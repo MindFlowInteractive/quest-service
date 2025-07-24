@@ -281,6 +281,7 @@ const logger_config_1 = __webpack_require__(/*! ./config/logger.config */ "./src
 const users_module_1 = __webpack_require__(/*! ./users/users.module */ "./src/users/users.module.ts");
 const puzzles_module_1 = __webpack_require__(/*! ./puzzles/puzzles.module */ "./src/puzzles/puzzles.module.ts");
 const achievements_module_1 = __webpack_require__(/*! ./achievements/achievements.module */ "./src/achievements/achievements.module.ts");
+const health_module_1 = __webpack_require__(/*! ./health/health.module */ "./src/health/health.module.ts");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -309,6 +310,7 @@ exports.AppModule = AppModule = __decorate([
             users_module_1.UsersModule,
             puzzles_module_1.PuzzlesModule,
             achievements_module_1.AchievementsModule,
+            health_module_1.HealthModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
@@ -398,6 +400,278 @@ exports["default"] = (0, config_1.registerAs)('app', () => ({
         limit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
     },
 }));
+
+
+/***/ }),
+
+/***/ "./src/config/database-service.ts":
+/*!****************************************!*\
+  !*** ./src/config/database-service.ts ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DatabaseService = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+const database_config_1 = __webpack_require__(/*! ../config/database.config */ "./src/config/database.config.ts");
+class DatabaseService {
+    static instance;
+    dataSource = null;
+    healthCheckInterval = null;
+    lastHealthCheck = null;
+    constructor() {
+    }
+    static getInstance() {
+        if (!DatabaseService.instance) {
+            DatabaseService.instance = new DatabaseService();
+        }
+        return DatabaseService.instance;
+    }
+    getDataSourceInstance() {
+        if (!this.dataSource) {
+            const configService = database_config_1.DatabaseConfigService.getInstance();
+            this.dataSource = new typeorm_1.DataSource(configService.getTypeOrmConfig());
+        }
+        return this.dataSource;
+    }
+    async initialize() {
+        try {
+            console.log('Initializing database connection...');
+            const dataSource = this.getDataSourceInstance();
+            if (!dataSource.isInitialized) {
+                await dataSource.initialize();
+            }
+            console.log('Database connection initialized successfully');
+            this.startHealthChecks();
+            if (process.env.NODE_ENV === 'production') {
+                await this.runMigrations();
+            }
+        }
+        catch (error) {
+            console.error('Failed to initialize database:', error);
+            throw error;
+        }
+    }
+    async runMigrations() {
+        try {
+            console.log('Running database migrations...');
+            const dataSource = this.getDataSourceInstance();
+            await dataSource.runMigrations();
+            console.log('Migrations completed successfully');
+        }
+        catch (error) {
+            console.error('Migration failed:', error);
+            throw error;
+        }
+    }
+    async revertMigration() {
+        try {
+            console.log('Reverting last migration...');
+            const dataSource = this.getDataSourceInstance();
+            await dataSource.undoLastMigration();
+            console.log('Migration reverted successfully');
+        }
+        catch (error) {
+            console.error('Migration revert failed:', error);
+            throw error;
+        }
+    }
+    async checkHealth() {
+        const startTime = Date.now();
+        try {
+            const dataSource = this.getDataSourceInstance();
+            const queryRunner = dataSource.createQueryRunner();
+            await queryRunner.connect();
+            const result = await queryRunner.query('SELECT 1 as test');
+            const stats = await this.getConnectionStats(queryRunner);
+            await queryRunner.release();
+            const latency = Date.now() - startTime;
+            this.lastHealthCheck = {
+                status: 'healthy',
+                connection: true,
+                latency,
+                activeConnections: stats.activeConnections,
+                timestamp: new Date(),
+            };
+            return this.lastHealthCheck;
+        }
+        catch (error) {
+            this.lastHealthCheck = {
+                status: 'unhealthy',
+                connection: false,
+                latency: Date.now() - startTime,
+                activeConnections: 0,
+                timestamp: new Date(),
+                error: error instanceof Error ? error.message : 'Unknown error',
+            };
+            return this.lastHealthCheck;
+        }
+    }
+    async getConnectionStats(queryRunner) {
+        const dataSource = this.getDataSourceInstance();
+        const runner = queryRunner || dataSource.createQueryRunner();
+        try {
+            if (!queryRunner)
+                await runner.connect();
+            const result = await runner.query(`
+        SELECT 
+          count(*) as total_connections,
+          count(*) FILTER (WHERE state = 'active') as active_connections,
+          count(*) FILTER (WHERE state = 'idle') as idle_connections,
+          count(*) FILTER (WHERE wait_event IS NOT NULL) as waiting_connections
+        FROM pg_stat_activity 
+        WHERE datname = current_database()
+      `);
+            return {
+                totalConnections: parseInt(result[0].total_connections),
+                activeConnections: parseInt(result[0].active_connections),
+                idleConnections: parseInt(result[0].idle_connections),
+                waitingConnections: parseInt(result[0].waiting_connections),
+            };
+        }
+        finally {
+            if (!queryRunner)
+                await runner.release();
+        }
+    }
+    getLastHealthCheck() {
+        return this.lastHealthCheck;
+    }
+    startHealthChecks() {
+        this.healthCheckInterval = setInterval(async () => {
+            await this.checkHealth();
+        }, 30000);
+    }
+    async retryConnection(maxRetries = 5, delay = 1000) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const dataSource = this.getDataSourceInstance();
+                if (!dataSource.isInitialized) {
+                    await dataSource.initialize();
+                }
+                await this.checkHealth();
+                if (this.lastHealthCheck?.status === 'healthy') {
+                    console.log(`Connection retry successful on attempt ${attempt}`);
+                    return;
+                }
+            }
+            catch (error) {
+                console.log(`Connection attempt ${attempt} failed:`, error);
+                if (attempt === maxRetries) {
+                    throw new Error(`Failed to establish database connection after ${maxRetries} attempts`);
+                }
+                await new Promise((resolve) => setTimeout(resolve, delay * attempt));
+            }
+        }
+    }
+    async close() {
+        if (this.healthCheckInterval) {
+            clearInterval(this.healthCheckInterval);
+            this.healthCheckInterval = null;
+        }
+        const dataSource = this.getDataSourceInstance();
+        if (dataSource.isInitialized) {
+            await dataSource.destroy();
+            console.log('Database connection closed');
+        }
+    }
+    getDataSource() {
+        return this.getDataSourceInstance();
+    }
+}
+exports.DatabaseService = DatabaseService;
+
+
+/***/ }),
+
+/***/ "./src/config/database.config.ts":
+/*!***************************************!*\
+  !*** ./src/config/database.config.ts ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DatabaseConfigService = void 0;
+const dotenv_1 = __webpack_require__(/*! dotenv */ "dotenv");
+const path = __webpack_require__(/*! path */ "path");
+(0, dotenv_1.config)();
+class DatabaseConfigService {
+    static instance;
+    constructor() { }
+    static getInstance() {
+        if (!DatabaseConfigService.instance) {
+            DatabaseConfigService.instance = new DatabaseConfigService();
+        }
+        return DatabaseConfigService.instance;
+    }
+    getConfig() {
+        const isTest = process.env.NODE_ENV === 'test';
+        return {
+            host: isTest
+                ? process.env.TEST_DB_HOST || 'localhost'
+                : process.env.DB_HOST || 'localhost',
+            port: isTest
+                ? parseInt(process.env.TEST_DB_PORT || '5433')
+                : parseInt(process.env.DB_PORT || '5432'),
+            username: isTest
+                ? process.env.TEST_DB_USER || 'postgres'
+                : process.env.DB_USER || 'postgres',
+            password: isTest
+                ? process.env.TEST_DB_PASSWORD || 'password'
+                : process.env.DB_PASSWORD || 'password',
+            database: isTest
+                ? process.env.TEST_DB_NAME || 'myapp_test'
+                : process.env.DB_NAME || 'myapp',
+            maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '20'),
+            minConnections: parseInt(process.env.DB_MIN_CONNECTIONS || '5'),
+            acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '20000'),
+            timeout: parseInt(process.env.DB_CONNECTION_TIMEOUT || '20000'),
+            idleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
+            logging: process.env.DB_LOGGING === 'true',
+            logLevel: process.env.LOG_LEVEL || 'info',
+        };
+    }
+    getTypeOrmConfig() {
+        const config = this.getConfig();
+        return {
+            type: 'postgres',
+            host: config.host,
+            port: config.port,
+            username: config.username,
+            password: config.password,
+            database: config.database,
+            entities: [path.join(__dirname, '../entities/*.{ts,js}')],
+            migrations: [path.join(__dirname, '../migrations/*.{ts,js}')],
+            subscribers: [path.join(__dirname, '../subscribers/*.{ts,js}')],
+            synchronize: false,
+            logging: config.logging
+                ? ['query', 'error', 'schema', 'warn', 'info', 'log']
+                : false,
+            logger: 'advanced-console',
+            maxQueryExecutionTime: 5000,
+            poolSize: config.maxConnections,
+            extra: {
+                connectionTimeoutMillis: config.timeout,
+                idleTimeoutMillis: config.idleTimeout,
+                max: config.maxConnections,
+                min: config.minConnections,
+                acquireTimeoutMillis: config.acquireTimeout,
+                createTimeoutMillis: 8000,
+                destroyTimeoutMillis: 5000,
+                reapIntervalMillis: 1000,
+                createRetryIntervalMillis: 200,
+            },
+            cache: {
+                type: 'database',
+                tableName: 'query_result_cache',
+                duration: 30000,
+            },
+        };
+    }
+}
+exports.DatabaseConfigService = DatabaseConfigService;
 
 
 /***/ }),
@@ -558,6 +832,264 @@ const createLoggerConfig = (configService) => {
     };
 };
 exports.createLoggerConfig = createLoggerConfig;
+
+
+/***/ }),
+
+/***/ "./src/health/health.controller.ts":
+/*!*****************************************!*\
+  !*** ./src/health/health.controller.ts ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.HealthController = void 0;
+const database_service_1 = __webpack_require__(/*! src/config/database-service */ "./src/config/database-service.ts");
+const performance_service_1 = __webpack_require__(/*! src/monitoring/performance.service */ "./src/monitoring/performance.service.ts");
+class HealthController {
+    databaseService = database_service_1.DatabaseService.getInstance();
+    performanceService;
+    constructor() {
+        this.performanceService = new performance_service_1.PerformanceMonitoringService(this.databaseService.getDataSource());
+    }
+    async checkHealth(req, res) {
+        try {
+            const health = await this.databaseService.checkHealth();
+            const status = health.status === 'healthy' ? 200 : 503;
+            res.status(status).json({
+                status: health.status,
+                timestamp: health.timestamp,
+                database: {
+                    connection: health.connection,
+                    latency: `${health.latency}ms`,
+                    activeConnections: health.activeConnections,
+                },
+                error: health.error,
+            });
+        }
+        catch (error) {
+            res.status(503).json({
+                status: 'unhealthy',
+                timestamp: new Date(),
+                error: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }
+    async getMetrics(req, res) {
+        try {
+            const metrics = await this.performanceService.getMetrics();
+            res.json(metrics);
+        }
+        catch (error) {
+            res.status(500).json({
+                error: error instanceof Error ? error.message : 'Failed to fetch metrics',
+            });
+        }
+    }
+    async getConnectionStats(req, res) {
+        try {
+            const stats = await this.databaseService.getConnectionStats();
+            res.json(stats);
+        }
+        catch (error) {
+            res.status(500).json({
+                error: error instanceof Error
+                    ? error.message
+                    : 'Failed to fetch connection stats',
+            });
+        }
+    }
+}
+exports.HealthController = HealthController;
+
+
+/***/ }),
+
+/***/ "./src/health/health.module.ts":
+/*!*************************************!*\
+  !*** ./src/health/health.module.ts ***!
+  \*************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.HealthModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const terminus_1 = __webpack_require__(/*! @nestjs/terminus */ "@nestjs/terminus");
+const health_controller_1 = __webpack_require__(/*! ./health.controller */ "./src/health/health.controller.ts");
+let HealthModule = class HealthModule {
+};
+exports.HealthModule = HealthModule;
+exports.HealthModule = HealthModule = __decorate([
+    (0, common_1.Module)({
+        imports: [terminus_1.TerminusModule],
+        controllers: [health_controller_1.HealthController],
+    })
+], HealthModule);
+
+
+/***/ }),
+
+/***/ "./src/monitoring/performance.service.ts":
+/*!***********************************************!*\
+  !*** ./src/monitoring/performance.service.ts ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PerformanceMonitoringService = void 0;
+class PerformanceMonitoringService {
+    dataSource;
+    constructor(dataSource) {
+        this.dataSource = dataSource;
+    }
+    async getSlowQueries(limit = 10) {
+        const queryRunner = this.dataSource.createQueryRunner();
+        try {
+            await queryRunner.connect();
+            const result = await queryRunner.query(`
+        SELECT 
+          query,
+          calls,
+          total_time,
+          mean_time,
+          min_time,
+          max_time,
+          rows
+        FROM pg_stat_statements 
+        WHERE calls > 5
+        ORDER BY mean_time DESC 
+        LIMIT $1
+      `, [limit]);
+            return result;
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+    async getCacheHitRatio() {
+        const queryRunner = this.dataSource.createQueryRunner();
+        try {
+            await queryRunner.connect();
+            const result = await queryRunner.query(`
+        SELECT 
+          round(
+            sum(blks_hit) * 100.0 / sum(blks_hit + blks_read), 2
+          ) as cache_hit_ratio
+        FROM pg_stat_database
+        WHERE datname = current_database()
+      `);
+            return result[0]?.cache_hit_ratio || 0;
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+    async getIndexUsage() {
+        const queryRunner = this.dataSource.createQueryRunner();
+        try {
+            await queryRunner.connect();
+            const result = await queryRunner.query(`
+        SELECT 
+          round(
+            sum(idx_scan) * 100.0 / sum(seq_scan + idx_scan), 2
+          ) as index_usage_ratio
+        FROM pg_stat_user_tables
+        WHERE seq_scan + idx_scan > 0
+      `);
+            return result[0]?.index_usage_ratio || 0;
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+    async getDatabaseSize() {
+        const queryRunner = this.dataSource.createQueryRunner();
+        try {
+            await queryRunner.connect();
+            const result = await queryRunner.query(`
+        SELECT pg_size_pretty(pg_database_size(current_database())) as size
+      `);
+            return result[0]?.size || '0 bytes';
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+    async getTablesSizes() {
+        const queryRunner = this.dataSource.createQueryRunner();
+        try {
+            await queryRunner.connect();
+            const result = await queryRunner.query(`
+        SELECT 
+          schemaname||'.'||tablename as table,
+          pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+        FROM pg_tables 
+        WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
+        ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+      `);
+            return result;
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+    async getMetrics() {
+        const [slowQueries, cacheHitRatio, indexUsage, databaseSize, tablesSizes] = await Promise.all([
+            this.getSlowQueries(),
+            this.getCacheHitRatio(),
+            this.getIndexUsage(),
+            this.getDatabaseSize(),
+            this.getTablesSizes(),
+        ]);
+        const connectionStats = await this.getConnectionStats();
+        return {
+            connections: connectionStats,
+            performance: {
+                slowQueries,
+                cacheHitRatio,
+                indexUsage,
+            },
+            storage: {
+                databaseSize,
+                tablesSizes,
+            },
+        };
+    }
+    async getConnectionStats() {
+        const queryRunner = this.dataSource.createQueryRunner();
+        try {
+            await queryRunner.connect();
+            const result = await queryRunner.query(`
+        SELECT 
+          count(*) as total,
+          count(*) FILTER (WHERE state = 'active') as active,
+          count(*) FILTER (WHERE state = 'idle') as idle,
+          count(*) FILTER (WHERE wait_event IS NOT NULL) as waiting
+        FROM pg_stat_activity 
+        WHERE datname = current_database()
+      `);
+            return {
+                total: parseInt(result[0].total),
+                active: parseInt(result[0].active),
+                idle: parseInt(result[0].idle),
+                waiting: parseInt(result[0].waiting),
+            };
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+}
+exports.PerformanceMonitoringService = PerformanceMonitoringService;
 
 
 /***/ }),
@@ -996,6 +1528,16 @@ module.exports = require("@nestjs/mapped-types");
 
 /***/ }),
 
+/***/ "@nestjs/terminus":
+/*!***********************************!*\
+  !*** external "@nestjs/terminus" ***!
+  \***********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/terminus");
+
+/***/ }),
+
 /***/ "@nestjs/throttler":
 /*!************************************!*\
   !*** external "@nestjs/throttler" ***!
@@ -1026,6 +1568,16 @@ module.exports = require("class-validator");
 
 /***/ }),
 
+/***/ "dotenv":
+/*!*************************!*\
+  !*** external "dotenv" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("dotenv");
+
+/***/ }),
+
 /***/ "helmet":
 /*!*************************!*\
   !*** external "helmet" ***!
@@ -1046,6 +1598,16 @@ module.exports = require("nest-winston");
 
 /***/ }),
 
+/***/ "typeorm":
+/*!**************************!*\
+  !*** external "typeorm" ***!
+  \**************************/
+/***/ ((module) => {
+
+module.exports = require("typeorm");
+
+/***/ }),
+
 /***/ "winston":
 /*!**************************!*\
   !*** external "winston" ***!
@@ -1053,6 +1615,16 @@ module.exports = require("nest-winston");
 /***/ ((module) => {
 
 module.exports = require("winston");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("path");
 
 /***/ })
 
