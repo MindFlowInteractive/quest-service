@@ -15,6 +15,7 @@ import { createLoggerConfig } from './config/logger.config';
 import { UsersModule } from './users/users.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
 import { AchievementsModule } from './achievements/achievements.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { AchievementsModule } from './achievements/achievements.module';
     UsersModule,
     PuzzlesModule,
     AchievementsModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
