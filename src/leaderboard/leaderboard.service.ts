@@ -6,6 +6,7 @@ import { LeaderboardEntry } from './entities/leaderboard-entry.entity';
 import { CreateLeaderboardDto } from './dto/create-leaderboard.dto';
 import { CreateLeaderboardEntryDto } from './dto/create-leaderboard-entry.dto';
 import { Cache } from 'cache-manager';
+import { AchievementsService } from '../achievements/achievements.service';
 
 @Injectable()
 export class LeaderboardService {
@@ -15,6 +16,7 @@ export class LeaderboardService {
     @InjectRepository(LeaderboardEntry)
     private entryRepository: Repository<LeaderboardEntry>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private achievementsService: AchievementsService,
   ) {}
 
   async createLeaderboard(dto: CreateLeaderboardDto): Promise<Leaderboard> {
@@ -29,8 +31,28 @@ export class LeaderboardService {
     });
     const saved = await this.entryRepository.save(entry);
     // Invalidate cache for this leaderboard
-    await this.cacheManager.reset(); // Optionally, use a more granular invalidation
+    await this.cacheManager.reset();
+    // Award leaderboard achievements if criteria met
+    await this.checkAndAwardLeaderboardAchievements(dto.leaderboardId, dto.userId);
     return saved;
+  }
+
+  private async checkAndAwardLeaderboardAchievements(leaderboardId: number, userId: number) {
+    // Find all leaderboard achievements for this leaderboard
+    // (Assume AchievementsService has a method to find by type/criteria)
+    const achievements = await this.achievementsService.findLeaderboardAchievements(leaderboardId);
+    if (!achievements?.length) return;
+    // Get current leaderboard entries ordered by score DESC
+    const entries = await this.entryRepository.find({
+      where: { leaderboard: { id: leaderboardId } },
+      order: [ { score: 'DESC' }, { userId: 'ASC' } ],
+    });
+    const userRank = entries.findIndex(e => e.userId === userId) + 1;
+    for (const achievement of achievements) {
+      if (achievement.criteria?.rank && userRank > 0 && userRank <= achievement.criteria.rank) {
+        await this.achievementsService.awardAchievementToUser(achievement.id, userId);
+      }
+    }
   }
 
   async getLeaderboardsByCategoryAndPeriod(category: string, period: string): Promise<Leaderboard[]> {

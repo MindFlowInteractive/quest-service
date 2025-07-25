@@ -5,11 +5,13 @@ import { LeaderboardService } from './leaderboard.service';
 import { LeaderboardController } from './leaderboard.controller';
 import { Leaderboard } from './entities/leaderboard.entity';
 import { LeaderboardEntry } from './entities/leaderboard-entry.entity';
+import { AchievementsModule } from '../achievements/achievements.module';
 
 @Module({
   imports: [
     CacheModule.register(),
     TypeOrmModule.forFeature([Leaderboard, LeaderboardEntry]),
+    AchievementsModule,
   ],
   controllers: [LeaderboardController],
   providers: [LeaderboardService],
