@@ -41,4 +41,23 @@ export class LeaderboardController {
   ) {
     return this.leaderboardService.getLeaderboardWithEntries(Number(id), ranking, order, period, userId ? Number(userId) : undefined);
   }
+
+  @Get(':id/analytics')
+  getLeaderboardAnalytics(@Param('id') id: number) {
+    return this.leaderboardService.getLeaderboardAnalytics(Number(id));
+  }
+
+  @Get(':id/user/:userId/share')
+  getUserRankSummary(@Param('id') id: number, @Param('userId') userId: number) {
+    return this.leaderboardService.getUserRankSummary(Number(id), Number(userId));
+  }
+
+  @Post(':id/challenge')
+  challengeUser(
+    @Param('id') id: number,
+    @Body('fromUserId') fromUserId: number,
+    @Body('toUserId') toUserId: number,
+  ) {
+    return this.leaderboardService.challengeUser(Number(id), fromUserId, toUserId);
+  }
 } 

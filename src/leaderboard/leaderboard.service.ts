@@ -130,4 +130,21 @@ export class LeaderboardService {
     // Invalidate cache
     await this.cacheManager.reset();
   }
+
+  async getUserRankSummary(leaderboardId: number, userId: number) {
+    const entries = await this.entryRepository.find({
+      where: { leaderboard: { id: leaderboardId }, archived: false },
+      order: [ { score: 'DESC' }, { userId: 'ASC' } ],
+    });
+    const userRank = entries.findIndex(e => e.userId === userId) + 1;
+    const userEntry = entries.find(e => e.userId === userId);
+    if (!userEntry) return { userId, rank: null, score: null, shareMessage: 'No entry found.' };
+    const shareMessage = `I am ranked #${userRank} on the leaderboard with a score of ${userEntry.score}! Can you beat me?`;
+    return { userId, rank: userRank, score: userEntry.score, shareMessage };
+  }
+
+  async challengeUser(leaderboardId: number, fromUserId: number, toUserId: number) {
+    // Stub: In a real app, you might send a notification or create a challenge record
+    return { message: `User ${fromUserId} challenged user ${toUserId} on leaderboard ${leaderboardId}` };
+  }
 } 
