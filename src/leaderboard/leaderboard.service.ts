@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Leaderboard } from './entities/leaderboard.entity';
 import { LeaderboardEntry } from './entities/leaderboard-entry.entity';
 import { CreateLeaderboardDto } from './dto/create-leaderboard.dto';
 import { CreateLeaderboardEntryDto } from './dto/create-leaderboard-entry.dto';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class LeaderboardService {
@@ -13,6 +14,7 @@ export class LeaderboardService {
     private leaderboardRepository: Repository<Leaderboard>,
     @InjectRepository(LeaderboardEntry)
     private entryRepository: Repository<LeaderboardEntry>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async createLeaderboard(dto: CreateLeaderboardDto): Promise<Leaderboard> {
@@ -25,7 +27,10 @@ export class LeaderboardService {
       ...dto,
       leaderboard: { id: dto.leaderboardId },
     });
-    return this.entryRepository.save(entry);
+    const saved = await this.entryRepository.save(entry);
+    // Invalidate cache for this leaderboard
+    await this.cacheManager.reset(); // Optionally, use a more granular invalidation
+    return saved;
   }
 
   async getLeaderboardsByCategoryAndPeriod(category: string, period: string): Promise<Leaderboard[]> {
@@ -40,6 +45,9 @@ export class LeaderboardService {
     order: 'ASC' | 'DESC' = 'DESC',
     period?: string,
   ): Promise<Leaderboard & { entries: LeaderboardEntry[] }> {
+    const cacheKey = `leaderboard:${leaderboardId}:${ranking}:${order}:${period || 'all'}`;
+    const cached = await this.cacheManager.get<Leaderboard & { entries: LeaderboardEntry[] }>(cacheKey);
+    if (cached) return cached;
     const leaderboard = await this.leaderboardRepository.findOne({
       where: { id: leaderboardId },
     });
@@ -53,6 +61,8 @@ export class LeaderboardService {
         { userId: 'ASC' },
       ],
     });
-    return { ...leaderboard, entries };
+    const result = { ...leaderboard, entries };
+    await this.cacheManager.set(cacheKey, result, { ttl: 30 }); // Cache for 30 seconds
+    return result;
   }
 } 
