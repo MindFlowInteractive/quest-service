@@ -44,14 +44,22 @@ export class LeaderboardService {
     ranking: 'score' | 'timeTaken' | 'efficiency' = 'score',
     order: 'ASC' | 'DESC' = 'DESC',
     period?: string,
+    userId?: number,
   ): Promise<Leaderboard & { entries: LeaderboardEntry[] }> {
-    const cacheKey = `leaderboard:${leaderboardId}:${ranking}:${order}:${period || 'all'}`;
+    const cacheKey = `leaderboard:${leaderboardId}:${ranking}:${order}:${period || 'all'}:${userId || 'anon'}`;
     const cached = await this.cacheManager.get<Leaderboard & { entries: LeaderboardEntry[] }>(cacheKey);
     if (cached) return cached;
     const leaderboard = await this.leaderboardRepository.findOne({
       where: { id: leaderboardId },
     });
     if (!leaderboard) throw new Error('Leaderboard not found');
+    // Privacy/visibility check
+    if (leaderboard.visibility === 'private' && (!userId || !leaderboard.allowedUserIds?.includes(userId))) {
+      throw new Error('Access denied: private leaderboard');
+    }
+    if (leaderboard.visibility === 'friends' && (!userId || !leaderboard.allowedUserIds?.includes(userId))) {
+      throw new Error('Access denied: friends-only leaderboard');
+    }
     const entryWhere: any = { leaderboard: { id: leaderboardId } };
     if (period) entryWhere.period = period;
     const entries = await this.entryRepository.find({
@@ -62,7 +70,7 @@ export class LeaderboardService {
       ],
     });
     const result = { ...leaderboard, entries };
-    await this.cacheManager.set(cacheKey, result, { ttl: 30 }); // Cache for 30 seconds
+    await this.cacheManager.set(cacheKey, result, { ttl: 30 });
     return result;
   }
 } 

@@ -17,6 +17,12 @@ export class Leaderboard {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ length: 20, default: 'public' })
+  visibility: 'public' | 'friends' | 'private';
+
+  @Column('int', { array: true, nullable: true })
+  allowedUserIds: number[] | null; // For private leaderboards
+
   @CreateDateColumn()
   createdAt: Date;
 

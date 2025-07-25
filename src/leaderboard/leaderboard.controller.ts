@@ -31,7 +31,8 @@ export class LeaderboardController {
     @Query('ranking') ranking: 'score' | 'timeTaken' | 'efficiency' = 'score',
     @Query('order') order: 'ASC' | 'DESC' = 'DESC',
     @Query('period') period?: string,
+    @Query('userId') userId?: number,
   ) {
-    return this.leaderboardService.getLeaderboardWithEntries(Number(id), ranking, order, period);
+    return this.leaderboardService.getLeaderboardWithEntries(Number(id), ranking, order, period, userId ? Number(userId) : undefined);
   }
 } 
