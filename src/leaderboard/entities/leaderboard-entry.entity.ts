@@ -21,6 +21,12 @@ export class LeaderboardEntry {
   @Column({ nullable: true })
   efficiency: number; // For efficiency-based rankings
 
+  @Column({ default: false })
+  archived: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  archivedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

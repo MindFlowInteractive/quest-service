@@ -95,4 +95,17 @@ export class LeaderboardService {
     await this.cacheManager.set(cacheKey, result, { ttl: 30 });
     return result;
   }
+
+  async archiveAndResetLeaderboard(leaderboardId: number): Promise<void> {
+    const now = new Date();
+    // Mark all non-archived entries as archived
+    await this.entryRepository.update(
+      { leaderboard: { id: leaderboardId }, archived: false },
+      { archived: true, archivedAt: now }
+    );
+    // Optionally, delete or keep archived entries; here we keep them for history
+    // (If you want to delete, use delete instead of update above)
+    // Invalidate cache
+    await this.cacheManager.reset();
+  }
 } 

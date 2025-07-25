@@ -17,6 +17,12 @@ export class LeaderboardController {
     return this.leaderboardService.createEntry(dto);
   }
 
+  @Post(':id/archive')
+  async archiveAndResetLeaderboard(@Param('id') id: number) {
+    await this.leaderboardService.archiveAndResetLeaderboard(Number(id));
+    return { message: 'Leaderboard archived and reset.' };
+  }
+
   @Get()
   getLeaderboardsByCategoryAndPeriod(
     @Query('category') category: string,
