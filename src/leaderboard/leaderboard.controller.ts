@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
 import { LeaderboardService } from './leaderboard.service';
 import { CreateLeaderboardDto } from './dto/create-leaderboard.dto';
 import { CreateLeaderboardEntryDto } from './dto/create-leaderboard-entry.dto';
@@ -18,7 +18,11 @@ export class LeaderboardController {
   }
 
   @Get(':id')
-  getLeaderboard(@Param('id') id: number) {
-    return this.leaderboardService.getLeaderboardWithEntries(Number(id));
+  getLeaderboard(
+    @Param('id') id: number,
+    @Query('ranking') ranking: 'score' | 'timeTaken' | 'efficiency' = 'score',
+    @Query('order') order: 'ASC' | 'DESC' = 'DESC',
+  ) {
+    return this.leaderboardService.getLeaderboardWithEntries(Number(id), ranking, order);
   }
 } 

@@ -28,14 +28,21 @@ export class LeaderboardService {
     return this.entryRepository.save(entry);
   }
 
-  async getLeaderboardWithEntries(leaderboardId: number): Promise<Leaderboard & { entries: LeaderboardEntry[] }> {
+  async getLeaderboardWithEntries(
+    leaderboardId: number,
+    ranking: 'score' | 'timeTaken' | 'efficiency' = 'score',
+    order: 'ASC' | 'DESC' = 'DESC',
+  ): Promise<Leaderboard & { entries: LeaderboardEntry[] }> {
     const leaderboard = await this.leaderboardRepository.findOne({
       where: { id: leaderboardId },
     });
     if (!leaderboard) throw new Error('Leaderboard not found');
     const entries = await this.entryRepository.find({
       where: { leaderboard: { id: leaderboardId } },
-      order: { score: 'DESC' },
+      order: [
+        { [ranking]: order },
+        { userId: 'ASC' }, // Tie-breaker: lower userId wins
+      ],
     });
     return { ...leaderboard, entries };
   }
