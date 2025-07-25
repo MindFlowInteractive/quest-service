@@ -28,20 +28,29 @@ export class LeaderboardService {
     return this.entryRepository.save(entry);
   }
 
+  async getLeaderboardsByCategoryAndPeriod(category: string, period: string): Promise<Leaderboard[]> {
+    return this.leaderboardRepository.find({
+      where: { category, period, isActive: true },
+    });
+  }
+
   async getLeaderboardWithEntries(
     leaderboardId: number,
     ranking: 'score' | 'timeTaken' | 'efficiency' = 'score',
     order: 'ASC' | 'DESC' = 'DESC',
+    period?: string,
   ): Promise<Leaderboard & { entries: LeaderboardEntry[] }> {
     const leaderboard = await this.leaderboardRepository.findOne({
       where: { id: leaderboardId },
     });
     if (!leaderboard) throw new Error('Leaderboard not found');
+    const entryWhere: any = { leaderboard: { id: leaderboardId } };
+    if (period) entryWhere.period = period;
     const entries = await this.entryRepository.find({
-      where: { leaderboard: { id: leaderboardId } },
+      where: entryWhere,
       order: [
         { [ranking]: order },
-        { userId: 'ASC' }, // Tie-breaker: lower userId wins
+        { userId: 'ASC' },
       ],
     });
     return { ...leaderboard, entries };

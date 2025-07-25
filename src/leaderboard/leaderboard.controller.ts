@@ -17,12 +17,21 @@ export class LeaderboardController {
     return this.leaderboardService.createEntry(dto);
   }
 
+  @Get()
+  getLeaderboardsByCategoryAndPeriod(
+    @Query('category') category: string,
+    @Query('period') period: string,
+  ) {
+    return this.leaderboardService.getLeaderboardsByCategoryAndPeriod(category, period);
+  }
+
   @Get(':id')
   getLeaderboard(
     @Param('id') id: number,
     @Query('ranking') ranking: 'score' | 'timeTaken' | 'efficiency' = 'score',
     @Query('order') order: 'ASC' | 'DESC' = 'DESC',
+    @Query('period') period?: string,
   ) {
-    return this.leaderboardService.getLeaderboardWithEntries(Number(id), ranking, order);
+    return this.leaderboardService.getLeaderboardWithEntries(Number(id), ranking, order, period);
   }
 } 
