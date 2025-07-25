@@ -96,6 +96,28 @@ export class LeaderboardService {
     return result;
   }
 
+  async getLeaderboardAnalytics(leaderboardId: number) {
+    // Only consider non-archived entries
+    const entries = await this.entryRepository.find({
+      where: { leaderboard: { id: leaderboardId }, archived: false },
+    });
+    const participantSet = new Set(entries.map(e => e.userId));
+    const participantCount = participantSet.size;
+    const entryCount = entries.length;
+    const averageScore = entries.length ? entries.reduce((sum, e) => sum + (e.score || 0), 0) / entries.length : 0;
+    // Top 5 users by score
+    const topUsers = entries
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(e => ({ userId: e.userId, score: e.score }));
+    return {
+      participantCount,
+      entryCount,
+      averageScore,
+      topUsers,
+    };
+  }
+
   async archiveAndResetLeaderboard(leaderboardId: number): Promise<void> {
     const now = new Date();
     // Mark all non-archived entries as archived
