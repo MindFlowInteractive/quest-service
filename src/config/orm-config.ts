@@ -15,7 +15,16 @@ export const AppDataSource = new DataSource({
   username: mustGetEnv('DB_USER'),
   password: mustGetEnv('DB_PASSWORD'),
   database: mustGetEnv('DB_NAME'),
-  entities: ['dist/**/*.entity.js'],
-  migrations: ['dist/migrations/*.js'],
+  entities: [
+    'dist/**/*.entity.js',
+    'src/**/*.entity.ts'  // For development
+  ],
+  migrations: [
+    'dist/migrations/*.js',
+    'src/migrations/*.ts'  // For development
+  ],
   synchronize: false,
+  logging: process.env.NODE_ENV === 'development',
+  dropSchema: false,
+  migrationsRun: false,
 });
