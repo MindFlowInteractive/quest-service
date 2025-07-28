@@ -15,41 +15,41 @@ export const EntityRelationships = {
     gameSessions: 'OneToMany:GameSession',
     puzzleProgress: 'OneToMany:PuzzleProgress',
     stats: 'OneToOne:UserStats',
-    ratings: 'OneToMany:PuzzleRating'
+    ratings: 'OneToMany:PuzzleRating',
   },
-  
+
   Puzzle: {
     progress: 'OneToMany:PuzzleProgress',
     ratings: 'OneToMany:PuzzleRating',
     parentPuzzle: 'ManyToOne:Puzzle',
     childPuzzles: 'OneToMany:Puzzle',
-    creator: 'ManyToOne:User'
+    creator: 'ManyToOne:User',
   },
-  
+
   PuzzleProgress: {
     user: 'ManyToOne:User',
-    puzzle: 'ManyToOne:Puzzle'
+    puzzle: 'ManyToOne:Puzzle',
   },
-  
+
   Achievement: {
-    userAchievements: 'OneToMany:UserAchievement'
+    userAchievements: 'OneToMany:UserAchievement',
   },
-  
+
   UserAchievement: {
     user: 'ManyToOne:User',
-    achievement: 'ManyToOne:Achievement'
+    achievement: 'ManyToOne:Achievement',
   },
-  
+
   GameSession: {
-    user: 'ManyToOne:User'
+    user: 'ManyToOne:User',
   },
-  
+
   PuzzleRating: {
     user: 'ManyToOne:User',
-    puzzle: 'ManyToOne:Puzzle'
+    puzzle: 'ManyToOne:Puzzle',
   },
-  
+
   UserStats: {
-    user: 'OneToOne:User'
-  }
+    user: 'OneToOne:User',
+  },
 };

@@ -27,12 +27,14 @@ The database schema is designed to support a comprehensive puzzle game platform 
 ## 🏛️ Database Architecture
 
 ### Technology Stack
+
 - **Database**: PostgreSQL 14+
 - **ORM**: TypeORM
 - **Migration System**: TypeORM Migrations
 - **Extensions**: uuid-ossp, pg_stat_statements
 
 ### Key Design Principles
+
 1. **Normalization**: Proper normalization to reduce data redundancy
 2. **Performance**: Strategic indexing for common query patterns
 3. **Integrity**: Comprehensive constraints and validation rules
@@ -43,7 +45,7 @@ The database schema is designed to support a comprehensive puzzle game platform 
 
 ```
 Users (1) ←→ (∞) UserAchievements (∞) ←→ (1) Achievements
-  ↓                                                    
+  ↓
   (1) ←→ (∞) PuzzleProgress (∞) ←→ (1) Puzzles
   ↓                                     ↓
   (1) ←→ (∞) GameSessions              (1) ←→ (∞) PuzzleRatings
@@ -54,6 +56,7 @@ Users (1) ←→ (∞) UserAchievements (∞) ←→ (1) Achievements
 ## 📊 Core Entities
 
 ### 👤 Users
+
 **Primary user entity with comprehensive profile and preference management.**
 
 ```sql
@@ -75,12 +78,14 @@ Table: users
 ```
 
 **Key Features:**
+
 - Comprehensive user preferences stored as JSONB
 - Profile information with social links and bio
 - Performance tracking (score, level, experience)
 - Soft delete support with `deletedAt`
 
 ### 🧩 Puzzles
+
 **Flexible puzzle content system with rich metadata.**
 
 ```sql
@@ -108,12 +113,14 @@ Table: puzzles
 ```
 
 **Key Features:**
+
 - Flexible content system supporting multiple puzzle types
 - Hierarchical puzzle relationships (parent/child)
 - Rich analytics and performance tracking
 - Advanced scoring and hint systems
 
 ### 📈 PuzzleProgress
+
 **Detailed tracking of user progress on individual puzzles.**
 
 ```sql
@@ -132,12 +139,14 @@ Table: puzzle_progress
 ```
 
 **Key Features:**
+
 - Comprehensive progress tracking with multiple attempts
 - Performance metrics and analytics
 - Save state for resuming puzzles
 - User ratings integrated with progress
 
 ### 🏆 Achievements
+
 **Complex achievement system with flexible unlock conditions.**
 
 ```sql
@@ -158,12 +167,14 @@ Table: achievements
 ```
 
 **Key Features:**
+
 - Flexible unlock condition system
 - Multi-step achievement progression
 - Seasonal and event-based achievements
 - Secret achievements support
 
 ### 🎯 UserAchievements
+
 **Junction table tracking user achievement progress.**
 
 ```sql
@@ -179,6 +190,7 @@ Table: user_achievements
 ```
 
 ### 🎮 GameSessions
+
 **Comprehensive session tracking for analytics.**
 
 ```sql
@@ -202,6 +214,7 @@ Table: game_sessions
 ```
 
 ### ⭐ PuzzleRatings
+
 **User ratings and reviews for puzzles.**
 
 ```sql
@@ -218,6 +231,7 @@ Table: puzzle_ratings
 ```
 
 ### 📊 UserStats
+
 **Aggregated user statistics and performance metrics.**
 
 ```sql
@@ -239,6 +253,7 @@ Table: user_stats
 ```
 
 ### 📁 PuzzleCategories
+
 **Puzzle categorization system.**
 
 ```sql
@@ -279,29 +294,32 @@ npx typeorm migration:run -d dist/config/orm-config.js
 ### Strategic Indexing
 
 **Primary Indexes:**
+
 - Unique indexes on email, username
 - Composite indexes for common query patterns
 - Foreign key indexes for join performance
 
 **Specialized Indexes:**
+
 - Full-text search on puzzle content
 - JSONB indexes for frequent JSON queries
 - Partial indexes for filtered queries
 - GIN indexes for array operations
 
 **Example Indexes:**
+
 ```sql
 -- Leaderboard queries
-CREATE INDEX CONCURRENTLY "IDX_user_stats_leaderboard_total" 
+CREATE INDEX CONCURRENTLY "IDX_user_stats_leaderboard_total"
 ON "user_stats" ("totalScore" DESC, "totalPuzzlesCompleted" DESC);
 
 -- Puzzle discovery
-CREATE INDEX CONCURRENTLY "IDX_puzzles_category_difficulty_rating" 
-ON "puzzles" ("category", "difficulty", "averageRating" DESC) 
+CREATE INDEX CONCURRENTLY "IDX_puzzles_category_difficulty_rating"
+ON "puzzles" ("category", "difficulty", "averageRating" DESC)
 WHERE "isActive" = true AND "publishedAt" IS NOT NULL;
 
 -- Full-text search
-CREATE INDEX CONCURRENTLY "IDX_puzzles_fulltext_search" 
+CREATE INDEX CONCURRENTLY "IDX_puzzles_fulltext_search"
 ON "puzzles" USING gin(to_tsvector('english', "title" || ' ' || "description"));
 ```
 
@@ -317,6 +335,7 @@ ON "puzzles" USING gin(to_tsvector('english', "title" || ' ' || "description"));
 ### Constraints and Validation
 
 **Check Constraints:**
+
 - Email format validation
 - Enum value validation
 - Positive value constraints
@@ -324,27 +343,29 @@ ON "puzzles" USING gin(to_tsvector('english', "title" || ' ' || "description"));
 - Logical consistency (best score ≥ current score)
 
 **Foreign Key Constraints:**
+
 - Cascade deletes for dependent data
 - Set null for optional references
 - Referential integrity maintenance
 
 **Business Logic Constraints:**
+
 ```sql
 -- User constraints
-ALTER TABLE "users" ADD CONSTRAINT "CHK_users_email_format" 
+ALTER TABLE "users" ADD CONSTRAINT "CHK_users_email_format"
 CHECK ("email" ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
 
 -- Puzzle progress logic
-ALTER TABLE "puzzle_progress" ADD CONSTRAINT "CHK_puzzle_progress_completion_logic" 
+ALTER TABLE "puzzle_progress" ADD CONSTRAINT "CHK_puzzle_progress_completion_logic"
 CHECK (
-  ("status" != 'completed' AND "completedAt" IS NULL) OR 
+  ("status" != 'completed' AND "completedAt" IS NULL) OR
   ("status" = 'completed' AND "completedAt" IS NOT NULL)
 );
 
 -- Achievement unlock logic
-ALTER TABLE "user_achievements" ADD CONSTRAINT "CHK_user_achievements_unlock_logic" 
+ALTER TABLE "user_achievements" ADD CONSTRAINT "CHK_user_achievements_unlock_logic"
 CHECK (
-  ("isUnlocked" = false AND "unlockedAt" IS NULL) OR 
+  ("isUnlocked" = false AND "unlockedAt" IS NULL) OR
   ("isUnlocked" = true AND "unlockedAt" IS NOT NULL)
 );
 ```
@@ -352,6 +373,7 @@ CHECK (
 ## 🚀 Setup Instructions
 
 ### Prerequisites
+
 - PostgreSQL 14+
 - Node.js 18+
 - npm or yarn
@@ -359,6 +381,7 @@ CHECK (
 ### Database Setup
 
 1. **Clone and install dependencies:**
+
 ```bash
 git clone <repository>
 cd quest-service
@@ -366,17 +389,20 @@ npm install
 ```
 
 2. **Configure environment:**
+
 ```bash
 cp .env.example .env
 # Edit .env with your database credentials
 ```
 
 3. **Run database setup:**
+
 ```bash
 ./scripts/setup-database.sh
 ```
 
 4. **Verify setup:**
+
 ```bash
 npm run start:dev
 ```
@@ -418,23 +444,25 @@ The database includes comprehensive seed data:
 ## 🔧 Maintenance
 
 ### Regular Tasks
+
 - Monitor query performance using pg_stat_statements
 - Update statistics: `ANALYZE;`
 - Vacuum regularly: `VACUUM ANALYZE;`
 - Monitor index usage and add/remove as needed
 
 ### Monitoring Queries
+
 ```sql
 -- Check table sizes
 SELECT schemaname,tablename,pg_size_pretty(size) as size_pretty
-FROM (SELECT schemaname,tablename,pg_total_relation_size(schemaname||'.'||tablename) as size 
-      FROM pg_tables WHERE schemaname='public') t 
+FROM (SELECT schemaname,tablename,pg_total_relation_size(schemaname||'.'||tablename) as size
+      FROM pg_tables WHERE schemaname='public') t
 ORDER BY size DESC;
 
 -- Monitor query performance
-SELECT query, calls, total_time, mean_time 
-FROM pg_stat_statements 
-ORDER BY total_time DESC 
+SELECT query, calls, total_time, mean_time
+FROM pg_stat_statements
+ORDER BY total_time DESC
 LIMIT 10;
 ```
 

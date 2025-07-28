@@ -26,13 +26,13 @@ export class User {
   isVerified: boolean
 
   @Column({ nullable: true })
-  verificationToken: string
+  verificationToken?: string
 
   @Column({ nullable: true })
-  resetPasswordToken: string
+  resetPasswordToken?: string
 
   @Column({ nullable: true })
-  resetPasswordExpires: Date
+  resetPasswordExpires?: Date
 
   @ManyToOne(
     () => Role,

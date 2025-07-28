@@ -3,7 +3,7 @@
 
 export { User } from '../users/entities/user.entity';
 export { UserStats } from '../users/entities/user-stats.entity';
-export { Puzzle } from '../puzzles/entities/puzzle.entity';  
+export { Puzzle } from '../puzzles/entities/puzzle.entity';
 export { PuzzleCategory } from '../puzzles/entities/puzzle-category.entity';
 export { PuzzleRating } from '../puzzles/entities/puzzle-rating.entity';
 export { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';

@@ -15,7 +15,6 @@ import {
 } from 'typeorm';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
-import { PuzzleRating } from './entities/puzzle-rating.entity';
 import {
   CreatePuzzleDto,
   UpdatePuzzleDto,
@@ -27,40 +26,8 @@ import {
   PuzzleDifficulty,
 } from './dto';
 
-export interface PuzzleWithStats {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  difficulty: string;
-  difficultyRating: number;
-  basePoints: number;
-  timeLimit: number;
-  maxHints: number;
-  attempts: number;
-  completions: number;
-  averageRating: number;
-  ratingCount: number;
-  averageCompletionTime: number;
-  isActive: boolean;
-  isFeatured: boolean;
-  publishedAt?: Date;
-  createdBy?: string;
-  content: any;
-  hints: any[];
-  tags: string[];
-  prerequisites: string[];
-  scoring: any;
-  analytics: any;
-  metadata: any;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date;
-  progress?: any[];
-  parentPuzzle?: any;
-  childPuzzles?: any[];
-  totalPlays?: number;
-  uniquePlayers?: number;
+export interface PuzzleWithStats extends Puzzle {
+  totalRatings?: number;
   completionRate?: number;
 }
 
@@ -95,8 +62,6 @@ export class PuzzlesService {
     private puzzleRepository: Repository<Puzzle>,
     @InjectRepository(PuzzleProgress)
     private progressRepository: Repository<PuzzleProgress>,
-    @InjectRepository(PuzzleRating)
-    private ratingRepository: Repository<PuzzleRating>,
   ) {}
 
   async create(
@@ -286,7 +251,7 @@ export class PuzzlesService {
     id: string,
     updatePuzzleDto: UpdatePuzzleDto,
     userId: string,
-  ): Promise<PuzzleWithStats> {
+  ): Promise<Puzzle> {
     try {
       const puzzle = await this.findOne(id, userId);
 
@@ -460,9 +425,7 @@ export class PuzzlesService {
         });
         break;
       case BulkAction.UNPUBLISH:
-        await this.puzzleRepository.update(puzzleId, {
-          publishedAt: undefined,
-        });
+        await this.puzzleRepository.update(puzzleId, { publishedAt: undefined });
         break;
       case BulkAction.ARCHIVE:
         await this.puzzleRepository.softDelete(puzzleId);

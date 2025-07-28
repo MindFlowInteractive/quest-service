@@ -8,6 +8,8 @@ export const jwtConstants = {
 
 export const BCRYPT_SALT_ROUNDS = 10
 
+export const ROLES_KEY = 'roles'
+
 export enum UserRole {
   ADMIN = "admin",
   USER = "user",
