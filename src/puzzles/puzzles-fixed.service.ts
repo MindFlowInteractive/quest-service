@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,59 +10,34 @@ import {
   Repository,
   SelectQueryBuilder,
   In,
+  ILike,
   Between,
   IsNull,
   Not,
 } from 'typeorm';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
-import { PuzzleRating } from './entities/puzzle-rating.entity';
+// import { PuzzleRating } from '../leaderboard/entities/puzzle-rating.entity';
 import {
   CreatePuzzleDto,
   UpdatePuzzleDto,
   SearchPuzzleDto,
   BulkUpdateDto,
+  ExportPuzzleDto,
+  ImportPuzzleDto,
   BulkAction,
   SortBy,
   SortOrder,
   PuzzleDifficulty,
 } from './dto';
 
-export interface PuzzleWithStats {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  difficulty: string;
-  difficultyRating: number;
-  basePoints: number;
-  timeLimit: number;
-  maxHints: number;
-  attempts: number;
-  completions: number;
-  averageRating: number;
-  ratingCount: number;
-  averageCompletionTime: number;
-  isActive: boolean;
-  isFeatured: boolean;
-  publishedAt?: Date;
-  createdBy?: string;
-  content: any;
-  hints: any[];
-  tags: string[];
-  prerequisites: string[];
-  scoring: any;
-  analytics: any;
-  metadata: any;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date;
-  progress?: any[];
-  parentPuzzle?: any;
-  childPuzzles?: any[];
+export interface PuzzleWithStats
+  extends Omit<Puzzle, 'averageRating' | 'averageCompletionTime'> {
   totalPlays?: number;
   uniquePlayers?: number;
   completionRate?: number;
+  averageRating?: number;
+  averageCompletionTime?: number;
 }
 
 export interface SearchResult {
@@ -95,8 +71,8 @@ export class PuzzlesService {
     private puzzleRepository: Repository<Puzzle>,
     @InjectRepository(PuzzleProgress)
     private progressRepository: Repository<PuzzleProgress>,
-    @InjectRepository(PuzzleRating)
-    private ratingRepository: Repository<PuzzleRating>,
+    // @InjectRepository(PuzzleRating)
+    // private ratingRepository: Repository<PuzzleRating>,
   ) {}
 
   async create(
@@ -104,6 +80,18 @@ export class PuzzlesService {
     createdBy: string,
   ): Promise<Puzzle> {
     try {
+      // Validate prerequisites if provided
+      if (createPuzzleDto.prerequisites?.length) {
+        const prereqCount = await this.puzzleRepository.count({
+          where: { id: In(createPuzzleDto.prerequisites) },
+        });
+        if (prereqCount !== createPuzzleDto.prerequisites.length) {
+          throw new BadRequestException(
+            'One or more prerequisite puzzles not found',
+          );
+        }
+      }
+
       const puzzleData = {
         title: createPuzzleDto.title,
         description: createPuzzleDto.description,
@@ -120,7 +108,7 @@ export class PuzzlesService {
         scoring: createPuzzleDto.scoring || {},
         isFeatured: createPuzzleDto.isFeatured || false,
         createdBy,
-        publishedAt: undefined, // Not published initially
+        // publishedAt: undefined, // Not published initially - leaving as undefined
         analytics: {
           completionRate: 0,
           averageAttempts: 0,
@@ -176,12 +164,13 @@ export class PuzzlesService {
 
       const queryBuilder = this.puzzleRepository
         .createQueryBuilder('puzzle')
-        .where('puzzle.deletedAt IS NULL');
+        .leftJoinAndSelect('puzzle.progress', 'progress')
+        .where('puzzle.deletedAt IS NULL'); // Only active puzzles
 
       // Apply filters
       if (search) {
         queryBuilder.andWhere(
-          '(puzzle.title ILIKE :search OR puzzle.description ILIKE :search)',
+          '(puzzle.title ILIKE :search OR puzzle.description ILIKE :search OR puzzle.tags::text ILIKE :search)',
           { search: `%${search}%` },
         );
       }
@@ -206,6 +195,10 @@ export class PuzzlesService {
         queryBuilder.andWhere('puzzle.difficultyRating <= :maxRating', {
           maxRating,
         });
+      }
+
+      if (tags?.length) {
+        queryBuilder.andWhere('puzzle.tags && ARRAY[:...tags]', { tags });
       }
 
       if (isFeatured !== undefined) {
@@ -258,6 +251,9 @@ export class PuzzlesService {
     try {
       const puzzle = await this.puzzleRepository
         .createQueryBuilder('puzzle')
+        .leftJoinAndSelect('puzzle.progress', 'progress')
+        .leftJoinAndSelect('puzzle.prerequisites', 'prerequisites')
+        .leftJoinAndSelect('puzzle.childPuzzles', 'childPuzzles')
         .where('puzzle.id = :id', { id })
         .andWhere('puzzle.deletedAt IS NULL')
         .getOne();
@@ -303,6 +299,14 @@ export class PuzzlesService {
         delete updateData.isPublished;
       }
 
+      // Update metadata
+      const currentMetadata = puzzle.metadata || {};
+      updateData.metadata = {
+        ...currentMetadata,
+        lastModifiedBy: userId,
+        version: this.incrementVersion(currentMetadata.version || '1.0'),
+      };
+
       await this.puzzleRepository.update(id, updateData);
 
       const updatedPuzzle = await this.findOne(id, userId);
@@ -328,8 +332,9 @@ export class PuzzlesService {
         );
       }
 
+      // Check if puzzle has any progress - always soft delete
       await this.puzzleRepository.softDelete(id);
-      this.logger.log(`Deleted puzzle: ${id}`);
+      this.logger.log(`Soft deleted puzzle: ${id}`);
     } catch (error) {
       this.logger.error(
         `Failed to remove puzzle ${id}: ${error.message}`,
@@ -348,6 +353,17 @@ export class PuzzlesService {
     let updated = 0;
 
     try {
+      // Verify user owns all puzzles
+      const puzzles = await this.puzzleRepository.find({
+        where: { id: In(puzzleIds), createdBy: userId },
+      });
+
+      if (puzzles.length !== puzzleIds.length) {
+        throw new BadRequestException(
+          'You can only bulk update puzzles you created',
+        );
+      }
+
       for (const puzzleId of puzzleIds) {
         try {
           await this.executeBulkAction(puzzleId, bulkUpdateDto, userId);
@@ -373,9 +389,33 @@ export class PuzzlesService {
         .createQueryBuilder('puzzle')
         .where('puzzle.deletedAt IS NULL');
 
-      const [totalPuzzles, publishedPuzzles, topPuzzles] = await Promise.all([
+      // Apply date filter
+      if (period !== 'all') {
+        const date = this.getDateFromPeriod(period);
+        baseQuery.andWhere('puzzle.createdAt >= :date', { date });
+      }
+
+      const [
+        totalPuzzles,
+        publishedPuzzles,
+        categoryResults,
+        difficultyResults,
+        ratingResult,
+        topPuzzles,
+      ] = await Promise.all([
         baseQuery.getCount(),
         baseQuery.clone().andWhere('puzzle.publishedAt IS NOT NULL').getCount(),
+        baseQuery
+          .clone()
+          .select('puzzle.category, COUNT(*) as count')
+          .groupBy('puzzle.category')
+          .getRawMany(),
+        baseQuery
+          .clone()
+          .select('puzzle.difficulty, COUNT(*) as count')
+          .groupBy('puzzle.difficulty')
+          .getRawMany(),
+        baseQuery.clone().select('AVG(puzzle.averageRating)').getRawOne(),
         this.puzzleRepository.find({
           where: { deletedAt: IsNull(), publishedAt: Not(IsNull()) },
           order: { completions: 'DESC' },
@@ -383,18 +423,27 @@ export class PuzzlesService {
         }),
       ]);
 
+      const categoryCounts = categoryResults.reduce((acc, row) => {
+        acc[row.puzzle_category] = parseInt(row.count);
+        return acc;
+      }, {});
+
+      const difficultyDistribution = difficultyResults.reduce(
+        (acc, row) => {
+          acc[row.puzzle_difficulty as PuzzleDifficulty] = parseInt(row.count);
+          return acc;
+        },
+        {} as { [key in PuzzleDifficulty]: number },
+      );
+
       return {
         totalPuzzles,
         publishedPuzzles,
-        categoryCounts: {},
-        difficultyDistribution: {} as any,
-        averageRating: 0,
+        categoryCounts,
+        difficultyDistribution,
+        averageRating: parseFloat(ratingResult.avg || '0'),
         topPerformingPuzzles: topPuzzles,
-        recentActivity: {
-          created: 0,
-          published: 0,
-          played: 0,
-        },
+        recentActivity: await this.getRecentActivity(period),
       };
     } catch (error) {
       this.logger.error(
@@ -435,15 +484,67 @@ export class PuzzlesService {
   private async enhanceWithStats(
     puzzles: Puzzle[],
   ): Promise<PuzzleWithStats[]> {
-    return puzzles.map((puzzle) => ({
-      ...puzzle,
-      totalPlays: puzzle.attempts,
-      uniquePlayers: 0,
-      completionRate:
-        puzzle.attempts > 0 ? (puzzle.completions / puzzle.attempts) * 100 : 0,
-      averageRating: puzzle.averageRating,
-      averageCompletionTime: puzzle.averageCompletionTime,
-    }));
+    if (!puzzles.length) return [];
+
+    const puzzleIds = puzzles.map((p) => p.id);
+
+    // Get play statistics
+    const playStats = await this.progressRepository
+      .createQueryBuilder('progress')
+      .select([
+        'puzzleId',
+        'COUNT(*) as totalPlays',
+        'COUNT(DISTINCT userId) as uniquePlayers',
+        'COUNT(CASE WHEN isCompleted = true THEN 1 END) as completions',
+        'AVG(CASE WHEN completionTime IS NOT NULL THEN completionTime END) as avgTime',
+      ])
+      .where('puzzleId IN (:...puzzleIds)', { puzzleIds })
+      .groupBy('puzzleId')
+      .getRawMany();
+
+    // Get rating statistics - commented out since PuzzleRating is not available
+    // const ratingStats = await this.ratingRepository
+    //   .createQueryBuilder('rating')
+    //   .select([
+    //     'puzzleId',
+    //     'AVG(rating) as averageRating'
+    //   ])
+    //   .where('puzzleId IN (:...puzzleIds)', { puzzleIds })
+    //   .groupBy('puzzleId')
+    //   .getRawMany();
+
+    // Create lookup maps
+    const playStatsMap = new Map(
+      playStats.map((stat) => [stat.puzzleId, stat]),
+    );
+    // const ratingStatsMap = new Map(ratingStats.map(stat => [stat.puzzleId, stat]));
+
+    return puzzles.map((puzzle) => {
+      const playData = playStatsMap.get(puzzle.id);
+      // const ratingData = ratingStatsMap.get(puzzle.id);
+
+      return {
+        ...puzzle,
+        totalPlays: playData ? parseInt(playData.totalPlays) : puzzle.attempts,
+        uniquePlayers: playData ? parseInt(playData.uniquePlayers) : 0,
+        completionRate:
+          playData && parseInt(playData.totalPlays) > 0
+            ? (parseInt(playData.completions) / parseInt(playData.totalPlays)) *
+              100
+            : 0,
+        averageRating: puzzle.averageRating,
+        averageCompletionTime: playData
+          ? parseFloat(playData.avgTime || '0')
+          : puzzle.averageCompletionTime,
+      };
+    });
+  }
+
+  private incrementVersion(version: string): string {
+    const parts = version.split('.');
+    const patch = parseInt(parts[parts.length - 1] || '0');
+    parts[parts.length - 1] = (patch + 1).toString();
+    return parts.join('.');
   }
 
   private async executeBulkAction(
@@ -467,8 +568,77 @@ export class PuzzlesService {
       case BulkAction.ARCHIVE:
         await this.puzzleRepository.softDelete(puzzleId);
         break;
+      case BulkAction.UPDATE_CATEGORY:
+        if (!value) throw new BadRequestException('Category value required');
+        await this.puzzleRepository.update(puzzleId, { category: value });
+        break;
+      case BulkAction.ADD_TAGS:
+        if (!value) throw new BadRequestException('Tags value required');
+        const tagsToAdd = value.split(',').map((t) => t.trim());
+        const puzzle = await this.puzzleRepository.findOne({
+          where: { id: puzzleId },
+        });
+        if (!puzzle) throw new NotFoundException('Puzzle not found');
+        const updatedTags = [
+          ...new Set([...(puzzle.tags || []), ...tagsToAdd]),
+        ];
+        await this.puzzleRepository.update(puzzleId, { tags: updatedTags });
+        break;
+      case BulkAction.REMOVE_TAGS:
+        if (!value) throw new BadRequestException('Tags value required');
+        const tagsToRemove = value.split(',').map((t) => t.trim());
+        const currentPuzzle = await this.puzzleRepository.findOne({
+          where: { id: puzzleId },
+        });
+        if (!currentPuzzle) throw new NotFoundException('Puzzle not found');
+        const filteredTags = (currentPuzzle.tags || []).filter(
+          (tag) => !tagsToRemove.includes(tag),
+        );
+        await this.puzzleRepository.update(puzzleId, { tags: filteredTags });
+        break;
       default:
         throw new BadRequestException(`Unsupported bulk action: ${action}`);
     }
+  }
+
+  private getDateFromPeriod(period: string): Date {
+    const now = new Date();
+    switch (period) {
+      case 'day':
+        return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      case 'week':
+        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      case 'month':
+        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      case 'year':
+        return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      default:
+        return new Date(0);
+    }
+  }
+
+  private async getRecentActivity(period: string) {
+    const date = this.getDateFromPeriod(period);
+
+    const [created, published, played] = await Promise.all([
+      this.puzzleRepository.count({
+        where: {
+          createdAt: Between(date, new Date()),
+          deletedAt: IsNull(),
+        },
+      }),
+      this.puzzleRepository.count({
+        where: {
+          publishedAt: Not(IsNull()),
+          createdAt: Between(date, new Date()),
+          deletedAt: IsNull(),
+        },
+      }),
+      this.progressRepository.count({
+        where: { createdAt: Between(date, new Date()) },
+      }),
+    ]);
+
+    return { created, published, played };
   }
 }

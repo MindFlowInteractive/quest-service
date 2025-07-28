@@ -98,7 +98,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refreshToken(req: RequestWithUser, refreshToken: string) {
     // The RefreshJwtAuthGuard already validated the refresh token and attached user to req.user
-    return this.authService.refreshToken(req.user.userId, refreshToken)
+    return this.authService.refreshToken(req.user.id, refreshToken)
   }
 
   @Post("logout")
@@ -113,7 +113,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(req: RequestWithUser, refreshToken: string) {
     // Invalidate the specific refresh token used for this session
-    return this.authService.logout(req.user.userId, refreshToken)
+    return this.authService.logout(req.user.id, refreshToken)
   }
 
   @Get("profile")

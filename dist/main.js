@@ -56,9 +56,7 @@ const app_config_1 = __webpack_require__(13);
 const logger_config_1 = __webpack_require__(14);
 const users_module_1 = __webpack_require__(16);
 const puzzles_module_1 = __webpack_require__(22);
-const achievements_module_1 = __webpack_require__(39);
-const health_module_1 = __webpack_require__(44);
-const leaderboard_module_1 = __webpack_require__(52);
+const health_module_1 = __webpack_require__(39);
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -86,9 +84,7 @@ exports.AppModule = AppModule = __decorate([
             }),
             users_module_1.UsersModule,
             puzzles_module_1.PuzzlesModule,
-            achievements_module_1.AchievementsModule,
             health_module_1.HealthModule,
-            leaderboard_module_1.LeaderboardModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
@@ -447,13 +443,13 @@ let UsersService = class UsersService {
         return `This action returns all users`;
     }
     findOne(id) {
-        return `This action returns a #${id} user`;
+        return `This action returns a user with id #${id}`;
     }
     update(id, updateUserDto) {
-        return `This action updates a #${id} user`;
+        return `This action updates a user with id #${id}`;
     }
     remove(id) {
-        return `This action removes a #${id} user`;
+        return `This action removes a user with id #${id}`;
     }
 };
 exports.UsersService = UsersService;
@@ -498,13 +494,13 @@ let UsersController = class UsersController {
         return this.usersService.findAll();
     }
     findOne(id) {
-        return this.usersService.findOne(+id);
+        return this.usersService.findOne(id);
     }
     update(id, updateUserDto) {
-        return this.usersService.update(+id, updateUserDto);
+        return this.usersService.update(id, updateUserDto);
     }
     remove(id) {
-        return this.usersService.remove(+id);
+        return this.usersService.remove(id);
     }
 };
 exports.UsersController = UsersController;
@@ -551,14 +547,51 @@ exports.UsersController = UsersController = __decorate([
 
 /***/ }),
 /* 19 */
-/***/ ((__unused_webpack_module, exports) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CreateUserDto = void 0;
+const class_validator_1 = __webpack_require__(11);
 class CreateUserDto {
+    username;
+    email;
+    password;
+    firstName;
+    lastName;
 }
 exports.CreateUserDto = CreateUserDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(3),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "username", void 0);
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(6),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "firstName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "lastName", void 0);
 
 
 /***/ }),
@@ -2749,238 +2782,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AchievementsModule = void 0;
-const common_1 = __webpack_require__(2);
-const typeorm_1 = __webpack_require__(23);
-const achievements_service_1 = __webpack_require__(40);
-const achievements_controller_1 = __webpack_require__(41);
-const achievement_entity_1 = __webpack_require__(31);
-const user_achievement_entity_1 = __webpack_require__(30);
-let AchievementsModule = class AchievementsModule {
-};
-exports.AchievementsModule = AchievementsModule;
-exports.AchievementsModule = AchievementsModule = __decorate([
-    (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([achievement_entity_1.Achievement, user_achievement_entity_1.UserAchievement])],
-        controllers: [achievements_controller_1.AchievementsController],
-        providers: [achievements_service_1.AchievementsService],
-    })
-], AchievementsModule);
-
-
-/***/ }),
-/* 40 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AchievementsService = void 0;
-const common_1 = __webpack_require__(2);
-const typeorm_1 = __webpack_require__(23);
-const typeorm_2 = __webpack_require__(25);
-const achievement_entity_1 = __webpack_require__(31);
-const user_achievement_entity_1 = __webpack_require__(30);
-let AchievementsService = class AchievementsService {
-    achievementRepository;
-    userAchievementRepository;
-    constructor(achievementRepository, userAchievementRepository) {
-        this.achievementRepository = achievementRepository;
-        this.userAchievementRepository = userAchievementRepository;
-    }
-    create(createAchievementDto) {
-        return 'This action adds a new achievement';
-    }
-    findAll() {
-        return `This action returns all achievements`;
-    }
-    findOne(id) {
-        return `This action returns a #${id} achievement`;
-    }
-    update(id, updateAchievementDto) {
-        return `This action updates a #${id} achievement`;
-    }
-    remove(id) {
-        return `This action removes a #${id} achievement`;
-    }
-    async findLeaderboardAchievements(leaderboardId) {
-        return this.achievementRepository.find({
-            where: {
-                type: 'leaderboard',
-                criteria: { leaderboardId },
-            },
-        });
-    }
-    async awardAchievementToUser(achievementId, userId) {
-        const existing = await this.userAchievementRepository.findOne({
-            where: {
-                achievement: { id: achievementId },
-                user: { id: userId },
-            },
-        });
-        if (existing)
-            return existing;
-        const userAchievement = this.userAchievementRepository.create({
-            achievement: { id: achievementId },
-            user: { id: userId },
-        });
-        return this.userAchievementRepository.save(userAchievement);
-    }
-};
-exports.AchievementsService = AchievementsService;
-exports.AchievementsService = AchievementsService = __decorate([
-    (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(achievement_entity_1.Achievement)),
-    __param(1, (0, typeorm_1.InjectRepository)(user_achievement_entity_1.UserAchievement)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object])
-], AchievementsService);
-
-
-/***/ }),
-/* 41 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b, _c;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AchievementsController = void 0;
-const common_1 = __webpack_require__(2);
-const achievements_service_1 = __webpack_require__(40);
-const create_achievement_dto_1 = __webpack_require__(42);
-const update_achievement_dto_1 = __webpack_require__(43);
-let AchievementsController = class AchievementsController {
-    achievementsService;
-    constructor(achievementsService) {
-        this.achievementsService = achievementsService;
-    }
-    create(createAchievementDto) {
-        return this.achievementsService.create(createAchievementDto);
-    }
-    findAll() {
-        return this.achievementsService.findAll();
-    }
-    findOne(id) {
-        return this.achievementsService.findOne(+id);
-    }
-    update(id, updateAchievementDto) {
-        return this.achievementsService.update(+id, updateAchievementDto);
-    }
-    remove(id) {
-        return this.achievementsService.remove(+id);
-    }
-};
-exports.AchievementsController = AchievementsController;
-__decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_b = typeof create_achievement_dto_1.CreateAchievementDto !== "undefined" && create_achievement_dto_1.CreateAchievementDto) === "function" ? _b : Object]),
-    __metadata("design:returntype", void 0)
-], AchievementsController.prototype, "create", null);
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], AchievementsController.prototype, "findAll", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], AchievementsController.prototype, "findOne", null);
-__decorate([
-    (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_c = typeof update_achievement_dto_1.UpdateAchievementDto !== "undefined" && update_achievement_dto_1.UpdateAchievementDto) === "function" ? _c : Object]),
-    __metadata("design:returntype", void 0)
-], AchievementsController.prototype, "update", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], AchievementsController.prototype, "remove", null);
-exports.AchievementsController = AchievementsController = __decorate([
-    (0, common_1.Controller)('achievements'),
-    __metadata("design:paramtypes", [typeof (_a = typeof achievements_service_1.AchievementsService !== "undefined" && achievements_service_1.AchievementsService) === "function" ? _a : Object])
-], AchievementsController);
-
-
-/***/ }),
-/* 42 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CreateAchievementDto = void 0;
-class CreateAchievementDto {
-    name;
-    description;
-    type;
-    criteria;
-}
-exports.CreateAchievementDto = CreateAchievementDto;
-
-
-/***/ }),
-/* 43 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UpdateAchievementDto = void 0;
-const mapped_types_1 = __webpack_require__(21);
-const create_achievement_dto_1 = __webpack_require__(42);
-class UpdateAchievementDto extends (0, mapped_types_1.PartialType)(create_achievement_dto_1.CreateAchievementDto) {
-}
-exports.UpdateAchievementDto = UpdateAchievementDto;
-
-
-/***/ }),
-/* 44 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HealthModule = void 0;
 const common_1 = __webpack_require__(2);
-const terminus_1 = __webpack_require__(45);
-const health_controller_1 = __webpack_require__(46);
+const terminus_1 = __webpack_require__(40);
+const health_controller_1 = __webpack_require__(41);
 let HealthModule = class HealthModule {
 };
 exports.HealthModule = HealthModule;
@@ -2993,20 +2798,20 @@ exports.HealthModule = HealthModule = __decorate([
 
 
 /***/ }),
-/* 45 */
+/* 40 */
 /***/ ((module) => {
 
 module.exports = require("@nestjs/terminus");
 
 /***/ }),
-/* 46 */
+/* 41 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HealthController = void 0;
-const database_service_1 = __webpack_require__(47);
-const performance_service_1 = __webpack_require__(51);
+const database_service_1 = __webpack_require__(42);
+const performance_service_1 = __webpack_require__(46);
 class HealthController {
     databaseService = database_service_1.DatabaseService.getInstance();
     performanceService;
@@ -3065,14 +2870,14 @@ exports.HealthController = HealthController;
 
 
 /***/ }),
-/* 47 */
+/* 42 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DatabaseService = void 0;
 const typeorm_1 = __webpack_require__(25);
-const database_config_1 = __webpack_require__(48);
+const database_config_1 = __webpack_require__(43);
 class DatabaseService {
     static instance;
     dataSource = null;
@@ -3242,14 +3047,14 @@ exports.DatabaseService = DatabaseService;
 
 
 /***/ }),
-/* 48 */
+/* 43 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DatabaseConfigService = void 0;
-const dotenv_1 = __webpack_require__(49);
-const path = __webpack_require__(50);
+const dotenv_1 = __webpack_require__(44);
+const path = __webpack_require__(45);
 (0, dotenv_1.config)();
 class DatabaseConfigService {
     static instance;
@@ -3329,19 +3134,19 @@ exports.DatabaseConfigService = DatabaseConfigService;
 
 
 /***/ }),
-/* 49 */
+/* 44 */
 /***/ ((module) => {
 
 module.exports = require("dotenv");
 
 /***/ }),
-/* 50 */
+/* 45 */
 /***/ ((module) => {
 
 module.exports = require("path");
 
 /***/ }),
-/* 51 */
+/* 46 */
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -3491,503 +3296,6 @@ class PerformanceMonitoringService {
     }
 }
 exports.PerformanceMonitoringService = PerformanceMonitoringService;
-
-
-/***/ }),
-/* 52 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LeaderboardModule = void 0;
-const common_1 = __webpack_require__(2);
-const common_2 = __webpack_require__(2);
-const typeorm_1 = __webpack_require__(23);
-const leaderboard_service_1 = __webpack_require__(53);
-const leaderboard_controller_1 = __webpack_require__(56);
-const leaderboard_entity_1 = __webpack_require__(54);
-const leaderboard_entry_entity_1 = __webpack_require__(55);
-const achievements_module_1 = __webpack_require__(39);
-let LeaderboardModule = class LeaderboardModule {
-};
-exports.LeaderboardModule = LeaderboardModule;
-exports.LeaderboardModule = LeaderboardModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            common_2.CacheModule.register(),
-            typeorm_1.TypeOrmModule.forFeature([leaderboard_entity_1.Leaderboard, leaderboard_entry_entity_1.LeaderboardEntry]),
-            achievements_module_1.AchievementsModule,
-        ],
-        controllers: [leaderboard_controller_1.LeaderboardController],
-        providers: [leaderboard_service_1.LeaderboardService],
-    })
-], LeaderboardModule);
-
-
-/***/ }),
-/* 53 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b, _c, _d;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LeaderboardService = void 0;
-const common_1 = __webpack_require__(2);
-const typeorm_1 = __webpack_require__(23);
-const typeorm_2 = __webpack_require__(25);
-const leaderboard_entity_1 = __webpack_require__(54);
-const leaderboard_entry_entity_1 = __webpack_require__(55);
-const cache_manager_1 = __webpack_require__(Object(function webpackMissingModule() { var e = new Error("Cannot find module 'cache-manager'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-const achievements_service_1 = __webpack_require__(40);
-let LeaderboardService = class LeaderboardService {
-    leaderboardRepository;
-    entryRepository;
-    cacheManager;
-    achievementsService;
-    constructor(leaderboardRepository, entryRepository, cacheManager, achievementsService) {
-        this.leaderboardRepository = leaderboardRepository;
-        this.entryRepository = entryRepository;
-        this.cacheManager = cacheManager;
-        this.achievementsService = achievementsService;
-    }
-    async createLeaderboard(dto) {
-        const leaderboard = this.leaderboardRepository.create(dto);
-        return this.leaderboardRepository.save(leaderboard);
-    }
-    async createEntry(dto) {
-        const entry = this.entryRepository.create({
-            ...dto,
-            leaderboard: { id: dto.leaderboardId },
-        });
-        const saved = await this.entryRepository.save(entry);
-        await this.cacheManager.reset();
-        await this.checkAndAwardLeaderboardAchievements(dto.leaderboardId, dto.userId);
-        return saved;
-    }
-    async checkAndAwardLeaderboardAchievements(leaderboardId, userId) {
-        const achievements = await this.achievementsService.findLeaderboardAchievements(leaderboardId);
-        if (!achievements?.length)
-            return;
-        const entries = await this.entryRepository.find({
-            where: { leaderboard: { id: leaderboardId } },
-            order: [{ score: 'DESC' }, { userId: 'ASC' }],
-        });
-        const userRank = entries.findIndex(e => e.userId === userId) + 1;
-        for (const achievement of achievements) {
-            if (achievement.criteria?.rank && userRank > 0 && userRank <= achievement.criteria.rank) {
-                await this.achievementsService.awardAchievementToUser(achievement.id, userId);
-            }
-        }
-    }
-    async getLeaderboardsByCategoryAndPeriod(category, period) {
-        return this.leaderboardRepository.find({
-            where: { category, period, isActive: true },
-        });
-    }
-    async getLeaderboardWithEntries(leaderboardId, ranking = 'score', order = 'DESC', period, userId) {
-        const cacheKey = `leaderboard:${leaderboardId}:${ranking}:${order}:${period || 'all'}:${userId || 'anon'}`;
-        const cached = await this.cacheManager.get(cacheKey);
-        if (cached)
-            return cached;
-        const leaderboard = await this.leaderboardRepository.findOne({
-            where: { id: leaderboardId },
-        });
-        if (!leaderboard)
-            throw new Error('Leaderboard not found');
-        if (leaderboard.visibility === 'private' && (!userId || !leaderboard.allowedUserIds?.includes(userId))) {
-            throw new Error('Access denied: private leaderboard');
-        }
-        if (leaderboard.visibility === 'friends' && (!userId || !leaderboard.allowedUserIds?.includes(userId))) {
-            throw new Error('Access denied: friends-only leaderboard');
-        }
-        const entryWhere = { leaderboard: { id: leaderboardId } };
-        if (period)
-            entryWhere.period = period;
-        const entries = await this.entryRepository.find({
-            where: entryWhere,
-            order: [
-                { [ranking]: order },
-                { userId: 'ASC' },
-            ],
-        });
-        const result = { ...leaderboard, entries };
-        await this.cacheManager.set(cacheKey, result, { ttl: 30 });
-        return result;
-    }
-    async getLeaderboardAnalytics(leaderboardId) {
-        const entries = await this.entryRepository.find({
-            where: { leaderboard: { id: leaderboardId }, archived: false },
-        });
-        const participantSet = new Set(entries.map(e => e.userId));
-        const participantCount = participantSet.size;
-        const entryCount = entries.length;
-        const averageScore = entries.length ? entries.reduce((sum, e) => sum + (e.score || 0), 0) / entries.length : 0;
-        const topUsers = entries
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 5)
-            .map(e => ({ userId: e.userId, score: e.score }));
-        return {
-            participantCount,
-            entryCount,
-            averageScore,
-            topUsers,
-        };
-    }
-    async archiveAndResetLeaderboard(leaderboardId) {
-        const now = new Date();
-        await this.entryRepository.update({ leaderboard: { id: leaderboardId }, archived: false }, { archived: true, archivedAt: now });
-        await this.cacheManager.reset();
-    }
-    async getUserRankSummary(leaderboardId, userId) {
-        const entries = await this.entryRepository.find({
-            where: { leaderboard: { id: leaderboardId }, archived: false },
-            order: [{ score: 'DESC' }, { userId: 'ASC' }],
-        });
-        const userRank = entries.findIndex(e => e.userId === userId) + 1;
-        const userEntry = entries.find(e => e.userId === userId);
-        if (!userEntry)
-            return { userId, rank: null, score: null, shareMessage: 'No entry found.' };
-        const shareMessage = `I am ranked #${userRank} on the leaderboard with a score of ${userEntry.score}! Can you beat me?`;
-        return { userId, rank: userRank, score: userEntry.score, shareMessage };
-    }
-    async challengeUser(leaderboardId, fromUserId, toUserId) {
-        return { message: `User ${fromUserId} challenged user ${toUserId} on leaderboard ${leaderboardId}` };
-    }
-};
-exports.LeaderboardService = LeaderboardService;
-exports.LeaderboardService = LeaderboardService = __decorate([
-    (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(leaderboard_entity_1.Leaderboard)),
-    __param(1, (0, typeorm_1.InjectRepository)(leaderboard_entry_entity_1.LeaderboardEntry)),
-    __param(2, (0, common_1.Inject)(common_1.CACHE_MANAGER)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof cache_manager_1.Cache !== "undefined" && cache_manager_1.Cache) === "function" ? _c : Object, typeof (_d = typeof achievements_service_1.AchievementsService !== "undefined" && achievements_service_1.AchievementsService) === "function" ? _d : Object])
-], LeaderboardService);
-
-
-/***/ }),
-/* 54 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a, _b;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Leaderboard = void 0;
-const typeorm_1 = __webpack_require__(25);
-let Leaderboard = class Leaderboard {
-    id;
-    name;
-    category;
-    period;
-    isActive;
-    visibility;
-    allowedUserIds;
-    createdAt;
-    updatedAt;
-};
-exports.Leaderboard = Leaderboard;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)(),
-    __metadata("design:type", Number)
-], Leaderboard.prototype, "id", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ length: 100 }),
-    __metadata("design:type", String)
-], Leaderboard.prototype, "name", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ length: 100 }),
-    __metadata("design:type", String)
-], Leaderboard.prototype, "category", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ length: 50 }),
-    __metadata("design:type", String)
-], Leaderboard.prototype, "period", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: true }),
-    __metadata("design:type", Boolean)
-], Leaderboard.prototype, "isActive", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ length: 20, default: 'public' }),
-    __metadata("design:type", String)
-], Leaderboard.prototype, "visibility", void 0);
-__decorate([
-    (0, typeorm_1.Column)('int', { array: true, nullable: true }),
-    __metadata("design:type", Object)
-], Leaderboard.prototype, "allowedUserIds", void 0);
-__decorate([
-    (0, typeorm_1.CreateDateColumn)(),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], Leaderboard.prototype, "createdAt", void 0);
-__decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
-    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
-], Leaderboard.prototype, "updatedAt", void 0);
-exports.Leaderboard = Leaderboard = __decorate([
-    (0, typeorm_1.Entity)('leaderboards')
-], Leaderboard);
-
-
-/***/ }),
-/* 55 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a, _b, _c, _d;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LeaderboardEntry = void 0;
-const typeorm_1 = __webpack_require__(25);
-const leaderboard_entity_1 = __webpack_require__(54);
-let LeaderboardEntry = class LeaderboardEntry {
-    id;
-    leaderboard;
-    userId;
-    score;
-    timeTaken;
-    efficiency;
-    archived;
-    archivedAt;
-    createdAt;
-    updatedAt;
-};
-exports.LeaderboardEntry = LeaderboardEntry;
-__decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)(),
-    __metadata("design:type", Number)
-], LeaderboardEntry.prototype, "id", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => leaderboard_entity_1.Leaderboard),
-    __metadata("design:type", typeof (_a = typeof leaderboard_entity_1.Leaderboard !== "undefined" && leaderboard_entity_1.Leaderboard) === "function" ? _a : Object)
-], LeaderboardEntry.prototype, "leaderboard", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", Number)
-], LeaderboardEntry.prototype, "userId", void 0);
-__decorate([
-    (0, typeorm_1.Column)('float'),
-    __metadata("design:type", Number)
-], LeaderboardEntry.prototype, "score", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", Number)
-], LeaderboardEntry.prototype, "timeTaken", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", Number)
-], LeaderboardEntry.prototype, "efficiency", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: false }),
-    __metadata("design:type", Boolean)
-], LeaderboardEntry.prototype, "archived", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
-    __metadata("design:type", Object)
-], LeaderboardEntry.prototype, "archivedAt", void 0);
-__decorate([
-    (0, typeorm_1.CreateDateColumn)(),
-    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
-], LeaderboardEntry.prototype, "createdAt", void 0);
-__decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
-    __metadata("design:type", typeof (_d = typeof Date !== "undefined" && Date) === "function" ? _d : Object)
-], LeaderboardEntry.prototype, "updatedAt", void 0);
-exports.LeaderboardEntry = LeaderboardEntry = __decorate([
-    (0, typeorm_1.Entity)('leaderboard_entries')
-], LeaderboardEntry);
-
-
-/***/ }),
-/* 56 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b, _c;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LeaderboardController = void 0;
-const common_1 = __webpack_require__(2);
-const leaderboard_service_1 = __webpack_require__(53);
-const create_leaderboard_dto_1 = __webpack_require__(57);
-const create_leaderboard_entry_dto_1 = __webpack_require__(58);
-let LeaderboardController = class LeaderboardController {
-    leaderboardService;
-    constructor(leaderboardService) {
-        this.leaderboardService = leaderboardService;
-    }
-    createLeaderboard(dto) {
-        return this.leaderboardService.createLeaderboard(dto);
-    }
-    createEntry(dto) {
-        return this.leaderboardService.createEntry(dto);
-    }
-    async archiveAndResetLeaderboard(id) {
-        await this.leaderboardService.archiveAndResetLeaderboard(Number(id));
-        return { message: 'Leaderboard archived and reset.' };
-    }
-    getLeaderboardsByCategoryAndPeriod(category, period) {
-        return this.leaderboardService.getLeaderboardsByCategoryAndPeriod(category, period);
-    }
-    getLeaderboard(id, ranking = 'score', order = 'DESC', period, userId) {
-        return this.leaderboardService.getLeaderboardWithEntries(Number(id), ranking, order, period, userId ? Number(userId) : undefined);
-    }
-    getLeaderboardAnalytics(id) {
-        return this.leaderboardService.getLeaderboardAnalytics(Number(id));
-    }
-    getUserRankSummary(id, userId) {
-        return this.leaderboardService.getUserRankSummary(Number(id), Number(userId));
-    }
-    challengeUser(id, fromUserId, toUserId) {
-        return this.leaderboardService.challengeUser(Number(id), fromUserId, toUserId);
-    }
-};
-exports.LeaderboardController = LeaderboardController;
-__decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_b = typeof create_leaderboard_dto_1.CreateLeaderboardDto !== "undefined" && create_leaderboard_dto_1.CreateLeaderboardDto) === "function" ? _b : Object]),
-    __metadata("design:returntype", void 0)
-], LeaderboardController.prototype, "createLeaderboard", null);
-__decorate([
-    (0, common_1.Post)('entry'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof create_leaderboard_entry_dto_1.CreateLeaderboardEntryDto !== "undefined" && create_leaderboard_entry_dto_1.CreateLeaderboardEntryDto) === "function" ? _c : Object]),
-    __metadata("design:returntype", void 0)
-], LeaderboardController.prototype, "createEntry", null);
-__decorate([
-    (0, common_1.Post)(':id/archive'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", Promise)
-], LeaderboardController.prototype, "archiveAndResetLeaderboard", null);
-__decorate([
-    (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)('category')),
-    __param(1, (0, common_1.Query)('period')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
-], LeaderboardController.prototype, "getLeaderboardsByCategoryAndPeriod", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)('ranking')),
-    __param(2, (0, common_1.Query)('order')),
-    __param(3, (0, common_1.Query)('period')),
-    __param(4, (0, common_1.Query)('userId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, String, String, String, Number]),
-    __metadata("design:returntype", void 0)
-], LeaderboardController.prototype, "getLeaderboard", null);
-__decorate([
-    (0, common_1.Get)(':id/analytics'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
-], LeaderboardController.prototype, "getLeaderboardAnalytics", null);
-__decorate([
-    (0, common_1.Get)(':id/user/:userId/share'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Param)('userId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
-    __metadata("design:returntype", void 0)
-], LeaderboardController.prototype, "getUserRankSummary", null);
-__decorate([
-    (0, common_1.Post)(':id/challenge'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('fromUserId')),
-    __param(2, (0, common_1.Body)('toUserId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number, Number]),
-    __metadata("design:returntype", void 0)
-], LeaderboardController.prototype, "challengeUser", null);
-exports.LeaderboardController = LeaderboardController = __decorate([
-    (0, common_1.Controller)('leaderboard'),
-    __metadata("design:paramtypes", [typeof (_a = typeof leaderboard_service_1.LeaderboardService !== "undefined" && leaderboard_service_1.LeaderboardService) === "function" ? _a : Object])
-], LeaderboardController);
-
-
-/***/ }),
-/* 57 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CreateLeaderboardDto = void 0;
-class CreateLeaderboardDto {
-    name;
-    category;
-    period;
-    visibility;
-    allowedUserIds;
-}
-exports.CreateLeaderboardDto = CreateLeaderboardDto;
-
-
-/***/ }),
-/* 58 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CreateLeaderboardEntryDto = void 0;
-class CreateLeaderboardEntryDto {
-    leaderboardId;
-    userId;
-    score;
-    timeTaken;
-    efficiency;
-}
-exports.CreateLeaderboardEntryDto = CreateLeaderboardEntryDto;
 
 
 /***/ })
