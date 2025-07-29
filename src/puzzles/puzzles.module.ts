@@ -7,9 +7,15 @@ import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Puzzle, PuzzleProgress, PuzzleRating])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Puzzle,
+      PuzzleProgress,
+      PuzzleRating
+    ])
+  ],
   controllers: [PuzzlesController],
   providers: [PuzzlesService],
-  exports: [PuzzlesService],
+  exports: [PuzzlesService]
 })
 export class PuzzlesModule {}

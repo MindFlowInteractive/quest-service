@@ -1,25 +1,11 @@
-import {
-  IsString,
-  IsEnum,
-  IsNumber,
-  IsBoolean,
-  IsOptional,
-  IsArray,
-  IsObject,
-  Min,
-  Max,
-  MinLength,
-  MaxLength,
-  IsUUID,
-  ValidateNested,
-} from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsBoolean, IsOptional, IsArray, IsObject, Min, Max, MinLength, MaxLength, IsUUID, ValidateNested } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export enum PuzzleDifficulty {
   EASY = 'easy',
   MEDIUM = 'medium',
   HARD = 'hard',
-  EXPERT = 'expert',
+  EXPERT = 'expert'
 }
 
 export enum PuzzleContentType {
@@ -28,7 +14,7 @@ export enum PuzzleContentType {
   DRAG_DROP = 'drag-drop',
   CODE = 'code',
   VISUAL = 'visual',
-  LOGIC_GRID = 'logic-grid',
+  LOGIC_GRID = 'logic-grid'
 }
 
 export class PuzzleContentDto {
