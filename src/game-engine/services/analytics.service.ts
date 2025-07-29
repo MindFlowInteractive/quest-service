@@ -298,12 +298,14 @@ export class AnalyticsService {
     }
 
     // Check for active session in database
-    session = await this.sessionRepository.findOne({
-      where: { playerId, isActive: true },
+    const foundSession = await this.sessionRepository.findOne({
+      where: { userId: playerId, isActive: true },
       order: { startTime: "DESC" },
     })
-
-    if (session) {
+    
+    if (foundSession) {
+      session = foundSession
+      
       // Check if session is still valid
       const sessionAge = Date.now() - session.startTime.getTime()
       if (sessionAge < this.config.analytics.sessionTimeout) {
@@ -320,14 +322,13 @@ export class AnalyticsService {
     // Create new session
     session = this.sessionRepository.create({
       sessionId,
-      playerId,
+      userId: playerId,
       startTime: new Date(),
       puzzlesAttempted: 0,
       puzzlesCompleted: 0,
       totalScore: 0,
       totalHintsUsed: 0,
       puzzleIds: [],
-      sessionData: {},
       isActive: true,
     })
 

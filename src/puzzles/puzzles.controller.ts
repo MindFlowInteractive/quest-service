@@ -15,20 +15,15 @@ import {
   HttpCode,
   ParseArrayPipe,
   BadRequestException,
-  Logger,
+  Logger
 } from '@nestjs/common';
-import {
-  PuzzlesService,
-  PuzzleWithStats,
-  SearchResult,
-  PuzzleAnalytics,
-} from './puzzles.service';
+import { PuzzlesService, PuzzleWithStats, SearchResult, PuzzleAnalytics } from './puzzles.service';
 import {
   CreatePuzzleDto,
   UpdatePuzzleDto,
   SearchPuzzleDto,
   BulkUpdateDto,
-  PuzzleStatsDto,
+  PuzzleStatsDto
 } from './dto';
 
 @Controller('puzzles')
@@ -43,42 +38,29 @@ export class PuzzlesController {
     @Body() createPuzzleDto: CreatePuzzleDto,
   ): Promise<PuzzleWithStats> {
     const userId = 'temp-user-id'; // TODO: Get from auth
-    this.logger.log(
-      `Creating puzzle: ${createPuzzleDto.title} by user: ${userId}`,
-    );
+    this.logger.log(`Creating puzzle: ${createPuzzleDto.title} by user: ${userId}`);
     return await this.puzzlesService.create(createPuzzleDto, userId);
   }
 
   @Get()
   async findAll(@Query() searchDto: SearchPuzzleDto): Promise<SearchResult> {
-    this.logger.log(
-      `Searching puzzles with filters: ${JSON.stringify(searchDto)}`,
-    );
+    this.logger.log(`Searching puzzles with filters: ${JSON.stringify(searchDto)}`);
     return await this.puzzlesService.findAll(searchDto);
   }
 
   @Get('analytics')
-  async getAnalytics(
-    @Query('period') period?: string,
-  ): Promise<PuzzleAnalytics> {
+  async getAnalytics(@Query('period') period?: string): Promise<PuzzleAnalytics> {
     return await this.puzzlesService.getAnalytics(period);
   }
 
   @Patch('bulk')
   async bulkUpdate(
-    @Body('puzzleIds', new ParseArrayPipe({ items: String }))
-    puzzleIds: string[],
+    @Body('puzzleIds', new ParseArrayPipe({ items: String })) puzzleIds: string[],
     @Body('bulkUpdate') bulkUpdateDto: BulkUpdateDto,
   ) {
     const userId = 'temp-user-id'; // TODO: Get from auth
-    this.logger.log(
-      `Bulk updating ${puzzleIds.length} puzzles with action: ${bulkUpdateDto.action}`,
-    );
-    return await this.puzzlesService.bulkUpdate(
-      puzzleIds,
-      bulkUpdateDto,
-      userId,
-    );
+    this.logger.log(`Bulk updating ${puzzleIds.length} puzzles with action: ${bulkUpdateDto.action}`);
+    return await this.puzzlesService.bulkUpdate(puzzleIds, bulkUpdateDto, userId);
   }
 
   @Get(':id')
@@ -115,7 +97,9 @@ export class PuzzlesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
     const userId = 'temp-user-id'; // TODO: Get from auth
     this.logger.log(`Deleting puzzle: ${id} by user: ${userId}`);
     await this.puzzlesService.remove(id, userId);
@@ -145,9 +129,9 @@ export class PuzzlesController {
   ): Promise<PuzzleWithStats> {
     const userId = 'temp-user-id'; // TODO: Get from auth
     this.logger.log(`Duplicating puzzle: ${id} by user: ${userId}`);
-
+    
     const originalPuzzle = await this.puzzlesService.findOne(id);
-
+    
     const duplicateDto: CreatePuzzleDto = {
       title: `${originalPuzzle.title} (Copy)`,
       description: originalPuzzle.description,

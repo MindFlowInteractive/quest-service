@@ -1,11 +1,4 @@
-import {
-  IsOptional,
-  IsEnum,
-  IsNumber,
-  IsString,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsOptional, IsEnum, IsNumber, IsString, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum BulkAction {
@@ -15,7 +8,7 @@ export enum BulkAction {
   DELETE = 'delete',
   UPDATE_CATEGORY = 'update_category',
   ADD_TAGS = 'add_tags',
-  REMOVE_TAGS = 'remove_tags',
+  REMOVE_TAGS = 'remove_tags'
 }
 
 export class BulkUpdateDto {
