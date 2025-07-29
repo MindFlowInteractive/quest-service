@@ -14,9 +14,9 @@ import appConfig from './config/app.config';
 import { createLoggerConfig } from './config/logger.config';
 import { UsersModule } from './users/users.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
-// import { AchievementsModule } from './achievements/achievements.module';
+import { AchievementsModule } from './achievements/achievements.module';
 import { HealthModule } from './health/health.module';
-// import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -49,9 +49,9 @@ import { HealthModule } from './health/health.module';
     // Feature modules
     UsersModule,
     PuzzlesModule,
-    // AchievementsModule,
+    AchievementsModule,
     HealthModule,
-    // LeaderboardModule,
+    LeaderboardModule,
   ],
   controllers: [AppController],
   providers: [
