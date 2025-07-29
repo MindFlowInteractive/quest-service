@@ -425,7 +425,9 @@ export class PuzzlesService {
         });
         break;
       case BulkAction.UNPUBLISH:
-        await this.puzzleRepository.update(puzzleId, { publishedAt: undefined });
+        await this.puzzleRepository.update(puzzleId, {
+          publishedAt: undefined,
+        });
         break;
       case BulkAction.ARCHIVE:
         await this.puzzleRepository.softDelete(puzzleId);

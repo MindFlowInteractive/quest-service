@@ -37,7 +37,16 @@ export class StateManagementService {
         status: gameState.status,
         difficulty: gameState.currentState.difficulty,
         currentState: gameState.currentState,
-        moves: gameState.moves,
+        moves: gameState.moves.map(move => ({
+          id: move.id,
+          timestamp: move.timestamp,
+          playerId: move.playerId,
+          puzzleId: move.puzzleId,
+          moveType: move.moveType,
+          moveData: move.moveData,
+          isValid: move.isValid,
+          causedEffects: move.causedEffects,
+        })),
         startTime: gameState.startTime,
         endTime: gameState.endTime,
         score: gameState.score,
@@ -49,7 +58,7 @@ export class StateManagementService {
       }
 
       if (existingState) {
-        await this.puzzleStateRepository.update(existingState.id, stateData)
+        await this.puzzleStateRepository.update(existingState.id, stateData as any)
       } else {
         await this.puzzleStateRepository.save(stateData)
       }

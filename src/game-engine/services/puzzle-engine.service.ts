@@ -3,6 +3,7 @@ import type { Repository } from "typeorm"
 import type { ConfigType } from "@nestjs/config"
 import type { IPuzzle, PuzzleGameState } from "../interfaces/puzzle.interfaces"
 import type { PuzzleMove, ValidationResult, PuzzleType, DifficultyLevel } from "../types/puzzle.types"
+import { PuzzleStatus } from "../types/puzzle.types"
 import type { PuzzleState } from "../entities/puzzle-state.entity"
 import type { StateManagementService } from "./state-management.service"
 import type { ValidationService } from "./validation.service"
@@ -44,7 +45,7 @@ export class PuzzleEngineService {
     const gameState: PuzzleGameState = {
       puzzleId: puzzle.id,
       playerId,
-      status: "not_started",
+      status: PuzzleStatus.NOT_STARTED,
       currentState: puzzle.getState(),
       moves: [],
       startTime: new Date(),
@@ -114,7 +115,7 @@ export class PuzzleEngineService {
 
     // Check if puzzle is complete
     if (puzzle.isComplete()) {
-      gameState.status = "completed"
+      gameState.status = PuzzleStatus.COMPLETED
       gameState.endTime = new Date()
       await this.handlePuzzleCompletion(puzzle, gameState)
     }
@@ -148,7 +149,7 @@ export class PuzzleEngineService {
 
     const gameState = await this.stateManagement.loadState(puzzleId, playerId)
     if (gameState) {
-      gameState.status = "not_started"
+      gameState.status = PuzzleStatus.NOT_STARTED
       gameState.currentState = puzzle.getState()
       gameState.moves = []
       gameState.score = 0
@@ -165,7 +166,7 @@ export class PuzzleEngineService {
   async abandonPuzzle(puzzleId: string, playerId: string): Promise<void> {
     const gameState = await this.stateManagement.loadState(puzzleId, playerId)
     if (gameState) {
-      gameState.status = "abandoned"
+      gameState.status = PuzzleStatus.ABANDONED
       gameState.endTime = new Date()
       await this.stateManagement.saveState(gameState)
     }
@@ -190,7 +191,7 @@ export class PuzzleEngineService {
     const gameState: PuzzleGameState = {
       puzzleId: clonedPuzzle.id,
       playerId: newPlayerId,
-      status: "not_started",
+      status: PuzzleStatus.NOT_STARTED,
       currentState: clonedPuzzle.getState(),
       moves: [],
       startTime: new Date(),

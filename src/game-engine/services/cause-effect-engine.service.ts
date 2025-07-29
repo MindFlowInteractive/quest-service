@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common"
-import type { IPuzzle, ICauseEffectEngine, CauseEffectRule, PuzzleType } from "../interfaces/puzzle.interfaces"
+import type { IPuzzle, ICauseEffectEngine, CauseEffectRule } from "../interfaces/puzzle.interfaces"
 import type { PuzzleMove, CauseEffectResult } from "../types/puzzle.types"
+import { PuzzleType } from "../types/puzzle.types"
 
 @Injectable()
 export class CauseEffectEngineService implements ICauseEffectEngine {
@@ -240,7 +241,7 @@ export class CauseEffectEngineService implements ICauseEffectEngine {
   private calculateDominoPath(startPosition: any, direction: string, puzzle: IPuzzle): any[] {
     // Implementation would depend on puzzle structure
     // This is a simplified example
-    const path = []
+    const path: any[] = []
     let currentPos = { ...startPosition }
 
     const directionMap = {

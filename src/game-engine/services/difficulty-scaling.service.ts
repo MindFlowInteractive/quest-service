@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common"
 import type { ConfigType } from "@nestjs/config"
-import type { IDifficultyScaler, PlayerMetrics, PerformanceMetrics, PuzzleType } from "../interfaces/puzzle.interfaces"
+import type { IDifficultyScaler, PlayerMetrics, PerformanceMetrics } from "../interfaces/puzzle.interfaces"
+import { PuzzleType } from "../types/puzzle.types"
 import type { DifficultyLevel } from "../types/puzzle.types"
 import type { gameEngineConfig } from "../config/game-engine.config"
 
