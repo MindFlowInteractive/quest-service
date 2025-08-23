@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import * as request from 'supertest';
 import { PuzzlesModule } from '../puzzles.module';
 import { Puzzle } from '../entities/puzzle.entity';
@@ -93,8 +94,8 @@ describe('Puzzles Integration Tests', () => {
 
     await app.init();
 
-    puzzleRepository = moduleFixture.get('PuzzleRepository');
-    userRepository = moduleFixture.get('UserRepository');
+  puzzleRepository = moduleFixture.get<Repository<Puzzle>>(getRepositoryToken(Puzzle));
+  userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
     jwtService = moduleFixture.get(JwtService);
 
     // Create test user

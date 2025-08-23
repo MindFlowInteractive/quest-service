@@ -16,6 +16,8 @@ import {
 @Index(['isActive', 'publishedAt'])
 @Index(['createdBy'])
 export class Puzzle {
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  archivedAt?: Date;
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

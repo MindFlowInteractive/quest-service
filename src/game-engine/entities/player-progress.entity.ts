@@ -41,8 +41,15 @@ export class PlayerProgress {
   @Column({ type: "jsonb", default: {} })
   achievements: Record<string, any>
 
+
   @Column({ type: "jsonb", default: {} })
   statistics: Record<string, any>
+
+  @Column({ type: "jsonb", default: {} })
+  metadata: {
+    checkpoints?: Record<string, { data: any; createdAt: string }>
+    [key: string]: any
+  }
 
   @CreateDateColumn()
   createdAt: Date
