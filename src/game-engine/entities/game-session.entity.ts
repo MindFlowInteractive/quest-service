@@ -23,9 +23,16 @@ export class GameSession {
   @Index()
   sessionId: string;
 
+
   @Column({ type: 'uuid' })
   @Index()
   userId: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  playerId?: string;
+  // Session data for resuming or analytics
+  @Column({ type: 'jsonb', default: {} })
+  sessionData?: Record<string, any>;
 
   @Column({ type: 'varchar', length: 20, default: 'web' })
   @Index()

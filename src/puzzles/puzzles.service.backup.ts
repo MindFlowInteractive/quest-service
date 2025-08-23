@@ -3,8 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, In, ILike, Between, IsNull, Not } from 'typeorm';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
-import { PuzzleRating } from '../leaderboard/entities/puzzle-rating.entity';
-import { 
+import {
   CreatePuzzleDto, 
   UpdatePuzzleDto, 
   SearchPuzzleDto, 
@@ -21,8 +20,10 @@ export interface PuzzleWithStats extends Puzzle {
   totalPlays?: number;
   uniquePlayers?: number;
   completionRate?: number;
-  averageRating?: number;
-  averageCompletionTime?: number;
+  averageRating: number;
+  averageCompletionTime: number;
+  version?: number;
+  updateHistory?: any[];
 }
 
 export interface SearchResult {
@@ -52,12 +53,10 @@ export class PuzzlesService {
   private readonly logger = new Logger(PuzzlesService.name);
 
   constructor(
-    @InjectRepository(Puzzle)
-    private puzzleRepository: Repository<Puzzle>,
-    @InjectRepository(PuzzleProgress)
-    private progressRepository: Repository<PuzzleProgress>,
-    @InjectRepository(PuzzleRating)
-    private ratingRepository: Repository<PuzzleRating>,
+  @InjectRepository(Puzzle)
+  private puzzleRepository: Repository<Puzzle>,
+  @InjectRepository(PuzzleProgress)
+  private progressRepository: Repository<PuzzleProgress>,
   ) {}
 
   async create(createPuzzleDto: CreatePuzzleDto, createdBy: string): Promise<Puzzle> {
@@ -84,8 +83,7 @@ export class PuzzlesService {
 
       const puzzle = this.puzzleRepository.create({
         ...createPuzzleDto,
-        createdBy,
-        publishedAt: null, // Not published initially
+        publishedAt: undefined, // Not published initially
         analytics: {
           completionRate: 0,
           averageAttempts: 0,
@@ -107,7 +105,6 @@ export class PuzzlesService {
 
       const savedPuzzle = await this.puzzleRepository.save(puzzle);
       this.logger.log(`Created puzzle: ${savedPuzzle.id} by user: ${createdBy}`);
-      
       return savedPuzzle;
     } catch (error) {
       this.logger.error(`Failed to create puzzle: ${error.message}`, error.stack);
@@ -219,7 +216,7 @@ export class PuzzlesService {
       }
 
       // Check if user has access to unpublished puzzle
-      if (!puzzle.isPublished && userId !== puzzle.createdBy) {
+  if (!puzzle.publishedAt && userId !== puzzle.createdBy) {
         throw new NotFoundException(`Puzzle with ID ${id} not found`);
       }
 
@@ -241,7 +238,7 @@ export class PuzzlesService {
 
       // Create new version if content changed
       const isContentChange = this.isContentUpdate(updatePuzzleDto);
-      const version = isContentChange ? puzzle.version + 1 : puzzle.version;
+  const version = isContentChange ? (puzzle.version ?? 1) + 1 : (puzzle.version ?? 1);
 
       Object.assign(puzzle, updatePuzzleDto, { 
         version,
@@ -284,7 +281,7 @@ export class PuzzlesService {
 
       if (hasProgress > 0) {
         await this.puzzleRepository.update(id, { 
-          isArchived: true, 
+          isActive: false, 
           archivedAt: new Date() 
         });
         this.logger.log(`Archived puzzle: ${id} (had progress records)`);
@@ -354,7 +351,6 @@ export class PuzzlesService {
         baseQuery.clone().select('puzzle.difficulty, COUNT(*) as count').groupBy('puzzle.difficulty').getRawMany(),
         baseQuery.clone().select('AVG(puzzle.difficultyRating)').getRawOne(),
         this.puzzleRepository.find({
-          order: { 'analytics.totalPlays': 'DESC' },
           take: 10
         })
       ]);
@@ -427,39 +423,25 @@ export class PuzzlesService {
       .getRawMany();
 
     // Get rating statistics
-    const ratingStats = await this.ratingRepository
-      .createQueryBuilder('rating')
-      .select([
-        'puzzleId',
-        'AVG(rating) as averageRating'
-      ])
-      .where('puzzleId IN (:...puzzleIds)', { puzzleIds })
-      .groupBy('puzzleId')
-      .getRawMany();
-
-    // Create lookup maps
-    const playStatsMap = new Map(playStats.map(stat => [stat.puzzleId, stat]));
-    const ratingStatsMap = new Map(ratingStats.map(stat => [stat.puzzleId, stat]));
+  const playStatsMap = new Map(playStats.map((stat: any) => [stat.puzzleId, stat]));
 
     return puzzles.map(puzzle => {
       const playData = playStatsMap.get(puzzle.id);
-      const ratingData = ratingStatsMap.get(puzzle.id);
-
       return {
         ...puzzle,
         totalPlays: playData ? parseInt(playData.totalPlays) : 0,
         uniquePlayers: playData ? parseInt(playData.uniquePlayers) : 0,
         completionRate: playData ? 
           (parseInt(playData.completions) / parseInt(playData.totalPlays)) * 100 : 0,
-        averageRating: ratingData ? parseFloat(ratingData.averageRating) : 0,
+        averageRating: 0, // No rating stats without ratingRepository
         averageCompletionTime: playData ? parseFloat(playData.avgTime) : 0
       };
     });
   }
 
   private isContentUpdate(updateDto: UpdatePuzzleDto): boolean {
-    const contentFields = ['title', 'description', 'content', 'hints', 'scoring'];
-    return contentFields.some(field => updateDto[field] !== undefined);
+  const contentFields = ['title', 'description', 'content', 'hints', 'scoring'];
+  return contentFields.some(field => (updateDto as any)[field] !== undefined);
   }
 
   private async executeBulkAction(puzzleId: string, bulkUpdateDto: BulkUpdateDto, userId: string): Promise<void> {
@@ -467,13 +449,13 @@ export class PuzzlesService {
 
     switch (action) {
       case BulkAction.PUBLISH:
-        await this.puzzleRepository.update(puzzleId, { isPublished: true });
+        await this.puzzleRepository.update(puzzleId, { publishedAt: new Date() });
         break;
       case BulkAction.UNPUBLISH:
-        await this.puzzleRepository.update(puzzleId, { isPublished: false });
+  await this.puzzleRepository.update(puzzleId, { publishedAt: undefined });
         break;
       case BulkAction.ARCHIVE:
-        await this.puzzleRepository.update(puzzleId, { isArchived: true });
+        await this.puzzleRepository.update(puzzleId, { isActive: false });
         break;
       case BulkAction.UPDATE_CATEGORY:
         if (!value) throw new BadRequestException('Category value required');
@@ -483,14 +465,14 @@ export class PuzzlesService {
         if (!value) throw new BadRequestException('Tags value required');
         const tagsToAdd = value.split(',').map(t => t.trim());
         const puzzle = await this.puzzleRepository.findOne({ where: { id: puzzleId } });
-        const updatedTags = [...new Set([...(puzzle.tags || []), ...tagsToAdd])];
+        const updatedTags = [...new Set([...(puzzle && puzzle.tags ? puzzle.tags : []), ...tagsToAdd])];
         await this.puzzleRepository.update(puzzleId, { tags: updatedTags });
         break;
       case BulkAction.REMOVE_TAGS:
         if (!value) throw new BadRequestException('Tags value required');
         const tagsToRemove = value.split(',').map(t => t.trim());
         const currentPuzzle = await this.puzzleRepository.findOne({ where: { id: puzzleId } });
-        const filteredTags = (currentPuzzle.tags || []).filter(tag => !tagsToRemove.includes(tag));
+        const filteredTags = (currentPuzzle && currentPuzzle.tags ? currentPuzzle.tags : []).filter(tag => !tagsToRemove.includes(tag));
         await this.puzzleRepository.update(puzzleId, { tags: filteredTags });
         break;
       default:
@@ -521,7 +503,7 @@ export class PuzzlesService {
       this.puzzleRepository.count({ where: { createdAt: Between(date, new Date()) } }),
       this.puzzleRepository.count({ 
         where: { 
-          isPublished: true, 
+          publishedAt: Not(IsNull()),
           createdAt: Between(date, new Date()) 
         } 
       }),

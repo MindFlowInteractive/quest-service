@@ -1,11 +1,21 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { CustomValidationPipe } from './common/exceptions/validation-exception.pipe';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/exceptions/http-exception.filter';
+import { SanitizeInterceptor } from './common/interceptors/sanitize.interceptor';
+import * as Sentry from '@sentry/node';
 
 async function bootstrap() {
+  // Initialize Sentry
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN || '', // Set your Sentry DSN in environment variables
+    tracesSampleRate: 1.0,
+    environment: process.env.NODE_ENV || 'development',
+  });
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
@@ -33,17 +43,16 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
+
+
   // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  app.useGlobalPipes(new CustomValidationPipe());
+
+  // Global exception filter
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Global sanitize interceptor
+  app.useGlobalInterceptors(new SanitizeInterceptor());
 
   app.setGlobalPrefix(apiPrefix);
 
