@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Patch } from '@nestjs/common';
 import { HintsService } from './hints.service';
 import { CreateHintDto, RequestHintDto, HintUsageDto } from './dto/create-hint.dto';
 
@@ -32,6 +32,27 @@ export class HintsController {
       difficulty,
       activeOnly: activeOnly ? activeOnly === 'true' : undefined,
     });
+  }
+
+  @Patch('templates')
+  async updateTemplate(
+    @Query('id') id: string,
+    @Body() body: any,
+  ) {
+    return this.hintsService.updateTemplate(id, body);
+  }
+
+  @Post('templates/toggle')
+  async toggleTemplate(
+    @Query('id') id: string,
+    @Query('active') active: string,
+  ) {
+    return this.hintsService.toggleTemplate(id, active === 'true');
+  }
+
+  @Post('templates/seed')
+  async seedTemplates() {
+    return this.hintsService.seedDefaultTemplates();
   }
 }
 

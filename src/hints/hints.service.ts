@@ -140,6 +140,97 @@ export class HintsService {
     return this.templateRepo.save(template);
   }
 
+  async updateTemplate(id: string, input: Partial<HintTemplate>): Promise<HintTemplate> {
+    const existing = await this.templateRepo.findOne({ where: { id } });
+    if (!existing) throw new BadRequestException('Template not found');
+    const updated = { ...existing, ...input, id: existing.id } as HintTemplate;
+    await this.templateRepo.save(updated);
+    return updated;
+  }
+
+  async toggleTemplate(id: string, isActive: boolean): Promise<HintTemplate> {
+    const existing = await this.templateRepo.findOne({ where: { id } });
+    if (!existing) throw new BadRequestException('Template not found');
+    existing.isActive = isActive;
+    return this.templateRepo.save(existing);
+  }
+
+  async seedDefaultTemplates(): Promise<{ created: number }> {
+    const defaults: Array<Partial<HintTemplate>> = [
+      {
+        name: 'MCQ General 1',
+        description: 'General guidance for MCQ without spoilers',
+        puzzleType: 'multiple-choice',
+        category: 'general',
+        difficulty: 'medium',
+        order: 1,
+        type: 'general',
+        template: 'Eliminate obviously wrong options and compare remaining choices.',
+        variables: {},
+        conditions: {},
+        cost: 0,
+        pointsPenalty: 0,
+        isActive: true,
+      },
+      {
+        name: 'Logic Grid Context 2',
+        description: 'Contextual nudge based on constraints',
+        puzzleType: 'logic-grid',
+        category: 'contextual',
+        difficulty: 'medium',
+        order: 2,
+        type: 'contextual',
+        template: 'Look again at the constraint linking {{currentStep}}; resolve contradictions first.',
+        variables: { currentStep: { type: 'string', description: 'Current solving focus', required: false } as any },
+        conditions: {},
+        cost: 0,
+        pointsPenalty: 0,
+        isActive: true,
+      },
+      {
+        name: 'Code Strategic 3',
+        description: 'Strategy hint for code puzzles',
+        puzzleType: 'code',
+        category: 'strategic',
+        difficulty: 'hard',
+        order: 3,
+        type: 'strategic',
+        template: 'Create a minimal repro for the failing case and add an assertion around {{progress}}.',
+        variables: { progress: { type: 'number', description: 'Progress percent', required: false } as any },
+        conditions: { minSkillLevel: 2 },
+        cost: 1,
+        pointsPenalty: 0,
+        isActive: true,
+      },
+      {
+        name: 'Visual Specific 4',
+        description: 'Specific but non-spoiling nudge',
+        puzzleType: 'visual',
+        category: 'specific',
+        difficulty: 'easy',
+        order: 4,
+        type: 'specific',
+        template: 'Focus on the outer boundary; check repeated shapes before moving inward.',
+        variables: {},
+        conditions: {},
+        cost: 2,
+        pointsPenalty: 1,
+        isActive: true,
+      },
+    ];
+
+    let created = 0;
+    for (const d of defaults) {
+      const exists = await this.templateRepo.findOne({ where: { name: d.name as string } });
+      if (!exists) {
+        const t = this.templateRepo.create(d);
+        await this.templateRepo.save(t);
+        created += 1;
+      }
+    }
+    return { created };
+  }
+
   // Internals
   private async generateFromTemplates(dto: RequestHintDto): Promise<Nullable<Hint>> {
     // Basic generation by puzzle type/difficulty inferred from puzzle state
