@@ -324,7 +324,7 @@ export class HintsService {
 
     const scored = candidates
       .filter((h) => h.order >= minOrder)
-      .map((h) => {
+      .map((h: Hint) => {
         const typeScore = typeBaseScore(h.type as any);
         const inRange = this.isSkillInRange(skill, h.skillLevelTarget);
         const personalizationScore = inRange ? 1 : 0;
