@@ -17,6 +17,7 @@ import { PuzzlesModule } from './puzzles/puzzles.module';
 // import { AchievementsModule } from './achievements/achievements.module';
 import { HealthModule } from './health/health.module';
 // import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { HintsModule } from './hints/hints.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { HealthModule } from './health/health.module';
     // AchievementsModule,
     HealthModule,
     // LeaderboardModule,
+    HintsModule,
   ],
   controllers: [AppController],
   providers: [
