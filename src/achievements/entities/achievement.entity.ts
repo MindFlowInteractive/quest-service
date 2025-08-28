@@ -8,7 +8,9 @@ import {
   Index,
   OneToMany,
 } from 'typeorm';
+
 import { UserAchievement } from './user-achievement.entity';
+import { AchievementConditionGroup } from '../types/achievement-condition.types';
 
 @Entity('achievements')
 @Index(['category', 'isActive'])
@@ -57,22 +59,7 @@ export class Achievement {
 
   // Complex unlock conditions
   @Column({ type: 'jsonb' })
-  unlockConditions: {
-    type: 'single' | 'multiple' | 'sequence' | 'time_based';
-    conditions: Array<{
-      id: string;
-      type: 'puzzle_completion' | 'score_threshold' | 'time_limit' | 'streak' | 'accuracy' | 'category_mastery' | 'social' | 'custom';
-      operator: 'equals' | 'greater_than' | 'less_than' | 'in_range' | 'contains';
-      value: any;
-      description: string;
-      metadata?: any;
-    }>;
-    logic?: 'AND' | 'OR'; // For multiple conditions
-    timeWindow?: {
-      duration: number; // in seconds
-      type: 'rolling' | 'fixed';
-    };
-  };
+  unlockConditions: AchievementConditionGroup;
 
   // Prerequisites (other achievements that must be unlocked first)
   @Column({ type: 'simple-array', default: [] })
