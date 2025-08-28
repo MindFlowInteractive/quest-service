@@ -19,6 +19,8 @@ import { HealthModule } from './health/health.module';
 // import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { HintsModule } from './hints/hints.module';
 
+import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
+
 @Module({
   imports: [
     // Configuration
@@ -54,6 +56,7 @@ import { HintsModule } from './hints/hints.module';
     HealthModule,
     // LeaderboardModule,
     HintsModule,
+  DifficultyScalingModule,
   ],
   controllers: [AppController],
   providers: [
