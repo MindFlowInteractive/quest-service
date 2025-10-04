@@ -18,6 +18,7 @@ import { PuzzlesModule } from './puzzles/puzzles.module';
 import { HealthModule } from './health/health.module';
 // import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { HintsModule } from './hints/hints.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
 
@@ -33,14 +34,15 @@ import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling
 
     // Logging
     WinstonModule.forRootAsync({
-      useFactory: (configService: ConfigService<EnvironmentVariables>) =>
-        createLoggerConfig(configService),
+      // Accept any here to avoid depending on exact ConfigService typing in build-time shim
+      useFactory: (configService: any) => createLoggerConfig(configService),
       inject: [ConfigService],
     }),
 
     // Rate limiting
     ThrottlerModule.forRootAsync({
-      useFactory: (configService: ConfigService) => [
+      // Keep the factory but accept any to avoid strict typing against the shimmed module
+      useFactory: (configService: any) => [
         {
           ttl: configService.get('app.throttle.ttl') || 60000,
           limit: configService.get('app.throttle.limit') || 100,
@@ -52,6 +54,7 @@ import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling
     // Feature modules
     UsersModule,
     PuzzlesModule,
+  NotificationsModule,
     // AchievementsModule,
     HealthModule,
     // LeaderboardModule,
