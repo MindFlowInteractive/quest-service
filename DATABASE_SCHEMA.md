@@ -51,6 +51,12 @@ Users (1) ←→ (∞) UserAchievements (∞) ←→ (1) Achievements
   (1) ←→ (∞) GameSessions              (1) ←→ (∞) PuzzleRatings
   ↓                                     ↓
   (1) ←→ (1) UserStats                 (∞) ←→ (1) PuzzleCategories
+  ↓
+  (1) ←→ (∞) TournamentParticipants (∞) ←→ (1) Tournaments
+                                            ↓
+                                     (1) ←→ (∞) TournamentMatches
+                                            ↓
+                                     (1) ←→ (∞) TournamentSpectators
 ```
 
 ## 📊 Core Entities
@@ -466,6 +472,95 @@ ORDER BY total_time DESC
 LIMIT 10;
 ```
 
+### 🏆 Tournaments
+
+**Tournament system for competitive puzzle competitions with prizes.**
+
+```sql
+Table: tournaments
+- id (UUID, PK)
+- name, description (VARCHAR/TEXT)
+- bracketType (ENUM: single-elimination, double-elimination, round-robin, swiss)
+- status (ENUM: scheduled, registration, in-progress, completed, cancelled)
+- maxParticipants, currentParticipants (INTEGER)
+- registrationStartTime, registrationEndTime, startTime, endTime (TIMESTAMP)
+- duration (INTEGER) - in seconds
+- createdBy (UUID, FK to users)
+- winnerId (UUID, FK to users)
+- entryRequirements (JSONB) - level, score, achievements, fee requirements
+- prizePool (JSONB) - prize distribution, currency, badges, achievements
+- config (JSONB) - puzzle categories, difficulty, match settings
+- bracket (JSONB) - bracket structure with rounds and matches
+- rules (JSONB) - no-shows, matchmaking, scoring rules
+- tags (TEXT ARRAY) - searchable tags
+- statistics (JSONB) - tournament performance metrics
+- metadata (JSONB) - banner, stream URL, recordings
+- createdAt, updatedAt (TIMESTAMP)
+
+Table: tournament_participants
+- id (UUID, PK)
+- tournamentId (UUID, FK to tournaments)
+- userId (UUID, FK to users)
+- username (VARCHAR)
+- status (ENUM: registered, checked-in, active, eliminated, withdrawn, disqualified)
+- seedNumber (INTEGER) - tournament seeding position
+- currentRound (INTEGER)
+- wins, losses, draws (INTEGER)
+- totalScore (INTEGER)
+- finalPosition (INTEGER) - 1st, 2nd, 3rd, etc.
+- puzzlesSolved, totalPuzzlesAttempted (INTEGER)
+- averageAccuracy, averageCompletionTime (DECIMAL/INTEGER)
+- longestWinStreak (INTEGER)
+- registeredAt, checkedInAt, eliminatedAt, withdrawnAt (TIMESTAMP)
+- prizeAwarded (JSONB) - amount, currency, badges, achievements
+- statistics (JSONB) - performance metrics
+- metadata (JSONB) - entry fee, team info, notes
+
+Table: tournament_matches
+- id (UUID, PK)
+- tournamentId (UUID, FK to tournaments)
+- roundNumber (INTEGER)
+- roundName (VARCHAR) - Quarter-finals, Semi-finals, Finals, etc.
+- matchNumber (INTEGER) - position in the round
+- status (ENUM: scheduled, ready, in-progress, completed, cancelled, no-show)
+- player1Id, player2Id (UUID, FK to tournament_participants)
+- player1Name, player2Name (VARCHAR)
+- player1Score, player2Score (INTEGER)
+- winnerId, loserId (UUID, FK to tournament_participants)
+- winnerName (VARCHAR)
+- scheduledTime, startTime, endTime (TIMESTAMP)
+- duration (INTEGER) - in seconds
+- nextMatchId, loserNextMatchId (UUID) - bracket progression
+- puzzleIds (TEXT ARRAY) - puzzles used in match
+- config (JSONB) - best of, time limit, category, difficulty
+- results (JSONB) - detailed puzzle-by-puzzle results
+- statistics (JSONB) - accuracy, times, spectator count
+- metadata (JSONB) - notes, cancel reason, stream URL, replay URL
+
+Table: tournament_spectators
+- id (UUID, PK)
+- tournamentId (UUID, FK to tournaments)
+- matchId (UUID, FK to tournament_matches) - specific match being watched
+- userId (UUID, FK to users)
+- username (VARCHAR)
+- joinedAt, leftAt (TIMESTAMP)
+- totalWatchTime (INTEGER) - in seconds
+- isActive (BOOLEAN)
+- engagement (JSONB) - reactions, messages, predictions
+- preferences (JSONB) - notifications, follow player, view mode
+- createdAt, updatedAt (TIMESTAMP)
+```
+
+**Key Features:**
+
+- Multiple bracket types (single/double elimination, round-robin, Swiss)
+- Automated bracket generation with seeding
+- Real-time match progression and winner advancement
+- Prize pool distribution with multiple currencies
+- Spectator mode with engagement tracking
+- Tournament history and archives
+- Comprehensive statistics and analytics
+
 ---
 
 ## 🎉 Conclusion
@@ -476,6 +571,7 @@ This comprehensive database schema provides a solid foundation for a scalable pu
 ✅ **Performance-optimized indexes for all common queries**  
 ✅ **Comprehensive constraints ensuring data integrity**  
 ✅ **Flexible JSONB fields for extensible metadata**  
+✅ **Tournament system for competitive play**  
 ✅ **Rich seed data for immediate development**  
 ✅ **Migration scripts for all environments**  
 ✅ **Detailed documentation and setup instructions**
