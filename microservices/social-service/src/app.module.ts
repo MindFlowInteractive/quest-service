@@ -9,6 +9,8 @@ import { RoomsModule } from '@/rooms/rooms.module';
 import { GatewayModule } from '@/common/gateways/gateway.module';
 import { EventSubscriberModule } from '@/events/event-subscriber.module';
 import { ServiceRegistrationService } from '@/services/service-registration.service';
+import { BookmarksModule } from '@/bookmarks/bookmarks.module';
+import { ListsModule } from '@/lists/lists.module';
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 
@@ -25,6 +27,8 @@ import { AppService } from '@/app.service';
     LeaderboardsModule,
     RoomsModule,
     GatewayModule,
+    BookmarksModule,
+    ListsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,58 +1,78 @@
 version: '3.8'
+
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: postgres_main
+    container_name: quest_postgres
+    ports:
+      - "5432:5432"
     environment:
-      POSTGRES_DB: ${DB_NAME:-myapp}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-    ports:
-      - '${DB_PORT:-5432}:5432'
+      POSTGRES_DB: ${DB_NAME:-myapp}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/init-scripts:/docker-entrypoint-initdb.d
-      - ./docker/postgresql.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - quest-network
     healthcheck:
-      test:
-        ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-myapp}']
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
-
-  postgres_test:
-    image: postgres:15-alpine
-    container_name: postgres_test
+  quest-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quest_service
+    ports:
+      - "${PORT:-3000}:3000"
     environment:
-      POSTGRES_DB: ${TEST_DB_NAME:-myapp_test}
-      POSTGRES_USER: ${TEST_DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD:-password}
-    ports:
-      - '${TEST_DB_PORT:-5433}:5432'
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-myapp}
     volumes:
-      - postgres_test_data:/var/lib/postgresql/data
-      - ./docker/init-scripts:/docker-entrypoint-initdb.d
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'pg_isready -U ${TEST_DB_USER:-postgres} -d ${TEST_DB_NAME:-myapp_test}',
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    restart: unless-stopped
-
-  adminer:
-    image: adminer
-    container_name: adminer
-    ports:
-      - '8080:8080'
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
     depends_on:
-      - postgres
-    restart: unless-stopped
+      postgres:
+        condition: service_healthy
+    networks:
+      - quest-network
+  
+  notification-service:
+    build:
+      context: ./microservices/notification-service
+      dockerfile: ../../Dockerfile
+    container_name: notification_service
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+    volumes:
+      - ./microservices/notification-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - quest-network
+  
+  social-service:
+    build:
+      context: ./microservices/social-service
+      dockerfile: ../../Dockerfile
+    container_name: social_service
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+    volumes:
+      - ./microservices/social-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - quest-network
 
   redis:
     image: redis:7-alpine
@@ -94,3 +114,6 @@ volumes:
   postgres_test_data:
   redis_data:
   rabbitmq_data:
+networks:
+  quest-network:
+    driver: bridge
