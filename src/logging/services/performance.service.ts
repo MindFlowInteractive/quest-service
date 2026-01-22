@@ -37,10 +37,10 @@ export class PerformanceService {
     const timer = this.startTimer(name)
     try {
       const result = await fn()
-      timer({ ...metadata, success: true })
+      timer()
       return result
     } catch (error) {
-      timer({ ...metadata, success: false, error: error instanceof Error ? error.message : "Unknown error" })
+      timer()
       throw error
     }
   }
@@ -49,10 +49,10 @@ export class PerformanceService {
     const timer = this.startTimer(name)
     try {
       const result = fn()
-      timer({ ...metadata, success: true })
+      timer()
       return result
     } catch (error) {
-      timer({ ...metadata, success: false, error: error instanceof Error ? error.message : "Unknown error" })
+      timer()
       throw error
     }
   }

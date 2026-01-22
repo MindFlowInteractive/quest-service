@@ -3,15 +3,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, Not } from 'typeorm';
+import { Repository, Between, Not, In } from 'typeorm';
 import { isYesterday, isToday } from 'date-fns';
 import { UserProgress } from '../entities/user-progress.entity';
 import { User } from '../../users/entities/user.entity';
-import { checkNewAchievements } from './logic/achievement-checker';
-import { UserAchievement } from './entities/user-achievement.entity';
-import { calculateLevel } from './utils/level.utils';
-import { MilestoneService } from './milestone/milestone.service';
-import { Puzzle } from '../puzzles/entities/puzzle.entity';
+import { checkNewAchievements } from '../logic/achievement-checker';
+import { UserAchievement } from '../entities/user-achievement.entity';
+import { calculateLevel } from '../utils/level.utils';
+import { MilestoneService } from '../milestone/milestone.service';
+import { Puzzle } from '../../puzzles/entities/puzzle.entity';
 
 @Injectable()
 export class UserProgressService {
@@ -200,12 +200,12 @@ export class UserProgressService {
     if (!progress) throw new Error('User progress not found');
 
     const currentLevel = this.calculateLevel(progress.xp);
-    const solvedPuzzleIds = progress.solvedPuzzles?.map((p) => p.id) || [];
+    const solvedPuzzleIds = progress.solvedPuzzles?.map((p: any) => typeof p === 'string' ? p : p.id) || [];
 
     const recommended = await this.puzzleRepository.find({
       where: {
         id: Not(In(solvedPuzzleIds)),
-        difficulty: Between(Math.max(currentLevel - 1, 1), currentLevel + 2),
+        difficulty: Between(Math.max(currentLevel - 1, 1).toString(), (currentLevel + 2).toString()) as any,
       },
       take: 5,
     });

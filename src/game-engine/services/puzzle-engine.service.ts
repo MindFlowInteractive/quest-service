@@ -10,6 +10,8 @@ import type { ValidationService } from "./validation.service"
 import type { CauseEffectEngineService } from "./cause-effect-engine.service"
 import type { AnalyticsService } from "./analytics.service"
 import type { gameEngineConfig } from "../config/game-engine.config"
+import { Inject } from "@nestjs/common"
+import { ClientProxy } from "@nestjs/microservices"
 
 @Injectable()
 export class PuzzleEngineService {
@@ -24,6 +26,7 @@ export class PuzzleEngineService {
     private readonly causeEffectEngine: CauseEffectEngineService,
     private readonly analytics: AnalyticsService,
     private readonly config: ConfigType<typeof gameEngineConfig>,
+    @Inject('REPLAY_SERVICE') private readonly replayClient: ClientProxy,
   ) {}
 
   registerPuzzleType(type: PuzzleType, factory: () => IPuzzle): void {
@@ -56,6 +59,13 @@ export class PuzzleEngineService {
 
     await this.stateManagement.saveState(gameState)
     this.activePuzzles.set(puzzle.id, puzzle)
+
+    // Emit event for replay-service
+    this.replayClient.emit('PUZZLE_STARTED', {
+      puzzleId: puzzle.id,
+      playerId,
+      initialState: gameState.currentState,
+    });
 
     this.logger.log(`Created puzzle ${puzzle.id} for player ${playerId}`)
     return puzzle
@@ -124,6 +134,14 @@ export class PuzzleEngineService {
 
     // Track analytics
     await this.analytics.trackMove(puzzleId, playerId, move, moveResult)
+
+    // Emit event for replay-service
+    this.replayClient.emit('PUZZLE_MOVE', {
+      puzzleId,
+      playerId,
+      move,
+      currentState: puzzle.getState(),
+    });
 
     this.logger.debug(`Move processed for puzzle ${puzzleId}`, {
       playerId,

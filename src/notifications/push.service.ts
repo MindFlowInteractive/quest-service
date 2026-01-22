@@ -2,12 +2,20 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 
+interface MessagingPayload {
+  notification?: {
+    title?: string;
+    body?: string;
+  };
+  data?: Record<string, string>;
+}
+
 @Injectable()
 export class PushService {
   private readonly logger = new Logger(PushService.name);
   private enabled = false;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(private readonly config: any) {
     const key = this.config.get('FCM_SERVICE_ACCOUNT_JSON');
     if (key) {
       try {
@@ -23,15 +31,15 @@ export class PushService {
     }
   }
 
-  async sendToToken(token: string, payload: admin.messaging.MessagingPayload | admin.messaging.Notification) {
+  async sendToToken(token: string, payload: MessagingPayload) {
     if (!this.enabled) {
       this.logger.debug('Push disabled - token would be:', token);
       // In production we would enqueue to a retry queue; for now return queued
       return { success: false, queued: true };
     }
     try {
-      const message: admin.messaging.Message = { token, notification: payload as any } as any;
-      const res = await admin.messaging().send(message);
+      const message: any = { token, notification: payload.notification };
+      const res = await (admin as any).messaging().send(message);
       return { success: true, result: res };
     } catch (err) {
       this.logger.error('FCM send failed', err as any);
