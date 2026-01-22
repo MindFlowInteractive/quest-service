@@ -19,6 +19,7 @@ import { HealthModule } from './health/health.module';
 // import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { HintsModule } from './hints/hints.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { WalletModule } from './wallet/wallet.module';
 
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
@@ -58,6 +59,7 @@ import { TournamentsModule } from './tournaments/tournaments.module';
     UsersModule,
     PuzzlesModule,
     NotificationsModule,
+    WalletModule,
     // AchievementsModule,
     HealthModule,
     // LeaderboardModule,
