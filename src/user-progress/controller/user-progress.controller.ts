@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { UserProgressService } from '../services/user-progress.service';
+import { UserProgress } from '../entities/user-progress.entity';
 
 
 @Controller('user-progress')
@@ -39,11 +40,6 @@ getXpLeaderboard() {
 @Get('backup')
 backupAllProgress() {
   return this.userProgressService.backupAllProgress();
-}
-
-@Post('restore')
-restoreAllProgress(@Body() data: Partial<UserProgress>[]) {
-  return this.userProgressService.restoreAllProgress(data);
 }
 
 }

@@ -1,25 +1,17 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type { Repository } from "typeorm";
-import type { ConfigType } from "@nestjs/config";
-import type { IPuzzle, PuzzleGameState } from "../interfaces/puzzle.interfaces";
-import type { PuzzleMove, ValidationResult, PuzzleType, DifficultyLevel } from "../types/puzzle.types";
-import { PuzzleStatus } from "../types/puzzle.types";
-import type { PuzzleState } from "../entities/puzzle-state.entity";
-import type { StateManagementService } from "./state-management.service";
-import type { ValidationService } from "./validation.service";
-import type { CauseEffectEngineService } from "./cause-effect-engine.service";
-import type { AnalyticsService } from "./analytics.service";
-import type { gameEngineConfig } from "../config/game-engine.config";
-
-// Import new entities and Repository type
-import { UserPuzzleCompletion } from '../../users/entities/user-puzzle-completion.entity';
-import { UserStats } from '../../users/entities/user-stats.entity';
-import { User } from '../../users/entities/user.entity';
-import { Puzzle } from '../../puzzles/entities/puzzle.entity';
-import { Repository } from 'typeorm'; // Ensure Repository is imported
-
-// Define the session combo window constant
-const SESSION_COMBO_WINDOW_MILLIS = 5 * 60 * 1000; // 5 minutes
+import { Injectable, Logger, NotFoundException } from "@nestjs/common"
+import type { Repository } from "typeorm"
+import type { ConfigType } from "@nestjs/config"
+import type { IPuzzle, PuzzleGameState } from "../interfaces/puzzle.interfaces"
+import type { PuzzleMove, ValidationResult, PuzzleType, DifficultyLevel } from "../types/puzzle.types"
+import { PuzzleStatus } from "../types/puzzle.types"
+import type { PuzzleState } from "../entities/puzzle-state.entity"
+import type { StateManagementService } from "./state-management.service"
+import type { ValidationService } from "./validation.service"
+import type { CauseEffectEngineService } from "./cause-effect-engine.service"
+import type { AnalyticsService } from "./analytics.service"
+import type { gameEngineConfig } from "../config/game-engine.config"
+import { Inject } from "@nestjs/common"
+import { ClientProxy } from "@nestjs/microservices"
 
 @Injectable()
 export class PuzzleEngineService {
@@ -39,6 +31,7 @@ export class PuzzleEngineService {
     private readonly causeEffectEngine: CauseEffectEngineService,
     private readonly analytics: AnalyticsService,
     private readonly config: ConfigType<typeof gameEngineConfig>,
+    @Inject('REPLAY_SERVICE') private readonly replayClient: ClientProxy,
   ) {}
 
   registerPuzzleType(type: PuzzleType, factory: () => IPuzzle): void {
@@ -66,19 +59,21 @@ export class PuzzleEngineService {
       startTime: new Date(),
       score: 0,
       hintsUsed: 0,
-      metadata: { // Initialize session here
-        session: {
-          puzzleCount: 0,
-          lastCompletionTime: undefined,
-        }
-      },
-    };
+      metadata: {},
+    }
 
-    await this.stateManagement.saveState(gameState);
-    this.activePuzzles.set(puzzle.id, puzzle);
+    await this.stateManagement.saveState(gameState)
+    this.activePuzzles.set(puzzle.id, puzzle)
 
-    this.logger.log(`Created puzzle ${puzzle.id} for player ${playerId}`);
-    return puzzle;
+    // Emit event for replay-service
+    this.replayClient.emit('PUZZLE_STARTED', {
+      puzzleId: puzzle.id,
+      playerId,
+      initialState: gameState.currentState,
+    });
+
+    this.logger.log(`Created puzzle ${puzzle.id} for player ${playerId}`)
+    return puzzle
   }
 
   async loadPuzzle(puzzleId: string, playerId: string): Promise<IPuzzle> {
@@ -147,6 +142,14 @@ export class PuzzleEngineService {
 
     // Track analytics
     await this.analytics.trackMove(puzzleId, playerId, move, moveResult);
+
+    // Emit event for replay-service
+    this.replayClient.emit('PUZZLE_MOVE', {
+      puzzleId,
+      playerId,
+      move,
+      currentState: puzzle.getState(),
+    });
 
     this.logger.debug(`Move processed for puzzle ${puzzleId}`, {
       playerId,

@@ -22,9 +22,13 @@ export class PuzzleRating {
   @Index()
   userId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   @Index()
-  puzzleId: string;
+  submissionId?: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  @Index()
+  puzzleId?: string;
 
   @Column({ type: 'decimal', precision: 3, scale: 2 })
   @Index()
@@ -63,6 +67,10 @@ export class PuzzleRating {
   @UpdateDateColumn()
   @Index()
   updatedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  @Index()
+  lastEditedAt?: Date;
 
   // Relationships
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
