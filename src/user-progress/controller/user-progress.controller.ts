@@ -4,7 +4,7 @@ import { UserProgressService } from '../services/user-progress.service';
 
 @Controller('user-progress')
 export class UserProgressController {
-  constructor(private readonly userProgressService: UserProgressService) {}
+  constructor(private readonly userProgressService: UserProgressService) { }
 
   @Get(':userId')
   async getUserProgress(@Param('userId') userId: string) {
@@ -12,11 +12,11 @@ export class UserProgressController {
   }
 
   @Post('puzzle-completed/:userId')
-completePuzzle(@Param('userId') userId: string) {
-  return this.userProgressService.incrementPuzzlesCompleted(userId);
-}
+  completePuzzle(@Param('userId') userId: string) {
+    return this.userProgressService.incrementPuzzlesCompleted(userId);
+  }
 
-@Get('analytics/xp-distribution')
+  @Get('analytics/xp-distribution')
   getXpDistribution() {
     return this.userProgressService.getXpDistribution();
   }
@@ -32,18 +32,18 @@ completePuzzle(@Param('userId') userId: string) {
   }
 
   @Get('leaderboard/xp')
-getXpLeaderboard() {
-  return this.userProgressService.getTopUsersByXp(10);
-}
+  getXpLeaderboard() {
+    return this.userProgressService.getTopUsersByXp(10);
+  }
 
-@Get('backup')
-backupAllProgress() {
-  return this.userProgressService.backupAllProgress();
-}
+  @Get('backup')
+  backupAllProgress() {
+    return this.userProgressService.backupAllProgress();
+  }
 
-@Post('restore')
-restoreAllProgress(@Body() data: Partial<UserProgress>[]) {
-  return this.userProgressService.restoreAllProgress(data);
-}
+  // @Post('restore')
+  // restoreAllProgress(@Body() data: Partial<any>[]) {
+  //   return this.userProgressService.restoreAllProgress(data);
+  // }
 
 }

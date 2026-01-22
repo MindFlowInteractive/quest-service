@@ -57,7 +57,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       errorCode = 'BAD_REQUEST';
     }
 
-    response.status(status).json({
+    response.status(status as number).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,

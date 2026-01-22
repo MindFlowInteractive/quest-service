@@ -67,12 +67,12 @@ export class PuzzleSearchDto {
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }: any) => value === 'true' || value === true)
   isFeatured?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }: any) => value === 'true' || value === true)
   isActive?: boolean;
 
   @IsOptional()

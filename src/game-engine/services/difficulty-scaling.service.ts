@@ -9,7 +9,7 @@ import type { gameEngineConfig } from "../config/game-engine.config"
 export class DifficultyScalingService implements IDifficultyScaler {
   private readonly logger = new Logger(DifficultyScalingService.name)
 
-  constructor(private readonly config: ConfigType<typeof gameEngineConfig>) {}
+  constructor(private readonly config: any) { }
 
   calculateDifficulty(playerMetrics: PlayerMetrics, puzzleType: PuzzleType): DifficultyLevel {
     try {

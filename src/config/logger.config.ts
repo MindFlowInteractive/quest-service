@@ -1,11 +1,11 @@
-import { WinstonModuleOptions } from 'nest-winston';
+import type { WinstonModuleOptions } from 'nest-winston';
 import * as winston from 'winston';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
 import { Environment, EnvironmentVariables } from './env.validation';
 
 export const createLoggerConfig = (
-  configService: ConfigService<EnvironmentVariables>,
-): WinstonModuleOptions => {
+  configService: any,
+): any => {
   const env = configService.get('NODE_ENV', { infer: true });
   const logLevel = configService.get('LOG_LEVEL', { infer: true });
 
@@ -20,16 +20,16 @@ export const createLoggerConfig = (
       winston.format.json(),
       ...(isDevelopment
         ? [
-            winston.format.colorize(),
-            winston.format.simple(),
-            winston.format.printf(
-              ({ timestamp, level, message, context, stack }) => {
-                const contextStr = context ? `[${context}]` : '';
-                const stackStr = stack ? `\n${stack}` : '';
-                return `${timestamp} [${level}] ${contextStr} ${message}${stackStr}`;
-              },
-            ),
-          ]
+          winston.format.colorize(),
+          winston.format.simple(),
+          winston.format.printf(
+            ({ timestamp, level, message, context, stack }) => {
+              const contextStr = context ? `[${context}]` : '';
+              const stackStr = stack ? `\n${stack}` : '';
+              return `${timestamp} [${level}] ${contextStr} ${message}${stackStr}`;
+            },
+          ),
+        ]
         : []),
     ),
     transports: [
@@ -38,14 +38,14 @@ export const createLoggerConfig = (
       }),
       ...(env === Environment.Production
         ? [
-            new winston.transports.File({
-              filename: 'logs/error.log',
-              level: 'error',
-            }),
-            new winston.transports.File({
-              filename: 'logs/combined.log',
-            }),
-          ]
+          new winston.transports.File({
+            filename: 'logs/error.log',
+            level: 'error',
+          }),
+          new winston.transports.File({
+            filename: 'logs/combined.log',
+          }),
+        ]
         : []),
     ],
   };

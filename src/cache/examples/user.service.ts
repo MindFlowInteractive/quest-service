@@ -15,12 +15,12 @@ export class UserService {
   constructor(
     private readonly cacheService: CacheService,
     private readonly invalidationService: InvalidationService,
-  ) {}
+  ) { }
 
   @Cacheable({
     key: (args) => `user:${args[0]}:profile`,
     ttl: 3600,
-    tags: (args) => [`user:${args[0]}`, "user-profiles"],
+    tags: (args: any) => [`user:${args[0]}`, "user-profiles"] as any,
   })
   async getUserProfile(userId: string): Promise<User | null> {
     // Simulate database query
@@ -38,7 +38,7 @@ export class UserService {
   @Cacheable({
     key: (args) => `user:${args[0]}:settings`,
     ttl: 1800,
-    tags: (args) => [`user:${args[0]}`, "user-settings"],
+    tags: (args: any) => [`user:${args[0]}`, "user-settings"] as any,
   })
   async getUserSettings(userId: string): Promise<Record<string, any>> {
     console.log(`Fetching user settings from database: ${userId}`)
@@ -52,7 +52,7 @@ export class UserService {
 
   @CacheEvict({
     key: (args) => `user:${args[0].id}:profile`,
-    tags: (args) => [`user:${args[0].id}`, "user-profiles"],
+    tags: (args: any) => [`user:${args[0].id}`, "user-profiles"] as any,
   })
   async updateUserProfile(user: User): Promise<User> {
     console.log(`Updating user profile in database: ${user.id}`)

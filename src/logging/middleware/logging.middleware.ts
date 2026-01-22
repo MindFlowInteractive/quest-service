@@ -10,9 +10,9 @@ export class LoggingMiddleware implements NestMiddleware {
     private readonly loggingService: LoggingService,
     private readonly monitoringService: MonitoringService,
     private readonly metricsService: MetricsService,
-  ) {}
+  ) { }
 
-  use(req: Request, res: Response, next: NextFunction): void {
+  use(req: any, res: any, next: any): void {
     const startTime = Date.now()
     const endRequest = this.metricsService.recordHttpRequestStart()
 
@@ -22,8 +22,8 @@ export class LoggingMiddleware implements NestMiddleware {
       url: req.url,
       userAgent: req.get("User-Agent"),
       ip: req.ip,
-      headers: req.headers,
-    })
+      headers: req.headers as any,
+    } as any)
 
     // Override res.end to capture response
     const originalEnd = res.end

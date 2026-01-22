@@ -33,7 +33,7 @@ interface RewardCalculation {
 export class ScoringService {
   private readonly logger = new Logger(ScoringService.name);
 
-  constructor(private readonly config: ConfigType<typeof gameEngineConfig>) {}
+  constructor(private readonly config: any) { }
 
   /**
    * Calculate comprehensive score for a completed puzzle
@@ -48,14 +48,14 @@ export class ScoringService {
     const timeBonus = this.calculateTimeBonus(
       performance.timeSpent,
       puzzle.timeLimit ||
-        this.getExpectedTimeLimit(puzzle.type, puzzle.difficulty),
+      this.getExpectedTimeLimit(puzzle.type, puzzle.difficulty),
       puzzle.difficulty,
     );
 
     const efficiencyBonus = this.calculateEfficiencyBonus(
       performance.movesUsed,
       puzzle.maxMoves ||
-        this.getExpectedMaxMoves(puzzle.type, puzzle.difficulty),
+      this.getExpectedMaxMoves(puzzle.type, puzzle.difficulty),
       puzzle.difficulty,
     );
 

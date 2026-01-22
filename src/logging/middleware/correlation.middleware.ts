@@ -4,9 +4,9 @@ import type { CorrelationService } from "../services/correlation.service"
 
 @Injectable()
 export class CorrelationMiddleware implements NestMiddleware {
-  constructor(private readonly correlationService: CorrelationService) {}
+  constructor(private readonly correlationService: CorrelationService) { }
 
-  use(req: Request, res: Response, next: NextFunction): void {
+  use(req: any, res: any, next: any): void {
     const correlationId = (req.headers["x-correlation-id"] as string) || this.correlationService.generateId()
 
     // Set correlation ID in response header

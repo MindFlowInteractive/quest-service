@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, LessThan, Between } from 'typeorm';
 import { Tournament } from './entities/tournament.entity';
@@ -28,7 +28,7 @@ export class TournamentsService {
     private readonly matchRepository: Repository<TournamentMatch>,
     @InjectRepository(TournamentSpectator)
     private readonly spectatorRepository: Repository<TournamentSpectator>,
-  ) {}
+  ) { }
 
   async create(
     createTournamentDto: CreateTournamentDto,
@@ -118,10 +118,14 @@ export class TournamentsService {
   }
 
   async findOne(id: string): Promise<Tournament> {
-    return await this.tournamentRepository.findOne({
+    const tournament = await this.tournamentRepository.findOne({
       where: { id },
       relations: ['participants', 'matches'],
     });
+    if (!tournament) {
+      throw new NotFoundException(`Tournament with ID ${id} not found`);
+    }
+    return tournament;
   }
 
   async update(
@@ -633,8 +637,8 @@ export class TournamentsService {
       endTime: new Date(),
       duration: match.startTime
         ? Math.floor(
-            (new Date().getTime() - new Date(match.startTime).getTime()) / 1000,
-          )
+          (new Date().getTime() - new Date(match.startTime).getTime()) / 1000,
+        )
         : 0,
       results: {
         puzzleResults,
@@ -665,7 +669,7 @@ export class TournamentsService {
       await this.advanceToNextMatch(
         match.nextMatchId,
         winnerId,
-        winnerId === match.player1Id ? match.player1Name : match.player2Name,
+        (winnerId === match.player1Id ? match.player1Name : match.player2Name) as string,
       );
     }
 
@@ -865,7 +869,7 @@ export class TournamentsService {
         winner: match.winnerId
           ? { id: match.winnerId, name: match.winnerName! }
           : undefined,
-        status: match.status,
+        status: match.status as any,
         nextMatchId: match.nextMatchId,
         loserNextMatchId: match.loserNextMatchId,
       });

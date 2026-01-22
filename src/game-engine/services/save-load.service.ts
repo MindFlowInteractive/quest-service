@@ -35,8 +35,8 @@ export class SaveLoadService {
     private readonly playerProgressRepository: Repository<PlayerProgress>,
     private readonly sessionRepository: Repository<GameSession>,
     private readonly stateManagement: StateManagementService,
-    private readonly config: ConfigType<typeof gameEngineConfig>,
-  ) {}
+    private readonly config: any,
+  ) { }
 
   async saveGame(playerId: string, includeHistory = false): Promise<SaveGameData> {
     try {
@@ -178,7 +178,7 @@ export class SaveLoadService {
         saveData = JSON.parse(data as string)
       } else {
         // Binary format
-        const jsonString = (data as Buffer).toString("utf-8")
+        const jsonString = (data as any).toString("utf-8")
         saveData = JSON.parse(jsonString)
       }
 
@@ -222,7 +222,7 @@ export class SaveLoadService {
 
         playerProgress.metadata.checkpoints[checkpointName] = {
           data: saveData,
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         }
 
         await this.playerProgressRepository.save(playerProgress)

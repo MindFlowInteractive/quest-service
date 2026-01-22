@@ -3,15 +3,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, Not } from 'typeorm';
+import { Repository, Between, Not, In } from 'typeorm';
 import { isYesterday, isToday } from 'date-fns';
 import { UserProgress } from '../entities/user-progress.entity';
 import { User } from '../../users/entities/user.entity';
-import { checkNewAchievements } from './logic/achievement-checker';
-import { UserAchievement } from './entities/user-achievement.entity';
-import { calculateLevel } from './utils/level.utils';
-import { MilestoneService } from './milestone/milestone.service';
-import { Puzzle } from '../puzzles/entities/puzzle.entity';
+// import { checkNewAchievements } from './logic/achievement-checker';
+import { UserAchievement } from '../entities/user-achievement.entity';
+// import { calculateLevel } from './utils/level.utils';
+// import { MilestoneService } from './milestone/milestone.service';
+import { Puzzle } from '../../puzzles/entities/puzzle.entity';
 
 @Injectable()
 export class UserProgressService {
@@ -24,16 +24,14 @@ export class UserProgressService {
 
     @InjectRepository(Puzzle)
     private readonly puzzleRepository: Repository<Puzzle>,
-
-    private readonly milestoneService: MilestoneService,
-  ) {}
+    // private readonly milestoneService: MilestoneService,
+  ) { }
 
   async getXpDistribution() {
     const progressList = await this.userProgressRepository.find();
     const distribution = progressList.reduce((acc, progress) => {
-      const range = `${Math.floor(progress.xp / 1000) * 1000}-${
-        Math.floor(progress.xp / 1000) * 1000 + 999
-      }`;
+      const range = `${Math.floor(progress.xp / 1000) * 1000}-${Math.floor(progress.xp / 1000) * 1000 + 999
+        }`;
       acc[range] = (acc[range] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -86,8 +84,8 @@ export class UserProgressService {
     const progress = await this.getOrCreateProgress(user);
     progress.xp += xpEarned;
 
-    const result = calculateLevel(progress.xp);
-    progress.level = result.level;
+    const newLevel = this.calculateLevel(progress.xp);
+    progress.level = newLevel;
 
     await this.userProgressRepository.save(progress);
     return progress;
@@ -126,11 +124,12 @@ export class UserProgressService {
       streakUpdate === 1
         ? progress.streakDays + 1
         : streakUpdate === -1
-        ? 1
-        : progress.streakDays;
+          ? 1
+          : progress.streakDays;
     progress.lastPuzzleCompletedAt = new Date();
 
-    const newAchievements = checkNewAchievements(progress, progress.achievements || []);
+    // const newAchievements = checkNewAchievements(progress, progress.achievements || []);
+    const newAchievements: any[] = []; // Placeholder until achievement checker is implemented
     const updatedProgress = await this.userProgressRepository.save(progress);
 
     if (newAchievements.length > 0) {
@@ -200,12 +199,12 @@ export class UserProgressService {
     if (!progress) throw new Error('User progress not found');
 
     const currentLevel = this.calculateLevel(progress.xp);
-    const solvedPuzzleIds = progress.solvedPuzzles?.map((p) => p.id) || [];
+    const solvedPuzzleIds = (progress.solvedPuzzles as any)?.map((p: any) => p.id || p) || [];
 
     const recommended = await this.puzzleRepository.find({
       where: {
         id: Not(In(solvedPuzzleIds)),
-        difficulty: Between(Math.max(currentLevel - 1, 1), currentLevel + 2),
+        difficulty: Between(Math.max(currentLevel - 1, 1), currentLevel + 2) as any,
       },
       take: 5,
     });

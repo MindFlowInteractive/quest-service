@@ -1,6 +1,6 @@
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+import { registerDecorator } from 'class-validator';
 
-export function IsStrongPassword(validationOptions?: ValidationOptions) {
+export function IsStrongPassword(validationOptions?: any) {
   return function (object: Object, propertyName: string) {
     registerDecorator({
       name: 'isStrongPassword',
@@ -8,14 +8,18 @@ export function IsStrongPassword(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(value: any, args: any) {
           // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
           return (
             typeof value === 'string' &&
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(value)
+            value.length >= 8 &&
+            /[A-Z]/.test(value) &&
+            /[a-z]/.test(value) &&
+            /[0-9]/.test(value) &&
+            /[^A-Za-z0-9]/.test(value)
           );
         },
-        defaultMessage(args: ValidationArguments) {
+        defaultMessage(args: any) {
           return `${args.property} must be a strong password (min 8 chars, upper, lower, number, special)`;
         },
       },

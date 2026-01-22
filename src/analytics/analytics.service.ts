@@ -103,7 +103,7 @@ export class AnalyticsService {
   /**
    * 5. A/B Testing Results & Statistical Analysis
    */
-  async getABTestResults(filters: any) {
+  async getAbTestResults(filters: any) {
     const qb = this.eventRepo.createQueryBuilder('event');
     qb.andWhere('event.eventType = :type', { type: 'ab_test' });
 
@@ -229,5 +229,13 @@ export class AnalyticsService {
       totalAttempts: parseInt(totalAttempts?.count || '0', 10),
       avgSuccessRate: parseFloat(successRate?.rate || '0') * 100,
     };
+  }
+
+  async getPuzzlesSummary(filters: any) {
+    return this.getPuzzlePerformanceAnalytics(filters);
+  }
+
+  async searchEvents(filters: any) {
+    return this.getPlayerBehaviorAnalytics(filters);
   }
 }

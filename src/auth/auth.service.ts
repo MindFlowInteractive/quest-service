@@ -21,7 +21,7 @@ export class AuthService {
     private rolesRepository: Repository<Role>,
     private refreshTokensRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, BCRYPT_SALT_ROUNDS)
@@ -219,8 +219,8 @@ export class AuthService {
   }
 
   async findOrCreateOAuthUser(
-    provider: string,
     oauthUser: any,
+    provider: string,
   ): Promise<User> {
     // TODO: Implement OAuth user creation/linking
     throw new Error("OAuth functionality not yet implemented")

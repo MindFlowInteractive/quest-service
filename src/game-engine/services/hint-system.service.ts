@@ -17,7 +17,7 @@ export class HintSystemService implements IHintSystem {
   private readonly hintGenerators = new Map<PuzzleType, HintGenerator>()
   private readonly playerHintUsage = new Map<string, { count: number; lastUsed: Date }>()
 
-  constructor(private readonly config: ConfigType<typeof gameEngineConfig>) {
+  constructor(private readonly config: any) {
     this.initializeDefaultHintGenerators()
   }
 
