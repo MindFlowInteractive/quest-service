@@ -8,6 +8,7 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/exceptions/http-exception.filter';
 import { SanitizeInterceptor } from './common/interceptors/sanitize.interceptor';
 import * as Sentry from '@sentry/node';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 async function bootstrap() {
   // Initialize Sentry
@@ -33,7 +34,12 @@ async function bootstrap() {
     configService.get('app.cors.origin') || 'http://localhost:3000';
 
   // Security middleware
-  app.use(helmet());
+  app.use(helmet(
+    {
+    contentSecurityPolicy: process.env.NODE_ENV === 'production',
+    crossOriginEmbedderPolicy: false,
+  }
+  ));
 
   // CORS configuration
   app.enableCors({
@@ -46,7 +52,15 @@ async function bootstrap() {
 
 
   // Global validation pipe
-  app.useGlobalPipes(new CustomValidationPipe());
+  app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }),);
+
+  //Global Guards 
+  app.useGlobalGuards(new ThrottlerGuard());
 
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());

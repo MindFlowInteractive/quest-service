@@ -52,6 +52,8 @@ import { TournamentsModule } from './tournaments/tournaments.module';
       inject: [ConfigService],
     }),
 
+    
+
     // Feature modules
     UsersModule,
     PuzzlesModule,
