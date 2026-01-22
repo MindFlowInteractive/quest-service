@@ -26,10 +26,42 @@ Quest Service brings gamification and educational value to the Stellar ecosystem
 * **Blockchain**: Stellar for on-chain achievements and rewards
 * **Smart Contracts**: Soroban smart contracts for NFTs and token rewards
 
-## 💡 Contribute
+## 🐳 Local Development with Docker
 
+We use Docker Compose to orchestrate the application, database, and microservices for a seamless local development experience.
+
+### Prerequisites
+- Docker Desktop installed and running.
+
+### Quick Start
+
+1. **Setup Environment**
+   Create your environment configuration file:
+   ```bash
+   cp .env.example .env 
+   ```
+
+2. **Start All Services**
+   Build and launch the entire stack:
+   ```bash
+   docker-compose up --build
+   ```
+- This command starts PostgreSQL and all Node.js microservices. Hot Reload is enabled, so changes in your code will automatically update the running container.
+
+### Service Access Points
+Once running, you can access the services at:
+
+- **Quest Service**: http://localhost:3000
+- **Notification Service**: http://localhost:3001
+- **Social Service**: http://localhost:3002
+- **Database (PostgreSQL)**: localhost:5432
+
+## Common Commands
+- **Stop everything**: Press Ctrl+C or run docker-compose down
+- **Rebuild after adding new dependencies**: docker-compose up --build
+
+## 💡 Contribute
 We welcome contributions from the community! Whether you're a developer, designer, or just passionate about logic games, Quest Service is open for you to add new puzzles, features, or help improve the game!
 
 ## 📜 License
-
-This project is licensed under the **MIT License**.
+This project is licensed under the MIT License.
