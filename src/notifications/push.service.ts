@@ -7,7 +7,7 @@ export class PushService {
   private readonly logger = new Logger(PushService.name);
   private enabled = false;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(private readonly config: any) {
     const key = this.config.get('FCM_SERVICE_ACCOUNT_JSON');
     if (key) {
       try {
@@ -23,14 +23,14 @@ export class PushService {
     }
   }
 
-  async sendToToken(token: string, payload: admin.messaging.MessagingPayload | admin.messaging.Notification) {
+  async sendToToken(token: string, payload: any) {
     if (!this.enabled) {
       this.logger.debug('Push disabled - token would be:', token);
       // In production we would enqueue to a retry queue; for now return queued
       return { success: false, queued: true };
     }
     try {
-      const message: admin.messaging.Message = { token, notification: payload as any } as any;
+      const message: any = { token, notification: payload as any } as any;
       const res = await admin.messaging().send(message);
       return { success: true, result: res };
     } catch (err) {

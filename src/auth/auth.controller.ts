@@ -1,4 +1,4 @@
-import { Controller, Post, HttpCode, HttpStatus, UseGuards, Get } from "@nestjs/common"
+import { Controller, Post, HttpCode, HttpStatus, UseGuards, Get, Req } from "@nestjs/common"
 import type { AuthService } from "./auth.service"
 import { RegisterUserDto } from "./dto/register-user.dto"
 import { LoginUserDto } from "./dto/login-user.dto"
@@ -17,7 +17,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from "@nes
 @ApiTags("Authentication")
 @Controller("auth")
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post("register")
   @ApiOperation({ summary: "Register a new user" })
@@ -154,7 +154,7 @@ export class AuthController {
   @ApiOperation({ summary: "Initiate Google OAuth2 login" })
   @ApiResponse({ status: 302, description: "Redirects to Google for authentication." })
   @UseGuards(AuthGuard("google"))
-  async googleAuth(req) {
+  async googleAuth(@Req() req: any) {
     // Initiates the Google OAuth2 login flow
   }
 
@@ -195,7 +195,7 @@ export class AuthController {
   // GitHub OAuth similarly
   @Get("github")
   @UseGuards(AuthGuard("github"))
-  async githubAuth(req) {}
+  async githubAuth(@Req() req: any) { }
 
   @Get("github/callback")
   @UseGuards(AuthGuard("github"))

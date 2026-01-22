@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import type { Repository } from "typeorm"
-import type { ConfigType } from "@nestjs/config"
+import { ConfigType } from "@nestjs/config"
 import type { IPuzzle, PuzzleGameState } from "../interfaces/puzzle.interfaces"
 import type { PuzzleMove, ValidationResult, PuzzleType, DifficultyLevel } from "../types/puzzle.types"
 import { PuzzleStatus } from "../types/puzzle.types"
@@ -9,7 +9,7 @@ import type { StateManagementService } from "./state-management.service"
 import type { ValidationService } from "./validation.service"
 import type { CauseEffectEngineService } from "./cause-effect-engine.service"
 import type { AnalyticsService } from "./analytics.service"
-import type { gameEngineConfig } from "../config/game-engine.config"
+import { gameEngineConfig } from "../config/game-engine.config"
 
 @Injectable()
 export class PuzzleEngineService {
@@ -23,8 +23,8 @@ export class PuzzleEngineService {
     private readonly validation: ValidationService,
     private readonly causeEffectEngine: CauseEffectEngineService,
     private readonly analytics: AnalyticsService,
-    private readonly config: ConfigType<typeof gameEngineConfig>,
-  ) {}
+    private readonly config: any,
+  ) { }
 
   registerPuzzleType(type: PuzzleType, factory: () => IPuzzle): void {
     this.puzzleRegistry.set(type, factory)

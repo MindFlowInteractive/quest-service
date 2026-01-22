@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import { DatabaseService } from 'src/config/database-service';
-import { PerformanceMonitoringService } from 'src/monitoring/performance.service';
+import { Request } from 'express';
+import { DatabaseService } from '../config/database-service';
+import { PerformanceMonitoringService } from '../monitoring/performance.service';
 
 export class HealthController {
   private databaseService = DatabaseService.getInstance();
@@ -12,7 +12,7 @@ export class HealthController {
     );
   }
 
-  public async checkHealth(req: Request, res: Response): Promise<void> {
+  public async checkHealth(req: Request, res: any): Promise<void> {
     try {
       const health = await this.databaseService.checkHealth();
       const status = health.status === 'healthy' ? 200 : 503;
@@ -36,7 +36,7 @@ export class HealthController {
     }
   }
 
-  public async getMetrics(req: Request, res: Response): Promise<void> {
+  public async getMetrics(req: Request, res: any): Promise<void> {
     try {
       const metrics = await this.performanceService.getMetrics();
       res.json(metrics);
@@ -48,7 +48,7 @@ export class HealthController {
     }
   }
 
-  public async getConnectionStats(req: Request, res: Response): Promise<void> {
+  public async getConnectionStats(req: Request, res: any): Promise<void> {
     try {
       const stats = await this.databaseService.getConnectionStats();
       res.json(stats);
