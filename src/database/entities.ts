@@ -14,3 +14,7 @@ export { GameSession } from '../game-engine/entities/game-session.entity';
 // Export new entities for collections and categories
 export { Category } from '../puzzles/entities/category.entity';
 export { Collection } from '../puzzles/entities/collection.entity';
+
+// Export new entities for streak tracking
+export { UserStreak } from '../users/entities/user-streak.entity';
+export { UserPuzzleCompletion } from '../users/entities/user-puzzle-completion.entity';

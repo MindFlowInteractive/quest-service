@@ -1,13 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Not, IsNull } from 'typeorm';
 import { UserCollectionProgress } from './entities/user-collection-progress.entity';
 import { User } from '../users/entities/user.entity'; // Adjust path if necessary
 import { Collection } from '../puzzles/entities/collection.entity'; // Adjust path if necessary
 import { Puzzle } from '../puzzles/entities/puzzle.entity'; // Adjust path if necessary
+import { UserPuzzleCompletion } from '../users/entities/user-puzzle-completion.entity'; // Added import
+import { UserStats } from '../users/entities/user-stats.entity'; // Added import
 
 @Injectable()
 export class UserCollectionProgressService {
+  private readonly logger = new Logger(UserCollectionProgressService.name); // Added logger
+
   constructor(
     @InjectRepository(UserCollectionProgress)
     private readonly userProgressRepository: Repository<UserCollectionProgress>,
@@ -17,6 +21,10 @@ export class UserCollectionProgressService {
     private readonly collectionsRepository: Repository<Collection>,
     @InjectRepository(Puzzle)
     private readonly puzzlesRepository: Repository<Puzzle>,
+    @InjectRepository(UserPuzzleCompletion) // Added injection
+    private readonly userPuzzleCompletionRepository: Repository<UserPuzzleCompletion>,
+    @InjectRepository(UserStats) // Added injection
+    private readonly userStatsRepository: Repository<UserStats>,
   ) {}
 
   async findAllForUser(userId: string): Promise<UserCollectionProgress[]> {
@@ -110,7 +118,6 @@ export class UserCollectionProgressService {
 
       if (!progress) {
         // If no progress record, initialize it.
-        // This might happen if the user hasn't explicitly started the collection yet.
         progress = await this.createInitialProgress(userId, collection.id);
         // Re-fetch relations to ensure puzzles are loaded for this new progress record
         progress = await this.userProgressRepository.findOne({
@@ -125,6 +132,64 @@ export class UserCollectionProgressService {
       if (!isAlreadyCompleted) {
         // Add the puzzle to the completed list
         progress.completedPuzzles.push(await this.puzzlesRepository.findOneByOrFail({ id: puzzleId }));
+
+        // --- START: Record Puzzle Completion for Streak Tracking ---
+        let newCompletion: UserPuzzleCompletion | null = null;
+        try {
+          const user = await this.userRepository.findOneByOrFail({ id: userId });
+          const puzzleEntity = await this.puzzlesRepository.findOneByOrFail({ id: puzzleId });
+          
+          const completionRecord = this.userPuzzleCompletionRepository.create({
+            user: user,
+            puzzle: puzzleEntity,
+            completedAt: new Date(),
+            comboMultiplier: 1, // Placeholder, actual calculation for combos is deferred
+          });
+          newCompletion = await this.userPuzzleCompletionRepository.save(completionRecord);
+        } catch (error) {
+          this.logError('Failed to record user puzzle completion for streak tracking', error);
+          // Continue with other progress updates even if streak recording fails
+        }
+        // --- END: Record Puzzle Completion for Streak Tracking ---
+
+        // --- START: Update User Streak ---
+        try {
+          let userStats = await this.userStatsRepository.findOne({ where: { userId } });
+
+          // If UserStats don't exist, create them.
+          if (!userStats) {
+            userStats = this.userStatsRepository.create({
+              userId: userId, // Ensure userId is set
+            });
+            userStats = await this.userStatsRepository.save(userStats);
+          }
+
+          // Check if the current completion is consecutive
+          const completionTime = newCompletion ? newCompletion.completedAt.getTime() : Date.now(); // Use now if newCompletion failed to save
+          const lastActivityTime = userStats.lastActivityAt ? userStats.lastActivityAt.getTime() : 0;
+          const timeDifferenceMillis = completionTime - lastActivityTime;
+
+          const CONSECUTIVE_WINDOW_MILLIS = 5 * 60 * 1000; // 5 minutes
+
+          if (userStats.lastActivityAt && timeDifferenceMillis < CONSECUTIVE_WINDOW_MILLIS) {
+            userStats.currentStreak++;
+          } else {
+            userStats.currentStreak = 1; // Reset streak if not consecutive
+          }
+
+          if (userStats.currentStreak > userStats.longestStreak) {
+            userStats.longestStreak = userStats.currentStreak;
+          }
+
+          userStats.lastActivityAt = new Date(completionTime); // Update last activity time to the actual completion time
+          userStats.lastCalculatedAt = new Date(); // Update last calculated time
+
+          await this.userStatsRepository.save(userStats);
+        } catch (error) {
+          this.logError('Failed to update user streak stats', error);
+        }
+        // --- END: Update User Streak ---
+
 
         // Recalculate completion percentage
         const totalPuzzlesInCollection = collection.puzzles.length;
@@ -156,5 +221,9 @@ export class UserCollectionProgressService {
       relations: ['puzzles'],
     });
     return collection?.puzzles?.length || 0;
+  }
+
+  private logError(message: string, error: any): void {
+    this.logger.error(message, error.stack, error.constructor.name);
   }
 }
