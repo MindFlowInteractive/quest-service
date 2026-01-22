@@ -6,6 +6,8 @@ import { FriendsModule } from '@/friends/friends.module';
 import { LeaderboardsModule } from '@/leaderboards/leaderboards.module';
 import { RoomsModule } from '@/rooms/rooms.module';
 import { GatewayModule } from '@/common/gateways/gateway.module';
+import { BookmarksModule } from '@/bookmarks/bookmarks.module';
+import { ListsModule } from '@/lists/lists.module';
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 
@@ -20,6 +22,8 @@ import { AppService } from '@/app.service';
     LeaderboardsModule,
     RoomsModule,
     GatewayModule,
+    BookmarksModule,
+    ListsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
