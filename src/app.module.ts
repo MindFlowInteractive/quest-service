@@ -21,6 +21,7 @@ import { HintsModule } from './hints/hints.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
+import { TournamentsModule } from './tournaments/tournaments.module';
 
 @Module({
   imports: [
@@ -54,12 +55,13 @@ import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling
     // Feature modules
     UsersModule,
     PuzzlesModule,
-  NotificationsModule,
+    NotificationsModule,
     // AchievementsModule,
     HealthModule,
     // LeaderboardModule,
     HintsModule,
-  DifficultyScalingModule,
+    DifficultyScalingModule,
+    TournamentsModule,
   ],
   controllers: [AppController],
   providers: [
