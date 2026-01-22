@@ -22,6 +22,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
+import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -32,6 +33,8 @@ import { TournamentsModule } from './tournaments/tournaments.module';
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
+    
+    RabbitMQModule,
 
     // Logging
     WinstonModule.forRootAsync({
