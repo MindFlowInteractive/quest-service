@@ -34,6 +34,7 @@
     "@nestjs/platform-ws": "^10.4.4",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^10.4.4",
+    "@quest-service/shared": "file:../shared",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "pg": "^8.16.3",

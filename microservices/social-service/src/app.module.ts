@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SharedModule } from '@quest-service/shared';
 import { AppDataSource } from '@/config/orm-config';
 import { FriendsModule } from '@/friends/friends.module';
 import { LeaderboardsModule } from '@/leaderboards/leaderboards.module';
 import { RoomsModule } from '@/rooms/rooms.module';
 import { GatewayModule } from '@/common/gateways/gateway.module';
+import { EventSubscriberModule } from '@/events/event-subscriber.module';
+import { ServiceRegistrationService } from '@/services/service-registration.service';
 import { BookmarksModule } from '@/bookmarks/bookmarks.module';
 import { ListsModule } from '@/lists/lists.module';
 import { AppController } from '@/app.controller';
@@ -18,6 +21,8 @@ import { AppService } from '@/app.service';
       envFilePath: '.env',
     }),
     TypeOrmModule.forRoot(AppDataSource.options),
+    SharedModule,
+    EventSubscriberModule,
     FriendsModule,
     LeaderboardsModule,
     RoomsModule,
@@ -26,6 +31,9 @@ import { AppService } from '@/app.service';
     ListsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    ServiceRegistrationService,
+  ],
 })
 export class AppModule {}
