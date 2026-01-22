@@ -51,6 +51,8 @@ import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling
       inject: [ConfigService],
     }),
 
+    
+
     // Feature modules
     UsersModule,
     PuzzlesModule,
