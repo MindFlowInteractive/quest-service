@@ -16,7 +16,7 @@ export interface BracketNode {
     id: string;
     name: string;
   };
-  status: 'scheduled' | 'ready' | 'in-progress' | 'completed';
+  status: 'scheduled' | 'ready' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
   nextMatchId?: string;
   loserNextMatchId?: string;
 }
