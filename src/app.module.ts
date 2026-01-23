@@ -24,6 +24,8 @@ import { WalletModule } from './wallet/wallet.module';
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { ReferralsModule } from './referrals/referrals.module';
+import { SaveGameModule } from './save-game/save-game.module';
 
 import { SorobanModule } from './soroban/soroban.module';
 import { NFTModule } from './nft/nft.module';
@@ -73,6 +75,8 @@ import { PuzzleModule } from './puzzle/puzzle.module';
     HintsModule,
     DifficultyScalingModule,
     TournamentsModule,
+    ReferralsModule,
+    SaveGameModule,
 
     SorobanModule,
     NFTModule,

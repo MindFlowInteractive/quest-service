@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
-import { User } from '../users/entities/user.entity'; // Assuming User entity is at this path
+import { User } from './user.entity';
 
 @Entity('user_streaks')
 export class UserStreak {
