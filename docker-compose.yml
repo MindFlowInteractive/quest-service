@@ -92,6 +92,28 @@ services:
       - quest-network
     logging: *logging_config
 
+  moderation-service:
+    build:
+      context: ./microservices/moderation-service
+      dockerfile: Dockerfile
+    container_name: moderation_service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_DATABASE=moderation_db
+      - PORT=3005
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/moderation-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - quest-network
+    logging: *logging_config
+
   prometheus:
     image: prom/prometheus:latest
     container_name: quest_prometheus
