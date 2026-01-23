@@ -7,9 +7,12 @@ import {
   DeleteDateColumn,
   Index,
   OneToMany,
+  OneToOne, // Added OneToOne import
 } from 'typeorm';
 import { UserAchievement } from '../../achievements/entities/user-achievement.entity';
 import { GameSession } from '../../game-engine/entities/game-session.entity';
+import { UserStreak } from './user-streak.entity'; // Added import
+import { UserPuzzleCompletion } from './user-puzzle-completion.entity'; // Added import
 
 @Entity('users')
 @Index(['email'], { unique: true })
@@ -127,17 +130,6 @@ export class User {
     referredBy?: string;
   };
 
-  @CreateDateColumn()
-  @Index()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  @Index()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt?: Date;
-
   // Relationships
   @OneToMany(() => UserAchievement, (userAchievement) => userAchievement.user)
   achievements: UserAchievement[];
@@ -147,4 +139,11 @@ export class User {
 
   @OneToMany(() => GameSession, (session) => session.user)
   gameSessions: GameSession[];
+
+  // Added relationships for streak tracking
+  @OneToOne(() => UserStreak, (streak) => streak.user, { cascade: true })
+  streak: UserStreak;
+
+  @OneToMany(() => UserPuzzleCompletion, (completion) => completion.user, { cascade: true })
+  puzzleCompletions: UserPuzzleCompletion[];
 }
