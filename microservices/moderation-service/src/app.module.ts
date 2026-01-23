@@ -10,6 +10,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { Report } from './entities/report.entity';
 import { Violation } from './entities/violation.entity';
 import { Review } from './entities/review.entity';
+import { Appeal } from './entities/appeal.entity';
 
 @Module({
     imports: [
@@ -25,7 +26,7 @@ import { Review } from './entities/review.entity';
                 username: configService.get<string>('DB_USERNAME', 'postgres'),
                 password: configService.get<string>('DB_PASSWORD', 'postgres'),
                 database: configService.get<string>('DB_DATABASE', 'moderation_service'),
-                entities: [Report, Violation, Review],
+                entities: [Report, Violation, Review, Appeal],
                 synchronize: true,
             }),
             inject: [ConfigService],

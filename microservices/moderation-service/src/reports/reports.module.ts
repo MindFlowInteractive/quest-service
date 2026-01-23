@@ -5,12 +5,13 @@ import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { Report } from '../entities/report.entity';
 import { Review } from '../entities/review.entity';
+import { Violation } from '../entities/violation.entity';
 import { ModerationModule } from '../moderation/moderation.module';
 import { ReportsProcessor } from './reports.processor';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Report, Review]),
+        TypeOrmModule.forFeature([Report, Review, Violation]),
         BullModule.registerQueue({
             name: 'moderation-queue',
         }),
