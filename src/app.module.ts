@@ -24,6 +24,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { ReferralsModule } from './referrals/referrals.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
     HintsModule,
     DifficultyScalingModule,
     TournamentsModule,
+    ReferralsModule,
   ],
   controllers: [AppController],
   providers: [
