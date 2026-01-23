@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  recommendation-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_NAME=recommendation_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - redis
+
+networks:
+  quest-net:
+    external: true

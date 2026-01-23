@@ -91,6 +91,34 @@ services:
     networks:
       - quest-network
     logging: *logging_config
+  
+  recommendation-service:
+    build:
+      context: ./microservices/recommendation-service
+      dockerfile: Dockerfile
+    container_name: recommendation_service
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DB_USER:-postgres}
+      - DATABASE_PASSWORD=${DB_PASSWORD:-password}
+      - DATABASE_NAME=recommendation_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./microservices/recommendation-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
 
   moderation-service:
     build:
