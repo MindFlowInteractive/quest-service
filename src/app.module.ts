@@ -27,6 +27,11 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { SaveGameModule } from './save-game/save-game.module';
 
+import { SorobanModule } from './soroban/soroban.module';
+import { NFTModule } from './nft/nft.module';
+import { RewardsModule } from './rewards/rewards.module';
+import { PuzzleModule } from './puzzle/puzzle.module';
+
 @Module({
   imports: [
     // Configuration
@@ -59,7 +64,6 @@ import { SaveGameModule } from './save-game/save-game.module';
     }),
 
     
-
     // Feature modules
     UsersModule,
     PuzzlesModule,
@@ -73,6 +77,11 @@ import { SaveGameModule } from './save-game/save-game.module';
     TournamentsModule,
     ReferralsModule,
     SaveGameModule,
+
+    SorobanModule,
+    NFTModule,
+    RewardsModule,
+    PuzzleModule,
   ],
   controllers: [AppController],
   providers: [
