@@ -25,6 +25,7 @@ import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { ReferralsModule } from './referrals/referrals.module';
+import { SaveGameModule } from './save-game/save-game.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { ReferralsModule } from './referrals/referrals.module';
     DifficultyScalingModule,
     TournamentsModule,
     ReferralsModule,
+    SaveGameModule,
   ],
   controllers: [AppController],
   providers: [
