@@ -7,7 +7,7 @@ import type { CacheMonitoringService } from "./cache-monitoring.service"
 
 export interface CacheOptions {
   ttl?: number
-  tags?: string[]
+  tags?: string[] | ((args: any[]) => string[])
   compress?: boolean
   layer?: "l1" | "l2" | "both"
 }
@@ -31,12 +31,12 @@ export class CacheService {
   constructor(
     private readonly redisClient: Redis,
     @Inject(cacheConfig.KEY)
-    private readonly config: ConfigType<typeof cacheConfig>,
+    private readonly config: typeof cacheConfig.KEY extends string ? any : any,
     private readonly monitoring: CacheMonitoringService,
   ) {
     this.keyPrefix = this.config.redis.keyPrefix;
     this.redis = this.redisClient;
-    
+
     // Initialize L1 cache (in-memory)
     this.l1Cache = new LRUCache({
       max: this.config.layers.l1.maxSize,
@@ -148,7 +148,7 @@ export class CacheService {
       if (keys.length > 0) {
         // Delete from L1 cache
         if (this.config.layers.l1.enabled) {
-          keys.forEach((key) => this.l1Cache.delete(key))
+          keys.forEach((key: string) => this.l1Cache.delete(key))
         }
 
         // Delete from L2 cache
@@ -253,7 +253,7 @@ export class CacheService {
 
     if (tagKeys.length > 0) {
       const pipeline = this.redis.pipeline()
-      tagKeys.forEach((tagKey) => pipeline.srem(tagKey, key))
+      tagKeys.forEach((tagKey: string) => pipeline.srem(tagKey, key))
       await pipeline.exec()
     }
   }
@@ -263,7 +263,7 @@ export class CacheService {
       this.logger.log("Redis connected")
     })
 
-    this.redis.on("error", (error) => {
+    this.redis.on("error", (error: Error) => {
       this.logger.error("Redis error:", error)
       this.monitoring.recordError()
     })

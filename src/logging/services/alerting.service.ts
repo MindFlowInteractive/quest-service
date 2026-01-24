@@ -18,11 +18,11 @@ export interface Alert {
 @Injectable()
 export class AlertingService {
   private readonly logger = new Logger(AlertingService.name)
-  private readonly emailTransporter?: nodemailer.Transporter
-  private readonly activeAlerts: Map<string, Alert> = new Map()
-  private readonly config: ConfigType<typeof loggingConfig>
+  private readonly emailTransporter?: nodemailer.Transporter;
+  private readonly activeAlerts: Map<string, any> = new Map();
+  private readonly config: any;
 
-  constructor(config: ConfigType<typeof loggingConfig>) {
+  constructor(config: any) {
     this.config = config
     if (this.config.alerting.channels.email.enabled) {
       this.emailTransporter = nodemailer.createTransport(this.config.alerting.channels.email.smtp)

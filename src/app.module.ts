@@ -24,11 +24,17 @@ import { WalletModule } from './wallet/wallet.module';
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { TutorialModule } from './tutorial/tutorial.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { SaveGameModule } from './save-game/save-game.module';
 import { PlayerModule } from './player/player.module';
 import { ProfileModule } from './profile/profile.module';
 import { ProgressModule } from './progress/progress.module';
+
+import { SorobanModule } from './soroban/soroban.module';
+import { NFTModule } from './nft/nft.module';
+import { RewardsModule } from './rewards/rewards.module';
+import { PuzzleModule } from './puzzle/puzzle.module';
 
 @Module({
   imports: [
@@ -62,7 +68,6 @@ import { ProgressModule } from './progress/progress.module';
     }),
 
     
-
     // Feature modules
     UsersModule,
     PuzzlesModule,
@@ -74,11 +79,20 @@ import { ProgressModule } from './progress/progress.module';
     HintsModule,
     DifficultyScalingModule,
     TournamentsModule,
+    TutorialModule,
     ReferralsModule,
     SaveGameModule,
+<<<<<<< HEAD
     PlayerModule,
     ProfileModule,
     ProgressModule,
+=======
+
+    SorobanModule,
+    NFTModule,
+    RewardsModule,
+    PuzzleModule,
+>>>>>>> 7b791d4990a44701853e0cfc426acd42051416b2
   ],
   controllers: [AppController],
   providers: [

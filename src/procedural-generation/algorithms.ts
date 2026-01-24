@@ -554,9 +554,10 @@ export class ProcedularGenerationAlgorithms {
   }
 
   private generateSequence(pattern: any, length: number): any[] {
+    const complexity = 1; // Default complexity
     const seq = [];
     for (let i = 0; i < length; i++) {
-      seq.push(i * (complexity || 1));
+      seq.push(i * complexity);
     }
     return seq;
   }

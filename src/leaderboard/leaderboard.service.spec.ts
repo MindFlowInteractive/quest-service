@@ -3,7 +3,8 @@ import { LeaderboardService } from './leaderboard.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Leaderboard } from './entities/leaderboard.entity';
 import { LeaderboardEntry } from './entities/leaderboard-entry.entity';
-import { CACHE_MANAGER } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+
 import { AchievementsService } from '../achievements/achievements.service';
 
 const mockLeaderboardRepo = () => ({
@@ -23,8 +24,8 @@ const mockAchievementsService = { findLeaderboardAchievements: jest.fn(), awardA
 
 describe('LeaderboardService', () => {
   let service: LeaderboardService;
-  let leaderboardRepo;
-  let entryRepo;
+  let leaderboardRepo: any;
+  let entryRepo: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -79,7 +80,7 @@ describe('LeaderboardService', () => {
     const analytics = await service.getLeaderboardAnalytics(1);
     expect(analytics.participantCount).toBe(2);
     expect(analytics.entryCount).toBe(3);
-    expect(analytics.averageScore).toBeCloseTo((100+200+150)/3);
+    expect(analytics.averageScore).toBeCloseTo((100 + 200 + 150) / 3);
     expect(analytics.topUsers[0].score).toBe(200);
   });
 
@@ -133,8 +134,8 @@ describe('LeaderboardService', () => {
 
   it('should get user rank summary', async () => {
     entryRepo.find.mockResolvedValue([
-      { userId: 1, score: 100 },
       { userId: 2, score: 200 },
+      { userId: 1, score: 100 },
     ]);
     const result = await service.getUserRankSummary(1, 2);
     expect(result.rank).toBe(1);

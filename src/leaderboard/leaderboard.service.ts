@@ -1,4 +1,5 @@
-import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Leaderboard } from './entities/leaderboard.entity';
@@ -15,9 +16,9 @@ export class LeaderboardService {
     private leaderboardRepository: Repository<Leaderboard>,
     @InjectRepository(LeaderboardEntry)
     private entryRepository: Repository<LeaderboardEntry>,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject(CACHE_MANAGER) private cacheManager: any,
     private achievementsService: AchievementsService,
-  ) {}
+  ) { }
 
   async createLeaderboard(dto: CreateLeaderboardDto): Promise<Leaderboard> {
     const leaderboard = this.leaderboardRepository.create(dto);
@@ -45,11 +46,12 @@ export class LeaderboardService {
     // Get current leaderboard entries ordered by score DESC
     const entries = await this.entryRepository.find({
       where: { leaderboard: { id: leaderboardId } },
-      order: [ { score: 'DESC' }, { userId: 'ASC' } ],
+      order: { score: 'DESC', userId: 'ASC' },
     });
     const userRank = entries.findIndex(e => e.userId === userId) + 1;
     for (const achievement of achievements) {
-      if (achievement.criteria?.rank && userRank > 0 && userRank <= achievement.criteria.rank) {
+      const criteria = (achievement as any).criteria;
+      if (criteria?.rank && userRank > 0 && userRank <= criteria.rank) {
         await this.achievementsService.awardAchievementToUser(achievement.id, userId);
       }
     }
@@ -69,7 +71,7 @@ export class LeaderboardService {
     userId?: number,
   ): Promise<Leaderboard & { entries: LeaderboardEntry[] }> {
     const cacheKey = `leaderboard:${leaderboardId}:${ranking}:${order}:${period || 'all'}:${userId || 'anon'}`;
-    const cached = await this.cacheManager.get<Leaderboard & { entries: LeaderboardEntry[] }>(cacheKey);
+    const cached = await this.cacheManager.get(cacheKey);
     if (cached) return cached;
     const leaderboard = await this.leaderboardRepository.findOne({
       where: { id: leaderboardId },
@@ -86,10 +88,10 @@ export class LeaderboardService {
     if (period) entryWhere.period = period;
     const entries = await this.entryRepository.find({
       where: entryWhere,
-      order: [
-        { [ranking]: order },
-        { userId: 'ASC' },
-      ],
+      order: {
+        [ranking]: order,
+        userId: 'ASC',
+      } as any,
     });
     const result = { ...leaderboard, entries };
     await this.cacheManager.set(cacheKey, result, { ttl: 30 });
@@ -134,7 +136,7 @@ export class LeaderboardService {
   async getUserRankSummary(leaderboardId: number, userId: number) {
     const entries = await this.entryRepository.find({
       where: { leaderboard: { id: leaderboardId }, archived: false },
-      order: [ { score: 'DESC' }, { userId: 'ASC' } ],
+      order: { score: 'DESC', userId: 'ASC' },
     });
     const userRank = entries.findIndex(e => e.userId === userId) + 1;
     const userEntry = entries.find(e => e.userId === userId);
