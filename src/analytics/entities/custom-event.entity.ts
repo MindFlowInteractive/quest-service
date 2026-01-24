@@ -1,3 +1,5 @@
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
+
 @Entity('custom_events')
 @Index(['funnelId', 'step'])
 export class CustomEvent {

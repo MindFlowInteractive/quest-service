@@ -31,6 +31,8 @@ import { SorobanModule } from './soroban/soroban.module';
 import { NFTModule } from './nft/nft.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { PuzzleModule } from './puzzle/puzzle.module';
+import { EventModule } from './event/event.module';
+import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
 
 @Module({
   imports: [
@@ -82,6 +84,8 @@ import { PuzzleModule } from './puzzle/puzzle.module';
     NFTModule,
     RewardsModule,
     PuzzleModule,
+    EventModule,
+    SeasonalEventsModule,
   ],
   controllers: [AppController],
   providers: [

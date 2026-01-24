@@ -1,3 +1,5 @@
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
+
 @Entity('player_cohorts')
 @Index(['cohortDate', 'daysSinceInstall'])
 export class PlayerCohort {

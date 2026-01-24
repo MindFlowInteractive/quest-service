@@ -1,3 +1,4 @@
+import { Events } from 'src/event/entities/event.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -193,4 +194,12 @@ export class Puzzle {
 
   @OneToMany(() => Puzzle, (puzzle) => puzzle.parentPuzzle)
   childPuzzles: Puzzle[];
+
+  @ManyToOne(() => Events, event => event.puzzles, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'eventId' })
+  event: Event;
+
+  @Column()
+  eventId: number;
+
 }

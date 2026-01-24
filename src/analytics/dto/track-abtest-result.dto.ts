@@ -1,3 +1,5 @@
+import { IsString, IsNumber } from 'class-validator';
+
 export class TrackABTestResultDto {
   @IsString()
   testId: string;

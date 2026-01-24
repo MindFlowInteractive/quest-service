@@ -1,3 +1,5 @@
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
+
 @Entity('abtest_results')
 @Index(['testId', 'variant'])
 export class ABTestResult {
