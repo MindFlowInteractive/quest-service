@@ -1,39 +1,17 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { AppService as ReplayService } from './app.service';
+import { Controller, Get } from '@nestjs/common';
+import { AppService } from './app.service';
 
-@Controller('replays')
-export class ReplayController {
-  constructor(private readonly replayService: ReplayService) {}
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
 
-  @MessagePattern('PUZZLE_STARTED')
-  async handlePuzzleStarted(@Payload() data: any) {
-    return this.replayService.handlePuzzleStarted(data);
+  @Get()
+  getHello(): { message: string } {
+    return { message: this.appService.getHello() };
   }
 
-  @MessagePattern('PUZZLE_MOVE')
-  async handlePuzzleMove(@Payload() data: any) {
-    return this.replayService.handlePuzzleMove(data);
-  }
-
-  @Get('latest/:puzzleId/:playerId')
-  async getLatestReplay(
-    @Param('puzzleId') puzzleId: string,
-    @Param('playerId') playerId: string,
-  ) {
-    return this.replayService.getLatestReplay(puzzleId, playerId);
-  }
-
-  @Get(':id')
-  async getReplayById(@Param('id') id: string) {
-    return this.replayService.getReplayById(id);
-  }
-
-  @Get(':id/compare')
-  async compareState(
-    @Param('id') id: string,
-    @Query('moveIndex') moveIndex: string,
-  ) {
-    return this.replayService.getReplayCompareState(id, parseInt(moveIndex, 10));
+  @Get('health')
+  getHealth(): { status: string; timestamp: string } {
+    return this.appService.getHealth();
   }
 }
