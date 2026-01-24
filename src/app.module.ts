@@ -26,6 +26,9 @@ import { TournamentsModule } from './tournaments/tournaments.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { SaveGameModule } from './save-game/save-game.module';
+import { PlayerModule } from './player/player.module';
+import { ProfileModule } from './profile/profile.module';
+import { ProgressModule } from './progress/progress.module';
 
 @Module({
   imports: [
@@ -73,6 +76,9 @@ import { SaveGameModule } from './save-game/save-game.module';
     TournamentsModule,
     ReferralsModule,
     SaveGameModule,
+    PlayerModule,
+    ProfileModule,
+    ProgressModule,
   ],
   controllers: [AppController],
   providers: [
