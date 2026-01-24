@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  achievement-service:
+    build: .
+    ports:
+      - '3006:3006'
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      DB_NAME: quest_achievement
+      PORT: 3006
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: quest_achievement
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
