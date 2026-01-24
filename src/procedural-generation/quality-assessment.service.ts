@@ -350,14 +350,14 @@ export class GenerationQualityAssessmentService {
 
     if (qualityCheck.issues.length > 0) {
       report += '\nISSUES FOUND:\n';
-      qualityCheck.issues.forEach((issue) => {
+      qualityCheck.issues.forEach((issue: any) => {
         report += `  ⚠ ${issue}\n`;
       });
     }
 
     if (qualityCheck.recommendations.length > 0) {
       report += '\nRECOMMENDATIONS:\n';
-      qualityCheck.recommendations.forEach((rec) => {
+      qualityCheck.recommendations.forEach((rec: any) => {
         report += `  → ${rec}\n`;
       });
     }

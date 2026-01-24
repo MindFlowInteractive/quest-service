@@ -9,6 +9,7 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
+import { HintUsage } from './hint-usage.entity';
 
 @Entity('hints')
 @Index(['puzzleId', 'order'])
@@ -83,7 +84,7 @@ export class Hint {
   updatedAt: Date;
 
   // Relationships
-  @ManyToOne(() => 'Puzzle', { onDelete: 'CASCADE' })
+  @ManyToOne('Puzzle', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'puzzleId' })
   puzzle: any;
 

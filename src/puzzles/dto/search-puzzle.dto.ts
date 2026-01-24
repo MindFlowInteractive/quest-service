@@ -46,17 +46,17 @@ export class SearchPuzzleDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @Transform(({ value }) => typeof value === 'string' ? value.split(',') : value)
+  @Transform(({ value }: any) => typeof value === 'string' ? value.split(',') : value)
   tags?: string[];
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }: any) => value === 'true')
   isFeatured?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }: any) => value === 'true')
   isPublished?: boolean;
 
   @IsOptional()
@@ -88,7 +88,7 @@ export class SearchPuzzleDto {
 export class PuzzleStatsDto {
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }: any) => value === 'true')
   includeStats?: boolean = false;
 
   @IsOptional()

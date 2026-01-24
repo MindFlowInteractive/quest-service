@@ -8,7 +8,9 @@ describe('AchievementsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AchievementsController],
-      providers: [AchievementsService],
+      providers: [
+        { provide: AchievementsService, useValue: { findAll: jest.fn(), findOne: jest.fn() } }
+      ],
     }).compile();
 
     controller = module.get<AchievementsController>(AchievementsController);

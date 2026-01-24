@@ -3,7 +3,9 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import * as request from 'supertest';
+import supertest from 'supertest';
+const request = supertest as any;
+
 import { PuzzlesModule } from '../puzzles.module';
 import { Puzzle } from '../entities/puzzle.entity';
 import { PuzzleProgress } from '../../game-logic/entities/puzzle-progress.entity';
@@ -94,8 +96,8 @@ describe('Puzzles Integration Tests', () => {
 
     await app.init();
 
-  puzzleRepository = moduleFixture.get<Repository<Puzzle>>(getRepositoryToken(Puzzle));
-  userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
+    puzzleRepository = moduleFixture.get<Repository<Puzzle>>(getRepositoryToken(Puzzle));
+    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
     jwtService = moduleFixture.get(JwtService);
 
     // Create test user
@@ -243,7 +245,7 @@ describe('Puzzles Integration Tests', () => {
         .query({ category: 'math' })
         .expect(200);
 
-      expect(response.body.puzzles.every((p) => p.category === 'math')).toBe(
+      expect(response.body.puzzles.every((p: any) => p.category === 'math')).toBe(
         true,
       );
     });
@@ -254,7 +256,7 @@ describe('Puzzles Integration Tests', () => {
         .query({ difficulty: 'easy' })
         .expect(200);
 
-      expect(response.body.puzzles.every((p) => p.difficulty === 'easy')).toBe(
+      expect(response.body.puzzles.every((p: any) => p.difficulty === 'easy')).toBe(
         true,
       );
     });
@@ -265,7 +267,7 @@ describe('Puzzles Integration Tests', () => {
         .query({ search: 'Math' })
         .expect(200);
 
-      expect(response.body.puzzles.some((p) => p.title.includes('Math'))).toBe(
+      expect(response.body.puzzles.some((p: any) => p.title.includes('Math'))).toBe(
         true,
       );
     });
@@ -276,7 +278,7 @@ describe('Puzzles Integration Tests', () => {
         .query({ sortBy: 'title', sortOrder: 'ASC' })
         .expect(200);
 
-      const titles = response.body.puzzles.map((p) => p.title);
+      const titles = response.body.puzzles.map((p: any) => p.title);
       const sortedTitles = [...titles].sort();
       expect(titles).toEqual(sortedTitles);
     });
@@ -439,7 +441,7 @@ describe('Puzzles Integration Tests', () => {
     });
 
     it('should perform bulk publish operation', async () => {
-      const puzzleIds = testPuzzles.map((p) => p.id);
+      const puzzleIds = testPuzzles.map((p: any) => p.id);
       const bulkUpdateDto = {
         action: 'publish',
         reason: 'Integration test bulk publish',

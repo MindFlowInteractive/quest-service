@@ -85,7 +85,7 @@ describe("AuthService", () => {
         verificationToken: "mock-token",
       }
 
-      jest.spyOn(userRepository, "findOne").mockResolvedValue(null)
+      jest.spyOn(userRepository, "findOne").mockResolvedValue(undefined)
       jest.spyOn(roleRepository, "findOne").mockResolvedValue(mockRole)
       jest.spyOn(userRepository, "create").mockReturnValue(mockUser)
       jest.spyOn(userRepository, "save").mockResolvedValue(mockUser)
@@ -131,7 +131,7 @@ describe("AuthService", () => {
 
     it("should throw UnauthorizedException for invalid credentials", async () => {
       const loginDto = { email: "test@example.com", password: "wrongpassword" }
-      jest.spyOn(userRepository, "findOne").mockResolvedValue(null)
+      jest.spyOn(userRepository, "findOne").mockResolvedValue(undefined)
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException)
     })
@@ -166,18 +166,18 @@ describe("AuthService", () => {
       } as User
 
       jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
-      jest.spyOn(userRepository, "save").mockResolvedValue({ ...mockUser, isVerified: true, verificationToken: null })
+      jest.spyOn(userRepository, "save").mockResolvedValue({ ...mockUser, isVerified: true, verificationToken: undefined })
 
       const result = await service.verifyEmail(verifyDto)
       expect(result).toEqual({ message: "Email verified successfully." })
       expect(userRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ isVerified: true, verificationToken: null }),
+        expect.objectContaining({ isVerified: true, verificationToken: undefined }),
       )
     })
 
     it("should throw BadRequestException for invalid token", async () => {
       const verifyDto = { token: "invalid-token" }
-      jest.spyOn(userRepository, "findOne").mockResolvedValue(null)
+      jest.spyOn(userRepository, "findOne").mockResolvedValue(undefined)
 
       await expect(service.verifyEmail(verifyDto)).rejects.toThrow(BadRequestException)
     })
@@ -200,7 +200,7 @@ describe("AuthService", () => {
 
     it("should return generic message if user does not exist", async () => {
       const forgotDto = { email: "nonexistent@example.com" }
-      jest.spyOn(userRepository, "findOne").mockResolvedValue(null)
+      jest.spyOn(userRepository, "findOne").mockResolvedValue(undefined)
 
       const result = await service.forgotPassword(forgotDto)
       expect(result).toEqual({ message: "If a user with that email exists, a password reset link has been sent." })
@@ -222,8 +222,8 @@ describe("AuthService", () => {
       jest.spyOn(userRepository, "save").mockResolvedValue({
         ...mockUser,
         password: "hashed_newpassword123",
-        resetPasswordToken: null,
-        resetPasswordExpires: null,
+        resetPasswordToken: undefined,
+        resetPasswordExpires: undefined,
       })
 
       const result = await service.resetPassword(resetDto)
@@ -231,15 +231,15 @@ describe("AuthService", () => {
       expect(userRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           password: "hashed_newpassword123",
-          resetPasswordToken: null,
-          resetPasswordExpires: null,
+          resetPasswordToken: undefined,
+          resetPasswordExpires: undefined,
         }),
       )
     })
 
     it("should throw BadRequestException for invalid or expired token", async () => {
       const resetDto = { token: "invalid-token", newPassword: "newpassword123" }
-      jest.spyOn(userRepository, "findOne").mockResolvedValue(null)
+      jest.spyOn(userRepository, "findOne").mockResolvedValue(undefined)
 
       await expect(service.resetPassword(resetDto)).rejects.toThrow(BadRequestException)
 
@@ -283,7 +283,7 @@ describe("AuthService", () => {
       const userId = "uuid-1"
       const oldRefreshToken = "invalid-refresh-token"
 
-      jest.spyOn(refreshTokenRepository, "findOne").mockResolvedValue(null)
+      jest.spyOn(refreshTokenRepository, "findOne").mockResolvedValue(undefined)
       await expect(service.refreshToken(userId, oldRefreshToken)).rejects.toThrow(UnauthorizedException)
 
       const expiredToken = {
@@ -317,7 +317,7 @@ describe("AuthService", () => {
       const userId = "uuid-1"
       const refreshToken = "invalid-refresh-token"
 
-      jest.spyOn(refreshTokenRepository, "findOne").mockResolvedValue(null)
+      jest.spyOn(refreshTokenRepository, "findOne").mockResolvedValue(undefined)
       await expect(service.logout(userId, refreshToken)).rejects.toThrow(BadRequestException)
     })
   })
@@ -337,8 +337,8 @@ describe("AuthService", () => {
       expect(result).toEqual(mockUser)
     })
 
-    it("should return null if user not found or not verified", async () => {
-      jest.spyOn(userRepository, "findOne").mockResolvedValue(null)
+    it("should return undefined if user not found or not verified", async () => {
+      jest.spyOn(userRepository, "findOne").mockResolvedValue(undefined)
       expect(await service.validateUserById("non-existent")).toBeNull()
 
       const unverifiedUser = { id: "uuid-2", email: "unverified@example.com", isVerified: false } as User
@@ -358,7 +358,7 @@ describe("AuthService", () => {
     })
 
     it("should return false if refresh token is invalid, revoked, or expired", async () => {
-      jest.spyOn(refreshTokenRepository, "findOne").mockResolvedValue(null)
+      jest.spyOn(refreshTokenRepository, "findOne").mockResolvedValue(undefined)
       expect(await service.validateRefreshToken("uuid-1", "invalid-token")).toBe(false)
 
       const revokedToken = {
@@ -387,7 +387,7 @@ describe("AuthService", () => {
       const mockUser = { id: "uuid-1", email: oauthUser.email, googleId: oauthUser.googleId, isVerified: true } as User
       jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
 
-      const result = await service.findOrCreateOAuthUser(oauthUser, "google")
+      const result = await service.findOrCreateOAuthUser("google", oauthUser)
       expect(result).toEqual(mockUser)
       expect(userRepository.findOne).toHaveBeenCalledWith({ where: { googleId: oauthUser.googleId } })
     })
@@ -398,13 +398,13 @@ describe("AuthService", () => {
 
       jest
         .spyOn(userRepository, "findOne")
-        .mockResolvedValueOnce(null) // No user by googleId
+        .mockResolvedValueOnce(undefined) // No user by googleId
         .mockResolvedValueOnce(existingUserByEmail) // User found by email
       jest
         .spyOn(userRepository, "save")
         .mockResolvedValue({ ...existingUserByEmail, googleId: oauthUser.googleId, isVerified: true })
 
-      const result = await service.findOrCreateOAuthUser(oauthUser, "google")
+      const result = await service.findOrCreateOAuthUser("google", oauthUser)
       expect(result.googleId).toBe(oauthUser.googleId)
       expect(result.isVerified).toBe(true)
       expect(userRepository.save).toHaveBeenCalledWith(
@@ -425,13 +425,13 @@ describe("AuthService", () => {
 
       jest
         .spyOn(userRepository, "findOne")
-        .mockResolvedValueOnce(null) // No user by githubId
-        .mockResolvedValueOnce(null) // No user by email
+        .mockResolvedValueOnce(undefined) // No user by githubId
+        .mockResolvedValueOnce(undefined) // No user by email
       jest.spyOn(roleRepository, "findOne").mockResolvedValue(mockRole)
       jest.spyOn(userRepository, "create").mockReturnValue(newOAuthUser)
       jest.spyOn(userRepository, "save").mockResolvedValue(newOAuthUser)
 
-      const result = await service.findOrCreateOAuthUser(oauthUser, "github")
+      const result = await service.findOrCreateOAuthUser("github", oauthUser)
       expect(result).toEqual(newOAuthUser)
       expect(userRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({ email: oauthUser.email, githubId: oauthUser.githubId, isVerified: true }),
@@ -443,11 +443,11 @@ describe("AuthService", () => {
 
       jest
         .spyOn(userRepository, "findOne")
-        .mockResolvedValueOnce(null) // No user by githubId
-        .mockResolvedValueOnce(null) // No user by email
-      jest.spyOn(roleRepository, "findOne").mockResolvedValue(null) // No default role
+        .mockResolvedValueOnce(undefined as any) // No user by githubId
+        .mockResolvedValueOnce(undefined as any) // No user by email
+      jest.spyOn(roleRepository, "findOne").mockResolvedValue(undefined as any) // No default role
 
-      await expect(service.findOrCreateOAuthUser(oauthUser, "github")).rejects.toThrow(
+      await expect(service.findOrCreateOAuthUser("github", oauthUser)).rejects.toThrow(
         "Default user role not found. Please seed roles.",
       )
     })

@@ -36,7 +36,7 @@ export class AnalyticsService {
   constructor(
     private readonly analyticsRepository: Repository<PuzzleAnalytics>,
     private readonly sessionRepository: Repository<GameSession>,
-    private readonly config: ConfigType<typeof gameEngineConfig>,
+    private readonly config: any,
   ) {
     // Process queued events periodically
     setInterval(() => this.processEventQueue(), 5000)
@@ -302,10 +302,10 @@ export class AnalyticsService {
       where: { userId: playerId, isActive: true },
       order: { startTime: "DESC" },
     })
-    
+
     if (foundSession) {
       session = foundSession
-      
+
       // Check if session is still valid
       const sessionAge = Date.now() - session.startTime.getTime()
       if (sessionAge < this.config.analytics.sessionTimeout) {

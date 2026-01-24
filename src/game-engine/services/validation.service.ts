@@ -1,15 +1,15 @@
-import { Injectable, Logger } from "@nestjs/common"
-import type { ConfigType } from "@nestjs/config"
+import { Injectable, Logger, Inject } from "@nestjs/common"
+import { ConfigType } from "@nestjs/config"
 import type { IPuzzle, IPuzzleValidator } from "../interfaces/puzzle.interfaces"
 import type { PuzzleMove, ValidationResult, ValidationError, PuzzleType } from "../types/puzzle.types"
-import type { gameEngineConfig } from "../config/game-engine.config"
+import { gameEngineConfig } from "../config/game-engine.config"
 
 @Injectable()
 export class ValidationService implements IPuzzleValidator {
   private readonly logger = new Logger(ValidationService.name)
   private readonly validators = new Map<PuzzleType, IPuzzleValidator>()
 
-  constructor(private readonly config: ConfigType<typeof gameEngineConfig>) {}
+  constructor(@Inject(gameEngineConfig.KEY) private readonly config: any) { }
 
   registerValidator(puzzleType: PuzzleType, validator: IPuzzleValidator): void {
     this.validators.set(puzzleType, validator)

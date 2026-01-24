@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '../users/entities/user.entity';
 import { Tag } from './tag.entity';
 import { Category } from './category.entity';
 import { ContentVersion } from './content_version.entity';
@@ -35,7 +35,7 @@ export class Content {
   @ManyToOne(() => User, { eager: true })
   author: User;
 
-  @Column({ type: 'enum', enum: ['draft','pending','published','rejected','archived'], default: 'draft' })
+  @Column({ type: 'enum', enum: ['draft', 'pending', 'published', 'rejected', 'archived'], default: 'draft' })
   status: ContentStatus;
 
   @ManyToOne(() => Category, (c) => c.contents, { nullable: true, eager: true })

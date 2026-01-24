@@ -2,7 +2,7 @@ import { Controller, Get, Post, Param, Body } from "@nestjs/common"
 import type { PuzzleEngineService } from "../services/puzzle-engine.service"
 import type { HintSystemService } from "../services/hint-system.service"
 import type { DifficultyScalingService } from "../services/difficulty-scaling.service"
-import type { PuzzleType, PuzzleMove } from "../types/puzzle.types"
+import { PuzzleType, PuzzleMove, DifficultyLevel } from "../types/puzzle.types"
 
 @Controller("puzzles")
 export class PuzzleController {
@@ -10,7 +10,7 @@ export class PuzzleController {
     private readonly puzzleEngine: PuzzleEngineService,
     private readonly hintSystem: HintSystemService,
     private readonly difficultyScaling: DifficultyScalingService,
-  ) {}
+  ) { }
 
   @Post()
   async createPuzzle(
@@ -21,7 +21,7 @@ export class PuzzleController {
       config?: any
     },
   ) {
-    const difficulty = createPuzzleDto.difficulty || "MEDIUM"
+    const difficulty = DifficultyLevel[createPuzzleDto.difficulty?.toUpperCase() as keyof typeof DifficultyLevel] || DifficultyLevel.MEDIUM
     return this.puzzleEngine.createPuzzle(
       createPuzzleDto.type,
       createPuzzleDto.playerId,

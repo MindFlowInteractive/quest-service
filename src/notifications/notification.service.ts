@@ -1,4 +1,3 @@
-
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -23,10 +22,10 @@ export class NotificationService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Device)
     private readonly deviceRepo: Repository<Device>,
-    private readonly emailService: any,
-    private readonly scheduler: any,
-    private readonly pushService: any,
-  ) {}
+    private readonly emailService: EmailService,
+    @Inject(SchedulerRegistry) private readonly scheduler: any,
+    private readonly pushService: PushService,
+  ) { }
 
   // Backwards-compatible convenience method used across the codebase
   async notifyAchievementUnlocked(userId: string, achievement: { name: string; description: string; iconUrl?: string; celebrationMessage?: string }) {
