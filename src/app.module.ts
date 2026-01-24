@@ -13,6 +13,7 @@ import {
 import appConfig from './config/app.config';
 import { createLoggerConfig } from './config/logger.config';
 import { UsersModule } from './users/users.module';
+import { PlayerProfileModule } from './player-profile/player-profile.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
 // import { AchievementsModule } from './achievements/achievements.module';
 import { HealthModule } from './health/health.module';
@@ -68,6 +69,7 @@ import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
     
     // Feature modules
     UsersModule,
+    PlayerProfileModule,
     PuzzlesModule,
     NotificationsModule,
     WalletModule,
