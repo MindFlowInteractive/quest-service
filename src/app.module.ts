@@ -25,6 +25,13 @@ import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { TutorialModule } from './tutorial/tutorial.module';
+import { ReferralsModule } from './referrals/referrals.module';
+import { SaveGameModule } from './save-game/save-game.module';
+
+import { SorobanModule } from './soroban/soroban.module';
+import { NFTModule } from './nft/nft.module';
+import { RewardsModule } from './rewards/rewards.module';
+import { PuzzleModule } from './puzzle/puzzle.module';
 
 @Module({
   imports: [
@@ -58,7 +65,6 @@ import { TutorialModule } from './tutorial/tutorial.module';
     }),
 
     
-
     // Feature modules
     UsersModule,
     PuzzlesModule,
@@ -71,6 +77,13 @@ import { TutorialModule } from './tutorial/tutorial.module';
     DifficultyScalingModule,
     TournamentsModule,
     TutorialModule,
+    ReferralsModule,
+    SaveGameModule,
+
+    SorobanModule,
+    NFTModule,
+    RewardsModule,
+    PuzzleModule,
   ],
   controllers: [AppController],
   providers: [

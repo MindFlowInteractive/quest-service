@@ -91,6 +91,56 @@ services:
     networks:
       - quest-network
     logging: *logging_config
+  
+  recommendation-service:
+    build:
+      context: ./microservices/recommendation-service
+      dockerfile: Dockerfile
+    container_name: recommendation_service
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DB_USER:-postgres}
+      - DATABASE_PASSWORD=${DB_PASSWORD:-password}
+      - DATABASE_NAME=recommendation_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./microservices/recommendation-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
+  moderation-service:
+    build:
+      context: ./microservices/moderation-service
+      dockerfile: Dockerfile
+    container_name: moderation_service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_DATABASE=moderation_db
+      - PORT=3005
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/moderation-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - quest-network
+    logging: *logging_config
 
   prometheus:
     image: prom/prometheus:latest
