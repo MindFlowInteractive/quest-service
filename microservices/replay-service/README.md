@@ -1,98 +1,134 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Replay Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A comprehensive microservice for recording, storing, and replaying puzzle-solving sessions with advanced analytics and sharing capabilities.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+### 🎬 Action Recording
+- Record player actions during gameplay with precise timestamps
+- Support for various action types (move, place piece, rotate, flip, hint used, undo, redo, etc.)
+- Batch action recording for improved performance
+- Action sequencing and relative timing tracking
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 💾 Replay Storage & Retrieval
+- Efficient storage of complete replay sessions
+- Multiple compression options (GZIP, Brotli) for storage optimization
+- Support for multiple storage backends (Local, S3, Azure)
+- Automatic compression type selection based on data size
+- Detailed storage metrics and compression ratios
 
-## Project setup
+### ▶️ Playback Controls
+- Smooth playback generation with adjustable speed controls
+- Position-based playback (start/end position selection)
+- Frame rate configuration (default 30 FPS)
+- Adjusted timing calculations for speed variations
 
-```bash
-$ npm install
-```
+### 🔒 Privacy & Sharing
+- Granular privacy levels: Private, Shared, Public, Unlisted
+- User-based access control
+- Dynamic share token generation
+- Access revocation capabilities
 
-## Compile and run the project
+### 📊 Advanced Analytics
+- Comprehensive replay analysis with skill level assessment
+- Action breakdown and efficiency scoring
+- Consistency metrics and peak activity detection
+- Hint usage and undo/redo ratio tracking
+- Multi-replay comparison capabilities
 
-```bash
-# development
-$ npm run start
+### 🗂️ Recording Management
+- Recording status tracking and metadata storage
+- Automatic cleanup and deletion
+- Recording statistics and monitoring
 
-# watch mode
-$ npm run start:dev
+## Quick Start
 
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Installation
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Development
 
-## Resources
+```bash
+# Watch mode
+npm run start:dev
 
-Check out a few resources that may come in handy when working with NestJS:
+# Debug mode
+npm run start:debug
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Production
 
-## Support
+```bash
+npm run build
+npm run start:prod
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Docker
 
-## Stay in touch
+```bash
+docker-compose up -d
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Environment Configuration
+
+```dotenv
+NODE_ENV=development
+PORT=3007
+DB_HOST=localhost
+DB_PORT=5433
+DB_USER=replay_user
+DB_PASSWORD=replay_password
+DB_NAME=replay_db
+STORAGE_TYPE=local
+STORAGE_PATH=./storage/replays
+```
+
+## API Documentation
+
+### Replay Endpoints
+- `POST /replay/create` - Create replay
+- `GET /replay/:replayId` - Get replay
+- `DELETE /replay/:replayId` - Delete replay
+
+### Action Recording
+- `POST /replay/:replayId/action` - Record action
+- `POST /replay/:replayId/actions` - Batch record
+- `GET /replay/:replayId/actions` - Get actions
+
+### Playback
+- `POST /replay/:replayId/playback` - Generate playback
+
+### Storage
+- `POST /replay/:replayId/save` - Save recording
+- `GET /replay/recording/:recordingId/retrieve` - Retrieve recording
+
+### Sharing
+- `PUT /replay/:replayId/privacy` - Update privacy
+- `POST /replay/:replayId/share` - Share replay
+
+### Analytics
+- `GET /replay/:replayId/analytics` - Get analytics
+- `POST /replay/analytics/compare` - Compare replays
+
+## Testing
+
+```bash
+# Unit tests
+npm run test
+
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:cov
+
+# E2E tests
+npm run test:e2e
+```
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED
