@@ -1,6 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PuzzleEngineService } from '../services/puzzle-engine.service';
 import { PuzzleType, DifficultyLevel, PuzzleMove } from '../types/puzzle.types';
+import { StateManagementService } from '../services/state-management.service';
+import { ValidationService } from '../services/validation.service';
+import { CauseEffectEngineService } from '../services/cause-effect-engine.service';
+import { AnalyticsService } from '../services/analytics.service';
+import { PuzzleState } from '../entities/puzzle-state.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
 // Mock all the dependencies to avoid complex service compilation issues
 const mockRepository = {
@@ -32,12 +38,12 @@ describe('Puzzle Engine Integration', () => {
     module = await Test.createTestingModule({
       providers: [
         PuzzleEngineService,
-        { provide: 'PuzzleStateRepository', useValue: mockRepository },
-        { provide: 'StateManagementService', useValue: mockService },
-        { provide: 'ValidationService', useValue: mockService },
-        { provide: 'CauseEffectEngineService', useValue: mockService },
-        { provide: 'AnalyticsService', useValue: mockService },
-        { provide: 'GAME_ENGINE_CONFIG', useValue: { analytics: { sessionTimeout: 1000 } } },
+        { provide: getRepositoryToken(PuzzleState), useValue: mockRepository },
+        { provide: StateManagementService, useValue: mockService },
+        { provide: ValidationService, useValue: mockService },
+        { provide: CauseEffectEngineService, useValue: mockService },
+        { provide: AnalyticsService, useValue: mockService },
+        { provide: 'gameEngine', useValue: { analytics: { sessionTimeout: 1000 }, progression: { perfectSolutionBonus: 1.5 } } },
       ],
     }).compile();
 

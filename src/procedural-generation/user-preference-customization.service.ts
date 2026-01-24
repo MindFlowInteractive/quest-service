@@ -186,7 +186,7 @@ export class UserPreferenceCustomizationService {
     }
 
     // Add theme preferences
-    if (preferences.preferredThemes?.length > 0) {
+    if (preferences.preferredThemes && preferences.preferredThemes.length > 0) {
       parameters.theme = preferences.preferredThemes[0];
     }
 

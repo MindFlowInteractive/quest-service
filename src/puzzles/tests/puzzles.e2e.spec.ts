@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import * as request from 'supertest';
+import supertest from 'supertest';
+const request = supertest as any;
+
 import { AppModule } from '../../app.module';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { Puzzle } from '../entities/puzzle.entity';
 import { JwtService } from '@nestjs/jwt';
 import { CreatePuzzleDto, PuzzleDifficulty, PuzzleContentType } from '../dto';
@@ -19,6 +22,7 @@ describe('Puzzles E2E', () => {
   let regularUser: User;
   let adminToken: string;
   let userToken: string;
+  let bulkTestPuzzleIds: string[];
 
   const samplePuzzle: CreatePuzzleDto = {
     title: 'E2E Test Puzzle: Advanced Logic Challenge',
@@ -99,8 +103,8 @@ describe('Puzzles E2E', () => {
 
     await app.init();
 
-    userRepository = moduleFixture.get('UserRepository');
-    puzzleRepository = moduleFixture.get('PuzzleRepository');
+    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
+    puzzleRepository = moduleFixture.get<Repository<Puzzle>>(getRepositoryToken(Puzzle));
     jwtService = moduleFixture.get(JwtService);
 
     // Create test users
@@ -109,28 +113,9 @@ describe('Puzzles E2E', () => {
       email: 'admin.e2e@test.com',
       password: 'hashedpassword',
       role: 'admin',
-      profile: {
-        firstName: 'Admin',
-        lastName: 'User',
-        preferredLanguage: 'en',
-        avatar: null,
-        bio: 'E2E Test Admin User',
-        location: null,
-        website: null,
-        dateOfBirth: null,
-      },
-      preferences: {
-        emailNotifications: true,
-        theme: 'light',
-        language: 'en',
-        timezone: 'UTC',
-        privacy: {
-          showProfile: true,
-          showProgress: true,
-          showAchievements: true,
-        },
-      },
-    });
+      firstName: 'Admin',
+      lastName: 'User',
+    } as any);
     adminUser = await userRepository.save(adminUser);
 
     regularUser = userRepository.create({
@@ -138,28 +123,9 @@ describe('Puzzles E2E', () => {
       email: 'user.e2e@test.com',
       password: 'hashedpassword',
       role: 'user',
-      profile: {
-        firstName: 'Regular',
-        lastName: 'User',
-        preferredLanguage: 'en',
-        avatar: null,
-        bio: 'E2E Test Regular User',
-        location: null,
-        website: null,
-        dateOfBirth: null,
-      },
-      preferences: {
-        emailNotifications: false,
-        theme: 'dark',
-        language: 'en',
-        timezone: 'EST',
-        privacy: {
-          showProfile: false,
-          showProgress: true,
-          showAchievements: false,
-        },
-      },
-    });
+      firstName: 'Regular',
+      lastName: 'User',
+    } as any);
     regularUser = await userRepository.save(regularUser);
 
     // Generate auth tokens
@@ -242,7 +208,7 @@ describe('Puzzles E2E', () => {
         .expect(200);
 
       expect(
-        publicSearch.body.puzzles.some((p) => p.id === createdPuzzleId),
+        publicSearch.body.puzzles.some((p: any) => p.id === createdPuzzleId),
       ).toBe(true);
 
       // Step 7: Regular user can view published puzzle
@@ -342,7 +308,7 @@ describe('Puzzles E2E', () => {
 
       expect(
         textSearch.body.puzzles.every(
-          (p) =>
+          (p: any) =>
             p.title.includes('Math') ||
             p.description.includes('Math') ||
             p.tags.includes('math'),
@@ -363,7 +329,7 @@ describe('Puzzles E2E', () => {
 
       expect(
         complexFilter.body.puzzles.every(
-          (p) =>
+          (p: any) =>
             p.category === 'math' &&
             p.difficulty === 'expert' &&
             p.difficultyRating >= 5 &&
@@ -377,7 +343,7 @@ describe('Puzzles E2E', () => {
         .query({ sortBy: 'title', sortOrder: 'ASC' })
         .expect(200);
 
-      const titles = sortedByTitle.body.puzzles.map((p) => p.title);
+      const titles = sortedByTitle.body.puzzles.map((p: any) => p.title);
       const sortedTitles = [...titles].sort();
       expect(titles).toEqual(sortedTitles);
     });
@@ -400,15 +366,15 @@ describe('Puzzles E2E', () => {
       expect(page1.body.totalPages).toBeGreaterThanOrEqual(1);
 
       // Ensure no overlap between pages
-      const page1Ids = page1.body.puzzles.map((p) => p.id);
-      const page2Ids = page2.body.puzzles.map((p) => p.id);
-      const overlap = page1Ids.filter((id) => page2Ids.includes(id));
+      const page1Ids = page1.body.puzzles.map((p: any) => p.id);
+      const page2Ids = page2.body.puzzles.map((p: any) => p.id);
+      const overlap = page1Ids.filter((id: any) => page2Ids.includes(id));
       expect(overlap).toHaveLength(0);
     });
   });
 
   describe('Bulk Operations Workflow', () => {
-    let bulkTestPuzzleIds: string[];
+    // bulkTestPuzzleIds is now at the top-level scope
 
     beforeAll(async () => {
       // Create puzzles for bulk operations

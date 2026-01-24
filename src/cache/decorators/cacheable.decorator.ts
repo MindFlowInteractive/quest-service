@@ -12,7 +12,7 @@ export function Cacheable(options: CacheableOptions = {}) {
   return applyDecorators(SetMetadata(CACHEABLE_KEY, options))
 }
 
-export function CacheEvict(options: { key?: string | ((args: any[]) => string); tags?: string[] } = {}) {
+export function CacheEvict(options: { key?: string | ((args: any[]) => string); tags?: string[] | ((args: any[]) => string[]) } = {}) {
   return SetMetadata("cache_evict", options)
 }
 

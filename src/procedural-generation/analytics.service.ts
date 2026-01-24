@@ -479,7 +479,7 @@ export class GenerationAnalyticsService {
   resetAnalytics(): void {
     this.eventLog.length = 0;
     this.engagementData.clear();
-    this.analytics = {
+    Object.assign(this.analytics, {
       totalGenerated: 0,
       successRate: 0,
       averageQualityScore: 0,
@@ -498,7 +498,7 @@ export class GenerationAnalyticsService {
         expert: 0,
       },
       failureReasons: {},
-    };
+    });
     this.logger.log('Analytics reset');
   }
 }

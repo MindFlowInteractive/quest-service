@@ -74,11 +74,11 @@ export class HintUsage {
   createdAt: Date;
 
   // Relationships
-  @ManyToOne(() => 'Hint', { onDelete: 'CASCADE' })
+  @ManyToOne('Hint', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hintId' })
   hint: any;
 
-  @ManyToOne(() => 'Puzzle', { onDelete: 'CASCADE' })
+  @ManyToOne('Puzzle', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'puzzleId' })
   puzzle: any;
 }

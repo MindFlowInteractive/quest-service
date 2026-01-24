@@ -41,16 +41,16 @@ export class MonitoringService {
     errors: number[]
     responseTimes: number[]
   } = {
-    requests: [],
-    errors: [],
-    responseTimes: [],
-  }
+      requests: [],
+      errors: [],
+      responseTimes: [],
+    }
 
   constructor(
-    private readonly config: ConfigType<typeof loggingConfig>,
+    private readonly config: any,
     private readonly alertingService: AlertingService,
     private readonly metricsService: MetricsService,
-  ) {}
+  ) { }
 
   registerHealthCheck(name: string, check: () => Promise<ServiceHealth>): void {
     this.healthChecks.set(name, check)
@@ -105,7 +105,7 @@ export class MonitoringService {
     return {
       status,
       timestamp: new Date(),
-      uptime: process.uptime(),
+      uptime: process.uptime?.() || 0,
       memory: {
         used: memUsage.heapUsed,
         total: totalMemory,

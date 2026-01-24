@@ -37,7 +37,7 @@ export class ProgressionService {
   constructor(
     @InjectRepository(PlayerProgress)
     private readonly playerProgressRepository: Repository<PlayerProgress>,
-    private readonly config: ConfigType<typeof gameEngineConfig>,
+    private readonly config: any,
   ) {
     this.initializeDefaultAchievements()
   }

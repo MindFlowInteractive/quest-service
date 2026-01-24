@@ -12,9 +12,9 @@ export class MetricsService {
   private readonly businessEventCounter: Counter<string>
   private readonly memoryUsage: Gauge<string>
   private readonly cpuUsage: Gauge<string>
-  private readonly config: ConfigType<typeof loggingConfig>
+  private readonly config: any
 
-  constructor(config: ConfigType<typeof loggingConfig>) {
+  constructor(config: any) {
     this.config = config
 
     // HTTP Metrics

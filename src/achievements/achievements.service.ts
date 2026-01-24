@@ -18,7 +18,7 @@ export class AchievementsService {
     private userAchievementRepository: Repository<UserAchievement>,
     private readonly notificationService: NotificationService,
     private readonly conditionEngine: AchievementConditionEngine,
-  ) {}
+  ) { }
 
   async create(createAchievementDto: CreateAchievementDto) {
     const achievement = this.achievementRepository.create(createAchievementDto);
@@ -151,5 +151,24 @@ export class AchievementsService {
   // Retroactive unlocking
   async retroactiveUnlock(userId: string, userContext: any) {
     return this.conditionEngine.evaluateAllForUser(userId, userContext);
+  }
+
+  async findLeaderboardAchievements(leaderboardId: number) {
+    // In a real app, you would query achievements linked to this leaderboard
+    return this.achievementRepository.find({
+      where: { metadata: { leaderboardId } } as any
+    });
+  }
+
+  async awardAchievementToUser(achievementId: string, userId: number | string) {
+    const userAchievement = this.userAchievementRepository.create({
+      userId: userId.toString(),
+      achievementId,
+      isUnlocked: true,
+      unlockedAt: new Date(),
+      progress: 100,
+      progressTotal: 100,
+    });
+    return this.userAchievementRepository.save(userAchievement);
   }
 }

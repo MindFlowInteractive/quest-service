@@ -20,7 +20,7 @@ export class EnvironmentVariables {
 
   @IsNumber()
   @IsOptional()
-  @Transform(({ value }) => parseInt(value, 10))
+  @Transform(({ value }: { value: any }) => parseInt(value, 10))
   PORT: number = 3000;
 
   @IsString()
@@ -33,12 +33,12 @@ export class EnvironmentVariables {
 
   @IsNumber()
   @IsOptional()
-  @Transform(({ value }) => parseInt(value, 10))
+  @Transform(({ value }: { value: any }) => parseInt(value, 10))
   THROTTLE_TTL: number = 60000; // 1 minute
 
   @IsNumber()
   @IsOptional()
-  @Transform(({ value }) => parseInt(value, 10))
+  @Transform(({ value }: { value: any }) => parseInt(value, 10))
   THROTTLE_LIMIT: number = 100; // 100 requests per minute
 
   @IsString()

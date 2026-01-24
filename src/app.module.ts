@@ -25,6 +25,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { TutorialModule } from './tutorial/tutorial.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { SaveGameModule } from './save-game/save-game.module';
 
@@ -79,6 +80,7 @@ import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
     HintsModule,
     DifficultyScalingModule,
     TournamentsModule,
+    TutorialModule,
     ReferralsModule,
     SaveGameModule,
 
