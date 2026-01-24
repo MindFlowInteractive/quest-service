@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  game-session-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: game_session_service
+    ports:
+      - "${PORT:-3004}:3004"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=game_session_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      - PORT=3004
+      - CORS_ORIGIN=http://localhost:3000
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quest-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: game_session_postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: game_session_db
+    volumes:
+      - game_session_postgres_data:/var/lib/postgresql/data
+    networks:
+      - quest-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: game_session_redis
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - game_session_redis_data:/data
+    networks:
+      - quest-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  game_session_postgres_data:
+  game_session_redis_data:
+
+networks:
+  quest-network:
+    external: true

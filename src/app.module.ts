@@ -19,9 +19,18 @@ import { HealthModule } from './health/health.module';
 // import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { HintsModule } from './hints/hints.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { WalletModule } from './wallet/wallet.module';
 
 import { DifficultyScalingModule } from './difficulty-scaling/difficulty-scaling.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
+import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { ReferralsModule } from './referrals/referrals.module';
+import { SaveGameModule } from './save-game/save-game.module';
+
+import { SorobanModule } from './soroban/soroban.module';
+import { NFTModule } from './nft/nft.module';
+import { RewardsModule } from './rewards/rewards.module';
+import { PuzzleModule } from './puzzle/puzzle.module';
 
 @Module({
   imports: [
@@ -32,6 +41,8 @@ import { TournamentsModule } from './tournaments/tournaments.module';
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
+    
+    RabbitMQModule,
 
     // Logging
     WinstonModule.forRootAsync({
@@ -53,17 +64,24 @@ import { TournamentsModule } from './tournaments/tournaments.module';
     }),
 
     
-
     // Feature modules
     UsersModule,
     PuzzlesModule,
     NotificationsModule,
+    WalletModule,
     // AchievementsModule,
     HealthModule,
     // LeaderboardModule,
     HintsModule,
     DifficultyScalingModule,
     TournamentsModule,
+    ReferralsModule,
+    SaveGameModule,
+
+    SorobanModule,
+    NFTModule,
+    RewardsModule,
+    PuzzleModule,
   ],
   controllers: [AppController],
   providers: [

@@ -41,7 +41,12 @@ export interface PuzzleGameState {
   endTime?: Date
   score: number
   hintsUsed: number
-  metadata: Record<string, any>
+  metadata: Record<string, any> & { // Use intersection to add new fields
+    session?: {
+      puzzleCount: number;
+      lastCompletionTime?: Date;
+    };
+  };
 }
 
 export interface IPuzzleGenerator {

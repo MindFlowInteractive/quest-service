@@ -1,0 +1,13 @@
+# compiled output
+/dist
+/node_modules
+
+# logs
+npm-debug.log
+yarn-error.log
+
+# test coverage
+/coverage
+
+# config settings
+.env

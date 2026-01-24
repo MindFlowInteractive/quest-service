@@ -10,3 +10,7 @@ export { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 export { Achievement } from '../achievements/entities/achievement.entity';
 export { UserAchievement } from '../achievements/entities/user-achievement.entity';
 export { GameSession } from '../game-engine/entities/game-session.entity';
+
+// Export new entities for collections and categories
+export { Category } from '../puzzles/entities/category.entity';
+export { Collection } from '../puzzles/entities/collection.entity';
