@@ -1,0 +1,260 @@
+{
+  "events": [
+    {
+      "name": "Winter Wonderland Challenge",
+      "description": "Solve festive puzzles and win amazing rewards!",
+      "theme": "winter",
+      "startDate": "2024-12-01T00:00:00Z",
+      "endDate": "2024-12-31T23:59:59Z",
+      "isPublished": true,
+      "bannerImage": {
+        "url": "https://example.com/winter-banner.jpg",
+        "alt": "Winter Challenge Banner"
+      },
+      "metadata": {
+        "eventType": "competitive",
+        "minLevel": 1,
+        "rules": [
+          "Complete puzzles to earn points",
+          "Top 10 players win special badges",
+          "Maintain streaks for bonus points"
+        ]
+      }
+    },
+    {
+      "name": "Spring Brain Teaser Festival",
+      "description": "Welcome spring with mind-bending puzzles!",
+      "theme": "spring",
+      "startDate": "2025-03-01T00:00:00Z",
+      "endDate": "2025-03-31T23:59:59Z",
+      "isPublished": true,
+      "metadata": {
+        "eventType": "casual",
+        "minLevel": 1
+      }
+    }
+  ],
+  "puzzles": [
+    {
+      "question": "What has keys but no locks, space but no room, and you can enter but can't go inside?",
+      "category": "riddle",
+      "difficulty": "easy",
+      "content": {
+        "type": "multiple-choice",
+        "options": ["A piano", "A keyboard", "A map", "A house"],
+        "correctAnswer": "A keyboard",
+        "explanation": "A keyboard has keys, a space bar, and an enter key!"
+      },
+      "rewardPoints": 100,
+      "timeLimit": 60,
+      "tags": ["riddle", "easy", "technology"]
+    },
+    {
+      "question": "If you have 3 apples and you take away 2, how many do you have?",
+      "category": "logic",
+      "difficulty": "easy",
+      "content": {
+        "type": "fill-blank",
+        "correctAnswer": "2",
+        "explanation": "You took 2 apples, so you have 2 apples!"
+      },
+      "rewardPoints": 80,
+      "timeLimit": 45,
+      "tags": ["logic", "easy", "math"]
+    },
+    {
+      "question": "What comes once in a minute, twice in a moment, but never in a thousand years?",
+      "category": "riddle",
+      "difficulty": "medium",
+      "content": {
+        "type": "fill-blank",
+        "correctAnswer": "M",
+        "explanation": "The letter 'M' appears once in 'minute', twice in 'moment', and never in 'thousand years'!"
+      },
+      "rewardPoints": 150,
+      "timeLimit": 90,
+      "tags": ["riddle", "medium", "wordplay"]
+    },
+    {
+      "question": "A farmer has 17 sheep. All but 9 die. How many are left?",
+      "category": "logic",
+      "difficulty": "medium",
+      "content": {
+        "type": "multiple-choice",
+        "options": ["8", "9", "17", "0"],
+        "correctAnswer": "9",
+        "explanation": "'All but 9' means 9 survived!"
+      },
+      "rewardPoints": 120,
+      "timeLimit": 60,
+      "tags": ["logic", "medium", "tricky"]
+    },
+    {
+      "question": "What is the next number in the sequence: 2, 6, 12, 20, 30, ?",
+      "category": "math",
+      "difficulty": "hard",
+      "content": {
+        "type": "fill-blank",
+        "correctAnswer": "42",
+        "explanation": "The pattern is n(n+1): 1×2=2, 2×3=6, 3×4=12, 4×5=20, 5×6=30, 6×7=42"
+      },
+      "rewardPoints": 200,
+      "timeLimit": 120,
+      "tags": ["math", "hard", "sequence"]
+    },
+    {
+      "question": "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
+      "category": "riddle",
+      "difficulty": "hard",
+      "content": {
+        "type": "multiple-choice",
+        "options": ["An echo", "A ghost", "A radio", "A whisper"],
+        "correctAnswer": "An echo",
+        "explanation": "An echo speaks without a mouth, hears without ears, and is carried by wind!"
+      },
+      "rewardPoints": 180,
+      "timeLimit": 120,
+      "tags": ["riddle", "hard", "nature"]
+    },
+    {
+      "question": "What 5-letter word becomes shorter when you add two letters to it?",
+      "category": "wordplay",
+      "difficulty": "expert",
+      "content": {
+        "type": "fill-blank",
+        "correctAnswer": "short",
+        "explanation": "The word 'short' becomes 'shorter' when you add 'er'!"
+      },
+      "rewardPoints": 250,
+      "timeLimit": 180,
+      "tags": ["wordplay", "expert", "clever"]
+    },
+    {
+      "question": "You see a boat filled with people. It has not sunk, but when you look again you don't see a single person on the boat. Why?",
+      "category": "riddle",
+      "difficulty": "expert",
+      "content": {
+        "type": "multiple-choice",
+        "options": [
+          "They all jumped off",
+          "They were all married",
+          "It was a ghost ship",
+          "They went underwater"
+        ],
+        "correctAnswer": "They were all married",
+        "explanation": "You don't see a 'single' person because they're all married (not single)!"
+      },
+      "rewardPoints": 300,
+      "timeLimit": 180,
+      "tags": ["riddle", "expert", "tricky"]
+    }
+  ],
+  "rewards": [
+    {
+      "name": "Puzzle Novice Badge",
+      "description": "Complete your first puzzle",
+      "type": "badge",
+      "requiredScore": 100,
+      "requiredPuzzles": 1,
+      "rewardData": {
+        "imageUrl": "https://example.com/badges/novice.png",
+        "rarity": "common"
+      },
+      "displayOrder": 1
+    },
+    {
+      "name": "Puzzle Enthusiast Badge",
+      "description": "Complete 5 puzzles",
+      "type": "badge",
+      "requiredScore": 500,
+      "requiredPuzzles": 5,
+      "rewardData": {
+        "imageUrl": "https://example.com/badges/enthusiast.png",
+        "rarity": "rare"
+      },
+      "displayOrder": 2
+    },
+    {
+      "name": "Puzzle Master Badge",
+      "description": "Complete 10 puzzles with high score",
+      "type": "badge",
+      "requiredScore": 1500,
+      "requiredPuzzles": 10,
+      "rewardData": {
+        "imageUrl": "https://example.com/badges/master.png",
+        "rarity": "epic"
+      },
+      "displayOrder": 3
+    },
+    {
+      "name": "Legendary Solver Badge",
+      "description": "Achieve legendary status",
+      "type": "badge",
+      "requiredScore": 3000,
+      "requiredPuzzles": 20,
+      "rewardData": {
+        "imageUrl": "https://example.com/badges/legendary.png",
+        "rarity": "legendary"
+      },
+      "maxClaims": 10,
+      "displayOrder": 4
+    },
+    {
+      "name": "Bonus Points",
+      "description": "Extra 500 points",
+      "type": "points",
+      "requiredScore": 1000,
+      "rewardData": {
+        "value": 500
+      },
+      "displayOrder": 5
+    },
+    {
+      "name": "Premium Currency Pack",
+      "description": "100 premium coins",
+      "type": "currency",
+      "requiredScore": 2000,
+      "rewardData": {
+        "value": 100,
+        "metadata": {
+          "currencyType": "premium"
+        }
+      },
+      "displayOrder": 6
+    },
+    {
+      "name": "Winter Champion Title",
+      "description": "Exclusive title for top performers",
+      "type": "title",
+      "requiredScore": 2500,
+      "requiredPuzzles": 15,
+      "rewardData": {
+        "metadata": {
+          "titleText": "Winter Champion",
+          "color": "#4A90E2"
+        }
+      },
+      "maxClaims": 50,
+      "displayOrder": 7
+    },
+    {
+      "name": "Snowflake Avatar Frame",
+      "description": "Beautiful winter-themed avatar frame",
+      "type": "avatar",
+      "requiredScore": 1800,
+      "rewardData": {
+        "imageUrl": "https://example.com/avatars/snowflake-frame.png",
+        "rarity": "epic"
+      },
+      "displayOrder": 8
+    }
+  ],
+  "usage_instructions": {
+    "step1": "Create an event using POST /seasonal-events with event data",
+    "step2": "Note the returned eventId",
+    "step3": "Create puzzles using POST /seasonal-events/:eventId/puzzles, adding eventId to each puzzle",
+    "step4": "Create rewards using POST /seasonal-events/:eventId/rewards, adding eventId to each reward",
+    "step5": "Test by submitting answers: POST /seasonal-events/:eventId/submit?playerId=test-player-id",
+    "step6": "Check leaderboard: GET /seasonal-events/:eventId/leaderboard"
+  }
+}

@@ -13,6 +13,7 @@ import {
 import appConfig from './config/app.config';
 import { createLoggerConfig } from './config/logger.config';
 import { UsersModule } from './users/users.module';
+import { PlayerProfileModule } from './player-profile/player-profile.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
 // import { AchievementsModule } from './achievements/achievements.module';
 import { HealthModule } from './health/health.module';
@@ -32,6 +33,8 @@ import { SorobanModule } from './soroban/soroban.module';
 import { NFTModule } from './nft/nft.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { PuzzleModule } from './puzzle/puzzle.module';
+import { EventModule } from './event/event.module';
+import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
 
 @Module({
   imports: [
@@ -67,6 +70,7 @@ import { PuzzleModule } from './puzzle/puzzle.module';
     
     // Feature modules
     UsersModule,
+    PlayerProfileModule,
     PuzzlesModule,
     NotificationsModule,
     WalletModule,
@@ -84,6 +88,8 @@ import { PuzzleModule } from './puzzle/puzzle.module';
     NFTModule,
     RewardsModule,
     PuzzleModule,
+    EventModule,
+    SeasonalEventsModule,
   ],
   controllers: [AppController],
   providers: [

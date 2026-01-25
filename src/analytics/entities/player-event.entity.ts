@@ -36,3 +36,4 @@ export class PlayerEvent {
   @CreateDateColumn({ type: 'timestamptz' })
   @Index()
   timestamp: Date;
+}

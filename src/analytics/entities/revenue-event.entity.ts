@@ -1,3 +1,5 @@
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
+
 @Entity('revenue_events')
 @Index(['playerId', 'timestamp'])
 @Index(['type', 'timestamp'])
