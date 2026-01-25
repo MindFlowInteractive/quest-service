@@ -13,5 +13,6 @@ import { AchievementsModule } from '../achievements/achievements.module';
   ],
   controllers: [LeaderboardController],
   providers: [LeaderboardService],
+  exports: [LeaderboardService],
 })
 export class LeaderboardModule { }

@@ -35,6 +35,7 @@ import { RewardsModule } from './rewards/rewards.module';
 import { PuzzleModule } from './puzzle/puzzle.module';
 import { EventModule } from './event/event.module';
 import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
+import { MultiplayerModule } from './multiplayer/multiplayer.module';
 
 @Module({
   imports: [
@@ -45,7 +46,7 @@ import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
-    
+
     RabbitMQModule,
 
     // Logging
@@ -67,7 +68,7 @@ import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
       inject: [ConfigService],
     }),
 
-    
+
     // Feature modules
     UsersModule,
     PlayerProfileModule,
@@ -90,6 +91,7 @@ import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
     PuzzleModule,
     EventModule,
     SeasonalEventsModule,
+    MultiplayerModule,
   ],
   controllers: [AppController],
   providers: [
@@ -100,4 +102,4 @@ import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
