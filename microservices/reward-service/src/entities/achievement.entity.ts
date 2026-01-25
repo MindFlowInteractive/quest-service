@@ -1,0 +1,113 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+  OneToMany,
+} from 'typeorm';
+
+@Entity('achievements')
+@Index(['category', 'isActive'])
+@Index(['rarity'])
+export class Achievement {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  @Index()
+  name: string;
+
+  @Column({ type: 'text' })
+  description: string;
+
+  @Column({ type: 'varchar', length: 50 })
+  @Index()
+  category: string; // e.g., 'puzzle_mastery', 'speed', 'consistency', 'exploration', 'social'
+
+  @Column({ type: 'varchar', length: 20, default: 'common' })
+  @Index()
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+
+  @Column({ type: 'int', default: 10 })
+  points: number; // Points awarded for this achievement
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  iconUrl?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  badgeUrl?: string;
+
+  @Column({ type: 'boolean', default: true })
+  @Index()
+  isActive: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  isSecret: boolean; // Hidden achievements
+
+  @Column({ type: 'int', default: 0 })
+  @Index()
+  unlockedCount: number; // How many users have unlocked this
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  unlockRate: number; // Percentage of users who unlocked this
+
+  // Complex unlock conditions
+  @Column({ type: 'jsonb' })
+  unlockConditions: any;
+
+  // Prerequisites (other achievements that must be unlocked first)
+  @Column({ type: 'simple-array', default: [] })
+  prerequisites: string[]; // Achievement IDs
+
+  // Progression tracking for multi-step achievements
+  @Column({ type: 'jsonb', nullable: true })
+  progression?: {
+    steps: Array<{
+      id: string;
+      name: string;
+      description: string;
+      condition: any;
+      points: number;
+    }>;
+    isCumulative: boolean; // Whether steps build on each other
+  };
+
+  // Seasonal or event-based achievements
+  @Column({ type: 'jsonb', nullable: true })
+  timeConstraints?: {
+    startDate?: Date;
+    endDate?: Date;
+    recurring?: {
+      type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+      pattern: string;
+    };
+    timezone?: string;
+  };
+
+  // Achievement metadata
+  @Column({ type: 'jsonb', default: {} })
+  metadata: {
+    tags?: string[];
+    difficulty?: number; // 1-10
+    estimatedTime?: number; // minutes to complete
+    relatedPuzzles?: string[];
+    relatedCategories?: string[];
+    tips?: string[];
+    celebrationMessage?: string;
+    shareText?: string;
+  };
+
+  @CreateDateColumn()
+  @Index()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  @Index()
+  updatedAt: Date;
+
+  // Relationships
+  @OneToMany('UserAchievement', 'achievement')
+  userAchievements: any[];
+}
