@@ -35,6 +35,7 @@ import { RewardsModule } from './rewards/rewards.module';
 import { PuzzleModule } from './puzzle/puzzle.module';
 import { EventModule } from './event/event.module';
 import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 
 @Module({
   imports: [
@@ -90,6 +91,7 @@ import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
     PuzzleModule,
     EventModule,
     SeasonalEventsModule,
+    RecommendationsModule,
   ],
   controllers: [AppController],
   providers: [
