@@ -13,6 +13,7 @@ import {
 import appConfig from './config/app.config';
 import { createLoggerConfig } from './config/logger.config';
 import { UsersModule } from './users/users.module';
+import { PlayerProfileModule } from './player-profile/player-profile.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
 // import { AchievementsModule } from './achievements/achievements.module';
 import { HealthModule } from './health/health.module';
@@ -35,6 +36,10 @@ import { SorobanModule } from './soroban/soroban.module';
 import { NFTModule } from './nft/nft.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { PuzzleModule } from './puzzle/puzzle.module';
+import { EventModule } from './event/event.module';
+import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
+import { MultiplayerModule } from './multiplayer/multiplayer.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 
 @Module({
   imports: [
@@ -45,7 +50,7 @@ import { PuzzleModule } from './puzzle/puzzle.module';
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
-    
+
     RabbitMQModule,
 
     // Logging
@@ -67,9 +72,10 @@ import { PuzzleModule } from './puzzle/puzzle.module';
       inject: [ConfigService],
     }),
 
-    
+
     // Feature modules
     UsersModule,
+    PlayerProfileModule,
     PuzzlesModule,
     NotificationsModule,
     WalletModule,
@@ -82,17 +88,17 @@ import { PuzzleModule } from './puzzle/puzzle.module';
     TutorialModule,
     ReferralsModule,
     SaveGameModule,
-<<<<<<< HEAD
     PlayerModule,
     ProfileModule,
     ProgressModule,
-=======
-
     SorobanModule,
     NFTModule,
     RewardsModule,
     PuzzleModule,
->>>>>>> 7b791d4990a44701853e0cfc426acd42051416b2
+    EventModule,
+    SeasonalEventsModule,
+    MultiplayerModule,
+    RecommendationsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -103,4 +109,4 @@ import { PuzzleModule } from './puzzle/puzzle.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

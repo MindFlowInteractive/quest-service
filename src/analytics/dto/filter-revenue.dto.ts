@@ -1,3 +1,5 @@
+import { IsOptional, IsString, IsDateString } from 'class-validator';
+
 export class FilterRevenueDto {
   @IsOptional()
   @IsDateString()
