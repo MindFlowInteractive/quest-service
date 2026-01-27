@@ -35,6 +35,7 @@ import { RewardsModule } from './rewards/rewards.module';
 import { PuzzleModule } from './puzzle/puzzle.module';
 import { EventModule } from './event/event.module';
 import { SeasonalEventsModule } from './seasonal-events/seasonal-events.module';
+import { MultiplayerModule } from './multiplayer/multiplayer.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 
 @Module({
@@ -46,7 +47,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
-    
+
     RabbitMQModule,
 
     // Logging
@@ -68,7 +69,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
       inject: [ConfigService],
     }),
 
-    
+
     // Feature modules
     UsersModule,
     PlayerProfileModule,
@@ -91,6 +92,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     PuzzleModule,
     EventModule,
     SeasonalEventsModule,
+    MultiplayerModule,
     RecommendationsModule,
   ],
   controllers: [AppController],
@@ -102,4 +104,4 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
