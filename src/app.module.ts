@@ -28,6 +28,9 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { TutorialModule } from './tutorial/tutorial.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { SaveGameModule } from './save-game/save-game.module';
+import { PlayerModule } from './player/player.module';
+import { ProfileModule } from './profile/profile.module';
+import { ProgressModule } from './progress/progress.module';
 
 import { SorobanModule } from './soroban/soroban.module';
 import { NFTModule } from './nft/nft.module';
@@ -85,7 +88,9 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     TutorialModule,
     ReferralsModule,
     SaveGameModule,
-
+    PlayerModule,
+    ProfileModule,
+    ProgressModule,
     SorobanModule,
     NFTModule,
     RewardsModule,
