@@ -1,0 +1,14 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "../src",
+  "testRegex": "\\.smoke\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "testEnvironment": "node",
+  "setupFilesAfterEnv": ["<rootDir>/../test/setup-smoke.ts"],
+  "moduleNameMapping": {
+    "^src/(.*)$": "<rootDir>/$1"
+  },
+  "testTimeout": 10000
+}

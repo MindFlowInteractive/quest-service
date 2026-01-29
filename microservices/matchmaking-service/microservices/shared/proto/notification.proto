@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package notification;
+
+service NotificationService {
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+  rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse);
+  rpc MarkAsRead(MarkAsReadRequest) returns (MarkAsReadResponse);
+  rpc SubscribeToUpdates(SubscribeRequest) returns (stream NotificationUpdate);
+}
+
+message SendNotificationRequest {
+  string user_id = 1;
+  string type = 2; // 'email', 'push', 'in_app'
+  string title = 3;
+  string message = 4;
+  map<string, string> data = 5;
+}
+
+message SendNotificationResponse {
+  bool success = 1;
+  string notification_id = 2;
+  string message = 3;
+}
+
+message GetNotificationsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  string type = 4; // optional filter by type
+}
+
+message GetNotificationsResponse {
+  repeated Notification notifications = 1;
+  int32 total = 2;
+  int32 unread_count = 3;
+}
+
+message Notification {
+  string id = 1;
+  string user_id = 2;
+  string type = 3;
+  string title = 4;
+  string message = 5;
+  bool is_read = 6;
+  map<string, string> data = 7;
+  int64 created_at = 8;
+}
+
+message MarkAsReadRequest {
+  string user_id = 1;
+  string notification_id = 2;
+}
+
+message MarkAsReadResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SubscribeRequest {
+  string user_id = 1;
+}
+
+message NotificationUpdate {
+  Notification notification = 1;
+}
