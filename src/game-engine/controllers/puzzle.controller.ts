@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Param, Body } from "@nestjs/common"
+import { Controller, Get, Post, Param, Body, UseGuards } from "@nestjs/common"
 import type { PuzzleEngineService } from "../services/puzzle-engine.service"
 import type { HintSystemService } from "../services/hint-system.service"
 import type { DifficultyScalingService } from "../services/difficulty-scaling.service"
 import { PuzzleType, PuzzleMove, DifficultyLevel } from "../types/puzzle.types"
+import { AntiCheatGuard } from "../../anti-cheat/guards/anti-cheat.guard"
 
 @Controller("puzzles")
 export class PuzzleController {
@@ -41,6 +42,7 @@ export class PuzzleController {
   }
 
   @Post(":puzzleId/player/:playerId/moves")
+  @UseGuards(AntiCheatGuard)
   async makeMove(@Param("puzzleId") puzzleId: string, @Param("playerId") playerId: string, @Body() move: PuzzleMove) {
     return this.puzzleEngine.makeMove(puzzleId, playerId, move)
   }
