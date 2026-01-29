@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package social;
+
+service SocialService {
+  rpc GetFriends(GetFriendsRequest) returns (GetFriendsResponse);
+  rpc SendFriendRequest(FriendRequestRequest) returns (FriendRequestResponse);
+  rpc AcceptFriendRequest(AcceptFriendRequestRequest) returns (AcceptFriendRequestResponse);
+  rpc GetLeaderboard(GetLeaderboardRequest) returns (GetLeaderboardResponse);
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+}
+
+message GetFriendsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetFriendsResponse {
+  repeated Friend friends = 1;
+  int32 total = 2;
+}
+
+message Friend {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string avatar_url = 4;
+  int64 created_at = 5;
+}
+
+message FriendRequestRequest {
+  string from_user_id = 1;
+  string to_user_id = 2;
+}
+
+message FriendRequestResponse {
+  bool success = 1;
+  string message = 2;
+  string request_id = 3;
+}
+
+message AcceptFriendRequestRequest {
+  string user_id = 1;
+  string request_id = 2;
+}
+
+message AcceptFriendRequestResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetLeaderboardRequest {
+  string type = 1; // 'puzzles', 'tournaments', 'overall'
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetLeaderboardResponse {
+  repeated LeaderboardEntry entries = 1;
+  int32 total = 2;
+}
+
+message LeaderboardEntry {
+  string user_id = 1;
+  string username = 2;
+  string avatar_url = 3;
+  int32 score = 4;
+  int32 rank = 5;
+}
+
+message GetUserProfileRequest {
+  string user_id = 1;
+}
+
+message GetUserProfileResponse {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string avatar_url = 4;
+  int32 total_score = 5;
+  int32 friends_count = 6;
+  repeated Achievement achievements = 7;
+}
+
+message Achievement {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string icon_url = 4;
+  int64 unlocked_at = 5;
+}

@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  replay-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: replay-service
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: replay_user
+      DB_PASSWORD: replay_password
+      DB_NAME: replay_db
+      STORAGE_TYPE: local
+      STORAGE_PATH: ./storage/replays
+    ports:
+      - "3007:3007"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/usr/src/app/src
+      - ./storage:/usr/src/app/storage
+    networks:
+      - quest-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: replay-postgres
+    environment:
+      POSTGRES_USER: replay_user
+      POSTGRES_PASSWORD: replay_password
+      POSTGRES_DB: replay_db
+    volumes:
+      - replay-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U replay_user -d replay_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - quest-network
+
+networks:
+  quest-network:
+    driver: bridge
+
+volumes:
+  replay-postgres-data:
+    driver: local

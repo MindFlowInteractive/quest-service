@@ -1,0 +1,248 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: quest_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-database.sh
+    networks:
+      - quest-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  quest-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quest_service
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=quest_db
+      - DB_READ_HOST=postgres
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: &logging_config
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+  
+  notification-service:
+    build:
+      context: ./microservices/notification-service
+      dockerfile: ../../Dockerfile
+    container_name: notification_service
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=notification_db
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/notification-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - quest-network
+    logging: *logging_config
+  
+  social-service:
+    build:
+      context: ./microservices/social-service
+      dockerfile: ../../Dockerfile
+    container_name: social_service
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=social_db
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/social-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - quest-network
+    logging: *logging_config
+  
+  recommendation-service:
+    build:
+      context: ./microservices/recommendation-service
+      dockerfile: Dockerfile
+    container_name: recommendation_service
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DB_USER:-postgres}
+      - DATABASE_PASSWORD=${DB_PASSWORD:-password}
+      - DATABASE_NAME=recommendation_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./microservices/recommendation-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
+  moderation-service:
+    build:
+      context: ./microservices/moderation-service
+      dockerfile: Dockerfile
+    container_name: moderation_service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_DATABASE=moderation_db
+      - PORT=3005
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/moderation-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - quest-network
+    logging: *logging_config
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: quest_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - quest-network
+
+
+  loki:
+    image: grafana/loki:2.8.2
+    container_name: quest_loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./docker/monitoring/loki-config.yaml:/etc/loki/config.yaml
+    networks:
+      - quest-network
+
+  promtail:
+    image: grafana/promtail:2.8.2
+    container_name: quest_promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./docker/monitoring/promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - quest-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.47
+    container_name: quest_jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=:9411
+    networks:
+      - quest-network
+
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: quest_grafana
+    ports:
+      - "3003:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - quest-network
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_main
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_main
+    ports:
+      - '${RABBITMQ_PORT:-5672}:5672'
+      - '${RABBITMQ_MGMT_PORT:-15672}:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbitmq123}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  postgres_test_data:
+  redis_data:
+  rabbitmq_data:
+networks:
+  quest-network:
+    driver: bridge

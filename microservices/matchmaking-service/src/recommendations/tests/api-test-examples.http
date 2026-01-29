@@ -1,0 +1,107 @@
+### API Testing Examples for Recommendation System
+### Use these HTTP requests to test the recommendation endpoints
+
+### 1. Get recommendations for a user
+GET http://localhost:3000/recommendations/puzzles/user-123
+?limit=10
+&category=logic
+&difficulty=medium
+&algorithm=hybrid
+
+### 2. Get recommendations with A/B testing
+GET http://localhost:3000/recommendations/puzzles/user-456
+?limit=5
+&abTestGroup=algorithm_comparison_v1_hybrid_default
+
+### 3. Track user interaction - View
+POST http://localhost:3000/recommendations/interactions
+Content-Type: application/json
+
+{
+  "userId": "user-123",
+  "puzzleId": "puzzle-456",
+  "interactionType": "view",
+  "metadata": {
+    "source": "homepage",
+    "position": 1
+  }
+}
+
+### 4. Track user interaction - Click
+POST http://localhost:3000/recommendations/interactions
+Content-Type: application/json
+
+{
+  "userId": "user-123",
+  "puzzleId": "puzzle-456",
+  "interactionType": "click",
+  "metadata": {
+    "source": "recommendation",
+    "algorithm": "hybrid"
+  }
+}
+
+### 5. Record puzzle completion
+POST http://localhost:3000/recommendations/puzzle-completed
+Content-Type: application/json
+
+{
+  "userId": "user-123",
+  "puzzleId": "puzzle-456",
+  "completionTime": 180,
+  "hintsUsed": 2,
+  "attempts": 3,
+  "score": 750
+}
+
+### 6. Record puzzle rating
+POST http://localhost:3000/recommendations/puzzle-rated
+Content-Type: application/json
+
+{
+  "userId": "user-123",
+  "puzzleId": "puzzle-456",
+  "rating": 4.5,
+  "difficultyVote": "medium"
+}
+
+### 7. Get user preferences and insights
+GET http://localhost:3000/recommendations/preferences/user-123
+
+### 8. Get recommendation metrics (all algorithms)
+GET http://localhost:3000/recommendations/metrics
+
+### 9. Get recommendation metrics (specific algorithm)
+GET http://localhost:3000/recommendations/metrics
+?algorithm=hybrid
+&startDate=2024-01-01
+&endDate=2024-12-31
+
+### 10. Get popular puzzles (fallback recommendations)
+GET http://localhost:3000/recommendations/popular/logic
+?limit=5
+&difficulty=easy
+
+### 11. Refresh user preferences manually
+POST http://localhost:3000/recommendations/refresh-preferences/user-123
+
+### A/B Testing Endpoints
+
+### 12. Assign user to A/B test
+GET http://localhost:3000/ab-testing/assign/user-789
+?interactionCount=15
+
+### 13. Get active A/B tests
+GET http://localhost:3000/ab-testing/active-tests
+
+### 14. Get A/B test results
+GET http://localhost:3000/ab-testing/results/algorithm_comparison_v1
+?startDate=2024-01-01
+&endDate=2024-12-31
+
+### 15. Calculate statistical significance
+GET http://localhost:3000/ab-testing/significance/algorithm_comparison_v1
+?metric=clickThroughRate
+
+### 16. Stop an A/B test
+POST http://localhost:3000/ab-testing/stop/algorithm_comparison_v1

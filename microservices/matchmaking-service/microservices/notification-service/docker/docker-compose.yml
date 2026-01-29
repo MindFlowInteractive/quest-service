@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  notification-service:
+    container_name: notification-service
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - '3003:3003'
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=${DB_NAME:-quest_service}
+      - NOTIFICATION_DB_NAME=notification_service
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOG_LEVEL=debug
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - quest-network
+    volumes:
+      - ../src:/app/src
+      - /app/node_modules
+    restart: unless-stopped
+
+  postgres:
+    container_name: postgres-notification
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=notification_service
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_notification_data:/var/lib/postgresql/data
+    networks:
+      - quest-network
+    restart: unless-stopped
+
+  redis:
+    container_name: redis-notification
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    networks:
+      - quest-network
+    restart: unless-stopped
+
+volumes:
+  postgres_notification_data:
+    driver: local
+
+networks:
+  quest-network:
+    driver: bridge
