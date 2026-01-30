@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  email-service:
+    container_name: email-service
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - '3006:3006'
+    environment:
+      - NODE_ENV=development
+      - SERVICE_PORT=3006
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=${DB_NAME:-email_service}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-sendgrid}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
+      - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL:-noreply@questservice.com}
+      - SENDGRID_FROM_NAME=${SENDGRID_FROM_NAME:-Quest Service}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-your_webhook_secret}
+      - UNSUBSCRIBE_BASE_URL=${UNSUBSCRIBE_BASE_URL:-http://localhost:3006/unsubscribe/verify}
+      - LOG_LEVEL=debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - email-network
+    volumes:
+      - ../src:/app/src
+      - /app/node_modules
+    restart: unless-stopped
+
+  postgres:
+    container_name: postgres-email
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=email_service
+    ports:
+      - '5436:5432'
+    volumes:
+      - postgres_email_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - email-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    container_name: redis-email
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - '6382:6379'
+    volumes:
+      - redis_email_data:/data
+    networks:
+      - email-network
+    restart: unless-stopped
+
+volumes:
+  postgres_email_data:
+    driver: local
+  redis_email_data:
+    driver: local
+
+networks:
+  email-network:
+    driver: bridge
