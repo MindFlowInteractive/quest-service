@@ -6,6 +6,9 @@ import { EnergyModule } from './energy/energy.module';
 import { UserEnergy } from './energy/entities/energy.entity';
 import { EnergyBoost } from './energy/entities/boost.entity';
 import { EnergyNotificationService } from './energy/energy-notification.service';
+import { StreaksModule } from './streaks/streaks.module';
+import { UserStreak } from './streaks/entities/user-streak.entity';
+import { UserCombo } from './streaks/entities/user-combo.entity';
 
 @Module({
   imports: [
@@ -21,13 +24,14 @@ import { EnergyNotificationService } from './energy/energy-notification.service'
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_DATABASE', 'quest_service'),
-        entities: [UserEnergy, EnergyBoost],
+        entities: [UserEnergy, EnergyBoost, UserStreak, UserCombo],
         synchronize: true, // Set to false in production
       }),
       inject: [ConfigService],
     }),
     ScheduleModule.forRoot(),
     EnergyModule,
+    StreaksModule,
   ],
   providers: [EnergyNotificationService],
 })
