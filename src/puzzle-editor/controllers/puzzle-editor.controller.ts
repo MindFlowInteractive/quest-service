@@ -19,7 +19,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PuzzleEditorService } from '../services/puzzle-editor.service';
 import { PuzzleValidationService } from '../services/puzzle-validation.service';
 import { PuzzleImportExportService } from '../services/puzzle-import-export.service';
@@ -186,7 +186,7 @@ export class PuzzleEditorController {
         history: [],
         historyIndex: 0,
         isDirty: false,
-        metadata: editor.editorMetadata,
+        metadata: editor.editorMetadata as any,
         selectedComponent: undefined,
         clipboard: undefined,
       },

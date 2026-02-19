@@ -159,8 +159,8 @@ export class BatchOperationsService {
       operation.progress = ((i + 1) / totalItems) * 100;
       operation.estimatedCompletionTime = this.estimateCompletionTime(operation);
 
-      // Check if operation was cancelled
-      if (operation.status === BatchOperationStatus.CANCELLED) {
+      // Check if operation was cancelled (may be set by another process)
+      if ((operation.status as BatchOperationStatus) === BatchOperationStatus.CANCELLED) {
         return;
       }
     }

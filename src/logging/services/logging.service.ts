@@ -1,7 +1,7 @@
 import { Injectable, type LoggerService } from "@nestjs/common"
 import type { ConfigType } from "@nestjs/config"
 import * as winston from "winston"
-import * as DailyRotateFile from "winston-daily-rotate-file"
+import DailyRotateFile from "winston-daily-rotate-file"
 import { ElasticsearchTransport } from "winston-elasticsearch"
 import type { loggingConfig } from "../config/logging.config"
 import type { CorrelationService } from "./correlation.service"
@@ -16,8 +16,17 @@ export interface LogContext {
   ip?: string
   duration?: number
   statusCode?: number
-  error?: Error
+  error?: Error | { name?: string; message?: string; stack?: string }
   metadata?: Record<string, any>
+  trace?: string
+  className?: string
+  methodName?: string
+  timestamp?: string
+  context?: string
+  pid?: number
+  hostname?: string
+  args?: any
+  resultType?: string
 }
 
 @Injectable()

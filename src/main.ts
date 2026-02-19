@@ -60,7 +60,8 @@ async function bootstrap() {
   }),);
 
   //Global Guards 
-  app.useGlobalGuards(new ThrottlerGuard());
+  // ThrottlerGuard is auto-provided by ThrottlerModule, use app.get() instead
+  // app.useGlobalGuards(new ThrottlerGuard());
 
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());

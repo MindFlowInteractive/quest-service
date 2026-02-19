@@ -185,14 +185,14 @@ export class TutorialService {
 
     const step = this.stepRepo.create({
       ...dto,
-      completionCriteria: dto.completionCriteria || { type: 'auto' },
+      completionCriteria: (dto.completionCriteria || { type: 'auto' }) as any,
       adaptivePacing: dto.adaptivePacing || {},
       accessibility: dto.accessibility || {},
       analytics: {},
       localization: {},
-    });
+    } as any);
 
-    const saved = await this.stepRepo.save(step);
+    const saved = await this.stepRepo.save(step) as unknown as TutorialStep;
     this.logger.log(`Created step: ${saved.id} for tutorial: ${dto.tutorialId}`);
     return saved;
   }

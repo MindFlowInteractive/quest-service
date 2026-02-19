@@ -9,6 +9,7 @@ import {
   Index,
   OneToMany,
   ManyToOne,
+  ManyToMany,
   JoinColumn,
 } from 'typeorm';
 
@@ -194,6 +195,12 @@ export class Puzzle {
 
   @OneToMany(() => Puzzle, (puzzle) => puzzle.parentPuzzle)
   childPuzzles: Puzzle[];
+
+  @ManyToMany('Category', 'puzzles')
+  categories: any[];
+
+  @ManyToMany('Collection', 'puzzles')
+  collections: any[];
 
   @ManyToOne(() => Events, event => event.puzzles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'eventId' })

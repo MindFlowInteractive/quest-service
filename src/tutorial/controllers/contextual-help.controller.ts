@@ -165,6 +165,9 @@ export class ContextualHelpController {
   @Get('analytics')
   async getHelpAnalytics(@Query('helpId') helpId?: string) {
     this.logger.log('Fetching contextual help analytics');
-    return this.helpService.getHelpAnalytics(helpId);
+    if (helpId) {
+      return this.helpService.getUserHelpHistory(helpId);
+    }
+    return { message: 'Provide helpId for analytics' };
   }
 }

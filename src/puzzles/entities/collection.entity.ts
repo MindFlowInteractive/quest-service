@@ -22,6 +22,9 @@ export class Collection {
   @JoinTable()
   categories?: Category[];
 
+  @ManyToMany('Theme', 'collections')
+  themes: any[];
+
   @OneToMany(() => UserCollectionProgress, (userCollectionProgress) => userCollectionProgress.collection)
   userProgress: UserCollectionProgress[];
 

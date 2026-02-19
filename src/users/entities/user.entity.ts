@@ -146,4 +146,7 @@ export class User {
 
   @OneToMany(() => UserPuzzleCompletion, (completion) => completion.user, { cascade: true })
   puzzleCompletions: UserPuzzleCompletion[];
+
+  @OneToMany('UserCollectionProgress', 'user')
+  collectionProgress: any[];
 }

@@ -1,4 +1,5 @@
-import { IsOptional, IsString, ValidateNested, Type } from 'class-validator';
+import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PrivacySettingsDto } from './privacy-settings.dto';
 
 export class UpdateProfileDto {

@@ -151,7 +151,7 @@ async function createTestData() {
 }
 
 // Run the tests
-if (require.main === module) {
+if ((require as any).main === module) {
   runManualTests().catch(console.error);
 }
 

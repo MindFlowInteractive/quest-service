@@ -26,7 +26,7 @@ import {
   SaveCheckpointDto,
 } from '../dto';
 
-interface ResumeResponse {
+export interface ResumeResponse {
   progress: UserTutorialProgress;
   nextStep: TutorialStep | null;
   checkpoint?: any;

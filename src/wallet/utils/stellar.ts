@@ -36,10 +36,10 @@ export function decodeStellarPublicKey(publicKey: string): Buffer {
   const payload = decoded.subarray(0, decoded.length - 2);
   const checksum = decoded.subarray(decoded.length - 2);
   const expectedChecksum = crc16Xmodem(payload);
-  const expectedBytes = Buffer.from([
+  const expectedBytes = Buffer.from(new Uint8Array([
     expectedChecksum & 0xff,
     (expectedChecksum >> 8) & 0xff,
-  ]);
+  ]));
 
   if (checksum[0] !== expectedBytes[0] || checksum[1] !== expectedBytes[1]) {
     throw new Error('Invalid public key checksum');
@@ -49,7 +49,7 @@ export function decodeStellarPublicKey(publicKey: string): Buffer {
     throw new Error('Invalid public key version');
   }
 
-  return Buffer.from(payload.subarray(1));
+  return Buffer.from(new Uint8Array(payload.subarray(1)));
 }
 
 export function verifyEd25519Signature(
@@ -58,7 +58,7 @@ export function verifyEd25519Signature(
   signature: string,
 ): boolean {
   const rawKey = decodeStellarPublicKey(publicKey);
-  const keyDer = Buffer.concat([ED25519_SPKI_PREFIX, rawKey]);
+  const keyDer = (Buffer as any).concat([ED25519_SPKI_PREFIX, rawKey]);
   const keyObject = createPublicKey({ key: keyDer, format: 'der', type: 'spki' });
   const signatureBuffer = decodeSignature(signature);
 
@@ -172,7 +172,7 @@ function base32Decode(input: string): Buffer {
     }
   }
 
-  return Buffer.from(bytes);
+  return Buffer.from(new Uint8Array(bytes));
 }
 
 function crc16Xmodem(payload: Buffer): number {

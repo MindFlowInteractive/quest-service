@@ -122,19 +122,21 @@ export const INDEX_SETTINGS = {
   analysis: {
     analyzer: {
       autocomplete: {
+        type: 'custom' as const,
         tokenizer: "autocomplete",
         filter: ["lowercase"],
       },
       autocomplete_search: {
+        type: 'custom' as const,
         tokenizer: "lowercase",
       },
     },
     tokenizer: {
       autocomplete: {
-        type: "edge_ngram",
+        type: "edge_ngram" as const,
         min_gram: 2,
         max_gram: 10,
-        token_chars: ["letter", "digit"],
+        token_chars: ["letter", "digit"] as ("letter" | "digit")[],
       },
     },
   },

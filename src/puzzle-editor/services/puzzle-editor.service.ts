@@ -437,35 +437,35 @@ export class PuzzleEditorService {
     await this.editorRepository.save(editor);
 
     // Create puzzle entity
-    let puzzle = editor.puzzle;
+    let puzzle: any = editor.puzzle;
     if (!puzzle) {
       puzzle = this.puzzleRepository.create({
         title: dto.title,
         description: dto.description,
         category: dto.category,
-        difficulty: dto.difficulty,
+        difficulty: dto.difficulty as 'easy' | 'medium' | 'hard' | 'expert',
         difficultyRating: this.calculateDifficultyRating(dto.difficulty),
         content: {
           components: editor.components,
           connections: editor.connections,
-        },
+        } as any,
         basePoints: 100,
         timeLimit: 300,
         maxHints: 3,
         tags: dto.tags,
         scoring: dto.scoring || {},
         createdBy: userId,
-      });
+      } as any);
     } else {
       puzzle.title = dto.title;
       puzzle.description = dto.description;
       puzzle.category = dto.category;
-      puzzle.difficulty = dto.difficulty;
+      puzzle.difficulty = dto.difficulty as 'easy' | 'medium' | 'hard' | 'expert';
       puzzle.tags = dto.tags;
       puzzle.content = {
         components: editor.components,
         connections: editor.connections,
-      };
+      } as any;
       if (dto.scoring) puzzle.scoring = dto.scoring;
     }
 

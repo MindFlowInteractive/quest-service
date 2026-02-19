@@ -308,17 +308,17 @@ export class RecommendationEngineService {
       this.recommendationRepository.create({
         userId,
         puzzleId: rec.puzzleId,
-        algorithm: rec.algorithm,
+        algorithm: rec.algorithm as any,
         score: rec.score,
         reason: rec.reason,
         metadata: {
           ...rec.metadata,
           abTestGroup,
         },
-      })
+      } as any)
     );
 
-    await this.recommendationRepository.save(recommendationEntities);
+    await this.recommendationRepository.save(recommendationEntities as any);
   }
 
   async trackInteraction(
@@ -332,10 +332,10 @@ export class RecommendationEngineService {
     const interaction = this.userInteractionRepository.create({
       userId,
       puzzleId,
-      interactionType,
+      interactionType: interactionType as any,
       value,
       metadata,
-    });
+    } as any);
 
     await this.userInteractionRepository.save(interaction);
 

@@ -23,7 +23,7 @@ interface AnalyticsQuery {
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
 
-  constructor(private readonly elasticsearchService: ElasticsearchService) {}
+  constructor(private readonly elasticsearchService: ElasticsearchService & Record<string, any>) {}
 
   async trackSearch(event: SearchEvent): Promise<void> {
     try {
@@ -108,7 +108,7 @@ export class AnalyticsService {
         },
       });
 
-      return response.aggregations.popular_queries.buckets.map(
+      return (response.aggregations.popular_queries as any).buckets.map(
         (bucket: any) => ({
           query: bucket.key,
           count: bucket.doc_count,
@@ -177,7 +177,7 @@ export class AnalyticsService {
         },
       });
 
-      const aggs = response.aggregations;
+      const aggs = response.aggregations as any;
 
       return {
         totalSearches: aggs.total_searches.value,
@@ -239,7 +239,7 @@ export class AnalyticsService {
         },
       });
 
-      return response.aggregations.failed_queries.buckets.map(
+      return (response.aggregations.failed_queries as any).buckets.map(
         (bucket: any) => ({
           query: bucket.key,
           count: bucket.doc_count,

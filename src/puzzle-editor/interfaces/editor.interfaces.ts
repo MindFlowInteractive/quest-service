@@ -30,6 +30,7 @@ export interface ComponentMetadata {
   linkedComponents?: string[];
   description?: string;
   tags?: string[];
+  isSuccessState?: boolean;
 }
 
 export enum ComponentType {

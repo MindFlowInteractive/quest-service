@@ -16,7 +16,7 @@ import {
 export class IndexService implements OnModuleInit {
   private readonly logger = new Logger(IndexService.name);
 
-  constructor(private readonly elasticsearchService: ElasticsearchService) {}
+  constructor(private readonly elasticsearchService: ElasticsearchService & Record<string, any>) {}
 
   async onModuleInit() {
     await this.initializeIndices();

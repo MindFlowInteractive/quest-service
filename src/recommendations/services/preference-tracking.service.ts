@@ -230,7 +230,7 @@ export class PreferenceTrackingService {
     const interaction = this.userInteractionRepository.create({
       userId,
       puzzleId,
-      interactionType: 'complete',
+      interactionType: 'complete' as any,
       value: 5.0, // Default positive rating for completion
       metadata: {
         completionTime,
@@ -239,7 +239,7 @@ export class PreferenceTrackingService {
         score,
         source: 'game_completion',
       },
-    });
+    } as any);
 
     await this.userInteractionRepository.save(interaction);
 
@@ -261,13 +261,13 @@ export class PreferenceTrackingService {
     const interaction = this.userInteractionRepository.create({
       userId,
       puzzleId,
-      interactionType: 'rate',
+      interactionType: 'rate' as any,
       value: rating,
       metadata: {
         difficultyVote,
         source: 'explicit_rating',
       },
-    });
+    } as any);
 
     await this.userInteractionRepository.save(interaction);
 

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsUUID, ValidateNested, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsUUID, ValidateNested, IsObject, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer'; // For nested object validation
 
 // Define a type for the reward structure for better validation
@@ -24,12 +24,12 @@ export class CreateCollectionDto {
 
   @IsOptional()
   @IsArray()
-  @IsUUID({}, { each: true })
+  @IsUUID('4', { each: true })
   puzzleIds?: string[];
 
   @IsOptional()
   @IsArray()
-  @IsUUID({}, { each: true })
+  @IsUUID('4', { each: true })
   categoryIds?: string[];
 
   @IsOptional()

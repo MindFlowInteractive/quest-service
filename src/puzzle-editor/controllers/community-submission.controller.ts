@@ -18,7 +18,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CommunitySubmissionService } from '../services/community-submission.service';
 import {
   SubmitToCommunityDto,
@@ -93,10 +93,10 @@ export class CommunitySubmissionController {
   @ApiOperation({ summary: 'Get moderation queue' })
   @ApiResponse({ status: 200, description: 'Moderation queue' })
   async getModerationQueue(
+    @Request() req: any,
     @Query('status') status?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
-    @Request() req: any,
   ) {
     // Check if user is moderator/admin
     if (!req.user.roles?.includes('MODERATOR') && !req.user.roles?.includes('ADMIN')) {
