@@ -1,4 +1,4 @@
-import { Puzzle } from "src/database/entities";
+import { Puzzle } from "../../puzzles/entities/puzzle.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 
