@@ -9,6 +9,7 @@ import { EnergyNotificationService } from './energy/energy-notification.service'
 import { StreaksModule } from './streaks/streaks.module';
 import { UserStreak } from './streaks/entities/user-streak.entity';
 import { UserCombo } from './streaks/entities/user-combo.entity';
+import { RewardsModule } from './rewards/rewards.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { UserCombo } from './streaks/entities/user-combo.entity';
     ScheduleModule.forRoot(),
     EnergyModule,
     StreaksModule,
+    RewardsModule,
   ],
   providers: [EnergyNotificationService],
 })
