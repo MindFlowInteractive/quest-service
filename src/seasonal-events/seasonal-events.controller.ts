@@ -9,8 +9,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  UseGuards,
-  Request,
 } from '@nestjs/common';
 import {
   SeasonalEventService,
@@ -25,8 +23,6 @@ import {
   CreateRewardDto,
   SubmitAnswerDto,
 } from './dto';
-import { NotificationService } from '../notifications/notification.service';
-
 @Controller('seasonal-events')
 export class SeasonalEventsController {
   constructor(
@@ -35,7 +31,6 @@ export class SeasonalEventsController {
     private readonly playerEventService: PlayerEventService,
     private readonly leaderboardService: LeaderboardService,
     private readonly rewardService: EventRewardService,
-    private readonly notificationService: NotificationService,
   ) {}
 
   // ==================== EVENT ENDPOINTS ====================

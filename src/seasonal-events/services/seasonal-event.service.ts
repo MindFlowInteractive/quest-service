@@ -23,8 +23,8 @@ export class SeasonalEventService {
   ) {}
 
   /**
-   * Cron job to automatically activate/deactivate events
-   * Runs every 5 minutes
+   * Cron job to automatically activate/deactivate events.
+   * Runs every 5 minutes.
    */
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handleEventActivation() {
@@ -91,8 +91,10 @@ export class SeasonalEventService {
   }
 
   /**
-   * Cron job to spawn new instances of recurring events
-   * Runs daily at midnight
+   * Cron job to spawn new instances of recurring events.
+   * Runs daily at midnight.
+   * Only spawns if the next scheduled window (template.endDate + intervalDays) is now or in the past,
+   * preventing duplicate spawning on consecutive runs.
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleRecurringEvents() {
@@ -114,19 +116,29 @@ export class SeasonalEventService {
         const config = template.recurrenceConfig;
         if (!config) continue;
 
+        // Ensure occurrenceCount is always a number (default 0 if undefined)
+        const occurrenceCount = config.occurrenceCount ?? 0;
+
         // Skip if max occurrences reached
         if (
           config.maxOccurrences !== undefined &&
           config.maxOccurrences !== null &&
-          config.occurrenceCount >= config.maxOccurrences
+          occurrenceCount >= config.maxOccurrences
         ) {
           continue;
         }
 
-        const durationMs = template.endDate.getTime() - template.startDate.getTime();
+        // intervalDays is the period of recurrence — shift both start and end by the same interval.
+        // e.g. a 7-day event with intervalDays=7 repeats every 7 days (no gap between occurrences).
         const intervalMs = config.intervalDays * 24 * 60 * 60 * 1000;
-        const newStartDate = new Date(template.endDate.getTime() + intervalMs);
-        const newEndDate = new Date(newStartDate.getTime() + durationMs);
+        const newStartDate = new Date(template.startDate.getTime() + intervalMs);
+        const newEndDate = new Date(template.endDate.getTime() + intervalMs);
+
+        // Guard: only spawn if the next window's start is at or before now,
+        // preventing duplicate spawning on consecutive midnight runs.
+        if (newStartDate > now) {
+          continue;
+        }
 
         // Create new event instance cloned from template
         const newEvent = this.eventRepository.create({
@@ -154,26 +166,29 @@ export class SeasonalEventService {
 
         const savedEvent = await this.eventRepository.save(newEvent);
 
-        // Clone puzzles
+        // Clone puzzles — strip runtime-only fields and the loaded relation object
         for (const puzzle of template.puzzles ?? []) {
-          const { id: _id, createdAt: _c, updatedAt: _u, completionCount: _cc, attemptCount: _ac, ...puzzleData } = puzzle as any;
+          const { id: _id, createdAt: _c, updatedAt: _u, completionCount: _cc, attemptCount: _ac, event: _ev, ...puzzleData } = puzzle as any;
           await this.puzzleRepository.save(
             this.puzzleRepository.create({ ...puzzleData, eventId: savedEvent.id }),
           );
         }
 
-        // Clone rewards
+        // Clone rewards — strip runtime-only fields and the loaded relation object
         for (const reward of template.rewards ?? []) {
-          const { id: _id, createdAt: _c, updatedAt: _u, claimedCount: _cl, ...rewardData } = reward as any;
+          const { id: _id, createdAt: _c, updatedAt: _u, claimedCount: _cl, event: _ev, ...rewardData } = reward as any;
           await this.rewardRepository.save(
             this.rewardRepository.create({ ...rewardData, eventId: savedEvent.id }),
           );
         }
 
-        // Increment occurrence count on template
+        // Advance the template's own dates by one interval so the next run's guard
+        // does not fire immediately, and increment occurrenceCount.
+        template.startDate = newStartDate;
+        template.endDate = newEndDate;
         template.recurrenceConfig = {
           ...config,
-          occurrenceCount: config.occurrenceCount + 1,
+          occurrenceCount: occurrenceCount + 1,
         };
         await this.eventRepository.save(template);
 
@@ -190,14 +205,17 @@ export class SeasonalEventService {
    * Create a new seasonal event
    */
   async createEvent(createEventDto: CreateEventDto): Promise<SeasonalEvent> {
-    // Validate dates
     if (createEventDto.startDate >= createEventDto.endDate) {
       throw new BadRequestException('Start date must be before end date');
     }
 
     const event = this.eventRepository.create({
       ...createEventDto,
-      isActive: false, // Will be activated by cron job
+      isActive: false,
+      // Normalise occurrenceCount to 0 if a recurrenceConfig is provided without it
+      recurrenceConfig: createEventDto.recurrenceConfig
+        ? { occurrenceCount: 0, ...createEventDto.recurrenceConfig }
+        : undefined,
     });
 
     // Check if event should be immediately active
@@ -277,7 +295,6 @@ export class SeasonalEventService {
   ): Promise<SeasonalEvent> {
     const event = await this.findOne(id);
 
-    // Validate dates if being updated
     if (updateData.startDate || updateData.endDate) {
       const startDate = updateData.startDate || event.startDate;
       const endDate = updateData.endDate || event.endDate;
@@ -289,7 +306,6 @@ export class SeasonalEventService {
 
     Object.assign(event, updateData);
 
-    // Recalculate isActive status
     const now = new Date();
     if (event.isPublished && event.startDate <= now && event.endDate > now) {
       event.isActive = true;
@@ -415,12 +431,13 @@ export class SeasonalEventService {
 
   /**
    * Announce an event to all active users via NotificationService.
+   * Targets users with status='active' (the canonical active-user field on User entity).
    * Called automatically on cron activation and manually via controller.
    */
   async announceEvent(event: SeasonalEvent): Promise<void> {
     try {
       await this.notificationService.createNotificationForUsers({
-        segment: { key: 'isActive', value: true },
+        segment: { key: 'status', value: 'active' },
         type: 'event_announcement',
         title: `New Event: ${event.name}`,
         body: event.description,

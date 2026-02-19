@@ -192,6 +192,7 @@ describe('SeasonalEventService', () => {
       expect(notifService.createNotificationForUsers).toHaveBeenCalledTimes(1);
       expect(notifService.createNotificationForUsers).toHaveBeenCalledWith(
         expect.objectContaining({
+          segment: { key: 'status', value: 'active' },
           type: 'event_announcement',
           title: expect.stringContaining('Winter Wonderland'),
         }),
@@ -228,11 +229,15 @@ describe('SeasonalEventService', () => {
   // ── handleRecurringEvents (cron) ─────────────────────────────────────────────
 
   describe('handleRecurringEvents()', () => {
-    it('clones a recurring event template when max occurrences not reached', async () => {
+    it('clones a recurring event template when max occurrences not reached and window is in the past', async () => {
+      const pastStart = new Date(Date.now() - 14 * 86400000); // 14 days ago
+      const pastEnd   = new Date(Date.now() - 7 * 86400000);  // 7 days ago (ended)
       const template = {
         ...baseEvent(),
+        startDate: pastStart,
+        endDate: pastEnd,
         isRecurring: true,
-        recurrenceConfig: { intervalDays: 7, maxOccurrences: 3, occurrenceCount: 1, parentEventId: undefined },
+        recurrenceConfig: { intervalDays: 7, maxOccurrences: 3, occurrenceCount: 1 },
         puzzles: [{ ...basePuzzle(), id: 'p1' }],
         rewards: [],
       } as any;
@@ -242,20 +247,49 @@ describe('SeasonalEventService', () => {
       puzzleRepo.save.mockResolvedValueOnce({ id: 'p2' });
       eventRepo.create.mockImplementationOnce((d) => d);
       eventRepo.save
-        .mockResolvedValueOnce({ id: 'new-event-id' }) // new event
-        .mockResolvedValueOnce({ ...template, recurrenceConfig: { ...template.recurrenceConfig, occurrenceCount: 2 } }); // updated template
+        .mockResolvedValueOnce({ id: 'new-event-id' })  // new event
+        .mockResolvedValueOnce(template);                // updated template
 
       await service.handleRecurringEvents();
 
+      // new event created and template updated
       expect(eventRepo.create).toHaveBeenCalled();
-      expect(eventRepo.save).toHaveBeenCalledTimes(2); // new event + template update
+      expect(eventRepo.save).toHaveBeenCalledTimes(2);
+      // occurrenceCount advanced on template
       expect(template.recurrenceConfig.occurrenceCount).toBe(2);
+      // puzzle cloned
       expect(puzzleRepo.save).toHaveBeenCalledTimes(1);
+      // template dates advanced by intervalDays
+      expect(template.startDate.getTime()).toBe(pastStart.getTime() + 7 * 86400000);
+      expect(template.endDate.getTime()).toBe(pastEnd.getTime() + 7 * 86400000);
+    });
+
+    it('skips spawning when next window start is still in the future', async () => {
+      const futureStart = new Date(Date.now() + 86400000); // starts tomorrow
+      const futureEnd   = new Date(Date.now() + 7 * 86400000);
+      const template = {
+        ...baseEvent(),
+        startDate: futureStart,
+        endDate: futureEnd,
+        isRecurring: true,
+        recurrenceConfig: { intervalDays: 7, maxOccurrences: 3, occurrenceCount: 0 },
+        puzzles: [],
+        rewards: [],
+      } as any;
+
+      // endDate is in the future so won't be returned by cron query, but test the guard directly
+      eventRepo.find.mockResolvedValueOnce([template]);
+
+      await service.handleRecurringEvents();
+
+      expect(eventRepo.save).not.toHaveBeenCalled();
     });
 
     it('skips event when maxOccurrences reached', async () => {
       const template = {
         ...baseEvent(),
+        startDate: new Date(Date.now() - 14 * 86400000),
+        endDate: new Date(Date.now() - 7 * 86400000),
         isRecurring: true,
         recurrenceConfig: { intervalDays: 7, maxOccurrences: 2, occurrenceCount: 2 },
         puzzles: [],
@@ -276,6 +310,30 @@ describe('SeasonalEventService', () => {
       await service.handleRecurringEvents();
 
       expect(eventRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('treats undefined occurrenceCount as 0 (no NaN)', async () => {
+      const pastStart = new Date(Date.now() - 14 * 86400000);
+      const pastEnd   = new Date(Date.now() - 7 * 86400000);
+      const template = {
+        ...baseEvent(),
+        startDate: pastStart,
+        endDate: pastEnd,
+        isRecurring: true,
+        // occurrenceCount intentionally omitted to test NaN guard
+        recurrenceConfig: { intervalDays: 7, maxOccurrences: 5 },
+        puzzles: [],
+        rewards: [],
+      } as any;
+
+      eventRepo.find.mockResolvedValueOnce([template]);
+      eventRepo.create.mockImplementationOnce((d) => d);
+      eventRepo.save.mockResolvedValue(template);
+
+      await service.handleRecurringEvents();
+
+      // occurrenceCount should be 0 + 1 = 1, not NaN
+      expect(template.recurrenceConfig.occurrenceCount).toBe(1);
     });
   });
 
@@ -332,13 +390,13 @@ describe('SeasonalEventService', () => {
   // ── announceEvent ─────────────────────────────────────────────────────────────
 
   describe('announceEvent()', () => {
-    it('calls createNotificationForUsers with correct payload', async () => {
+    it('calls createNotificationForUsers with correct payload targeting active users', async () => {
       const event = baseEvent() as SeasonalEvent;
 
       await service.announceEvent(event);
 
       expect(notifService.createNotificationForUsers).toHaveBeenCalledWith({
-        segment: { key: 'isActive', value: true },
+        segment: { key: 'status', value: 'active' },
         type: 'event_announcement',
         title: `New Event: ${event.name}`,
         body: event.description,
