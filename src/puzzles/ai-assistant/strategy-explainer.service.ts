@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PuzzleAnalysis, Strategy } from './interfaces/puzzle-analysis.interface';
 
 @Injectable()
 export class StrategyExplainerService {

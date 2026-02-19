@@ -18,7 +18,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PuzzleTemplateService } from '../services/puzzle-template.service';
 import { PuzzleEditorService } from '../services/puzzle-editor.service';
 import { CreateTemplateDto, UseTemplateDto } from '../dto';

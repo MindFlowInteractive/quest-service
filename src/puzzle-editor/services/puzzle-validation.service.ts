@@ -11,6 +11,7 @@ import {
   ValidationSuggestion,
   EditorComponent,
   RuleType,
+  ComponentType,
 } from '../interfaces/editor.interfaces';
 
 @Injectable()
@@ -542,7 +543,7 @@ export class PuzzleValidationService {
 
     // Set default type if missing
     if (!fixed.type) {
-      fixed.type = 'PANEL';
+      fixed.type = ComponentType.PANEL;
     }
 
     // Ensure position is valid

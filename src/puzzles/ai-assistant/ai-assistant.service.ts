@@ -3,6 +3,8 @@ import { StrategyExplainerService } from './strategy-explainer.service';
 import { HintProgressionService } from './hint-progression.service';
 import { LearningPathService } from './learning-path.service';
 import { EffectivenessTrackerService } from './effectiveness-tracker.service';
+import { PuzzleAnalysis, Hint, LearningPath } from './interfaces/puzzle-analysis.interface';
+import { HintRequestDto, ThinkingProcessRequestDto } from './dto/hint-request.dto';
 
 @Injectable()
 export class AiAssistantService {

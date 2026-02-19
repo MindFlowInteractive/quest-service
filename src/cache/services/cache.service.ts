@@ -103,8 +103,11 @@ export class CacheService {
         await this.redis.setex(fullKey, ttl, serialized)
 
         // Add tags for invalidation
-        if (options.tags && options.tags.length > 0) {
-          await this.addTags(fullKey, options.tags)
+        if (options.tags) {
+          const tags = typeof options.tags === 'function' ? options.tags([]) : options.tags;
+          if (tags.length > 0) {
+            await this.addTags(fullKey, tags)
+          }
         }
       }
 

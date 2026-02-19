@@ -10,6 +10,6 @@ export class CreateThemeDto {
 
   @IsOptional()
   @IsArray()
-  @IsUUID({}, { each: true }) // Expect an array of UUIDs for collection IDs
+  @IsUUID('4', { each: true }) // Expect an array of UUIDs for collection IDs
   collectionIds?: string[];
 }

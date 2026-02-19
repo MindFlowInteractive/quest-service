@@ -70,7 +70,7 @@ export class WalletService {
     const normalizedNetwork = this.normalizeNetwork(network);
     this.ensureAllowedNetwork(normalizedNetwork);
 
-    const nonce = randomBytes(16).toString('hex');
+    const nonce = randomBytes(16).toString('hex' as any);
     const issuedAt = new Date();
     const message = [
       'LogiQuest Wallet Authentication',
@@ -514,7 +514,7 @@ export class WalletService {
     }
 
     const transaction = await transactionResponse.json();
-    if (!transaction.successful) {
+    if (!(transaction as any).successful) {
       throw new BadRequestException('Transaction was not successful');
     }
 

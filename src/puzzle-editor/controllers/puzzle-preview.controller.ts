@@ -16,7 +16,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PuzzleEditorService } from '../services/puzzle-editor.service';
 import { PuzzlePreviewService } from '../services/puzzle-preview.service';
 import { StartPreviewSessionDto, RecordPreviewMoveDto } from '../dto';

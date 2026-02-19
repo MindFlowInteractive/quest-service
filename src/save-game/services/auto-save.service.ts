@@ -7,7 +7,7 @@ import { SaveType, SyncStatus, SaveGameData } from '../interfaces/save-game.inte
 import { SaveGameService } from './save-game.service';
 import { CloudSyncService } from './cloud-sync.service';
 
-interface AutoSaveConfig {
+export interface AutoSaveConfig {
   userId: string;
   slotId: number;
   intervalMs: number;

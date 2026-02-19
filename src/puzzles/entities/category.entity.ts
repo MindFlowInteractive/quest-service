@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
 import { Puzzle } from './puzzle.entity';
+import { Collection } from './collection.entity';
 
 @Entity()
 export class Category {
@@ -13,6 +14,9 @@ export class Category {
   description?: string;
 
   @ManyToMany(() => Puzzle, (puzzle) => puzzle.categories)
-  @JoinTable() // This creates a join table for the many-to-many relationship
+  @JoinTable()
   puzzles: Puzzle[];
+
+  @ManyToMany(() => Collection, (collection) => collection.categories)
+  collections: Collection[];
 }

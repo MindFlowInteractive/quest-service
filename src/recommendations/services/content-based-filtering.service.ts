@@ -1,5 +1,19 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ContentBasedFilteringAlgorithm, ContentBasedRecommendation } from '../algorithms/content-based-filtering.algorithm';
+import { UserPreference } from '../entities/user-preference.entity';
+import { UserInteraction } from '../entities/user-interaction.entity';
+import { Puzzle } from '../../puzzles/entities/puzzle.entity';
+
+interface PuzzleFeatures {
+  category: string;
+  difficulty: string;
+  difficultyRating: number;
+  tags: string[];
+  averageRating: number;
+  completionRate: number;
+}
 
 interface PuzzleScore {
   puzzleId: string;
@@ -11,6 +25,12 @@ interface PuzzleScore {
 export class ContentBasedFilteringService {
   constructor(
     private contentBasedAlgorithm: ContentBasedFilteringAlgorithm,
+    @InjectRepository(UserPreference)
+    private userPreferenceRepository: Repository<UserPreference>,
+    @InjectRepository(UserInteraction)
+    private userInteractionRepository: Repository<UserInteraction>,
+    @InjectRepository(Puzzle)
+    private puzzleRepository: Repository<Puzzle>,
   ) {}
 
   async generateRecommendations(

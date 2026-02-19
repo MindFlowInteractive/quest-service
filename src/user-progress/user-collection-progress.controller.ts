@@ -12,7 +12,7 @@ export class UserCollectionProgressController {
   // Get progress for all collections for the current user
   @Get()
   async findAllForUser(@Req() req: Request): Promise<UserCollectionProgress[]> {
-    const userId = req.user.id; // Assuming user object is attached by JwtAuthGuard
+    const userId = (req as any).user.id; // Assuming user object is attached by JwtAuthGuard
     return this.userCollectionProgressService.findAllForUser(userId);
   }
 
@@ -22,7 +22,7 @@ export class UserCollectionProgressController {
     @Param('collectionId', ParseUUIDPipe) collectionId: string,
     @Req() req: Request,
   ): Promise<UserCollectionProgress> {
-    const userId = req.user.id;
+    const userId = (req as any).user.id;
     return this.userCollectionProgressService.findOneForUser(userId, collectionId);
   }
 

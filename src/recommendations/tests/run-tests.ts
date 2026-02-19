@@ -26,21 +26,21 @@ async function runTests(testType: keyof typeof testCommands = 'all') {
 
   try {
     // Run Jest tests
-    if (testType !== 'manual' && testType !== 'performance') {
+    if ((testType as string) !== 'manual' && (testType as string) !== 'performance') {
       console.log('📋 Running Jest Tests...');
       execSync(testCommands[testType], { stdio: 'inherit' });
       console.log('✅ Jest tests completed!\n');
     }
 
     // Run manual tests if requested
-    if (testType === 'all' || testType === 'manual') {
+    if (testType === 'all' || (testType as string) === 'manual') {
       console.log('📋 Running Manual Tests...');
       await runManualTests();
       console.log('✅ Manual tests completed!\n');
     }
 
     // Run performance tests if requested
-    if (testType === 'all' || testType === 'performance') {
+    if (testType === 'all' || (testType as string) === 'performance') {
       console.log('📋 Running Performance Tests...');
       await runPerformanceTests();
       console.log('✅ Performance tests completed!\n');
@@ -56,7 +56,7 @@ async function runTests(testType: keyof typeof testCommands = 'all') {
 // Parse command line arguments
 const testType = process.argv[2] as keyof typeof testCommands;
 
-if (require.main === module) {
+if ((require as any).main === module) {
   runTests(testType).catch(console.error);
 }
 

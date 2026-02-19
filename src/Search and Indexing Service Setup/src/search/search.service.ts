@@ -21,7 +21,7 @@ import {
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
 
-  constructor(private readonly elasticsearchService: ElasticsearchService) {}
+  constructor(private readonly elasticsearchService: ElasticsearchService & Record<string, any>) {}
 
   async searchPuzzles(
     searchDto: PuzzleSearchDto,
@@ -379,7 +379,7 @@ export class SearchService {
         const response = await this.elasticsearchService.search(search);
         const suggestions = response.suggest?.autocomplete?.[0]?.options || [];
 
-        suggestions.forEach((option: any) => {
+        (suggestions as any[]).forEach((option: any) => {
           results.push({
             text: option.text,
             score: option._score,

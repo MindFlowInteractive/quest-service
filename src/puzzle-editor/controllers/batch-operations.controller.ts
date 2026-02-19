@@ -17,7 +17,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { BatchOperationsService } from '../services/batch-operations.service';
 import { BatchOperationDto } from '../dto';
 

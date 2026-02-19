@@ -126,12 +126,12 @@ export class UserInteractionRepository {
     const interaction = this.repository.create({
       userId,
       puzzleId,
-      interactionType,
+      interactionType: interactionType as any,
       value,
       metadata,
     });
 
-    return this.repository.save(interaction);
+    return this.repository.save(interaction) as unknown as Promise<UserInteraction>;
   }
 
   async getUserActivityStats(userId: string): Promise<{

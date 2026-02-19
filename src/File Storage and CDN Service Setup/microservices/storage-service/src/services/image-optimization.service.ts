@@ -1,6 +1,6 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { ConfigType } from "@nestjs/config";
-import * as sharp from "sharp";
+import sharp from "sharp";
 import storageConfig from "../config/storage.config";
 
 export interface OptimizationResult {

@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateRecommendationTables1704067200000 implements MigrationInterface {
   name = 'CreateRecommendationTables1704067200000';
@@ -267,47 +267,47 @@ export class CreateRecommendationTables1704067200000 implements MigrationInterfa
     // Create indexes for user_preferences
     await queryRunner.createIndex(
       'user_preferences',
-      new Index('IDX_user_preferences_userId', ['userId']),
+      new TableIndex({ name: 'IDX_user_preferences_userId', columnNames: ['userId'] }),
     );
 
     // Create indexes for user_interactions
     await queryRunner.createIndex(
       'user_interactions',
-      new Index('IDX_user_interactions_userId_puzzleId', ['userId', 'puzzleId']),
+      new TableIndex({ name: 'IDX_user_interactions_userId_puzzleId', columnNames: ['userId', 'puzzleId'] }),
     );
     await queryRunner.createIndex(
       'user_interactions',
-      new Index('IDX_user_interactions_userId_type_createdAt', ['userId', 'interactionType', 'createdAt']),
+      new TableIndex({ name: 'IDX_user_interactions_userId_type_createdAt', columnNames: ['userId', 'interactionType', 'createdAt'] }),
     );
 
     // Create indexes for recommendations
     await queryRunner.createIndex(
       'recommendations',
-      new Index('IDX_recommendations_userId_puzzleId', ['userId', 'puzzleId'], { isUnique: true }),
+      new TableIndex({ name: 'IDX_recommendations_userId_puzzleId', columnNames: ['userId', 'puzzleId'], isUnique: true }),
     );
     await queryRunner.createIndex(
       'recommendations',
-      new Index('IDX_recommendations_userId_createdAt', ['userId', 'createdAt']),
+      new TableIndex({ name: 'IDX_recommendations_userId_createdAt', columnNames: ['userId', 'createdAt'] }),
     );
     await queryRunner.createIndex(
       'recommendations',
-      new Index('IDX_recommendations_algorithm_createdAt', ['algorithm', 'createdAt']),
+      new TableIndex({ name: 'IDX_recommendations_algorithm_createdAt', columnNames: ['algorithm', 'createdAt'] }),
     );
     await queryRunner.createIndex(
       'recommendations',
-      new Index('IDX_recommendations_score', ['score']),
+      new TableIndex({ name: 'IDX_recommendations_score', columnNames: ['score'] }),
     );
     await queryRunner.createIndex(
       'recommendations',
-      new Index('IDX_recommendations_wasViewed', ['wasViewed']),
+      new TableIndex({ name: 'IDX_recommendations_wasViewed', columnNames: ['wasViewed'] }),
     );
     await queryRunner.createIndex(
       'recommendations',
-      new Index('IDX_recommendations_wasClicked', ['wasClicked']),
+      new TableIndex({ name: 'IDX_recommendations_wasClicked', columnNames: ['wasClicked'] }),
     );
     await queryRunner.createIndex(
       'recommendations',
-      new Index('IDX_recommendations_wasCompleted', ['wasCompleted']),
+      new TableIndex({ name: 'IDX_recommendations_wasCompleted', columnNames: ['wasCompleted'] }),
     );
   }
 

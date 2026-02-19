@@ -39,7 +39,7 @@ export class AuthService {
     }
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: jwtConstants.accessExpiresIn,
+      expiresIn: jwtConstants.accessExpiresIn as `${number}m`,
     })
 
     const refreshToken = uuidv4() // Generate a unique refresh token

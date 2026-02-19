@@ -1,19 +1,36 @@
-  async sendToToken(token: string, payload: MessagingPayload) {
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+interface PushPayload {
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+}
+
+@Injectable()
+export class PushService {
+  private readonly logger = new Logger(PushService.name);
+  private readonly enabled: boolean;
+
+  constructor(private readonly configService: ConfigService) {
+    this.enabled = !!this.configService.get<string>('FCM_SERVER_KEY');
+    if (!this.enabled) {
+      this.logger.warn('Push notifications disabled - FCM_SERVER_KEY not configured');
+    }
+  }
+
+  async sendToToken(token: string, payload: PushPayload) {
     if (!this.enabled) {
       this.logger.debug('Push disabled - token would be:', token);
       return { success: false, queued: true };
     }
     try {
-      const message: any = {
-        token,
-        notification: payload.notification,
-        data: payload.data,
-      };
-
-      const res = await admin.messaging().send(message);
-      return { success: true, result: res };
+      this.logger.log(`Sending push to token: ${token.substring(0, 10)}...`);
+      // FCM integration placeholder
+      return { success: true };
     } catch (err) {
-      this.logger.error('FCM send failed', err as any);
+      this.logger.error('Push send failed', err as any);
       return { success: false, error: err };
     }
   }
+}

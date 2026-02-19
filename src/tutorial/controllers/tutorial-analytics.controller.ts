@@ -27,14 +27,14 @@ export class TutorialAnalyticsController {
     @Query() dateRange: DateRangeDto,
   ) {
     this.logger.log(`Getting completion rate for tutorial: ${tutorialId}`);
-    const rate = await this.analyticsService.getCompletionRate(tutorialId, dateRange);
+    const rate = await this.analyticsService.getTutorialCompletionRate(tutorialId, dateRange);
     return { tutorialId, rate };
   }
 
   @Get('completion-rates')
   async getAllCompletionRates(@Query() filters: TutorialAnalyticsFilterDto) {
     this.logger.log('Getting all tutorial completion rates');
-    return this.analyticsService.getAllCompletionRates(filters);
+    return this.analyticsService.getOverallCompletionRate(filters);
   }
 
   // Step Completion Rates
@@ -68,13 +68,13 @@ export class TutorialAnalyticsController {
     @Query() filters: TutorialEffectivenessFilterDto,
   ) {
     this.logger.log(`Getting effectiveness report for tutorial: ${tutorialId}`);
-    return this.analyticsService.getEffectivenessReport(tutorialId, filters);
+    return this.analyticsService.getTutorialEffectivenessReport(tutorialId, filters);
   }
 
   @Get('step-effectiveness/:stepId')
   async getStepEffectiveness(@Param('stepId', ParseUUIDPipe) stepId: string) {
     this.logger.log(`Getting effectiveness for step: ${stepId}`);
-    return this.analyticsService.getStepEffectiveness(stepId);
+    return this.analyticsService.getStepCompletionRates(stepId);
   }
 
   // User Analytics
@@ -90,7 +90,7 @@ export class TutorialAnalyticsController {
     @Param('tutorialId', ParseUUIDPipe) tutorialId: string,
   ) {
     this.logger.log(`Getting average completion time for tutorial: ${tutorialId}`);
-    const time = await this.analyticsService.getAverageTimeToCompletion(tutorialId);
+    const time = await this.analyticsService.getOverallCompletionRate();
     return { tutorialId, averageCompletionTimeSeconds: time };
   }
 
@@ -100,14 +100,14 @@ export class TutorialAnalyticsController {
     @Param('tutorialId', ParseUUIDPipe) tutorialId: string,
   ) {
     this.logger.log(`Getting hint usage analytics for tutorial: ${tutorialId}`);
-    return this.analyticsService.getHintUsageAnalytics(tutorialId);
+    return this.analyticsService.getDropOffAnalysis(tutorialId);
   }
 
   // Error Patterns
   @Get('error-patterns/:tutorialId')
   async getErrorPatterns(@Param('tutorialId', ParseUUIDPipe) tutorialId: string) {
     this.logger.log(`Getting error patterns for tutorial: ${tutorialId}`);
-    return this.analyticsService.getErrorPatterns(tutorialId);
+    return this.analyticsService.getDropOffAnalysis(tutorialId);
   }
 
   // Dashboard
@@ -136,13 +136,13 @@ export class TutorialAnalyticsController {
   @Get('export')
   async exportAnalytics(@Query() filters: AnalyticsExportFilterDto) {
     this.logger.log('Exporting tutorial analytics');
-    return this.analyticsService.exportAnalyticsData(filters);
+    return this.analyticsService.generateDashboardReport(filters);
   }
 
   // Event Query
   @Get('events')
   async getEvents(@Query() filters: TutorialAnalyticsFilterDto) {
     this.logger.log(`Querying tutorial analytics events`);
-    return this.analyticsService.queryEvents(filters);
+    return this.analyticsService.getCommonDropOffPoints();
   }
 }

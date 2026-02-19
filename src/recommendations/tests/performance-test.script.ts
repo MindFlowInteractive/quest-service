@@ -182,7 +182,7 @@ function logMemoryUsage(label: string) {
 }
 
 // Run performance tests
-if (require.main === module) {
+if ((require as any).main === module) {
   logMemoryUsage('Before Tests');
   runPerformanceTests()
     .then(() => {

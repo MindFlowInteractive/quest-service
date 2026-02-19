@@ -150,7 +150,7 @@ export class PuzzleImportExportService {
       xmldec: { version: '1.0', encoding: 'UTF-8' },
     });
 
-    const obj = {
+    const obj: any = {
       version: format.version,
       exportedAt: new Date().toISOString(),
       puzzle: {
@@ -347,7 +347,7 @@ export class PuzzleImportExportService {
         history: [],
         historyIndex: 0,
         isDirty: false,
-        metadata: { version: '1.0', lastSaved: new Date(), lastModifiedBy: 'system' },
+        metadata: { version: '1.0', lastSaved: new Date(), lastModifiedBy: 'system', autosaveEnabled: false, autosaveInterval: 60000 },
       };
     } catch (error) {
       throw new BadRequestException(`Invalid CSV format: ${error.message}`);
