@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, MoreThan, Between } from 'typeorm';
+import { Repository, LessThan, MoreThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { SeasonalEvent } from '../entities/seasonal-event.entity';
+import { EventPuzzle } from '../entities/event-puzzle.entity';
+import { EventReward } from '../entities/event-reward.entity';
 import { CreateEventDto } from '../dto/create-event.dto';
+import { NotificationService } from '../../notifications/notification.service';
 
 @Injectable()
 export class SeasonalEventService {
@@ -12,6 +15,11 @@ export class SeasonalEventService {
   constructor(
     @InjectRepository(SeasonalEvent)
     private readonly eventRepository: Repository<SeasonalEvent>,
+    @InjectRepository(EventPuzzle)
+    private readonly puzzleRepository: Repository<EventPuzzle>,
+    @InjectRepository(EventReward)
+    private readonly rewardRepository: Repository<EventReward>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -21,7 +29,7 @@ export class SeasonalEventService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handleEventActivation() {
     this.logger.log('Running event activation/deactivation cron job');
-    
+
     const now = new Date();
 
     try {
@@ -30,6 +38,7 @@ export class SeasonalEventService {
         where: {
           isActive: false,
           isPublished: true,
+          isArchived: false,
           startDate: LessThan(now),
           endDate: MoreThan(now),
         },
@@ -39,6 +48,7 @@ export class SeasonalEventService {
         event.isActive = true;
         await this.eventRepository.save(event);
         this.logger.log(`Activated event: ${event.name} (${event.id})`);
+        await this.announceEventOnActivation(event);
       }
 
       // Deactivate events that should no longer be active
@@ -55,11 +65,124 @@ export class SeasonalEventService {
         this.logger.log(`Deactivated event: ${event.name} (${event.id})`);
       }
 
+      // Auto-archive events that ended more than 7 days ago and are not yet archived
+      const archiveThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const eventsToAutoArchive = await this.eventRepository.find({
+        where: {
+          isActive: false,
+          isArchived: false,
+          endDate: LessThan(archiveThreshold),
+        },
+      });
+
+      for (const event of eventsToAutoArchive) {
+        event.isArchived = true;
+        event.archivedAt = now;
+        await this.eventRepository.save(event);
+        this.logger.log(`Auto-archived event: ${event.name} (${event.id})`);
+      }
+
       this.logger.log(
-        `Event activation complete. Activated: ${eventsToActivate.length}, Deactivated: ${eventsToDeactivate.length}`,
+        `Event activation complete. Activated: ${eventsToActivate.length}, Deactivated: ${eventsToDeactivate.length}, Auto-archived: ${eventsToAutoArchive.length}`,
       );
     } catch (error) {
       this.logger.error('Error in event activation cron job', error);
+    }
+  }
+
+  /**
+   * Cron job to spawn new instances of recurring events
+   * Runs daily at midnight
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleRecurringEvents() {
+    this.logger.log('Running recurring event cron job');
+
+    const now = new Date();
+
+    try {
+      const recurringTemplates = await this.eventRepository.find({
+        where: {
+          isRecurring: true,
+          isArchived: false,
+          endDate: LessThan(now),
+        },
+        relations: ['puzzles', 'rewards'],
+      });
+
+      for (const template of recurringTemplates) {
+        const config = template.recurrenceConfig;
+        if (!config) continue;
+
+        // Skip if max occurrences reached
+        if (
+          config.maxOccurrences !== undefined &&
+          config.maxOccurrences !== null &&
+          config.occurrenceCount >= config.maxOccurrences
+        ) {
+          continue;
+        }
+
+        const durationMs = template.endDate.getTime() - template.startDate.getTime();
+        const intervalMs = config.intervalDays * 24 * 60 * 60 * 1000;
+        const newStartDate = new Date(template.endDate.getTime() + intervalMs);
+        const newEndDate = new Date(newStartDate.getTime() + durationMs);
+
+        // Create new event instance cloned from template
+        const newEvent = this.eventRepository.create({
+          name: template.name,
+          description: template.description,
+          theme: template.theme,
+          startDate: newStartDate,
+          endDate: newEndDate,
+          isPublished: template.isPublished,
+          bannerImage: template.bannerImage,
+          metadata: template.metadata,
+          isRecurring: false, // child instances are not templates
+          recurrenceConfig: {
+            intervalDays: config.intervalDays,
+            maxOccurrences: config.maxOccurrences,
+            occurrenceCount: 0,
+            parentEventId: template.id,
+          },
+        });
+
+        // Check if it should be immediately active
+        if (newEvent.isPublished && newStartDate <= now && newEndDate > now) {
+          newEvent.isActive = true;
+        }
+
+        const savedEvent = await this.eventRepository.save(newEvent);
+
+        // Clone puzzles
+        for (const puzzle of template.puzzles ?? []) {
+          const { id: _id, createdAt: _c, updatedAt: _u, completionCount: _cc, attemptCount: _ac, ...puzzleData } = puzzle as any;
+          await this.puzzleRepository.save(
+            this.puzzleRepository.create({ ...puzzleData, eventId: savedEvent.id }),
+          );
+        }
+
+        // Clone rewards
+        for (const reward of template.rewards ?? []) {
+          const { id: _id, createdAt: _c, updatedAt: _u, claimedCount: _cl, ...rewardData } = reward as any;
+          await this.rewardRepository.save(
+            this.rewardRepository.create({ ...rewardData, eventId: savedEvent.id }),
+          );
+        }
+
+        // Increment occurrence count on template
+        template.recurrenceConfig = {
+          ...config,
+          occurrenceCount: config.occurrenceCount + 1,
+        };
+        await this.eventRepository.save(template);
+
+        this.logger.log(
+          `Spawned recurring instance for event: ${template.name} (new id: ${savedEvent.id})`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Error in recurring events cron job', error);
     }
   }
 
@@ -97,7 +220,7 @@ export class SeasonalEventService {
     isActive?: boolean;
     isPublished?: boolean;
   }): Promise<SeasonalEvent[]> {
-    const where: any = {};
+    const where: any = { isArchived: false };
 
     if (filters?.isActive !== undefined) {
       where.isActive = filters.isActive;
@@ -122,6 +245,7 @@ export class SeasonalEventService {
       where: {
         isActive: true,
         isPublished: true,
+        isArchived: false,
       },
       relations: ['puzzles', 'rewards'],
       order: { startDate: 'DESC' },
@@ -167,11 +291,7 @@ export class SeasonalEventService {
 
     // Recalculate isActive status
     const now = new Date();
-    if (
-      event.isPublished &&
-      event.startDate <= now &&
-      event.endDate > now
-    ) {
+    if (event.isPublished && event.startDate <= now && event.endDate > now) {
       event.isActive = true;
     } else if (event.endDate <= now) {
       event.isActive = false;
@@ -190,6 +310,19 @@ export class SeasonalEventService {
   }
 
   /**
+   * Archive an event (soft archive)
+   */
+  async archiveEvent(id: string): Promise<SeasonalEvent> {
+    const event = await this.findOne(id);
+    event.isArchived = true;
+    event.archivedAt = new Date();
+    event.isActive = false;
+    const saved = await this.eventRepository.save(event);
+    this.logger.log(`Archived event: ${event.name} (${id})`);
+    return saved;
+  }
+
+  /**
    * Get upcoming events
    */
   async findUpcomingEvents(): Promise<SeasonalEvent[]> {
@@ -197,6 +330,7 @@ export class SeasonalEventService {
     return await this.eventRepository.find({
       where: {
         isPublished: true,
+        isArchived: false,
         startDate: MoreThan(now),
       },
       order: { startDate: 'ASC' },
@@ -205,15 +339,27 @@ export class SeasonalEventService {
   }
 
   /**
-   * Get past events
+   * Get past events (ended but not archived)
    */
   async findPastEvents(limit: number = 10): Promise<SeasonalEvent[]> {
     const now = new Date();
     return await this.eventRepository.find({
       where: {
+        isArchived: false,
         endDate: LessThan(now),
       },
       order: { endDate: 'DESC' },
+      take: limit,
+    });
+  }
+
+  /**
+   * Get archived events (history)
+   */
+  async findArchivedEvents(limit: number = 20): Promise<SeasonalEvent[]> {
+    return await this.eventRepository.find({
+      where: { isArchived: true },
+      order: { archivedAt: 'DESC' },
       take: limit,
     });
   }
@@ -265,5 +411,34 @@ export class SeasonalEventService {
         completionRate: Math.round(completionRate * 100) / 100,
       },
     };
+  }
+
+  /**
+   * Announce an event to all active users via NotificationService.
+   * Called automatically on cron activation and manually via controller.
+   */
+  async announceEvent(event: SeasonalEvent): Promise<void> {
+    try {
+      await this.notificationService.createNotificationForUsers({
+        segment: { key: 'isActive', value: true },
+        type: 'event_announcement',
+        title: `New Event: ${event.name}`,
+        body: event.description,
+        meta: {
+          eventId: event.id,
+          startDate: event.startDate,
+          endDate: event.endDate,
+          theme: event.theme,
+          bannerImage: event.bannerImage,
+        },
+      });
+      this.logger.log(`Announced event: ${event.name} (${event.id})`);
+    } catch (error) {
+      this.logger.error(`Failed to announce event ${event.id}`, error);
+    }
+  }
+
+  private async announceEventOnActivation(event: SeasonalEvent): Promise<void> {
+    await this.announceEvent(event);
   }
 }

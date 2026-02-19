@@ -41,4 +41,17 @@ export class CreateEventDto {
     eventType?: 'competitive' | 'casual' | 'special';
     rules?: string[];
   };
+
+  @IsBoolean()
+  @IsOptional()
+  isRecurring?: boolean;
+
+  @IsObject()
+  @IsOptional()
+  recurrenceConfig?: {
+    intervalDays: number;
+    maxOccurrences?: number;
+    occurrenceCount?: number;
+    parentEventId?: string;
+  };
 }

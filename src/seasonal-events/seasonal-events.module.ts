@@ -15,6 +15,7 @@ import {
   EventRewardService,
 } from './services';
 import { SeasonalEventsController } from './seasonal-events.controller';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { SeasonalEventsController } from './seasonal-events.controller';
       PlayerEvent,
       EventReward,
     ]),
-    ScheduleModule.forRoot(), // Enable cron jobs
+    ScheduleModule.forRoot(),
+    NotificationsModule,
   ],
   controllers: [SeasonalEventsController],
   providers: [

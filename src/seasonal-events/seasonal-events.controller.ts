@@ -25,6 +25,7 @@ import {
   CreateRewardDto,
   SubmitAnswerDto,
 } from './dto';
+import { NotificationService } from '../notifications/notification.service';
 
 @Controller('seasonal-events')
 export class SeasonalEventsController {
@@ -34,6 +35,7 @@ export class SeasonalEventsController {
     private readonly playerEventService: PlayerEventService,
     private readonly leaderboardService: LeaderboardService,
     private readonly rewardService: EventRewardService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // ==================== EVENT ENDPOINTS ====================
@@ -57,7 +59,7 @@ export class SeasonalEventsController {
     const filters: any = {};
     if (isActive !== undefined) filters.isActive = isActive === 'true';
     if (isPublished !== undefined) filters.isPublished = isPublished === 'true';
-    
+
     return await this.eventService.findAll(filters);
   }
 
@@ -70,12 +72,40 @@ export class SeasonalEventsController {
   }
 
   /**
-   * Get past events
+   * Get past events (ended, not yet archived)
    */
   @Get('past')
   async getPastEvents(@Query('limit') limit?: string) {
     const limitNum = limit ? parseInt(limit, 10) : 10;
     return await this.eventService.findPastEvents(limitNum);
+  }
+
+  /**
+   * Get archived events (event history)
+   */
+  @Get('archived')
+  async getArchivedEvents(@Query('limit') limit?: string) {
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    return await this.eventService.findArchivedEvents(limitNum);
+  }
+
+  /**
+   * Get global leaderboard across all events
+   * NOTE: must be declared before /:eventId to avoid route conflict
+   */
+  @Get('leaderboard/global')
+  async getGlobalLeaderboard(@Query('limit') limit?: string) {
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+    return await this.leaderboardService.getGlobalLeaderboard(limitNum);
+  }
+
+  /**
+   * Get all events a player has participated in
+   * NOTE: must be declared before /:eventId to avoid route conflict
+   */
+  @Get('player/:playerId/events')
+  async getPlayerEvents(@Param('playerId') playerId: string) {
+    return await this.playerEventService.getPlayerEvents(playerId);
   }
 
   /**
@@ -121,6 +151,14 @@ export class SeasonalEventsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteEvent(@Param('eventId') eventId: string) {
     await this.eventService.deleteEvent(eventId);
+  }
+
+  /**
+   * Archive an event (Admin only) — soft archive for history retention
+   */
+  @Post(':eventId/archive')
+  async archiveEvent(@Param('eventId') eventId: string) {
+    return await this.eventService.archiveEvent(eventId);
   }
 
   // ==================== PUZZLE ENDPOINTS ====================
@@ -207,7 +245,7 @@ export class SeasonalEventsController {
   async submitAnswer(
     @Param('eventId') eventId: string,
     @Body() submitAnswerDto: SubmitAnswerDto,
-    @Query('playerId') playerId: string, // In production, get from auth token
+    @Query('playerId') playerId: string,
   ) {
     return await this.playerEventService.submitAnswer(
       playerId,
@@ -236,14 +274,6 @@ export class SeasonalEventsController {
     @Param('playerId') playerId: string,
   ) {
     return await this.playerEventService.getPlayerRank(playerId, eventId);
-  }
-
-  /**
-   * Get all events a player has participated in
-   */
-  @Get('player/:playerId/events')
-  async getPlayerEvents(@Param('playerId') playerId: string) {
-    return await this.playerEventService.getPlayerEvents(playerId);
   }
 
   // ==================== LEADERBOARD ENDPOINTS ====================
@@ -318,15 +348,6 @@ export class SeasonalEventsController {
     return await this.leaderboardService.getSpeedLeaderboard(eventId, limitNum);
   }
 
-  /**
-   * Get global leaderboard across all events
-   */
-  @Get('leaderboard/global')
-  async getGlobalLeaderboard(@Query('limit') limit?: string) {
-    const limitNum = limit ? parseInt(limit, 10) : 10;
-    return await this.leaderboardService.getGlobalLeaderboard(limitNum);
-  }
-
   // ==================== REWARD ENDPOINTS ====================
 
   /**
@@ -399,16 +420,13 @@ export class SeasonalEventsController {
   // ==================== ANNOUNCEMENT ENDPOINT ====================
 
   /**
-   * Announce an event (sends notifications)
-   * This is a placeholder - integrate with your notification service
+   * Announce an event — broadcasts notification to all active users
    */
   @Post(':eventId/announce')
   async announceEvent(@Param('eventId') eventId: string) {
     const event = await this.eventService.findOne(eventId);
-    
-    // TODO: Integrate with notification service or WebSocket gateway
-    // Example: await this.notificationService.broadcastEventAnnouncement(event);
-    
+    await this.eventService.announceEvent(event);
+
     return {
       message: 'Event announcement sent',
       event: {
