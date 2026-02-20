@@ -43,6 +43,15 @@ export class UserProgress {
   @Column({ default: false })
   achievementStreakMaster: boolean;
 
+  // Quest chain statistics
+  @Column({ type: 'jsonb', default: '{}' })
+  questChainStats: {
+    totalChainsCompleted: number;
+    currentChains: string[];
+    bestCompletionTimes: { [chainId: string]: number };
+    totalChainScore: number;
+  };
+
   @CreateDateColumn()
   createdAt: Date;
 

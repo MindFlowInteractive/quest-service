@@ -1,4 +1,4 @@
-import { Events } from 'src/event/entities/event.entity';
+import { Events } from '../../event/entities/event.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -204,9 +204,17 @@ export class Puzzle {
 
   @ManyToOne(() => Events, event => event.puzzles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'eventId' })
-  event: Event;
+  event: Events;
 
   @Column()
   eventId: number;
+
+  // Quest chain references
+  @Column({ type: 'jsonb', default: [] })
+  questChainReferences: Array<{
+    chainId: string;
+    sequenceOrder: number;
+    isRequired: boolean;
+  }>;
 
 }
