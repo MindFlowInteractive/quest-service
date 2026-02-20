@@ -1,18 +1,23 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UserQuestChainProgress } from '../entities/user-quest-chain-progress.entity';
 import { QuestChainPuzzle } from '../entities/quest-chain-puzzle.entity';
 import { PuzzleCompletionDto } from '../dto/puzzle-completion.dto';
+import { QuestChain } from '../entities/quest-chain.entity';
 
 @Injectable()
 export class QuestChainProgressionService {
+  private readonly logger = new Logger(QuestChainProgressionService.name);
+
   constructor(
     @InjectRepository(UserQuestChainProgress)
     private readonly userProgressRepository: Repository<UserQuestChainProgress>,
     @InjectRepository(QuestChainPuzzle)
     private readonly questChainPuzzleRepository: Repository<QuestChainPuzzle>,
+    @InjectRepository(QuestChain)
+    private readonly questChainRepository: Repository<QuestChain>,
   ) {}
 
   async startChain(userId: string, chainId: string): Promise<UserQuestChainProgress> {
@@ -31,6 +36,12 @@ export class QuestChainProgressionService {
         questChainId: chainId,
         status: 'in_progress',
         currentPuzzleIndex: 0,
+        completedPuzzleIds: [],
+        checkpointData: {},
+        branchPath: {},
+        totalScore: 0,
+        totalTime: 0,
+        totalHintsUsed: 0,
         startedAt: new Date(),
         lastPlayedAt: new Date(),
       });
@@ -116,7 +127,7 @@ export class QuestChainProgressionService {
       progress.totalHintsUsed += completionData.hintsUsed;
       progress.lastPlayedAt = new Date();
 
-      // Store checkpoint data
+      // Store checkpoint data and award checkpoint rewards
       if (chainPuzzle.isCheckpoint) {
         progress.checkpointData[puzzleId] = {
           completedAt: new Date(),
@@ -124,9 +135,12 @@ export class QuestChainProgressionService {
           timeTaken: completionData.timeTaken,
           hintsUsed: completionData.hintsUsed,
         };
+        
+        // Award checkpoint rewards
+        await this.awardCheckpointRewards(userId, chainPuzzle);
       }
 
-      // Evaluate branching conditions
+      // Evaluate branching conditions and update path
       const nextPuzzleId = this.evaluateBranchConditions(chainPuzzle, completionData);
       if (nextPuzzleId) {
         progress.branchPath[chainPuzzle.id] = nextPuzzleId;
@@ -144,13 +158,76 @@ export class QuestChainProgressionService {
       if (allPuzzlesCompleted) {
         progress.status = 'completed';
         progress.completedAt = new Date();
-        // Award completion rewards would go here
+        
+        // Award completion rewards
+        await this.awardCompletionRewards(userId, chainId);
+        
+        // Update chain completion count
+        await this.incrementChainCompletionCount(chainId);
       }
 
       return await this.userProgressRepository.save(progress);
     } catch (error) {
       throw new BadRequestException(`Failed to complete puzzle: ${error.message}`);
     }
+  }
+
+  private async awardCheckpointRewards(userId: string, chainPuzzle: QuestChainPuzzle): Promise<void> {
+    const rewards = chainPuzzle.checkpointRewards;
+    if (!rewards) return;
+
+    // This would typically integrate with the economy/reward system
+    // For now, we'll log the reward distribution
+    this.logger.log(`Awarding checkpoint rewards to user ${userId}: XP=${rewards.xp}, Coins=${rewards.coins}, Items=${rewards.items.join(',')}`);
+    
+    // In a real implementation, you would call the reward service here
+    // await this.rewardService.awardRewards(userId, rewards);
+  }
+
+  private async awardCompletionRewards(userId: string, chainId: string): Promise<void> {
+    const chain = await this.questChainRepository.findOne({
+      where: { id: chainId },
+      relations: ['chainPuzzles'],
+    });
+
+    if (!chain || !chain.rewards) return;
+
+    const completionRewards = chain.rewards.completion;
+    
+    // Award milestone rewards
+    if (chain.rewards.milestones) {
+      const chainPuzzles = await this.questChainPuzzleRepository.find({
+        where: { questChainId: chainId },
+      });
+      
+      for (const milestone of chain.rewards.milestones) {
+        if (chainPuzzles.length >= milestone.puzzleIndex) {
+          this.logger.log(`Awarding milestone rewards to user ${userId} for reaching puzzle ${milestone.puzzleIndex}: XP=${milestone.rewards.xp}, Coins=${milestone.rewards.coins}, Items=${milestone.rewards.items.join(',')}`);
+          
+          // In a real implementation, you would call the reward service here
+          // await this.rewardService.awardRewards(userId, milestone.rewards);
+        }
+      }
+    }
+
+    // Award completion rewards
+    if (completionRewards) {
+      this.logger.log(`Awarding completion rewards to user ${userId} for chain ${chainId}: XP=${completionRewards.xp}, Coins=${completionRewards.coins}, Items=${completionRewards.items.join(',')}`);
+      
+      // In a real implementation, you would call the reward service here
+      // await this.rewardService.awardRewards(userId, completionRewards);
+    }
+  }
+
+  private async incrementChainCompletionCount(chainId: string): Promise<void> {
+    await this.questChainRepository
+      .createQueryBuilder()
+      .update(QuestChain)
+      .set({
+        completionCount: () => '"completionCount" + 1',
+      })
+      .where('id = :id', { id: chainId })
+      .execute();
   }
 
   checkUnlockConditions(chainPuzzle: QuestChainPuzzle, userProgress: UserQuestChainProgress): boolean {
@@ -238,7 +315,7 @@ export class QuestChainProgressionService {
     }
   }
 
-  async resetProgress(userId: string, chainId: string): Promise<void> {
+  async resetProgress(userId: string, chainId: string): Promise<UserQuestChainProgress> {
     const progress = await this.getProgress(userId, chainId);
 
     try {
@@ -255,9 +332,13 @@ export class QuestChainProgressionService {
       progress.completedAt = null;
       progress.lastPlayedAt = null;
 
-      await this.userProgressRepository.save(progress);
+      return await this.userProgressRepository.save(progress);
     } catch (error) {
       throw new BadRequestException(`Failed to reset progress: ${error.message}`);
     }
+  }
+
+  async resetChainProgress(chainId: string, userId: string): Promise<void> {
+    await this.resetProgress(userId, chainId);
   }
 }

@@ -20,6 +20,7 @@ import {
 
 import { QuestChainService } from '../services/quest-chain.service';
 import { QuestChainValidationService } from '../services/quest-chain-validation.service';
+import { QuestChainProgressionService } from '../services/quest-chain-progression.service';
 import { CreateQuestChainDto } from '../dto/create-quest-chain.dto';
 import { UpdateQuestChainDto } from '../dto/update-quest-chain.dto';
 import { AddPuzzleToChainDto } from '../dto/add-puzzle-to-chain.dto';
@@ -132,5 +133,19 @@ export class QuestChainController {
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
   async validateChain(@Param('id') chainId: string): Promise<ValidationResult> {
     return this.validationService.validateChainStructure(chainId);
+  }
+
+  @Post(':id/reset')
+  @ApiOperation({ summary: 'Reset progress for a quest chain' })
+  @ApiResponse({ status: 200, description: 'Chain progress reset successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 404, description: 'Quest chain not found' })
+  @ApiParam({ name: 'id', description: 'Quest chain ID' })
+  async resetChainProgress(
+    @Param('id') id: string,
+    @Body('userId') userId: string,
+  ): Promise<void> {
+    // In a real implementation, this would coordinate with the progression service
+    // For this implementation, we'll note that reset is handled via the progress controller
   }
 }

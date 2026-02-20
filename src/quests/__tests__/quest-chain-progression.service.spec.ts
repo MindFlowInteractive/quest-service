@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { QuestChainProgressionService } from '../services/quest-chain-progression.service';
 import { UserQuestChainProgress } from '../entities/user-quest-chain-progress.entity';
 import { QuestChainPuzzle } from '../entities/quest-chain-puzzle.entity';
+import { QuestChain } from '../entities/quest-chain.entity';
 import { PuzzleCompletionDto } from '../dto/puzzle-completion.dto';
 
 describe('QuestChainProgressionService', () => {

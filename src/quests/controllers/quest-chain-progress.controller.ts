@@ -81,14 +81,14 @@ export class QuestChainProgressController {
 
   @Post(':id/reset')
   @ApiOperation({ summary: 'Reset user progress for a quest chain' })
-  @ApiResponse({ status: 204, description: 'Progress reset successfully' })
+  @ApiResponse({ status: 200, description: 'Progress reset successfully', type: UserQuestChainProgress })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Progress not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
   async resetProgress(
     @Param('id') chainId: string,
     @Body('userId') userId: string,
-  ): Promise<void> {
+  ): Promise<UserQuestChainProgress> {
     return this.progressionService.resetProgress(userId, chainId);
   }
 }

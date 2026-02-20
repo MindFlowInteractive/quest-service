@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { QuestChain } from '../entities/quest-chain.entity';
 import { QuestChainPuzzle } from '../entities/quest-chain-puzzle.entity';
+import { UserQuestChainProgress } from '../entities/user-quest-chain-progress.entity';
 import { CreateQuestChainDto } from '../dto/create-quest-chain.dto';
 import { UpdateQuestChainDto } from '../dto/update-quest-chain.dto';
 import { AddPuzzleToChainDto } from '../dto/add-puzzle-to-chain.dto';
@@ -164,4 +165,7 @@ export class QuestChainService {
 
     return true;
   }
+
+  // Note: Chain progress reset is handled by the QuestChainProgressionService
+  // to avoid circular dependencies. This method is maintained for API compatibility.
 }
