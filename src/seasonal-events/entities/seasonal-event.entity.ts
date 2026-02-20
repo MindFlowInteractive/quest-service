@@ -63,6 +63,23 @@ export class SeasonalEvent {
   @Column({ type: 'int', default: 0 })
   totalPuzzlesCompleted: number;
 
+  @Column({ type: 'boolean', default: false })
+  isArchived: boolean;
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  archivedAt?: Date;
+
+  @Column({ type: 'boolean', default: false })
+  isRecurring: boolean;
+
+  @Column({ type: 'jsonb', nullable: true })
+  recurrenceConfig?: {
+    intervalDays: number;
+    maxOccurrences?: number;
+    occurrenceCount: number;
+    parentEventId?: string;
+  };
+
   @CreateDateColumn()
   createdAt: Date;
 

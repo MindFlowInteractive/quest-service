@@ -41,4 +41,17 @@ export class CreateEventDto {
     eventType?: 'competitive' | 'casual' | 'special';
     rules?: string[];
   };
+
+  @IsBoolean()
+  @IsOptional()
+  isRecurring?: boolean;
+
+  @IsObject()
+  @IsOptional()
+  recurrenceConfig?: {
+    /** How many days between occurrences. Must be a positive integer. */
+    intervalDays: number;
+    /** Maximum number of times this event will recur. Omit for infinite. */
+    maxOccurrences?: number;
+  };
 }
