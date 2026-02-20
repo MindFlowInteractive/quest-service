@@ -6,6 +6,9 @@ import { CommunityPuzzlesModule } from './community-puzzles.module';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
+import { PuzzleSolutionAttempt } from './entities/puzzle-solution-attempt.entity';
+import { SolutionSubmissionService } from './services/solution-submission.service';
+import { AntiCheatModule } from '../anti-cheat/anti-cheat.module';
 
 // Import entities and components for categories, collections, and themes
 import { Category } from './entities/category.entity';
@@ -26,8 +29,10 @@ import { ThemesController } from './theme.controller'; // Import ThemesControlle
       PuzzleRating,
       Category,
       Collection,
-      Theme // Add Theme entity
-    ])
+      Theme,
+      PuzzleSolutionAttempt,
+    ]),
+    AntiCheatModule,
   ],
   controllers: [
     PuzzlesController,
@@ -39,8 +44,9 @@ import { ThemesController } from './theme.controller'; // Import ThemesControlle
     PuzzlesService,
     CategoriesService,
     CollectionsService,
-    ThemesService // Add ThemesService
+    ThemesService,
+    SolutionSubmissionService,
   ],
   exports: [PuzzlesService]
 })
-export class PuzzlesModule {}
+export class PuzzlesModule { }
