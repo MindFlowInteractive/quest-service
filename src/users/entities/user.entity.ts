@@ -81,6 +81,7 @@ export class User {
   @Column({ type: 'jsonb', default: {} })
   preferences: {
     theme?: 'light' | 'dark' | 'auto';
+    language?: string;
     difficulty?: 'easy' | 'medium' | 'hard' | 'expert';
     notifications?: {
       email?: boolean;

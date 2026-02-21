@@ -4,15 +4,16 @@ import { Repository, SelectQueryBuilder, In, Between, IsNull, Not } from 'typeor
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
-import { 
-  CreatePuzzleDto, 
-  UpdatePuzzleDto, 
-  SearchPuzzleDto, 
+import { LocalizationService } from '../common/i18n/localization.service';
+import {
+  CreatePuzzleDto,
+  UpdatePuzzleDto,
+  SearchPuzzleDto,
   BulkUpdateDto,
   BulkAction,
   SortBy,
   SortOrder,
-  PuzzleDifficulty 
+  PuzzleDifficulty
 } from './dto';
 
 export interface PuzzleWithStats {
@@ -85,7 +86,8 @@ export class PuzzlesService {
     private progressRepository: Repository<PuzzleProgress>,
     @InjectRepository(PuzzleRating)
     private ratingRepository: Repository<PuzzleRating>,
-  ) {}
+    private readonly localizationService: LocalizationService,
+  ) { }
 
   async create(createPuzzleDto: CreatePuzzleDto, createdBy: string): Promise<Puzzle> {
     try {
@@ -128,7 +130,7 @@ export class PuzzlesService {
       const puzzle = this.puzzleRepository.create(puzzleData);
       const savedPuzzle = await this.puzzleRepository.save(puzzle);
       this.logger.log(`Created puzzle: ${savedPuzzle.id} by user: ${createdBy}`);
-      
+
       return savedPuzzle;
     } catch (error) {
       this.logger.error(`Failed to create puzzle: ${error.message}`, error.stack);
@@ -241,6 +243,15 @@ export class PuzzlesService {
       }
 
       const [enhancedPuzzle] = await this.enhanceWithStats([puzzle]);
+
+      // Translate title and description
+      enhancedPuzzle.title = await this.localizationService.translate(`puzzle-${puzzle.id}-title`, {
+        defaultValue: puzzle.title,
+      });
+      enhancedPuzzle.description = await this.localizationService.translate(`puzzle-${puzzle.id}-description`, {
+        defaultValue: puzzle.description,
+      });
+
       return enhancedPuzzle;
     } catch (error) {
       this.logger.error(`Failed to find puzzle ${id}: ${error.message}`, error.stack);
@@ -264,10 +275,10 @@ export class PuzzlesService {
       }
 
       await this.puzzleRepository.update(id, updateData);
-      
+
       const updatedPuzzle = await this.findOne(id, userId);
       this.logger.log(`Updated puzzle: ${id}`);
-      
+
       return updatedPuzzle;
     } catch (error) {
       this.logger.error(`Failed to update puzzle ${id}: ${error.message}`, error.stack);
@@ -375,14 +386,20 @@ export class PuzzlesService {
   }
 
   private async enhanceWithStats(puzzles: Puzzle[]): Promise<PuzzleWithStats[]> {
-    return puzzles.map(puzzle => ({
+    return Promise.all(puzzles.map(async puzzle => ({
       ...puzzle,
+      title: await this.localizationService.translate(`puzzle-${puzzle.id}-title`, {
+        defaultValue: puzzle.title,
+      }),
+      description: await this.localizationService.translate(`puzzle-${puzzle.id}-description`, {
+        defaultValue: puzzle.description,
+      }),
       totalPlays: puzzle.attempts,
       uniquePlayers: 0,
       completionRate: puzzle.attempts > 0 ? (puzzle.completions / puzzle.attempts) * 100 : 0,
       averageRating: puzzle.averageRating,
       averageCompletionTime: puzzle.averageCompletionTime
-    }));
+    })));
   }
 
   private async executeBulkAction(puzzleId: string, bulkUpdateDto: BulkUpdateDto, userId: string): Promise<void> {
