@@ -38,6 +38,7 @@ import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
 import { QuestsModule } from './quests/quests.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { DailyChallengesModule } from './daily-challenges/daily-challenges.module';
 
 @Module({
   imports: [
@@ -117,6 +118,7 @@ import { PrivacyModule } from './privacy/privacy.module';
     QuestsModule,
     BlockchainTransactionModule,
     PrivacyModule,
+    DailyChallengesModule,
   ],
   controllers: [AppController],
   providers: [
