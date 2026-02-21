@@ -37,6 +37,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
 import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
 import { QuestsModule } from './quests/quests.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
+import { PrivacyModule } from './privacy/privacy.module';
 
 @Module({
   imports: [
@@ -115,6 +116,7 @@ import { BlockchainTransactionModule } from './blockchain-transaction/blockchain
     AntiCheatModule,
     QuestsModule,
     BlockchainTransactionModule,
+    PrivacyModule,
   ],
   controllers: [AppController],
   providers: [
