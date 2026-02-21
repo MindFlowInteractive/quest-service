@@ -41,6 +41,6 @@ import { ThemesController } from './theme.controller'; // Import ThemesControlle
     CollectionsService,
     ThemesService // Add ThemesService
   ],
-  exports: [PuzzlesService]
+  exports: [PuzzlesService, PuzzleModerationService]
 })
-export class PuzzlesModule {}
+export class PuzzlesModule { }
