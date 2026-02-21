@@ -1,6 +1,31 @@
 import { IsString, IsOptional, IsEnum, IsInt, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
+class CompletionRewardsDto {
+  @IsInt()
+  xp: number;
+
+  @IsInt()
+  coins: number;
+
+  @IsString({ each: true })
+  items: string[];
+}
+
+class QuestChainStoryDto {
+  @IsString()
+  intro: string;
+
+  @IsString()
+  outro: string;
+}
+
+class QuestChainRewardsDto {
+  @ValidateNested()
+  @Type(() => CompletionRewardsDto)
+  completion: CompletionRewardsDto;
+}
+
 export class UpdateQuestChainDto {
   @IsString()
   @IsOptional()
@@ -23,29 +48,4 @@ export class UpdateQuestChainDto {
   @Type(() => QuestChainRewardsDto)
   @IsOptional()
   rewards?: QuestChainRewardsDto;
-}
-
-class QuestChainStoryDto {
-  @IsString()
-  intro: string;
-
-  @IsString()
-  outro: string;
-}
-
-class QuestChainRewardsDto {
-  @ValidateNested()
-  @Type(() => CompletionRewardsDto)
-  completion: CompletionRewardsDto;
-}
-
-class CompletionRewardsDto {
-  @IsInt()
-  xp: number;
-
-  @IsInt()
-  coins: number;
-
-  @IsString({ each: true })
-  items: string[];
 }
