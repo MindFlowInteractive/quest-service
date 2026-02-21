@@ -1,0 +1,6 @@
+{
+    "GREETING": "Hola",
+    "WELCOME": "Bienvenido a LogiQuest",
+    "PUZZLE_RESOLVED": "¡Rompecabezas resuelto con éxito!",
+    "ERROR_NOT_FOUND": "Recurso solicitado no encontrado"
+}

@@ -17,9 +17,11 @@ import { CollectionsController } from './collection.controller';
 import { Theme } from './entities/theme.entity'; // Import Theme entity
 import { ThemesService } from './theme.service'; // Import ThemesService
 import { ThemesController } from './theme.controller'; // Import ThemesController
+import { LocalizationModule } from '../common/i18n/localization.module';
 
 @Module({
   imports: [
+    LocalizationModule,
     TypeOrmModule.forFeature([
       Puzzle,
       PuzzleProgress,
@@ -43,4 +45,4 @@ import { ThemesController } from './theme.controller'; // Import ThemesControlle
   ],
   exports: [PuzzlesService]
 })
-export class PuzzlesModule {}
+export class PuzzlesModule { }

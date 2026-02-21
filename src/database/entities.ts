@@ -14,3 +14,4 @@ export { GameSession } from '../game-engine/entities/game-session.entity';
 // Export new entities for collections and categories
 export { Category } from '../puzzles/entities/category.entity';
 export { Collection } from '../puzzles/entities/collection.entity';
+export { Translation } from '../common/i18n/entities/translation.entity';
