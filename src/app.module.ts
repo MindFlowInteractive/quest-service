@@ -36,6 +36,7 @@ import { MultiplayerModule } from './multiplayer/multiplayer.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
 import { QuestsModule } from './quests/quests.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
 
@@ -115,6 +116,7 @@ import { PrivacyModule } from './privacy/privacy.module';
     RecommendationsModule,
     AntiCheatModule,
     QuestsModule,
+    IntegrationsModule,
     BlockchainTransactionModule,
     PrivacyModule,
   ],
