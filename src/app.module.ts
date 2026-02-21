@@ -10,6 +10,8 @@ import { AppService } from './app.service';
 import { validateEnvironment } from './config/env.validation';
 import appConfig from './config/app.config';
 import { createLoggerConfig } from './config/logger.config';
+
+// Feature modules
 import { UsersModule } from './users/users.module';
 import { PlayerProfileModule } from './player-profile/player-profile.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
@@ -38,6 +40,7 @@ import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
 import { QuestsModule } from './quests/quests.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { WalletAuthModule } from './auth/wallet-auth.module';
 
 @Module({
   imports: [
@@ -80,10 +83,10 @@ import { PrivacyModule } from './privacy/privacy.module';
 
     // Rate limiting
     ThrottlerModule.forRootAsync({
-      useFactory: (configService: any) => [
+      useFactory: (configService: ConfigService) => [
         {
-          ttl: configService.get('app.throttle.ttl') || 60000,
-          limit: configService.get('app.throttle.limit') || 100,
+          ttl: configService.get<number>('app.throttle.ttl') || 60_000, // 1 minute
+          limit: configService.get<number>('app.throttle.limit') || 100, // 100 requests per minute
         },
       ],
       inject: [ConfigService],
@@ -117,6 +120,7 @@ import { PrivacyModule } from './privacy/privacy.module';
     QuestsModule,
     BlockchainTransactionModule,
     PrivacyModule,
+    WalletAuthModule,
   ],
   controllers: [AppController],
   providers: [
