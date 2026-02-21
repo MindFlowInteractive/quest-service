@@ -38,6 +38,7 @@ import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
 import { QuestsModule } from './quests/quests.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { SkillRatingModule } from './skill-rating/skill-rating.module';
 
 @Module({
   imports: [
@@ -117,6 +118,7 @@ import { PrivacyModule } from './privacy/privacy.module';
     QuestsModule,
     BlockchainTransactionModule,
     PrivacyModule,
+    SkillRatingModule,
   ],
   controllers: [AppController],
   providers: [
