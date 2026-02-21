@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from "@nestjs/common"
 import type { Repository } from "typeorm"
+import type { DeepPartial } from "typeorm"
 import type { JwtService } from "@nestjs/jwt"
 import * as bcrypt from "bcrypt"
 import type { User } from "./entities/user.entity"
@@ -255,14 +256,14 @@ export class AuthService {
       throw new Error("Default user role not found. Please seed roles.");
     }
 
-    const userData: Partial<User> = {
+    const userData: DeepPartial<User> = {
       email: oauthUser.email,
       isVerified: true,
       role,
     };
-    (userData as any)[providerIdField] = providerId;
+    (userData as Record<string, unknown>)[providerIdField as string] = providerId;
 
-    const newUser = this.usersRepository.create(userData as any);
+    const newUser = this.usersRepository.create(userData);
 
     return this.usersRepository.save(newUser);
   }
