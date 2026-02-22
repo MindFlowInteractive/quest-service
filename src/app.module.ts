@@ -11,6 +11,8 @@ import { AppService } from './app.service';
 import { validateEnvironment } from './config/env.validation';
 import appConfig from './config/app.config';
 import { createLoggerConfig } from './config/logger.config';
+
+// Feature modules
 import { UsersModule } from './users/users.module';
 import { PlayerProfileModule } from './player-profile/player-profile.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
@@ -85,10 +87,10 @@ import { EnergyModule } from './energy/energy.module';
 
     // Rate limiting
     ThrottlerModule.forRootAsync({
-      useFactory: (configService: any) => [
+      useFactory: (configService: ConfigService) => [
         {
-          ttl: configService.get('app.throttle.ttl') || 60000,
-          limit: configService.get('app.throttle.limit') || 100,
+          ttl: configService.get<number>('app.throttle.ttl') || 60_000, // 1 minute
+          limit: configService.get<number>('app.throttle.limit') || 100, // 100 requests per minute
         },
       ],
       inject: [ConfigService],
@@ -123,6 +125,7 @@ import { EnergyModule } from './energy/energy.module';
     QuestsModule,
     BlockchainTransactionModule,
     PrivacyModule,
+    WalletAuthModule,
   ],
   controllers: [AppController],
   providers: [
