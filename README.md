@@ -65,3 +65,33 @@ We welcome contributions from the community! Whether you're a developer, designe
 
 ## 📜 License
 This project is licensed under the MIT License.
+
+## 🔑 Wallet Authentication (Stellar + Freighter)
+
+This feature allows users to authenticate using their Stellar wallet (Freighter).
+
+### Flow
+1. **Request Challenge**
+   - `POST /auth/wallet/challenge`
+   - Input: `{ "walletAddress": "GABC..." }`
+   - Output: `{ "challenge": "Login challenge for GABC..." }`
+
+2. **Sign Challenge in Freighter**
+   - User signs the challenge message with their wallet.
+
+3. **Verify Signature**
+   - `POST /auth/wallet/verify`
+   - Input:
+     ```json
+     {
+       "walletAddress": "GABC...",
+       "signature": "base64signature...",
+       "challenge": "Login challenge for GABC..."
+     }
+     ```
+   - Output: JWT token + linked wallet account.
+
+### Security
+- Rate limiting: 100 requests/minute
+- JWT expiry: 1 hour
+- Replay protection: timestamped challenges
