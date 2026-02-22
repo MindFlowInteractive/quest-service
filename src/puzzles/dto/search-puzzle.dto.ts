@@ -7,6 +7,7 @@ export enum SortBy {
   TITLE = 'title',
   DIFFICULTY = 'difficulty',
   RATING = 'rating',
+  REVIEWS = 'reviews',
   PLAYS = 'totalPlays',
   COMPLETION_RATE = 'completionRate'
 }

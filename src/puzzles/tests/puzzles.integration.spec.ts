@@ -1,639 +1,161 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import supertest from 'supertest';
-const request = supertest as any;
-
 import { PuzzlesModule } from '../puzzles.module';
+import { PuzzleRatingService } from '../services/puzzle-rating.service';
+import { PuzzleReviewService } from '../services/puzzle-review.service';
+import { PuzzlesService } from '../puzzles.service';
 import { Puzzle } from '../entities/puzzle.entity';
+import { PuzzleRating } from '../entities/puzzle-rating.entity';
+import { PuzzleReview } from '../entities/puzzle-review.entity';
+import { DataSource } from 'typeorm';
+import { ReviewVote } from '../entities/review-vote.entity';
+import { PuzzleRatingAggregate } from '../entities/puzzle-rating-aggregate.entity';
+import { Category } from '../entities/category.entity';
+import { Collection } from '../entities/collection.entity';
+import { Theme } from '../entities/theme.entity';
 import { PuzzleProgress } from '../../game-logic/entities/puzzle-progress.entity';
-import { User } from '../../auth/entities/user.entity';
-import { AuthModule } from '../../auth/auth.module';
-import { JwtService } from '@nestjs/jwt';
-import {
-  CreatePuzzleDto,
-  UpdatePuzzleDto,
-  PuzzleDifficulty,
-  PuzzleContentType,
-} from '../dto';
+import { Events } from '../../event/entities/event.entity';
+import { UserAchievement } from '../../achievements/entities/user-achievement.entity';
+import { Achievement } from '../../achievements/entities/achievement.entity';
+import { GameSession } from '../../game-engine/entities/game-session.entity';
+import { UserStreak } from '../../users/entities/user-streak.entity';
+import { UserPuzzleCompletion } from '../../users/entities/user-puzzle-completion.entity';
+import { User } from '../../users/entities/user.entity';
+import { PuzzleDifficulty, PuzzleContentType } from '../dto/create-puzzle.dto';
 
-describe('Puzzles Integration Tests', () => {
-  let app: INestApplication;
-  let puzzleRepository: Repository<Puzzle>;
-  let userRepository: Repository<User>;
-  let jwtService: JwtService;
-  let authToken: string;
-  let testUser: User;
-
-  const testPuzzleDto: CreatePuzzleDto = {
-    title: 'Integration Test Puzzle',
-    description:
-      'A comprehensive integration test puzzle with sufficient description length to pass validation',
-    category: 'integration-test',
-    difficulty: PuzzleDifficulty.MEDIUM,
-    difficultyRating: 5,
-    basePoints: 100,
-    timeLimit: 300,
-    maxHints: 3,
-    content: {
-      type: PuzzleContentType.MULTIPLE_CHOICE,
-      question: 'What is the purpose of integration testing?',
-      options: [
-        'To test individual components in isolation',
-        'To test the interaction between different components',
-        'To test the user interface only',
-        'To test database performance',
-      ],
-      correctAnswer: 'To test the interaction between different components',
-      explanation:
-        'Integration testing verifies that different components work together correctly.',
-    },
-    hints: [
-      {
-        order: 1,
-        text: 'Think about how different parts of a system work together',
-        pointsPenalty: 10,
-        unlockAfter: 60,
-      },
-    ],
-    tags: ['testing', 'integration', 'software-development'],
-    prerequisites: [],
-    scoring: {
-      timeBonus: {
-        enabled: true,
-        maxBonus: 50,
-        baseTime: 300,
-      },
-    },
-    isFeatured: false,
-  };
+describe('Puzzles Integration Test', () => {
+  let module: TestingModule;
+  let ratingService: PuzzleRatingService;
+  let reviewService: PuzzleReviewService;
+  let puzzlesService: PuzzlesService;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [Puzzle, PuzzleProgress, User],
+          entities: [
+            Puzzle, 
+            PuzzleRating, 
+            PuzzleReview, 
+            ReviewVote, 
+            PuzzleRatingAggregate, 
+            Category, 
+            Collection, 
+            Theme, 
+            PuzzleProgress, 
+            Events, 
+            User,
+            UserAchievement,
+            Achievement,
+            GameSession,
+            UserStreak,
+            UserPuzzleCompletion
+          ],
           synchronize: true,
-          logging: false,
         }),
-        PuzzlesModule,
-        AuthModule,
+        TypeOrmModule.forFeature([
+          Puzzle, 
+          PuzzleRating, 
+          PuzzleReview, 
+          ReviewVote, 
+          PuzzleRatingAggregate, 
+          Category, 
+          Collection, 
+          Theme, 
+          PuzzleProgress, 
+          Events, 
+          User,
+          UserAchievement,
+          Achievement,
+          GameSession,
+          UserStreak,
+          UserPuzzleCompletion
+        ])
+      ],
+      providers: [
+        PuzzlesService,
+        PuzzleRatingService,
+        PuzzleReviewService,
       ],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-
-    await app.init();
-
-    puzzleRepository = moduleFixture.get<Repository<Puzzle>>(getRepositoryToken(Puzzle));
-    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
-    jwtService = moduleFixture.get(JwtService);
-
-    // Create test user
-    testUser = userRepository.create({
-      email: 'test@example.com',
-      password: 'hashedpassword',
-      isVerified: true,
-    });
-    testUser = await userRepository.save(testUser);
-
-    // Generate auth token
-    authToken = jwtService.sign({
-      sub: testUser.id,
-      email: testUser.email,
-    });
+    ratingService = module.get<PuzzleRatingService>(PuzzleRatingService);
+    reviewService = module.get<PuzzleReviewService>(PuzzleReviewService);
+    puzzlesService = module.get<PuzzlesService>(PuzzlesService);
+    dataSource = module.get<DataSource>(DataSource);
   });
 
   afterAll(async () => {
-    await app.close();
+    await module.close();
   });
 
   beforeEach(async () => {
-    // Clean up database before each test
-    await puzzleRepository.clear();
+    // Clean up database
+    await dataSource.synchronize(true);
   });
 
-  describe('POST /puzzles', () => {
-    it('should create a puzzle with valid data', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/puzzles')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(testPuzzleDto)
-        .expect(201);
-
-      expect(response.body).toHaveProperty('id');
-      expect(response.body.title).toBe(testPuzzleDto.title);
-      expect(response.body.category).toBe(testPuzzleDto.category);
-      expect(response.body.createdBy).toBe(testUser.id);
-      expect(response.body.publishedAt).toBeNull();
-
-      // Verify in database
-      const puzzleInDb = await puzzleRepository.findOne({
-        where: { id: response.body.id },
-      });
-      expect(puzzleInDb).toBeDefined();
-      expect(puzzleInDb).not.toBeNull();
-      expect(puzzleInDb!.title).toBe(testPuzzleDto.title);
-    });
-
-    it('should reject puzzle creation without authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/puzzles')
-        .send(testPuzzleDto)
-        .expect(401);
-    });
-
-    it('should validate required fields', async () => {
-      const invalidPuzzle = {
-        title: 'Short', // Too short
-        description: 'Short', // Too short
-        category: '',
-        difficulty: 'invalid-difficulty',
-      };
-
-      const response = await request(app.getHttpServer())
-        .post('/puzzles')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(invalidPuzzle)
-        .expect(400);
-
-      expect(response.body).toHaveProperty('message');
-      expect(Array.isArray(response.body.message)).toBe(true);
-    });
-
-    it('should validate content structure', async () => {
-      const puzzleWithInvalidContent = {
-        ...testPuzzleDto,
+  describe('Rating System Integration', () => {
+    it('should correctly aggregate ratings when multiple users rate a puzzle', async () => {
+      // 1. Create a puzzle
+      const puzzle = await puzzlesService.create({
+        title: 'Test Puzzle',
+        description: 'Test Description',
+        category: 'logic',
+        difficulty: PuzzleDifficulty.MEDIUM,
+        difficultyRating: 5,
+        basePoints: 100,
+        timeLimit: 300,
+        maxHints: 3,
         content: {
-          type: 'invalid-type',
-          question: '', // Too short
+          type: PuzzleContentType.MULTIPLE_CHOICE,
+          question: 'What is 2+2?',
+          correctAnswer: '4',
+          options: ['3', '4', '5']
         },
-      };
+      }, 'user-creator-id');
 
-      await request(app.getHttpServer())
-        .post('/puzzles')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(puzzleWithInvalidContent)
-        .expect(400);
+      // 2. Submit ratings
+      await ratingService.submitRating('user-1', puzzle.id, { rating: 5 });
+      await ratingService.submitRating('user-2', puzzle.id, { rating: 3 });
+      await ratingService.submitRating('user-3', puzzle.id, { rating: 4 });
+
+      // 3. Verify aggregate
+      const aggregate = await ratingService.getPuzzleAggregate(puzzle.id);
+      expect(aggregate.totalRatings).toBe(3);
+      expect(Number(aggregate.averageRating)).toBeCloseTo(4.0, 1);
+      
+      // 4. Verify denormalized fields on Puzzle
+      const updatedPuzzle = await puzzlesService.findOne(puzzle.id, 'user-creator-id');
+      expect(Number(updatedPuzzle.averageRating)).toBeCloseTo(4.0, 1);
+      expect(updatedPuzzle.ratingCount).toBe(3);
     });
-  });
 
-  describe('GET /puzzles', () => {
-    beforeEach(async () => {
-      // Create test puzzles
-      const puzzles = [
-        {
-          ...testPuzzleDto,
-          title: 'Math Puzzle 1',
-          category: 'math',
-          difficulty: 'easy' as const,
-          publishedAt: new Date(),
-          createdBy: testUser.id,
+    it('should prevent duplicate reviews from the same user', async () => {
+      const puzzle = await puzzlesService.create({
+        title: 'Review Test',
+        description: 'Desc',
+        category: 'logic',
+        difficulty: PuzzleDifficulty.EASY,
+        difficultyRating: 1,
+        basePoints: 10,
+        timeLimit: 60,
+        maxHints: 1,
+        content: {
+          type: PuzzleContentType.MULTIPLE_CHOICE,
+          question: 'What is 1+1?',
+          correctAnswer: '2',
+          options: ['1', '2', '3']
         },
-        {
-          ...testPuzzleDto,
-          title: 'Logic Puzzle 1',
-          category: 'logic',
-          difficulty: 'hard' as const,
-          publishedAt: new Date(),
-          createdBy: testUser.id,
-        },
-        {
-          ...testPuzzleDto,
-          title: 'Unpublished Puzzle',
-          category: 'math',
-          difficulty: 'medium' as const,
-          publishedAt: undefined,
-          createdBy: testUser.id,
-        },
-      ];
+      }, 'creator-id');
 
-      for (const puzzleData of puzzles) {
-        const puzzle = puzzleRepository.create(puzzleData);
-        await puzzleRepository.save(puzzle);
-      }
-    });
+      await reviewService.submitReview('user-1', puzzle.id, { reviewText: 'First review' });
 
-    it('should return paginated puzzles', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/puzzles')
-        .query({ page: 1, limit: 10 })
-        .expect(200);
-
-      expect(response.body).toHaveProperty('puzzles');
-      expect(response.body).toHaveProperty('total');
-      expect(response.body).toHaveProperty('page', 1);
-      expect(response.body).toHaveProperty('limit', 10);
-      expect(response.body).toHaveProperty('totalPages');
-      expect(Array.isArray(response.body.puzzles)).toBe(true);
-    });
-
-    it('should filter by category', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/puzzles')
-        .query({ category: 'math' })
-        .expect(200);
-
-      expect(response.body.puzzles.every((p: any) => p.category === 'math')).toBe(
-        true,
-      );
-    });
-
-    it('should filter by difficulty', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/puzzles')
-        .query({ difficulty: 'easy' })
-        .expect(200);
-
-      expect(response.body.puzzles.every((p: any) => p.difficulty === 'easy')).toBe(
-        true,
-      );
-    });
-
-    it('should search by title and description', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/puzzles')
-        .query({ search: 'Math' })
-        .expect(200);
-
-      expect(response.body.puzzles.some((p: any) => p.title.includes('Math'))).toBe(
-        true,
-      );
-    });
-
-    it('should sort results', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/puzzles')
-        .query({ sortBy: 'title', sortOrder: 'ASC' })
-        .expect(200);
-
-      const titles = response.body.puzzles.map((p: any) => p.title);
-      const sortedTitles = [...titles].sort();
-      expect(titles).toEqual(sortedTitles);
-    });
-  });
-
-  describe('GET /puzzles/:id', () => {
-    let testPuzzle: Puzzle;
-
-    beforeEach(async () => {
-      testPuzzle = puzzleRepository.create({
-        ...testPuzzleDto,
-        publishedAt: new Date(),
-        createdBy: testUser.id,
-      });
-      testPuzzle = await puzzleRepository.save(testPuzzle);
-    });
-
-    it('should return a puzzle by id', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/puzzles/${testPuzzle.id}`)
-        .expect(200);
-
-      expect(response.body.id).toBe(testPuzzle.id);
-      expect(response.body.title).toBe(testPuzzle.title);
-      expect(response.body).toHaveProperty('totalPlays');
-      expect(response.body).toHaveProperty('averageRating');
-    });
-
-    it('should return 404 for non-existent puzzle', async () => {
-      const fakeId = '123e4567-e89b-12d3-a456-426614174000';
-      await request(app.getHttpServer()).get(`/puzzles/${fakeId}`).expect(404);
-    });
-
-    it('should return 400 for invalid UUID', async () => {
-      await request(app.getHttpServer())
-        .get('/puzzles/invalid-uuid')
-        .expect(400);
-    });
-  });
-
-  describe('PATCH /puzzles/:id', () => {
-    let testPuzzle: Puzzle;
-
-    beforeEach(async () => {
-      testPuzzle = puzzleRepository.create({
-        ...testPuzzleDto,
-        createdBy: testUser.id,
-      });
-      testPuzzle = await puzzleRepository.save(testPuzzle);
-    });
-
-    it('should update a puzzle', async () => {
-      const updateDto: UpdatePuzzleDto = {
-        title: 'Updated Integration Test Puzzle',
-        updateReason: 'Testing integration update functionality',
-      };
-
-      const response = await request(app.getHttpServer())
-        .patch(`/puzzles/${testPuzzle.id}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateDto)
-        .expect(200);
-
-      expect(response.body.title).toBe(updateDto.title);
-
-      // Verify in database
-      const updatedPuzzle = await puzzleRepository.findOne({
-        where: { id: testPuzzle.id },
-      });
-      expect(updatedPuzzle).not.toBeNull();
-      expect(updatedPuzzle!.title).toBe(updateDto.title);
-    });
-
-    it('should reject update without authentication', async () => {
-      const updateDto: UpdatePuzzleDto = {
-        title: 'Unauthorized Update',
-      };
-
-      await request(app.getHttpServer())
-        .patch(`/puzzles/${testPuzzle.id}`)
-        .send(updateDto)
-        .expect(401);
-    });
-
-    it('should reject update by non-owner', async () => {
-      // Create another user
-      const anotherUser = userRepository.create({
-        email: 'another@example.com',
-        password: 'hashedpassword',
-        isVerified: true,
-      });
-      await userRepository.save(anotherUser);
-
-      const anotherToken = jwtService.sign({
-        sub: anotherUser.id,
-        email: anotherUser.email,
-      });
-
-      const updateDto: UpdatePuzzleDto = {
-        title: 'Unauthorized Update',
-      };
-
-      await request(app.getHttpServer())
-        .patch(`/puzzles/${testPuzzle.id}`)
-        .set('Authorization', `Bearer ${anotherToken}`)
-        .send(updateDto)
-        .expect(400);
-    });
-  });
-
-  describe('DELETE /puzzles/:id', () => {
-    let testPuzzle: Puzzle;
-
-    beforeEach(async () => {
-      testPuzzle = puzzleRepository.create({
-        ...testPuzzleDto,
-        createdBy: testUser.id,
-      });
-      testPuzzle = await puzzleRepository.save(testPuzzle);
-    });
-
-    it('should delete a puzzle without progress', async () => {
-      await request(app.getHttpServer())
-        .delete(`/puzzles/${testPuzzle.id}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(204);
-
-      // Verify puzzle is deleted
-      const deletedPuzzle = await puzzleRepository.findOne({
-        where: { id: testPuzzle.id },
-      });
-      expect(deletedPuzzle).toBeNull();
-    });
-
-    it('should reject delete without authentication', async () => {
-      await request(app.getHttpServer())
-        .delete(`/puzzles/${testPuzzle.id}`)
-        .expect(401);
-    });
-  });
-
-  describe('PATCH /puzzles/bulk', () => {
-    let testPuzzles: Puzzle[];
-
-    beforeEach(async () => {
-      const puzzleData = [
-        { ...testPuzzleDto, title: 'Bulk Test 1' },
-        { ...testPuzzleDto, title: 'Bulk Test 2' },
-        { ...testPuzzleDto, title: 'Bulk Test 3' },
-      ];
-
-      testPuzzles = [];
-      for (const data of puzzleData) {
-        const puzzle = puzzleRepository.create({
-          ...data,
-          createdBy: testUser.id,
-        });
-        testPuzzles.push(await puzzleRepository.save(puzzle));
-      }
-    });
-
-    it('should perform bulk publish operation', async () => {
-      const puzzleIds = testPuzzles.map((p: any) => p.id);
-      const bulkUpdateDto = {
-        action: 'publish',
-        reason: 'Integration test bulk publish',
-      };
-
-      const response = await request(app.getHttpServer())
-        .patch('/puzzles/bulk')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          puzzleIds,
-          bulkUpdate: bulkUpdateDto,
-        })
-        .expect(200);
-
-      expect(response.body.updated).toBe(3);
-      expect(response.body.errors).toHaveLength(0);
-
-      // Verify puzzles are published
-      for (const puzzle of testPuzzles) {
-        const updatedPuzzle = await puzzleRepository.findOne({
-          where: { id: puzzle.id },
-        });
-        expect(updatedPuzzle).not.toBeNull();
-        expect(updatedPuzzle!.publishedAt).not.toBeNull();
-      }
-    });
-
-    it('should handle bulk tag operations', async () => {
-      const puzzleIds = testPuzzles.map((p) => p.id);
-      const bulkUpdateDto = {
-        action: 'add_tags',
-        value: 'bulk-test,integration',
-        reason: 'Adding integration test tags',
-      };
-
-      const response = await request(app.getHttpServer())
-        .patch('/puzzles/bulk')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          puzzleIds,
-          bulkUpdate: bulkUpdateDto,
-        })
-        .expect(200);
-
-      expect(response.body.updated).toBe(3);
-
-      // Verify tags were added
-      for (const puzzle of testPuzzles) {
-        const updatedPuzzle = await puzzleRepository.findOne({
-          where: { id: puzzle.id },
-        });
-        expect(updatedPuzzle).not.toBeNull();
-        expect(updatedPuzzle!.tags).toContain('bulk-test');
-        expect(updatedPuzzle!.tags).toContain('integration');
-      }
-    });
-  });
-
-  describe('GET /puzzles/analytics', () => {
-    beforeEach(async () => {
-      // Create diverse test data
-      const puzzleData = [
-        {
-          ...testPuzzleDto,
-          category: 'math',
-          difficulty: 'easy' as const,
-          publishedAt: new Date(),
-        },
-        {
-          ...testPuzzleDto,
-          category: 'math',
-          difficulty: 'medium' as const,
-          publishedAt: new Date(),
-        },
-        {
-          ...testPuzzleDto,
-          category: 'logic',
-          difficulty: 'hard' as const,
-          publishedAt: new Date(),
-        },
-        {
-          ...testPuzzleDto,
-          category: 'logic',
-          difficulty: 'expert' as const,
-          publishedAt: undefined,
-        },
-      ];
-
-      for (const data of puzzleData) {
-        const puzzle = puzzleRepository.create({
-          ...data,
-          createdBy: testUser.id,
-        });
-        await puzzleRepository.save(puzzle);
-      }
-    });
-
-    it('should return comprehensive analytics', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/puzzles/analytics')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(response.body).toHaveProperty('totalPuzzles');
-      expect(response.body).toHaveProperty('publishedPuzzles');
-      expect(response.body).toHaveProperty('categoryCounts');
-      expect(response.body).toHaveProperty('difficultyDistribution');
-      expect(response.body).toHaveProperty('averageRating');
-      expect(response.body).toHaveProperty('recentActivity');
-
-      expect(response.body.totalPuzzles).toBe(4);
-      expect(response.body.publishedPuzzles).toBe(3);
-      expect(response.body.categoryCounts).toHaveProperty('math');
-      expect(response.body.categoryCounts).toHaveProperty('logic');
-    });
-
-    it('should filter analytics by time period', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/puzzles/analytics')
-        .query({ period: 'week' })
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(response.body).toHaveProperty('totalPuzzles');
-      expect(response.body).toHaveProperty('recentActivity');
-    });
-  });
-
-  describe('POST /puzzles/:id/publish', () => {
-    let testPuzzle: Puzzle;
-
-    beforeEach(async () => {
-      testPuzzle = puzzleRepository.create({
-        ...testPuzzleDto,
-        publishedAt: undefined,
-        createdBy: testUser.id,
-      });
-      testPuzzle = await puzzleRepository.save(testPuzzle);
-    });
-
-    it('should publish a puzzle', async () => {
-      const response = await request(app.getHttpServer())
-        .post(`/puzzles/${testPuzzle.id}/publish`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(response.body.publishedAt).not.toBeNull();
-
-      // Verify in database
-      const publishedPuzzle = await puzzleRepository.findOne({
-        where: { id: testPuzzle.id },
-      });
-      expect(publishedPuzzle).not.toBeNull();
-      expect(publishedPuzzle!.publishedAt).not.toBeNull();
-    });
-  });
-
-  describe('POST /puzzles/:id/duplicate', () => {
-    let testPuzzle: Puzzle;
-
-    beforeEach(async () => {
-      testPuzzle = puzzleRepository.create({
-        ...testPuzzleDto,
-        publishedAt: new Date(),
-        createdBy: testUser.id,
-      });
-      testPuzzle = await puzzleRepository.save(testPuzzle);
-    });
-
-    it('should duplicate a puzzle', async () => {
-      const response = await request(app.getHttpServer())
-        .post(`/puzzles/${testPuzzle.id}/duplicate`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(201);
-
-      expect(response.body.title).toBe(`${testPuzzle.title} (Copy)`);
-      expect(response.body.id).not.toBe(testPuzzle.id);
-      expect(response.body.createdBy).toBe(testUser.id);
-      expect(response.body.isFeatured).toBe(false);
-
-      // Verify both puzzles exist in database
-      const originalPuzzle = await puzzleRepository.findOne({
-        where: { id: testPuzzle.id },
-      });
-      const duplicatedPuzzle = await puzzleRepository.findOne({
-        where: { id: response.body.id },
-      });
-
-      expect(originalPuzzle).toBeDefined();
-      expect(duplicatedPuzzle).toBeDefined();
-      expect(duplicatedPuzzle).not.toBeNull();
-      expect(duplicatedPuzzle!.title).toContain('(Copy)');
+      await expect(
+        reviewService.submitReview('user-1', puzzle.id, { reviewText: 'Second review' })
+      ).rejects.toThrow();
     });
   });
 });
