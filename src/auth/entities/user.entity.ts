@@ -63,4 +63,10 @@ export class User {
 
   @Column({ nullable: true })
   githubId?: string
+
+  @Column({ nullable: true })
+  discordId?: string
+
+  @Column({ nullable: true })
+  twitterId?: string
 }

@@ -39,9 +39,12 @@ import { MultiplayerModule } from './multiplayer/multiplayer.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
 import { QuestsModule } from './quests/quests.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
 import { EnergyModule } from './energy/energy.module';
+import { SkillRatingModule } from './skill-rating/skill-rating.module';
+import { WalletAuthModule } from './auth/wallet-auth.module';
 
 @Module({
   imports: [
@@ -123,8 +126,10 @@ import { EnergyModule } from './energy/energy.module';
     RecommendationsModule,
     AntiCheatModule,
     QuestsModule,
+    IntegrationsModule,
     BlockchainTransactionModule,
     PrivacyModule,
+    SkillRatingModule,
     WalletAuthModule,
   ],
   controllers: [AppController],

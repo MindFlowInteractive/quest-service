@@ -1,15 +1,19 @@
 import { PassportStrategy } from "@nestjs/passport"
 import { Strategy, type VerifyCallback } from "passport-google-oauth20"
 import { Injectable } from "@nestjs/common"
+import { ConfigService } from "@nestjs/config"
 import type { AuthService } from "../auth.service"
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService,
+  ) {
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:3000/auth/google/callback",
+      clientID: configService.get<string>("GOOGLE_CLIENT_ID"),
+      clientSecret: configService.get<string>("GOOGLE_CLIENT_SECRET"),
+      callbackURL: configService.get<string>("GOOGLE_CALLBACK_URL") || "http://localhost:3000/auth/google/callback",
       scope: ["email", "profile"],
     })
   }
@@ -25,7 +29,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
       refreshToken,
     }
     // Delegate to authService to find or create user
-    const authUser = await this.authService.findOrCreateOAuthUser(user, "google")
+    const authUser = await this.authService.findOrCreateOAuthUser("google", user)
     done(null, authUser)
   }
 }
