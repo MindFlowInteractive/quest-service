@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -41,6 +42,7 @@ import { QuestsModule } from './quests/quests.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { EnergyModule } from './energy/energy.module';
 import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
 
@@ -53,6 +55,9 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
+
+    // Scheduling for cron jobs
+    ScheduleModule.forRoot(),
 
     // Database
     TypeOrmModule.forRootAsync({
@@ -95,6 +100,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
     }),
 
     // Feature modules
+    EnergyModule,
     UsersModule,
     PlayerProfileModule,
     PuzzlesModule,
