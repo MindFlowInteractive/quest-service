@@ -13,6 +13,7 @@ import { UserAchievement } from '../../achievements/entities/user-achievement.en
 import { GameSession } from '../../game-engine/entities/game-session.entity';
 import { UserStreak } from './user-streak.entity'; // Added import
 import { UserPuzzleCompletion } from './user-puzzle-completion.entity'; // Added import
+import { DailyChallengeCompletion } from '../../daily-challenges/entities/daily-challenge-completion.entity';
 
 @Entity('users')
 @Index(['email'], { unique: true })
@@ -145,9 +146,16 @@ export class User {
   @OneToOne(() => UserStreak, (streak) => streak.user, { cascade: true })
   streak: UserStreak;
 
-  @OneToMany(() => UserPuzzleCompletion, (completion) => completion.user, { cascade: true })
+  @OneToMany(() => UserPuzzleCompletion, (completion) => completion.user, {
+    cascade: true,
+  })
   puzzleCompletions: UserPuzzleCompletion[];
 
   @OneToMany('UserCollectionProgress', 'user')
   collectionProgress: any[];
+
+  @OneToMany(() => DailyChallengeCompletion, (completion) => completion.user, {
+    cascade: true,
+  })
+  dailyChallengeCompletions: DailyChallengeCompletion[];
 }

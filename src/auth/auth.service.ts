@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from "@nestjs/common"
 import type { Repository } from "typeorm"
+import type { DeepPartial } from "typeorm"
 import type { JwtService } from "@nestjs/jwt"
 import * as bcrypt from "bcrypt"
 import type { User } from "./entities/user.entity"
@@ -219,10 +220,51 @@ export class AuthService {
   }
 
   async findOrCreateOAuthUser(
-    oauthUser: any,
     provider: string,
+    oauthUser: any,
   ): Promise<User> {
-    // TODO: Implement OAuth user creation/linking
-    throw new Error("OAuth functionality not yet implemented")
+    const providerIdField = `${provider}Id` as keyof User;
+    const providerId = oauthUser[providerIdField] || oauthUser.providerUserId;
+
+    // 1. Try to find user by provider-specific ID
+    if (providerId) {
+      const existingByProvider = await this.usersRepository.findOne({
+        where: { [providerIdField]: providerId } as any,
+        relations: ["role"],
+      });
+      if (existingByProvider) {
+        return existingByProvider;
+      }
+    }
+
+    // 2. Try to find user by email and link the provider
+    if (oauthUser.email) {
+      const existingByEmail = await this.usersRepository.findOne({
+        where: { email: oauthUser.email },
+        relations: ["role"],
+      });
+      if (existingByEmail) {
+        (existingByEmail as any)[providerIdField] = providerId;
+        existingByEmail.isVerified = true;
+        return this.usersRepository.save(existingByEmail);
+      }
+    }
+
+    // 3. Create a new user
+    const role = await this.rolesRepository.findOne({ where: { name: UserRole.USER } });
+    if (!role) {
+      throw new Error("Default user role not found. Please seed roles.");
+    }
+
+    const userData: DeepPartial<User> = {
+      email: oauthUser.email,
+      isVerified: true,
+      role,
+    };
+    (userData as Record<string, unknown>)[providerIdField as string] = providerId;
+
+    const newUser = this.usersRepository.create(userData);
+
+    return this.usersRepository.save(newUser);
   }
 }
