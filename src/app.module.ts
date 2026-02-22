@@ -4,12 +4,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnvironment } from './config/env.validation';
 import appConfig from './config/app.config';
 import { createLoggerConfig } from './config/logger.config';
+
+// Feature modules
 import { UsersModule } from './users/users.module';
 import { PlayerProfileModule } from './player-profile/player-profile.module';
 import { PuzzlesModule } from './puzzles/puzzles.module';
@@ -36,9 +39,13 @@ import { MultiplayerModule } from './multiplayer/multiplayer.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { AntiCheatModule } from './anti-cheat/anti-cheat.module';
 import { QuestsModule } from './quests/quests.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
 import { DailyChallengesModule } from './daily-challenges/daily-challenges.module';
+import { EnergyModule } from './energy/energy.module';
+import { SkillRatingModule } from './skill-rating/skill-rating.module';
+import { WalletAuthModule } from './auth/wallet-auth.module';
 
 @Module({
   imports: [
@@ -49,6 +56,9 @@ import { DailyChallengesModule } from './daily-challenges/daily-challenges.modul
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
+
+    // Scheduling for cron jobs
+    ScheduleModule.forRoot(),
 
     // Database
     TypeOrmModule.forRootAsync({
@@ -81,16 +91,17 @@ import { DailyChallengesModule } from './daily-challenges/daily-challenges.modul
 
     // Rate limiting
     ThrottlerModule.forRootAsync({
-      useFactory: (configService: any) => [
+      useFactory: (configService: ConfigService) => [
         {
-          ttl: configService.get('app.throttle.ttl') || 60000,
-          limit: configService.get('app.throttle.limit') || 100,
+          ttl: configService.get<number>('app.throttle.ttl') || 60_000, // 1 minute
+          limit: configService.get<number>('app.throttle.limit') || 100, // 100 requests per minute
         },
       ],
       inject: [ConfigService],
     }),
 
     // Feature modules
+    EnergyModule,
     UsersModule,
     PlayerProfileModule,
     PuzzlesModule,
@@ -116,9 +127,12 @@ import { DailyChallengesModule } from './daily-challenges/daily-challenges.modul
     RecommendationsModule,
     AntiCheatModule,
     QuestsModule,
+    IntegrationsModule,
     BlockchainTransactionModule,
     PrivacyModule,
     DailyChallengesModule,
+    SkillRatingModule,
+    WalletAuthModule,
   ],
   controllers: [AppController],
   providers: [
