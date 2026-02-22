@@ -1,0 +1,6 @@
+{
+    "GREETING": "Hello",
+    "WELCOME": "Welcome to LogiQuest",
+    "PUZZLE_RESOLVED": "Puzzle successfully resolved!",
+    "ERROR_NOT_FOUND": "Requested resource not found"
+}

@@ -42,6 +42,7 @@ import { QuestsModule } from './quests/quests.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { LocalizationModule } from './common/i18n/localization.module';
 import { DailyChallengesModule } from './daily-challenges/daily-challenges.module';
 import { EnergyModule } from './energy/energy.module';
 import { SkillRatingModule } from './skill-rating/skill-rating.module';
@@ -130,6 +131,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
     IntegrationsModule,
     BlockchainTransactionModule,
     PrivacyModule,
+    LocalizationModule,
     DailyChallengesModule,
     SkillRatingModule,
     WalletAuthModule,
@@ -143,4 +145,4 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
