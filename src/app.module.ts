@@ -41,6 +41,7 @@ import { QuestsModule } from './quests/quests.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
 
 @Module({
@@ -122,6 +123,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
     IntegrationsModule,
     BlockchainTransactionModule,
     PrivacyModule,
+    SkillRatingModule,
     WalletAuthModule,
   ],
   controllers: [AppController],
