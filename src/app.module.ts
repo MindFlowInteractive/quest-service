@@ -42,6 +42,7 @@ import { QuestsModule } from './quests/quests.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { BlockchainTransactionModule } from './blockchain-transaction/blockchain-transaction.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { DailyChallengesModule } from './daily-challenges/daily-challenges.module';
 import { EnergyModule } from './energy/energy.module';
 import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
@@ -129,6 +130,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
     IntegrationsModule,
     BlockchainTransactionModule,
     PrivacyModule,
+    DailyChallengesModule,
     SkillRatingModule,
     WalletAuthModule,
   ],
