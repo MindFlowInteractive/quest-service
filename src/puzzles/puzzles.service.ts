@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, In, Between, IsNull, Not } from 'typeorm';
+import { Repository, SelectQueryBuilder, In, Between, IsNull, Not, Brackets } from 'typeorm';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
@@ -362,6 +362,61 @@ export class PuzzlesService {
     }
   }
 
+  async getRecommendations(userId: string, limit: number = 5): Promise<PuzzleWithStats[]> {
+    try {
+      // 1. Get user's top rated puzzles
+      const topRatings = await this.ratingRepository.find({
+        where: { userId, rating: Between(4, 5) },
+        relations: ['puzzle'],
+        take: 10,
+        order: { createdAt: 'DESC' }
+      });
+
+      if (topRatings.length === 0) {
+        // Fallback to trending/popular puzzles
+        const trending = await this.findAll({ 
+            limit, 
+            sortBy: SortBy.PLAYS, 
+            sortOrder: SortOrder.DESC,
+            isPublished: true 
+        } as SearchPuzzleDto);
+        return trending.puzzles;
+      }
+
+      // 2. Extract categories and tags
+      const categories = new Set<string>();
+      const tags = new Set<string>();
+      const playedPuzzleIds = new Set<string>();
+
+      topRatings.forEach(r => {
+        if (r.puzzle) {
+            categories.add(r.puzzle.category);
+            r.puzzle.tags.forEach(t => tags.add(t));
+            playedPuzzleIds.add(r.puzzle.id);
+        }
+      });
+
+      // 3. Find similar puzzles
+      const queryBuilder = this.puzzleRepository.createQueryBuilder('puzzle')
+        .where('puzzle.deletedAt IS NULL')
+        .andWhere('puzzle.publishedAt IS NOT NULL')
+        .andWhere('puzzle.id NOT IN (:...playedIds)', { playedIds: Array.from(playedPuzzleIds).length > 0 ? Array.from(playedPuzzleIds) : ['00000000-0000-0000-0000-000000000000'] })
+        .andWhere(new Brackets(qb => {
+            if (categories.size > 0) {
+                qb.where('puzzle.category IN (:...categories)', { categories: Array.from(categories) });
+            }
+        }))
+        .orderBy('puzzle.averageRating', 'DESC')
+        .take(limit);
+
+      const puzzles = await queryBuilder.getMany();
+      return this.enhanceWithStats(puzzles);
+    } catch (error) {
+      this.logger.error(`Failed to get recommendations: ${error.message}`, error.stack);
+      return [];
+    }
+  }
+
   // Private helper methods
   private applySorting(queryBuilder: SelectQueryBuilder<Puzzle>, sortBy: SortBy, sortOrder: SortOrder): void {
     switch (sortBy) {
@@ -373,6 +428,9 @@ export class PuzzlesService {
         break;
       case SortBy.RATING:
         queryBuilder.orderBy('puzzle.averageRating', sortOrder);
+        break;
+      case SortBy.REVIEWS:
+        queryBuilder.orderBy('puzzle.ratingCount', sortOrder);
         break;
       case SortBy.PLAYS:
         queryBuilder.orderBy('puzzle.attempts', sortOrder);
