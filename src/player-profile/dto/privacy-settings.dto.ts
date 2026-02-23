@@ -12,4 +12,20 @@ export class PrivacySettingsDto {
   @IsOptional()
   @IsBoolean()
   showBio?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showStats?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showSocialLinks?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showLocation?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showWebsite?: boolean;
 }
