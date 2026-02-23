@@ -43,6 +43,6 @@ import { LocalizationModule } from '../common/i18n/localization.module';
     CollectionsService,
     ThemesService // Add ThemesService
   ],
-  exports: [PuzzlesService]
+  exports: [PuzzlesService, PuzzleModerationService]
 })
 export class PuzzlesModule { }
