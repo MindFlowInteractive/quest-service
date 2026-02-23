@@ -17,11 +17,15 @@ import {
   type WalletRequest,
 } from './guards/wallet-session.guard';
 import { WalletService } from './wallet.service';
+import { WalletSyncService } from './wallet-sync.service';
 
 @ApiTags('Wallet')
 @Controller('wallet')
 export class WalletController {
-  constructor(private readonly walletService: WalletService) {}
+ constructor(
+  private readonly walletService: WalletService,
+  private readonly walletSyncService: WalletSyncService,
+) {}
 
   @Post('connect')
   @HttpCode(HttpStatus.OK)
@@ -71,6 +75,15 @@ export class WalletController {
   getBalances(@Req() req: WalletRequest) {
     return this.walletService.getBalances(req.walletSession!);
   }
+
+  @Post('refresh')
+@UseGuards(WalletSessionGuard)
+@HttpCode(HttpStatus.OK)
+refresh(@Req() req: WalletRequest) {
+  return this.walletSyncService.syncBalances(req.walletSession!);
+}
+
+
 
   @Get('transactions')
   @UseGuards(WalletSessionGuard)
