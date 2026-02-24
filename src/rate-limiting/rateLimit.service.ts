@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import * as Redis from 'ioredis';
+import Redis from 'ioredis'; // ✅ default import
 
 @Injectable()
 export class RateLimitService {
-  private redis = new Redis();
+  private redis: Redis;
 
   private limits = {
     free: { requests: 100, window: 60 }, // 100/min
     premium: { requests: 1000, window: 60 }, // 1000/min
   };
+
+  constructor() {
+    this.redis = new Redis(); // ✅ constructable
+  }
 
   async checkLimit(userId: string, endpoint: string, tier: 'free' | 'premium') {
     const key = `rate:${userId}:${endpoint}`;

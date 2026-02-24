@@ -1,0 +1,373 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/migrations/SeedInitialData.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/migrations</a> SeedInitialData.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/8</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/0</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/2</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/8</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { MigrationInterface, QueryRunner } from 'typeorm';
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export class S</span>eedInitialData implements MigrationInterface {
+  public <span class="fstat-no" title="function not covered" >async </span>up(queryRunner: QueryRunner): Promise&lt;void&gt; {
+    // Insert puzzle categories
+<span class="cstat-no" title="statement not covered" >    await queryRunner.query(`</span>
+      INSERT INTO "puzzle_categories" ("id", "name", "slug", "description", "color", "sortOrder", "metadata") VALUES
+      ('550e8400-e29b-41d4-a716-446655440001', 'Logic Puzzles', 'logic', 'Mind-bending logical reasoning challenges', '#FF6B6B', 1, '{"skills": ["critical thinking", "deduction", "pattern recognition"], "ageRange": {"min": 8, "max": 99}, "estimatedTimePerPuzzle": 15}'),
+      ('550e8400-e29b-41d4-a716-446655440002', 'Math Puzzles', 'math', 'Mathematical problem-solving adventures', '#4ECDC4', 2, '{"skills": ["arithmetic", "algebra", "geometry"], "ageRange": {"min": 10, "max": 99}, "estimatedTimePerPuzzle": 12}'),
+      ('550e8400-e29b-41d4-a716-446655440003', 'Word Games', 'word', 'Vocabulary and language challenges', '#45B7D1', 3, '{"skills": ["vocabulary", "spelling", "comprehension"], "ageRange": {"min": 6, "max": 99}, "estimatedTimePerPuzzle": 8}'),
+      ('550e8400-e29b-41d4-a716-446655440004', 'Pattern Recognition', 'pattern', 'Visual and sequential pattern challenges', '#F7DC6F', 4, '{"skills": ["pattern recognition", "visual processing", "sequence analysis"], "ageRange": {"min": 7, "max": 99}, "estimatedTimePerPuzzle": 10}'),
+      ('550e8400-e29b-41d4-a716-446655440005', 'Spatial Reasoning', 'spatial', '3D thinking and spatial awareness puzzles', '#BB8FCE', 5, '{"skills": ["spatial awareness", "3D thinking", "visualization"], "ageRange": {"min": 9, "max": 99}, "estimatedTimePerPuzzle": 18}')
+    `);
+&nbsp;
+    // Insert sample puzzles
+<span class="cstat-no" title="statement not covered" >    await queryRunner.query(`</span>
+      INSERT INTO "puzzles" ("id", "title", "description", "category", "difficulty", "difficultyRating", "basePoints", "timeLimit", "maxHints", "isActive", "isFeatured", "publishedAt", "content", "hints", "tags", "scoring") VALUES
+      ('660e8400-e29b-41d4-a716-446655440001', 'The Missing Number', 'Find the missing number in this logical sequence: 2, 4, 8, 16, ?', 'logic', 'easy', 2, 100, 300, 2, true, true, NOW(), 
+       '{"type": "multiple-choice", "question": "What number comes next in the sequence: 2, 4, 8, 16, ?", "options": ["24", "32", "20", "18"], "correctAnswer": "32", "explanation": "Each number is double the previous number. 16 × 2 = 32"}',
+       '[{"order": 1, "text": "Look for a pattern between consecutive numbers", "pointsPenalty": 10}, {"order": 2, "text": "Try multiplying each number by something", "pointsPenalty": 20}]',
+       'sequence,numbers,pattern,multiplication',
+       '{"timeBonus": {"enabled": true, "maxBonus": 50, "baseTime": 120}}'),
+      
+      ('660e8400-e29b-41d4-a716-446655440002', 'Simple Addition Challenge', 'Solve this basic arithmetic problem', 'math', 'easy', 1, 50, 180, 1, true, false, NOW(),
+       '{"type": "fill-blank", "question": "What is 15 + 27?", "correctAnswer": "42", "explanation": "15 + 27 = 42"}',
+       '[{"order": 1, "text": "Break it down: 15 + 20 + 7", "pointsPenalty": 15}]',
+       'addition,arithmetic,basic',
+       '{"accuracyBonus": {"enabled": true, "maxBonus": 25}}'),
+      
+      ('660e8400-e29b-41d4-a716-446655440003', 'Word Scramble', 'Unscramble these letters to form a common English word', 'word', 'medium', 3, 150, 240, 3, true, false, NOW(),
+       '{"type": "fill-blank", "question": "Unscramble: TUESOMRC", "correctAnswer": "COMPUTER", "explanation": "The letters T-U-E-S-O-M-R-C can be rearranged to spell COMPUTER"}',
+       '[{"order": 1, "text": "Think of technology-related words", "pointsPenalty": 20}, {"order": 2, "text": "It starts with C", "pointsPenalty": 30}, {"order": 3, "text": "It has 8 letters", "pointsPenalty": 40}]',
+       'anagram,vocabulary,technology',
+       '{"timeBonus": {"enabled": true, "maxBonus": 75, "baseTime": 180}}'),
+      
+      ('660e8400-e29b-41d4-a716-446655440004', 'Color Pattern', 'Complete the color pattern sequence', 'pattern', 'medium', 4, 200, 360, 2, true, true, NOW(),
+       '{"type": "multiple-choice", "question": "What color comes next in the pattern: Red, Blue, Red, Blue, Red, ?", "options": ["Red", "Blue", "Green", "Yellow"], "correctAnswer": "Blue", "explanation": "The pattern alternates between Red and Blue"}',
+       '[{"order": 1, "text": "Look at every other color", "pointsPenalty": 25}, {"order": 2, "text": "The pattern repeats every 2 colors", "pointsPenalty": 50}]',
+       'colors,sequence,visual,alternating',
+       '{"streakBonus": {"enabled": true, "multiplier": 1.5}}'),
+      
+      ('660e8400-e29b-41d4-a716-446655440005', 'Cube Rotation', 'Visualize how this cube would look when rotated', 'spatial', 'hard', 7, 300, 450, 3, true, false, NOW(),
+       '{"type": "multiple-choice", "question": "If you rotate this cube 90 degrees clockwise, which face will be on top?", "options": ["Face A", "Face B", "Face C", "Face D"], "correctAnswer": "Face C", "explanation": "When rotated 90 degrees clockwise, Face C moves to the top position"}',
+       '[{"order": 1, "text": "Imagine the cube in your mind", "pointsPenalty": 30}, {"order": 2, "text": "Think about which face is currently on the right", "pointsPenalty": 60}, {"order": 3, "text": "The right face becomes the top when rotated clockwise", "pointsPenalty": 90}]',
+       '3d,rotation,visualization,cube',
+       '{"timeBonus": {"enabled": true, "maxBonus": 150, "baseTime": 300}}')
+    `);
+&nbsp;
+    // Insert initial achievements
+<span class="cstat-no" title="statement not covered" >    await queryRunner.query(`</span>
+      INSERT INTO "achievements" ("id", "name", "description", "category", "rarity", "points", "isActive", "isSecret", "unlockConditions", "metadata") VALUES
+      ('770e8400-e29b-41d4-a716-446655440001', 'First Step', 'Complete your very first puzzle', 'puzzle_mastery', 'common', 10, true, false,
+       '{"type": "single", "conditions": [{"id": "first_puzzle", "type": "puzzle_completion", "operator": "greater_than", "value": 0, "description": "Complete any puzzle"}]}',
+       '{"difficulty": 1, "estimatedTime": 5, "celebrationMessage": "Congratulations on solving your first puzzle!", "tips": ["Take your time", "Use hints if needed"]}'),
+      
+      ('770e8400-e29b-41d4-a716-446655440002', 'Speed Demon', 'Complete a puzzle in under 30 seconds', 'speed', 'rare', 50, true, false,
+       '{"type": "single", "conditions": [{"id": "fast_completion", "type": "time_limit", "operator": "less_than", "value": 30, "description": "Complete any puzzle in under 30 seconds"}]}',
+       '{"difficulty": 6, "estimatedTime": 10, "celebrationMessage": "Lightning fast! You are a speed demon!", "tips": ["Start with easier puzzles", "Practice pattern recognition"]}'),
+      
+      ('770e8400-e29b-41d4-a716-446655440003', 'Perfect Score', 'Complete a puzzle with 100% accuracy on first try', 'accuracy', 'rare', 40, true, false,
+       '{"type": "multiple", "logic": "AND", "conditions": [{"id": "perfect_accuracy", "type": "accuracy", "operator": "equals", "value": 100, "description": "Get 100% accuracy"}, {"id": "first_attempt", "type": "custom", "operator": "equals", "value": 1, "description": "On first attempt"}]}',
+       '{"difficulty": 5, "estimatedTime": 15, "celebrationMessage": "Flawless execution! Perfect score achieved!", "tips": ["Read carefully", "Think before answering"]}'),
+      
+      ('770e8400-e29b-41d4-a716-446655440004', 'Puzzle Master', 'Complete 100 puzzles', 'puzzle_mastery', 'epic', 200, true, false,
+       '{"type": "single", "conditions": [{"id": "hundred_puzzles", "type": "puzzle_completion", "operator": "greater_than", "value": 99, "description": "Complete 100+ puzzles"}]}',
+       '{"difficulty": 8, "estimatedTime": 300, "celebrationMessage": "You are a true Puzzle Master! 100 puzzles conquered!", "tips": ["Try different categories", "Challenge yourself with harder puzzles"]}'),
+      
+      ('770e8400-e29b-41d4-a716-446655440005', 'Streak Champion', 'Get a solving streak of 20 correct answers in a row', 'consistency', 'epic', 150, true, false,
+       '{"type": "single", "conditions": [{"id": "twenty_streak", "type": "streak", "operator": "greater_than", "value": 19, "description": "Achieve 20+ correct answers in a row"}]}',
+       '{"difficulty": 7, "estimatedTime": 120, "celebrationMessage": "Incredible consistency! 20 in a row!", "tips": ["Start with easier puzzles", "Stay focused", "Take breaks if needed"]}'),
+      
+      ('770e8400-e29b-41d4-a716-446655440006', 'Category Explorer', 'Complete at least one puzzle from each category', 'exploration', 'rare', 75, true, false,
+       '{"type": "multiple", "logic": "AND", "conditions": [{"id": "logic_category", "type": "category_mastery", "operator": "greater_than", "value": 0, "description": "Complete a logic puzzle"}, {"id": "math_category", "type": "category_mastery", "operator": "greater_than", "value": 0, "description": "Complete a math puzzle"}, {"id": "word_category", "type": "category_mastery", "operator": "greater_than", "value": 0, "description": "Complete a word puzzle"}, {"id": "pattern_category", "type": "category_mastery", "operator": "greater_than", "value": 0, "description": "Complete a pattern puzzle"}, {"id": "spatial_category", "type": "category_mastery", "operator": "greater_than", "value": 0, "description": "Complete a spatial puzzle"}]}',
+       '{"difficulty": 4, "estimatedTime": 60, "celebrationMessage": "Well-rounded solver! You have explored all categories!", "tips": ["Try different puzzle types", "Each category develops different skills"]}'),
+      
+      ('770e8400-e29b-41d4-a716-446655440007', 'Night Owl', 'Complete 10 puzzles between 10 PM and 6 AM', 'social', 'rare', 60, true, true,
+       '{"type": "time_based", "conditions": [{"id": "night_puzzles", "type": "puzzle_completion", "operator": "greater_than", "value": 9, "description": "Complete 10+ puzzles during night hours"}], "timeWindow": {"duration": 8, "type": "recurring"}}',
+       '{"difficulty": 3, "estimatedTime": 180, "celebrationMessage": "Night owl achievement unlocked! Burning the midnight oil!", "tips": ["This is a secret achievement", "Play during late hours"]})
+    `);
+&nbsp;
+    // Update puzzle counts for categories
+<span class="cstat-no" title="statement not covered" >    await queryRunner.query(`</span>
+      UPDATE "puzzle_categories" SET "puzzleCount" = (
+        SELECT COUNT(*) FROM "puzzles" 
+        WHERE "puzzles"."category" = "puzzle_categories"."slug" 
+        AND "isActive" = true
+      );
+    `);
+  }
+&nbsp;
+  public <span class="fstat-no" title="function not covered" >async </span>down(queryRunner: QueryRunner): Promise&lt;void&gt; {
+<span class="cstat-no" title="statement not covered" >    await queryRunner.query('DELETE FROM "achievements";');</span>
+<span class="cstat-no" title="statement not covered" >    await queryRunner.query('DELETE FROM "puzzles";');</span>
+<span class="cstat-no" title="statement not covered" >    await queryRunner.query('DELETE FROM "puzzle_categories";');</span>
+  }
+}
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-02-24T10:00:58.408Z
+            </div>
+        <script src="../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
+    </body>
+</html>
+    
