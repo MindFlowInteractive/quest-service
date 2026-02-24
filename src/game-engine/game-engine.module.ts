@@ -23,6 +23,7 @@ import { PlayerProgress } from './entities/player-progress.entity';
 import { GameSession } from './entities/game-session.entity';
 import { PuzzleAnalytics } from './entities/puzzle-analytics.entity';
 import { gameEngineConfig } from './config/game-engine.config';
+import { EnergyModule } from '../energy/energy.module';
 
 @Global()
 @Module({
@@ -34,6 +35,7 @@ import { gameEngineConfig } from './config/game-engine.config';
       GameSession,
       PuzzleAnalytics,
     ]),
+    EnergyModule,
   ],
   providers: [
     PuzzleEngineService,

@@ -1,28 +1,6 @@
 import { IsUUID, IsInt, IsOptional, IsBoolean, ValidateNested, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class AddPuzzleToChainDto {
-  @IsUUID()
-  puzzleId: string;
-
-  @IsInt()
-  sequenceOrder: number;
-
-  @ValidateNested()
-  @Type(() => UnlockConditionsDto)
-  @IsOptional()
-  unlockConditions?: UnlockConditionsDto;
-
-  @IsBoolean()
-  @IsOptional()
-  isCheckpoint?: boolean;
-
-  @ValidateNested()
-  @Type(() => CheckpointRewardsDto)
-  @IsOptional()
-  checkpointRewards?: CheckpointRewardsDto;
-}
-
 class UnlockConditionsDto {
   @IsUUID(undefined, { each: true })
   previousPuzzles: string[];
@@ -49,4 +27,26 @@ class CheckpointRewardsDto {
 
   @IsString({ each: true })
   items: string[];
+}
+
+export class AddPuzzleToChainDto {
+  @IsUUID()
+  puzzleId: string;
+
+  @IsInt()
+  sequenceOrder: number;
+
+  @ValidateNested()
+  @Type(() => UnlockConditionsDto)
+  @IsOptional()
+  unlockConditions?: UnlockConditionsDto;
+
+  @IsBoolean()
+  @IsOptional()
+  isCheckpoint?: boolean;
+
+  @ValidateNested()
+  @Type(() => CheckpointRewardsDto)
+  @IsOptional()
+  checkpointRewards?: CheckpointRewardsDto;
 }

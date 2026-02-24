@@ -1,18 +1,19 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, In, Between, IsNull, Not } from 'typeorm';
+import { Repository, SelectQueryBuilder, In, Between, IsNull, Not, Brackets } from 'typeorm';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
-import { 
-  CreatePuzzleDto, 
-  UpdatePuzzleDto, 
-  SearchPuzzleDto, 
+import { LocalizationService } from '../common/i18n/localization.service';
+import {
+  CreatePuzzleDto,
+  UpdatePuzzleDto,
+  SearchPuzzleDto,
   BulkUpdateDto,
   BulkAction,
   SortBy,
   SortOrder,
-  PuzzleDifficulty 
+  PuzzleDifficulty
 } from './dto';
 
 export interface PuzzleWithStats {
@@ -85,7 +86,8 @@ export class PuzzlesService {
     private progressRepository: Repository<PuzzleProgress>,
     @InjectRepository(PuzzleRating)
     private ratingRepository: Repository<PuzzleRating>,
-  ) {}
+    private readonly localizationService: LocalizationService,
+  ) { }
 
   async create(createPuzzleDto: CreatePuzzleDto, createdBy: string): Promise<Puzzle> {
     try {
@@ -128,7 +130,7 @@ export class PuzzlesService {
       const puzzle = this.puzzleRepository.create(puzzleData);
       const savedPuzzle = await this.puzzleRepository.save(puzzle);
       this.logger.log(`Created puzzle: ${savedPuzzle.id} by user: ${createdBy}`);
-      
+
       return savedPuzzle;
     } catch (error) {
       this.logger.error(`Failed to create puzzle: ${error.message}`, error.stack);
@@ -241,6 +243,15 @@ export class PuzzlesService {
       }
 
       const [enhancedPuzzle] = await this.enhanceWithStats([puzzle]);
+
+      // Translate title and description
+      enhancedPuzzle.title = await this.localizationService.translate(`puzzle-${puzzle.id}-title`, {
+        defaultValue: puzzle.title,
+      });
+      enhancedPuzzle.description = await this.localizationService.translate(`puzzle-${puzzle.id}-description`, {
+        defaultValue: puzzle.description,
+      });
+
       return enhancedPuzzle;
     } catch (error) {
       this.logger.error(`Failed to find puzzle ${id}: ${error.message}`, error.stack);
@@ -264,10 +275,10 @@ export class PuzzlesService {
       }
 
       await this.puzzleRepository.update(id, updateData);
-      
+
       const updatedPuzzle = await this.findOne(id, userId);
       this.logger.log(`Updated puzzle: ${id}`);
-      
+
       return updatedPuzzle;
     } catch (error) {
       this.logger.error(`Failed to update puzzle ${id}: ${error.message}`, error.stack);
@@ -351,6 +362,61 @@ export class PuzzlesService {
     }
   }
 
+  async getRecommendations(userId: string, limit: number = 5): Promise<PuzzleWithStats[]> {
+    try {
+      // 1. Get user's top rated puzzles
+      const topRatings = await this.ratingRepository.find({
+        where: { userId, rating: Between(4, 5) },
+        relations: ['puzzle'],
+        take: 10,
+        order: { createdAt: 'DESC' }
+      });
+
+      if (topRatings.length === 0) {
+        // Fallback to trending/popular puzzles
+        const trending = await this.findAll({ 
+            limit, 
+            sortBy: SortBy.PLAYS, 
+            sortOrder: SortOrder.DESC,
+            isPublished: true 
+        } as SearchPuzzleDto);
+        return trending.puzzles;
+      }
+
+      // 2. Extract categories and tags
+      const categories = new Set<string>();
+      const tags = new Set<string>();
+      const playedPuzzleIds = new Set<string>();
+
+      topRatings.forEach(r => {
+        if (r.puzzle) {
+            categories.add(r.puzzle.category);
+            r.puzzle.tags.forEach(t => tags.add(t));
+            playedPuzzleIds.add(r.puzzle.id);
+        }
+      });
+
+      // 3. Find similar puzzles
+      const queryBuilder = this.puzzleRepository.createQueryBuilder('puzzle')
+        .where('puzzle.deletedAt IS NULL')
+        .andWhere('puzzle.publishedAt IS NOT NULL')
+        .andWhere('puzzle.id NOT IN (:...playedIds)', { playedIds: Array.from(playedPuzzleIds).length > 0 ? Array.from(playedPuzzleIds) : ['00000000-0000-0000-0000-000000000000'] })
+        .andWhere(new Brackets(qb => {
+            if (categories.size > 0) {
+                qb.where('puzzle.category IN (:...categories)', { categories: Array.from(categories) });
+            }
+        }))
+        .orderBy('puzzle.averageRating', 'DESC')
+        .take(limit);
+
+      const puzzles = await queryBuilder.getMany();
+      return this.enhanceWithStats(puzzles);
+    } catch (error) {
+      this.logger.error(`Failed to get recommendations: ${error.message}`, error.stack);
+      return [];
+    }
+  }
+
   // Private helper methods
   private applySorting(queryBuilder: SelectQueryBuilder<Puzzle>, sortBy: SortBy, sortOrder: SortOrder): void {
     switch (sortBy) {
@@ -362,6 +428,9 @@ export class PuzzlesService {
         break;
       case SortBy.RATING:
         queryBuilder.orderBy('puzzle.averageRating', sortOrder);
+        break;
+      case SortBy.REVIEWS:
+        queryBuilder.orderBy('puzzle.ratingCount', sortOrder);
         break;
       case SortBy.PLAYS:
         queryBuilder.orderBy('puzzle.attempts', sortOrder);
@@ -375,14 +444,20 @@ export class PuzzlesService {
   }
 
   private async enhanceWithStats(puzzles: Puzzle[]): Promise<PuzzleWithStats[]> {
-    return puzzles.map(puzzle => ({
+    return Promise.all(puzzles.map(async puzzle => ({
       ...puzzle,
+      title: await this.localizationService.translate(`puzzle-${puzzle.id}-title`, {
+        defaultValue: puzzle.title,
+      }),
+      description: await this.localizationService.translate(`puzzle-${puzzle.id}-description`, {
+        defaultValue: puzzle.description,
+      }),
       totalPlays: puzzle.attempts,
       uniquePlayers: 0,
       completionRate: puzzle.attempts > 0 ? (puzzle.completions / puzzle.attempts) * 100 : 0,
       averageRating: puzzle.averageRating,
       averageCompletionTime: puzzle.averageCompletionTime
-    }));
+    })));
   }
 
   private async executeBulkAction(puzzleId: string, bulkUpdateDto: BulkUpdateDto, userId: string): Promise<void> {
