@@ -178,4 +178,27 @@ export class CollectionsService {
     const progress = await this.userCollectionProgressRepo.findOneBy({ user_id, collection_id });
     return { collection, progress };
   }
+
+  // Category management helpers
+  async createCategory(dto: Partial<Category>) {
+    const cat = this.categoriesRepo.create(dto as any);
+    return this.categoriesRepo.save(cat);
+  }
+
+  async listCategories(page = 0, limit = 50) {
+    return this.categoriesRepo.find({ skip: page * limit, take: limit });
+  }
+
+  async getCategoryById(id: string) {
+    return this.categoriesRepo.findOneBy({ id });
+  }
+
+  async updateCategory(id: string, dto: Partial<Category>) {
+    await this.categoriesRepo.update(id, dto as any);
+    return this.categoriesRepo.findOneBy({ id });
+  }
+
+  async deleteCategory(id: string) {
+    return this.categoriesRepo.delete(id);
+  }
 }

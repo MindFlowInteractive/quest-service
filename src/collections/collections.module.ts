@@ -7,6 +7,7 @@ import { UserPuzzleCompletion } from './entities/user-puzzle-completion.entity';
 import { UserCollectionProgress } from './entities/user-collection-progress.entity';
 import { CollectionsService } from './collections.service';
 import { CollectionsController } from './collections.controller';
+import { CategoriesController } from './categories.controller';
 import { RewardService } from './reward.service';
 
 @Module({
@@ -20,7 +21,7 @@ import { RewardService } from './reward.service';
     ]),
   ],
   providers: [CollectionsService, RewardService],
-  controllers: [CollectionsController],
+  controllers: [CollectionsController, CategoriesController],
   exports: [CollectionsService, RewardService],
 })
 export class CollectionsModule {}
