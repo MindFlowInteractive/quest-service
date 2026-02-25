@@ -3,6 +3,7 @@ import { SorobanService } from '../soroban/soroban.service';
 import { ConfigService } from '@nestjs/config';
 import { nativeToScVal, Address } from '@stellar/stellar-sdk';
 import * as crypto from 'crypto';
+import { CollectionsService } from '../collections/collections.service';
 
 @Injectable()
 export class PuzzleService {
@@ -11,6 +12,7 @@ export class PuzzleService {
   constructor(
     private sorobanService: SorobanService,
     private configService: ConfigService,
+    private collectionsService: CollectionsService,
   ) {
     this.puzzleContractId = this.configService.get<string>('PUZZLE_CONTRACT_ID');
   }
@@ -70,6 +72,18 @@ export class PuzzleService {
       'mark_completed',
       params,
     );
+
+    // After a successful on-chain mark, update collection progress and dispatch collection rewards.
+    if (result && result.status === 'SUCCESS') {
+      try {
+        // collections service expects string ids
+        await this.collectionsService.handlePuzzleCompletion(userAddress, String(puzzleId));
+      } catch (err) {
+        // Do not fail the on-chain result if collection progress update fails; log for investigation.
+        // eslint-disable-next-line no-console
+        console.error('Failed to update collection progress after puzzle completion', err);
+      }
+    }
 
     return {
       success: result.status === 'SUCCESS',
