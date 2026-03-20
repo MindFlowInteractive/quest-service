@@ -5,13 +5,13 @@ import { AchievementsService } from './achievements.service';
 import { AchievementsController } from './achievements.controller';
 import { Achievement } from './entities/achievement.entity';
 import { UserAchievement } from './entities/user-achievement.entity';
-import { NotificationService } from '../notifications/notification.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { AchievementConditionEngine } from './achievement-condition.engine';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Achievement, UserAchievement])],
+  imports: [TypeOrmModule.forFeature([Achievement, UserAchievement]), NotificationsModule],
   controllers: [AchievementsController],
-  providers: [AchievementsService, NotificationService, AchievementConditionEngine],
+  providers: [AchievementsService, AchievementConditionEngine],
   exports: [AchievementsService],
 })
 export class AchievementsModule {}

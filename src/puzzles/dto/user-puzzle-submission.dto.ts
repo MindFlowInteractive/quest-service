@@ -58,7 +58,7 @@ export class CreatePuzzleSubmissionDto {
   @IsObject()
   @ValidateNested()
   @Type(() => PuzzleContentDto)
-  content: PuzzleContentDto;
+  content: any;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -85,13 +85,13 @@ export class CreatePuzzleSubmissionDto {
   @IsObject()
   @ValidateNested()
   @Type(() => SharingSettingsDto)
-  sharingSettings?: SharingSettingsDto;
+  sharingSettings?: any;
 
   @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => CreatorNotesDto)
-  creatorNotes?: CreatorNotesDto;
+  creatorNotes?: any;
 }
 
 export class PuzzleContentDto {
@@ -118,7 +118,7 @@ export class PuzzleContentDto {
   @IsObject()
   @ValidateNested()
   @Type(() => MediaContentDto)
-  media?: MediaContentDto;
+  media?: any;
 
   @IsOptional()
   @IsObject()

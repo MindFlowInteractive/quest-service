@@ -1,8 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common"
+import { Inject, Injectable, Logger } from "@nestjs/common"
 import type { ConfigType } from "@nestjs/config"
 import type { IPuzzle, IHintSystem } from "../interfaces/puzzle.interfaces"
 import type { PuzzleHint } from "../types/puzzle.types"
-import type { gameEngineConfig } from "../config/game-engine.config"
+import { gameEngineConfig } from "../config/game-engine.config"
 import { PuzzleType } from "../types/puzzle.types" // Declaration of PuzzleType
 
 export interface HintGenerator {
@@ -17,7 +17,10 @@ export class HintSystemService implements IHintSystem {
   private readonly hintGenerators = new Map<PuzzleType, HintGenerator>()
   private readonly playerHintUsage = new Map<string, { count: number; lastUsed: Date }>()
 
-  constructor(private readonly config: any) {
+  constructor(
+    @Inject(gameEngineConfig.KEY)
+    private readonly config: ConfigType<typeof gameEngineConfig>,
+  ) {
     this.initializeDefaultHintGenerators()
   }
 

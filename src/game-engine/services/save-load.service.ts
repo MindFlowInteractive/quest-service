@@ -1,12 +1,13 @@
-import { Injectable, Logger } from "@nestjs/common"
-import type { Repository } from "typeorm"
-import type { ConfigType } from "@nestjs/config"
+import { Inject, Injectable, Logger } from "@nestjs/common"
+import { InjectRepository } from "@nestjs/typeorm"
+import { Repository } from "typeorm"
+import { ConfigType } from "@nestjs/config"
 import type { PuzzleGameState } from "../interfaces/puzzle.interfaces"
-import type { PuzzleState } from "../entities/puzzle-state.entity"
-import type { PlayerProgress } from "../entities/player-progress.entity"
-import type { GameSession } from "../entities/game-session.entity"
-import type { StateManagementService } from "./state-management.service"
-import type { gameEngineConfig } from "../config/game-engine.config"
+import { PuzzleState } from "../entities/puzzle-state.entity"
+import { PlayerProgress } from "../entities/player-progress.entity"
+import { GameSession } from "../entities/game-session.entity"
+import { StateManagementService } from "./state-management.service"
+import { gameEngineConfig } from "../config/game-engine.config"
 
 export interface SaveGameData {
   version: string
@@ -31,11 +32,15 @@ export class SaveLoadService {
   private readonly currentVersion = "1.0.0"
 
   constructor(
+    @InjectRepository(PuzzleState)
     private readonly puzzleStateRepository: Repository<PuzzleState>,
+    @InjectRepository(PlayerProgress)
     private readonly playerProgressRepository: Repository<PlayerProgress>,
+    @InjectRepository(GameSession)
     private readonly sessionRepository: Repository<GameSession>,
     private readonly stateManagement: StateManagementService,
-    private readonly config: any,
+    @Inject(gameEngineConfig.KEY)
+    private readonly config: ConfigType<typeof gameEngineConfig>,
   ) { }
 
   async saveGame(playerId: string, includeHistory = false): Promise<SaveGameData> {

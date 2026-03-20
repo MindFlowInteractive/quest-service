@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, MoreThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PlayerRating, SkillTier, SeasonStatus } from './entities/player-rating.entity';
 import { RatingHistory, RatingChangeReason } from './entities/rating-history.entity';
@@ -212,7 +212,7 @@ export class SkillRatingService {
       where: {
         seasonId: currentSeason.seasonId,
         seasonStatus: SeasonStatus.ACTIVE,
-        rating: { $gt: playerRating.rating },
+        rating: MoreThan(playerRating.rating),
       },
     });
     

@@ -1,15 +1,16 @@
 import { Injectable, Logger } from "@nestjs/common"
-import type { Repository } from "typeorm"
+import { InjectRepository } from "@nestjs/typeorm"
+import { Repository } from "typeorm"
 import type { PuzzleGameState } from "../interfaces/puzzle.interfaces"
 import type { PuzzleStatus } from "../types/puzzle.types"
-import type { PuzzleState } from "../entities/puzzle-state.entity"
+import { PuzzleState } from "../entities/puzzle-state.entity"
 
 @Injectable()
 export class StateManagementService {
   private readonly logger = new Logger(StateManagementService.name)
   private readonly stateCache = new Map<string, PuzzleGameState>()
 
-  constructor(puzzleStateRepository: Repository<PuzzleState>) {
+  constructor(@InjectRepository(PuzzleState) puzzleStateRepository: Repository<PuzzleState>) {
     this.puzzleStateRepository = puzzleStateRepository
   }
 

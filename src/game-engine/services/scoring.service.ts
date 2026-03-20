@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import type {
   IPuzzle,
   PerformanceMetrics,
 } from '../interfaces/puzzle.interfaces';
 import { PuzzleType, DifficultyLevel } from '../types/puzzle.types';
-import type { gameEngineConfig } from '../config/game-engine.config';
+import { gameEngineConfig } from '../config/game-engine.config';
 
 interface ScoreCalculationResult {
   baseScore: number;
@@ -33,7 +33,10 @@ interface RewardCalculation {
 export class ScoringService {
   private readonly logger = new Logger(ScoringService.name);
 
-  constructor(private readonly config: any) { }
+  constructor(
+    @Inject(gameEngineConfig.KEY)
+    private readonly config: ConfigType<typeof gameEngineConfig>,
+  ) { }
 
   /**
    * Calculate comprehensive score for a completed puzzle

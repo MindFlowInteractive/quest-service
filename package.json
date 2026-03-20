@@ -27,6 +27,7 @@
         "@nestjs/config": "^3.0.0",
         "@nestjs/core": "^10.0.0",
         "@nestjs/elasticsearch": "^11.1.0",
+        "@nestjs/event-emitter": "^3.0.1",
         "@nestjs/jwt": "^11.0.2",
         "@nestjs/mapped-types": "^2.1.0",
         "@nestjs/microservices": "^11.1.14",

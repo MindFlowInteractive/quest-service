@@ -8,7 +8,7 @@ import { EnergyTransaction } from './entities/energy-transaction.entity';
 import { EnergyGift } from './entities/energy-gift.entity';
 import { EnergyBoost } from './entities/energy-boost.entity';
 import { User } from '../users/entities/user.entity';
-import { NotificationModule } from '../notifications/notification.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import energyConfig from './config/energy.config';
 
 @Module({
@@ -21,7 +21,7 @@ import energyConfig from './config/energy.config';
       EnergyBoost,
       User,
     ]),
-    NotificationModule,
+    NotificationsModule,
   ],
   controllers: [EnergyController],
   providers: [EnergyService],

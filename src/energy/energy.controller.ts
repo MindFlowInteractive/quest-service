@@ -10,7 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EnergyService } from './energy.service';
 import { SendEnergyGiftDto } from './dto/send-energy-gift.dto';
 import { RefillEnergyDto } from './dto/refill-energy.dto';

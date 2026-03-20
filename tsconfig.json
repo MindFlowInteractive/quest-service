@@ -21,8 +21,18 @@
     "noFallthroughCasesInSwitch": false,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "express", "multer"],
+    "typeRoots": ["node_modules/@types"]
   },
   "include": ["src/**/*", "src/types.d.ts"],
-  "exclude": ["node_modules", "dist", "test"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "src/**/*.spec.ts",
+    "src/**/__tests__/**",
+    "src/**/tests/**",
+    "src/File Storage and CDN Service Setup/**",
+    "src/Scheduler and Cron Service Setup/**"
+  ]
 }

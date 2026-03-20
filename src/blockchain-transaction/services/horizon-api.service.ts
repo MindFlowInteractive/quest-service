@@ -282,7 +282,7 @@ export class HorizonApiService {
         return { healthy: false, latency };
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as { protocol_version?: string | number };
       return {
         healthy: true,
         latency,

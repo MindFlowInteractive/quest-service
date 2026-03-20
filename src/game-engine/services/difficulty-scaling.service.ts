@@ -1,15 +1,18 @@
-import { Injectable, Logger } from "@nestjs/common"
+import { Inject, Injectable, Logger } from "@nestjs/common"
 import type { ConfigType } from "@nestjs/config"
 import type { IDifficultyScaler, PlayerMetrics, PerformanceMetrics } from "../interfaces/puzzle.interfaces"
 import { PuzzleType } from "../types/puzzle.types"
 import type { DifficultyLevel } from "../types/puzzle.types"
-import type { gameEngineConfig } from "../config/game-engine.config"
+import { gameEngineConfig } from "../config/game-engine.config"
 
 @Injectable()
 export class DifficultyScalingService implements IDifficultyScaler {
   private readonly logger = new Logger(DifficultyScalingService.name)
 
-  constructor(private readonly config: any) { }
+  constructor(
+    @Inject(gameEngineConfig.KEY)
+    private readonly config: ConfigType<typeof gameEngineConfig>,
+  ) { }
 
   calculateDifficulty(playerMetrics: PlayerMetrics, puzzleType: PuzzleType): DifficultyLevel {
     try {

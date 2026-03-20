@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
 import { ICacheService } from '../../domain/repositories/repository-interfaces';
 
@@ -7,7 +8,7 @@ import { ICacheService } from '../../domain/repositories/repository-interfaces';
  */
 @Injectable()
 export class RedisCacheService implements ICacheService {
-  constructor(private redisClient: Redis) {}
+  constructor(@InjectRedis() private redisClient: Redis) {}
 
   async get<T>(key: string): Promise<T | null> {
     const value = await this.redisClient.get(key);

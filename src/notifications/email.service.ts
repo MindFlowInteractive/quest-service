@@ -7,7 +7,7 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: any;
 
-  constructor(private readonly config: any) {
+  constructor(private readonly config: ConfigService) {
     // Basic SMTP transporter using env vars
     const host = this.config.get('EMAIL_HOST') || 'localhost';
     const port = Number(this.config.get('EMAIL_PORT') || 1025);

@@ -79,6 +79,7 @@ export class RatingHistory {
     kFactor?: number;
     performanceScore?: number;
     bonusFactors?: string[];
+    daysInactive?: number;
   };
 
   @CreateDateColumn()

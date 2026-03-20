@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common"
-import type { CacheService } from "../services/cache.service"
+import { CacheService } from "../services/cache.service"
 
 export interface InvalidationRule {
   pattern: string

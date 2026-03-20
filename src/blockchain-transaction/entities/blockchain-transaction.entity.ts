@@ -144,6 +144,9 @@ export class BlockchainTransaction {
   @Column({ name: 'failed_at', type: 'timestamptz', nullable: true })
   failedAt: Date;
 
+  @Column({ name: 'cancelled_at', type: 'timestamptz', nullable: true })
+  cancelledAt: Date;
+
   @Column({ name: 'next_retry_at', type: 'timestamptz', nullable: true })
   nextRetryAt: Date;
 

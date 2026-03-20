@@ -1,6 +1,6 @@
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common"
 import { Cron, CronExpression } from "@nestjs/schedule"
-import type { CacheService } from "./cache.service"
+import { CacheService } from "./cache.service"
 
 export interface WarmingStrategy {
   name: string

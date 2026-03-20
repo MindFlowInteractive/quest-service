@@ -9,7 +9,10 @@ export class ValidationService implements IPuzzleValidator {
   private readonly logger = new Logger(ValidationService.name)
   private readonly validators = new Map<PuzzleType, IPuzzleValidator>()
 
-  constructor(@Inject(gameEngineConfig.KEY) private readonly config: any) { }
+  constructor(
+    @Inject(gameEngineConfig.KEY)
+    private readonly config: ConfigType<typeof gameEngineConfig>,
+  ) { }
 
   registerValidator(puzzleType: PuzzleType, validator: IPuzzleValidator): void {
     this.validators.set(puzzleType, validator)

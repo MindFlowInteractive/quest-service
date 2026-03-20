@@ -1,11 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common"
+import { Inject, Injectable, Logger } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import type { Repository } from "typeorm"
 import type { ConfigType } from "@nestjs/config"
 import type { PlayerMetrics, PerformanceMetrics } from "../interfaces/puzzle.interfaces"
 import { PuzzleType, DifficultyLevel } from "../types/puzzle.types"
 import { PlayerProgress } from "../entities/player-progress.entity"
-import type { gameEngineConfig } from "../config/game-engine.config"
+import { gameEngineConfig } from "../config/game-engine.config"
 
 export interface UnlockCriteria {
   puzzleId: string
@@ -37,7 +37,8 @@ export class ProgressionService {
   constructor(
     @InjectRepository(PlayerProgress)
     private readonly playerProgressRepository: Repository<PlayerProgress>,
-    private readonly config: any,
+    @Inject(gameEngineConfig.KEY)
+    private readonly config: ConfigType<typeof gameEngineConfig>,
   ) {
     this.initializeDefaultAchievements()
   }

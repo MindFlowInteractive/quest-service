@@ -1,11 +1,12 @@
 import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from "@nestjs/common"
-import type { Repository } from "typeorm"
+import { InjectRepository } from "@nestjs/typeorm"
+import { Repository } from "typeorm"
 import type { DeepPartial } from "typeorm"
-import type { JwtService } from "@nestjs/jwt"
+import { JwtService } from "@nestjs/jwt"
 import * as bcrypt from "bcrypt"
-import type { User } from "./entities/user.entity"
-import type { Role } from "./entities/role.entity"
-import type { RefreshToken } from "./entities/refresh-token.entity"
+import { User } from "./entities/user.entity"
+import { Role } from "./entities/role.entity"
+import { RefreshToken } from "./entities/refresh-token.entity"
 import type { RegisterUserDto } from "./dto/register-user.dto"
 import type { LoginUserDto } from "./dto/login-user.dto"
 import type { ForgotPasswordDto } from "./dto/forgot-password.dto"
@@ -18,8 +19,11 @@ import { v4 as uuidv4 } from "uuid"
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @InjectRepository(RefreshToken)
     private refreshTokensRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
   ) { }

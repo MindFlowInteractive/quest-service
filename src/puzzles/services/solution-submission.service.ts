@@ -4,7 +4,8 @@ import {
     ConflictException,
     BadRequestException,
     NotFoundException,
-    TooManyRequestsException,
+    HttpException,
+    HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, MoreThan } from 'typeorm';
@@ -265,8 +266,9 @@ export class SolutionSubmissionService {
 
         if (recentCount >= RATE_LIMIT_MAX) {
             this.logger.warn(`Rate limit hit for user ${userId}: ${recentCount} submissions in last 60s`);
-            throw new TooManyRequestsException(
+            throw new HttpException(
                 `You have exceeded the submission rate limit (${RATE_LIMIT_MAX} per minute). Please wait before trying again.`,
+                HttpStatus.TOO_MANY_REQUESTS,
             );
         }
     }

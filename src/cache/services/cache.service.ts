@@ -1,9 +1,10 @@
 import { Injectable, Logger, Inject } from "@nestjs/common"
+import { InjectRedis } from "@nestjs-modules/ioredis"
 import type { ConfigType } from "@nestjs/config"
 import type Redis from "ioredis"
 import { LRUCache } from "lru-cache"
 import { cacheConfig } from "../config/cache.config"
-import type { CacheMonitoringService } from "./cache-monitoring.service"
+import { CacheMonitoringService } from "./cache-monitoring.service"
 
 export interface CacheOptions {
   ttl?: number
@@ -29,6 +30,7 @@ export class CacheService {
   private readonly redis: Redis;
 
   constructor(
+    @InjectRedis()
     private readonly redisClient: Redis,
     @Inject(cacheConfig.KEY)
     private readonly config: typeof cacheConfig.KEY extends string ? any : any,

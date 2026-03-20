@@ -9,6 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { RatingHistory } from './rating-history.entity';
 
 export enum SkillTier {
   BRONZE = 'bronze',

@@ -5,6 +5,10 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+type UploadedFile = {
+  originalname: string;
+};
+
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -40,7 +44,7 @@ export class UsersController {
     fileFilter: fileFilter(['.png', '.jpg', '.jpeg'], ['image/png', 'image/jpeg']),
     limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
   }))
-  uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+  uploadAvatar(@UploadedFile() file: UploadedFile) {
     // Only validation logic shown; file storage logic can be added as needed
     return { message: 'Avatar uploaded successfully', filename: file.originalname };
   }

@@ -1,10 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common"
-import type { Repository } from "typeorm"
+import { Inject, Injectable, Logger } from "@nestjs/common"
+import { InjectRepository } from "@nestjs/typeorm"
+import { Repository } from "typeorm"
 import type { ConfigType } from "@nestjs/config"
-import type { PuzzleAnalytics } from "../entities/puzzle-analytics.entity"
-import type { GameSession } from "../entities/game-session.entity"
+import { PuzzleAnalytics } from "../entities/puzzle-analytics.entity"
+import { GameSession } from "../entities/game-session.entity"
 import { PuzzleType, DifficultyLevel } from "../types/puzzle.types"
-import type { gameEngineConfig } from "../config/game-engine.config"
+import { gameEngineConfig } from "../config/game-engine.config"
 
 export interface AnalyticsEvent {
   type: string
@@ -34,9 +35,12 @@ export class AnalyticsService {
   private readonly sessionCache = new Map<string, GameSession>()
 
   constructor(
+    @InjectRepository(PuzzleAnalytics)
     private readonly analyticsRepository: Repository<PuzzleAnalytics>,
+    @InjectRepository(GameSession)
     private readonly sessionRepository: Repository<GameSession>,
-    private readonly config: any,
+    @Inject(gameEngineConfig.KEY)
+    private readonly config: ConfigType<typeof gameEngineConfig>,
   ) {
     // Process queued events periodically
     setInterval(() => this.processEventQueue(), 5000)

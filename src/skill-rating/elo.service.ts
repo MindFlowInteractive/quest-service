@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { PlayerRating, SkillTier } from './entities/player-rating.entity';
 import { RatingHistory, RatingChangeReason } from './entities/rating-history.entity';
 import { Puzzle } from '../puzzles/entities/puzzle.entity';
-import { Season } from './entities/season.entity';
+import { Season, SeasonStatus } from './entities/season.entity';
 
 export interface ELOCalculationResult {
   ratingChange: number;
@@ -224,7 +224,7 @@ export class ELOService {
    */
   async getCurrentSeason(): Promise<Season> {
     const season = await this.seasonRepository.findOne({
-      where: { status: 'active' },
+      where: { status: SeasonStatus.ACTIVE },
       order: { startDate: 'DESC' },
     });
     
