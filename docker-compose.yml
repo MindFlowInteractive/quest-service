@@ -120,6 +120,34 @@ services:
       - quest-network
     logging: *logging_config
 
+  achievement-service:
+    build:
+      context: ./microservices/achievement-service
+      dockerfile: Dockerfile
+    container_name: achievement_service
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=achievement_db
+      - DB_SYNC=true
+      - SERVICE_PORT=3007
+      - NOTIFICATION_WEBHOOK_URL=
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/achievement-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
   moderation-service:
     build:
       context: ./microservices/moderation-service
