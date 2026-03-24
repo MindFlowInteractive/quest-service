@@ -16,5 +16,6 @@ create_db "quest_db"
 create_db "notification_db"
 create_db "social_db"
 create_db "recommendation_db"
+create_db "achievement_db"
 
 echo "All microservice databases created successfully!"
