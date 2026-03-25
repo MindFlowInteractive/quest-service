@@ -45,6 +45,7 @@ const app_module_1 = require("./app.module");
 const http_exception_filter_1 = require("./common/exceptions/http-exception.filter");
 const sanitize_interceptor_1 = require("./common/interceptors/sanitize.interceptor");
 const Sentry = __importStar(require("@sentry/node"));
+const microservices_1 = require("@nestjs/microservices");
 async function bootstrap() {
     Sentry.init({
         dsn: process.env.SENTRY_DSN || '',
@@ -78,6 +79,17 @@ async function bootstrap() {
     app.useGlobalFilters(new http_exception_filter_1.AllExceptionsFilter());
     app.useGlobalInterceptors(new sanitize_interceptor_1.SanitizeInterceptor());
     app.setGlobalPrefix(apiPrefix);
+    const rabbitmqUrl = configService.get('RABBITMQ_URL') || 'amqp://admin:rabbitmq123@rabbitmq:5672';
+    app.connectMicroservice({
+        transport: microservices_1.Transport.RMQ,
+        options: {
+            urls: [rabbitmqUrl],
+            queue: 'notification_stale_tokens_queue',
+            queueOptions: { durable: true },
+            noAck: false,
+        },
+    });
+    await app.startAllMicroservices();
     await app.listen(port);
     logger.log(`🚀 LogiQuest Backend is running on: http://localhost:${port}/${apiPrefix}`, 'Bootstrap');
 }
