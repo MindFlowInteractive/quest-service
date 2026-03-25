@@ -49,12 +49,16 @@ export class XpService {
   }
 
   async getPublicLevel(userId: string): Promise<LevelProgressView> {
-    await this.assertUserExists(userId);
+    const user = await this.assertUserExists(userId);
     const privacySettings = await this.privacySettingsRepo.findOne({
       where: { userId },
     });
 
     if (privacySettings && !privacySettings.profilePublic) {
+      throw new ForbiddenException('Player level is private');
+    }
+
+    if (user.preferences?.privacy?.showStats === false) {
       throw new ForbiddenException('Player level is private');
     }
 
@@ -232,11 +236,12 @@ export class XpService {
     return this.getMyLevel(params.userId);
   }
 
-  private async assertUserExists(userId: string): Promise<void> {
+  private async assertUserExists(userId: string): Promise<User> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    return user;
   }
 
   private async getOrCreatePlayerLevel(userId: string): Promise<PlayerLevel> {
