@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { NotificationGateway } from '../common/gateways/notification.gateway';
 import { NotificationChannel } from '../notifications/entities/notification.entity';
 import { PushNotificationProvider } from '../notifications/providers/push-notification.provider';
+import { RabbitMQService } from '@quest-service/shared';
 
 @Processor('notifications')
 export class NotificationProcessor extends WorkerHost {
@@ -12,6 +13,7 @@ export class NotificationProcessor extends WorkerHost {
     constructor(
         private readonly notificationGateway: NotificationGateway,
         private readonly pushProvider: PushNotificationProvider,
+        private readonly rabbitMQService: RabbitMQService,
     ) {
         super();
     }
@@ -27,7 +29,7 @@ export class NotificationProcessor extends WorkerHost {
                     await this.processWebSocket(userId, content, type);
                     break;
                 case NotificationChannel.PUSH:
-                    await this.processPush(userId, content, type);
+                    await this.processPush(job);
                     break;
                 case NotificationChannel.EMAIL:
                     await this.processEmail(userId, content, type);
@@ -51,13 +53,32 @@ export class NotificationProcessor extends WorkerHost {
         }
     }
 
-    private async processPush(userId: string, content: any, type: string) {
-        this.logger.log(`Sending Push notification to user ${userId}`);
-        await this.pushProvider.sendPush(userId, {
+    private async processPush(job: Job) {
+        const { tokens, content, type } = job.data;
+
+        if (!tokens?.length) {
+            this.logger.warn('No tokens provided for push notification');
+            return;
+        }
+
+        const payload = {
             title: content.subject || 'New Notification',
             body: content.body || 'You have a new notification',
-            data: { type, ...content },
-        });
+            data: content,
+        };
+
+        const result = type === 'broadcast'
+            ? await this.pushProvider.sendBroadcast(tokens, payload)
+            : await this.pushProvider.sendToTokens(tokens, payload);
+
+        this.logger.log(`Push sent: ${result.successCount} success, ${result.failureCount} failure`);
+
+        if (result.staleTokens.length > 0) {
+            await this.rabbitMQService.publish('', 'notification_stale_tokens_queue', {
+                tokens: result.staleTokens,
+            });
+            this.logger.log(`Reported ${result.staleTokens.length} stale tokens`);
+        }
     }
 
     private async processEmail(userId: string, content: any, type: string) {

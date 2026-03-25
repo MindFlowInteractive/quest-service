@@ -9,6 +9,7 @@ import { AllExceptionsFilter } from './common/exceptions/http-exception.filter';
 import { SanitizeInterceptor } from './common/interceptors/sanitize.interceptor';
 import * as Sentry from '@sentry/node';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   // Initialize Sentry
@@ -70,6 +71,19 @@ async function bootstrap() {
   app.useGlobalInterceptors(new SanitizeInterceptor());
 
   app.setGlobalPrefix(apiPrefix);
+
+  // Connect RabbitMQ microservice for stale token cleanup
+  const rabbitmqUrl = configService.get<string>('RABBITMQ_URL') || 'amqp://admin:rabbitmq123@rabbitmq:5672';
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [rabbitmqUrl],
+      queue: 'notification_stale_tokens_queue',
+      queueOptions: { durable: true },
+      noAck: false,
+    },
+  });
+  await app.startAllMicroservices();
 
   await app.listen(port);
 
