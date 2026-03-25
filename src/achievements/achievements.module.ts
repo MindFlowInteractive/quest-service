@@ -3,13 +3,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AchievementsService } from './achievements.service';
 import { AchievementsController } from './achievements.controller';
+import { PlayerEventsModule } from '../player-events/player-events.module';
 import { Achievement } from './entities/achievement.entity';
 import { UserAchievement } from './entities/user-achievement.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AchievementConditionEngine } from './achievement-condition.engine';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Achievement, UserAchievement]), NotificationsModule],
+  imports: [TypeOrmModule.forFeature([Achievement, UserAchievement]), NotificationsModule, PlayerEventsModule],
   controllers: [AchievementsController],
   providers: [AchievementsService, AchievementConditionEngine],
   exports: [AchievementsService],

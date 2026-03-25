@@ -50,6 +50,7 @@ import { EnergyModule } from './energy/energy.module';
 import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
 import { XpModule } from './xp/xp.module';
+import { PlayerEventsModule } from './player-events/player-events.module';
 
 @Module({
   imports: [
@@ -128,8 +129,7 @@ import { XpModule } from './xp/xp.module';
     PuzzleModule,
     EventModule,
     SeasonalEventsModule,
-    MultiplayerModule,
-    RecommendationsModule,
+    MultiplayerModule,    PlayerEventsModule,    RecommendationsModule,
     AntiCheatModule,
     QuestsModule,
     IntegrationsModule,
