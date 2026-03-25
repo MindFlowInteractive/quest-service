@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ClientProxy } from '@nestjs/microservices';
 import { Notification } from './entities/notification.entity';
 import { NotificationDelivery } from './entities/notification-delivery.entity';
 import { User } from '../users/entities/user.entity';
@@ -15,6 +16,14 @@ import { PLAYER_LEVEL_UP_EVENT } from '../xp/xp.constants';
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
 
+  private readonly EVENT_PATTERNS: Record<string, string> = {
+    achievements: 'AchievementUnlocked',
+    dailyChallenge: 'DailyChallengeAvailable',
+    friendRequest: 'FriendRequestSent',
+    tournamentReminder: 'TournamentStartingSoon',
+    sessionInvite: 'SessionInviteReceived',
+  };
+
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepo: Repository<Notification>,
@@ -26,7 +35,7 @@ export class NotificationService {
     private readonly deviceRepo: Repository<Device>,
     private readonly emailService: EmailService,
     @Inject(SchedulerRegistry) private readonly scheduler: any,
-    private readonly pushService: PushService,
+    @Inject('NOTIFICATION_SERVICE') private readonly notificationClient: ClientProxy,
   ) { }
 
   // Backwards-compatible convenience method used across the codebase
@@ -58,24 +67,13 @@ export class NotificationService {
       }
     }
 
-    if (prefs.push) {
-      // Send push notifications to user's registered devices
-      const devices = await this.deviceRepo.find({ where: { userId } });
-      if (devices?.length) {
-        for (const d of devices) {
-          const res = await this.pushService.sendToToken(d.token, { title: notif.title, body: notif.body });
-          if ((res as any)?.success) {
-            await this.recordDelivery(notif.id, 'push', 'sent', JSON.stringify(res));
-          } else if ((res as any)?.queued) {
-            await this.recordDelivery(notif.id, 'push', 'queued');
-          } else {
-            await this.recordDelivery(notif.id, 'push', 'failed', JSON.stringify(res));
-          }
-        }
-      } else {
-        await this.recordDelivery(notif.id, 'push', 'no_devices');
-      }
-    }
+    // Push notification via microservice
+    await this.emitPushEvent(userId, 'achievements', {
+      title: notif.title,
+      body: notif.body ?? '',
+      data: { type: 'achievement', ...notif.meta },
+    });
+    await this.recordDelivery(notif.id, 'push', 'queued');
 
     // For in-app, mark delivered
     await this.recordDelivery(notif.id, 'in_app', 'delivered');
@@ -156,21 +154,61 @@ export class NotificationService {
     }
 
     if (prefs.push) {
-      const devices = await this.deviceRepo.find({ where: { userId: notif.userId } });
-      if (devices?.length) {
-        for (const d of devices) {
-          const res = await this.pushService.sendToToken(d.token, { title: notif.title, body: notif.body });
-          if ((res as any)?.success) {
-            await this.recordDelivery(notif.id, 'push', 'sent', JSON.stringify(res));
-          } else if ((res as any)?.queued) {
-            await this.recordDelivery(notif.id, 'push', 'queued');
-          } else {
-            await this.recordDelivery(notif.id, 'push', 'failed', JSON.stringify(res));
-          }
-        }
-      } else {
-        await this.recordDelivery(notif.id, 'push', 'no_devices');
+      await this.emitPushEvent(notif.userId, notif.type, {
+        title: notif.title, body: notif.body ?? '',
+      });
+      await this.recordDelivery(notif.id, 'push', 'queued');
+    }
+  }
+
+  async emitPushEvent(userId: string, eventType: string, payload: { title: string; body: string; data?: Record<string, any> }) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) return;
+    const prefs = user.preferences?.notifications ?? {};
+    if (prefs.push !== true) return;
+    if ((prefs as any)[eventType] === false) return;
+    const devices = await this.deviceRepo.find({ where: { userId } });
+    if (!devices?.length) return;
+    const tokens = devices.map((d) => d.token);
+    const pattern = this.EVENT_PATTERNS[eventType] || eventType;
+    this.notificationClient.emit(pattern, {
+      userId, tokens,
+      title: payload.title, body: payload.body,
+      data: payload.data ?? {},
+    }).subscribe();
+    this.logger.log(`Push event ${pattern} emitted for user ${userId} to ${tokens.length} devices`);
+  }
+
+  async emitBroadcastPush(eventType: string, payload: { title: string; body: string; data?: Record<string, any> }) {
+    const PAGE_SIZE = 1000;
+    let offset = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const users = await this.userRepo
+        .createQueryBuilder('user')
+        .select(['user.id'])
+        .where("user.preferences->'notifications'->>'push' = 'true'")
+        .andWhere(`COALESCE(user.preferences->'notifications'->>:eventType, 'true') != 'false'`, { eventType })
+        .skip(offset).take(PAGE_SIZE).getMany();
+      if (users.length === 0) { hasMore = false; break; }
+      const userIds = users.map((u) => u.id);
+      const devices = await this.deviceRepo
+        .createQueryBuilder('device')
+        .select(['device.token'])
+        .where('device.userId IN (:...userIds)', { userIds })
+        .getMany();
+      const tokens = devices.map((d) => d.token);
+      if (tokens.length > 0) {
+        const pattern = this.EVENT_PATTERNS[eventType] || eventType;
+        this.notificationClient.emit(pattern, {
+          type: 'broadcast', tokens,
+          title: payload.title, body: payload.body,
+          data: payload.data ?? {},
+        }).subscribe();
+        this.logger.log(`Broadcast ${pattern} emitted: ${tokens.length} tokens (batch offset=${offset})`);
       }
+      offset += PAGE_SIZE;
+      hasMore = users.length === PAGE_SIZE;
     }
   }
 

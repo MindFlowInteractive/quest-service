@@ -84,4 +84,16 @@ export class NotificationsService {
             order: { createdAt: 'DESC' },
         });
     }
+
+    async enqueuePush(tokens: string[], payload: { title: string; body: string; data?: Record<string, any> }, type: string = 'push') {
+        this.logger.log(`Enqueueing push for ${tokens.length} tokens (type: ${type})`);
+
+        const isBroadcast = type === 'broadcast';
+        await this.notificationQueue.add('send-push', {
+            tokens,
+            content: { subject: payload.title, body: payload.body, ...payload.data },
+            channels: ['push'],
+            type: isBroadcast ? 'broadcast' : type,
+        });
+    }
 }
