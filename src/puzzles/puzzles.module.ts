@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PuzzlesService } from './puzzles.service';
 import { PuzzlesController } from './puzzles.controller';
 import { CommunityPuzzlesModule } from './community-puzzles.module';
+import { PlayerEventsModule } from '../player-events/player-events.module';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
@@ -55,6 +56,7 @@ import { XpModule } from '../xp/xp.module';
     ]),
     AntiCheatModule,
     XpModule,
+    PlayerEventsModule,
   ],
   controllers: [
     PuzzlesController,
