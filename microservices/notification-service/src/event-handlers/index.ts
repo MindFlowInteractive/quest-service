@@ -1,68 +1,88 @@
 import { Injectable } from '@nestjs/common';
-import { IEventHandler, BaseEvent, UserRegisteredEvent, PuzzleCompletedEvent, AchievementUnlockedEvent, FriendRequestSentEvent, FriendRequestAcceptedEvent } from '@quest-service/shared';
+import { IEventHandler, BaseEvent } from '@quest-service/shared';
+import { NotificationsService } from '../notifications/notifications.service';
+
+function extractPushData(event: BaseEvent) {
+  const { tokens, title, body, data, userId } = event.data;
+  return { tokens: tokens as string[] | undefined, title: title as string, body: body as string, data, userId };
+}
 
 @Injectable()
-export class UserRegisteredHandler implements IEventHandler<UserRegisteredEvent> {
-  async handle(event: UserRegisteredEvent): Promise<void> {
-    console.log('Handling UserRegistered event:', event);
-    // Send welcome notification
-    await this.sendWelcomeNotification(event.data.userId, event.data.email);
-  }
-
-  private async sendWelcomeNotification(userId: string, email: string): Promise<void> {
-    // Implementation would send welcome email/push notification
-    console.log(`Welcome notification sent to user ${userId} at ${email}`);
+export class UserRegisteredHandler implements IEventHandler<BaseEvent> {
+  async handle(event: BaseEvent): Promise<void> {
+    console.log('Handling UserRegistered event:', event.eventType);
   }
 }
 
 @Injectable()
-export class PuzzleCompletedHandler implements IEventHandler<PuzzleCompletedEvent> {
-  async handle(event: PuzzleCompletedEvent): Promise<void> {
-    console.log('Handling PuzzleCompleted event:', event);
-    // Send puzzle completion notification
-    await this.sendPuzzleCompletionNotification(event.data.userId, event.data.score);
-  }
-
-  private async sendPuzzleCompletionNotification(userId: string, score: number): Promise<void> {
-    console.log(`Puzzle completion notification sent to user ${userId} with score ${score}`);
+export class PuzzleCompletedHandler implements IEventHandler<BaseEvent> {
+  async handle(event: BaseEvent): Promise<void> {
+    console.log('Handling PuzzleCompleted event:', event.eventType);
   }
 }
 
 @Injectable()
-export class AchievementUnlockedHandler implements IEventHandler<AchievementUnlockedEvent> {
-  async handle(event: AchievementUnlockedEvent): Promise<void> {
-    console.log('Handling AchievementUnlocked event:', event);
-    // Send achievement notification
-    await this.sendAchievementNotification(event.data.userId, event.data.achievementName);
-  }
+export class AchievementUnlockedHandler implements IEventHandler<BaseEvent> {
+  constructor(private readonly notificationsService: NotificationsService) {}
 
-  private async sendAchievementNotification(userId: string, achievementName: string): Promise<void> {
-    console.log(`Achievement notification sent to user ${userId}: ${achievementName}`);
+  async handle(event: BaseEvent): Promise<void> {
+    const { tokens, title, body, data } = extractPushData(event);
+    if (!tokens?.length) return;
+    await this.notificationsService.enqueuePush(tokens, { title, body, data }, 'achievement');
   }
 }
 
 @Injectable()
-export class FriendRequestSentHandler implements IEventHandler<FriendRequestSentEvent> {
-  async handle(event: FriendRequestSentEvent): Promise<void> {
-    console.log('Handling FriendRequestSent event:', event);
-    // Send friend request notification
-    await this.sendFriendRequestNotification(event.data.toUserId, event.data.fromUserId);
-  }
+export class FriendRequestSentHandler implements IEventHandler<BaseEvent> {
+  constructor(private readonly notificationsService: NotificationsService) {}
 
-  private async sendFriendRequestNotification(toUserId: string, fromUserId: string): Promise<void> {
-    console.log(`Friend request notification sent to user ${toUserId} from user ${fromUserId}`);
+  async handle(event: BaseEvent): Promise<void> {
+    const { tokens, title, body, data } = extractPushData(event);
+    if (!tokens?.length) return;
+    await this.notificationsService.enqueuePush(tokens, { title, body, data }, 'friendRequest');
   }
 }
 
 @Injectable()
-export class FriendRequestAcceptedHandler implements IEventHandler<FriendRequestAcceptedEvent> {
-  async handle(event: FriendRequestAcceptedEvent): Promise<void> {
-    console.log('Handling FriendRequestAccepted event:', event);
-    // Send friend request accepted notification
-    await this.sendFriendAcceptedNotification(event.data.userId, event.data.friendId);
-  }
+export class FriendRequestAcceptedHandler implements IEventHandler<BaseEvent> {
+  constructor(private readonly notificationsService: NotificationsService) {}
 
-  private async sendFriendAcceptedNotification(userId: string, friendId: string): Promise<void> {
-    console.log(`Friend accepted notification sent to user ${userId} and ${friendId}`);
+  async handle(event: BaseEvent): Promise<void> {
+    const { tokens, title, body, data } = extractPushData(event);
+    if (!tokens?.length) return;
+    await this.notificationsService.enqueuePush(tokens, { title, body, data }, 'friendRequest');
+  }
+}
+
+@Injectable()
+export class DailyChallengeAvailableHandler implements IEventHandler<BaseEvent> {
+  constructor(private readonly notificationsService: NotificationsService) {}
+
+  async handle(event: BaseEvent): Promise<void> {
+    const { tokens, title, body, data } = extractPushData(event);
+    if (!tokens?.length) return;
+    await this.notificationsService.enqueuePush(tokens, { title, body, data }, 'broadcast');
+  }
+}
+
+@Injectable()
+export class TournamentStartingSoonHandler implements IEventHandler<BaseEvent> {
+  constructor(private readonly notificationsService: NotificationsService) {}
+
+  async handle(event: BaseEvent): Promise<void> {
+    const { tokens, title, body, data } = extractPushData(event);
+    if (!tokens?.length) return;
+    await this.notificationsService.enqueuePush(tokens, { title, body, data }, 'tournamentReminder');
+  }
+}
+
+@Injectable()
+export class SessionInviteReceivedHandler implements IEventHandler<BaseEvent> {
+  constructor(private readonly notificationsService: NotificationsService) {}
+
+  async handle(event: BaseEvent): Promise<void> {
+    const { tokens, title, body, data } = extractPushData(event);
+    if (!tokens?.length) return;
+    await this.notificationsService.enqueuePush(tokens, { title, body, data }, 'sessionInvite');
   }
 }
