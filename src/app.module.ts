@@ -50,6 +50,7 @@ import { EnergyModule } from './energy/energy.module';
 import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
 import { XpModule } from './xp/xp.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -141,6 +142,7 @@ import { XpModule } from './xp/xp.module';
     SkillRatingModule,
     WalletAuthModule,
     XpModule,
+    WebhooksModule,
   ],
   controllers: [AppController],
   providers: [
