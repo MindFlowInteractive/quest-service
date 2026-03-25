@@ -5,6 +5,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -48,6 +49,7 @@ import { DailyChallengesModule } from './daily-challenges/daily-challenges.modul
 import { EnergyModule } from './energy/energy.module';
 import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
+import { XpModule } from './xp/xp.module';
 
 @Module({
   imports: [
@@ -61,6 +63,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
 
     // Scheduling for cron jobs
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
 
     // Database
     TypeOrmModule.forRootAsync({
@@ -137,6 +140,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
     DailyChallengesModule,
     SkillRatingModule,
     WalletAuthModule,
+    XpModule,
   ],
   controllers: [AppController],
   providers: [

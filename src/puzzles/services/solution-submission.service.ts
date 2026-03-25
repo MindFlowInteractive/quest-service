@@ -23,6 +23,7 @@ import {
 } from '../dto/submission-result.dto';
 import { AntiCheatService } from '../../anti-cheat/services/anti-cheat.service';
 import { ViolationType } from '../../anti-cheat/constants';
+import { XpService } from '../../xp/xp.service';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -50,6 +51,7 @@ export class SolutionSubmissionService {
 
         private readonly dataSource: DataSource,
         private readonly antiCheatService: AntiCheatService,
+        private readonly xpService: XpService,
     ) { }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -198,6 +200,17 @@ export class SolutionSubmissionService {
             rewards: rewardData,
             explanation: isCorrect ? (puzzle.content?.explanation ?? undefined) : undefined,
         };
+
+        if (result.isCorrect) {
+            await this.xpService.awardPuzzleCompletionXp({
+                userId,
+                puzzleId,
+                difficulty: puzzle.difficulty,
+                hintsUsed: dto.hintsUsed ?? 0,
+                sourceEventId: attempt.id,
+                solvedAt: now,
+            });
+        }
 
         if (fraudResult.isFraud) {
             result.message =

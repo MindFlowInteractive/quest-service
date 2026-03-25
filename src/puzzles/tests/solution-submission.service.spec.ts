@@ -15,6 +15,7 @@ import {
 import { AntiCheatService } from '../../anti-cheat/services/anti-cheat.service';
 import { SubmitSolutionDto } from '../dto/submit-solution.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { XpService } from '../../xp/xp.service';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -99,6 +100,18 @@ function makeAntiCheatService() {
     };
 }
 
+function makeXpService() {
+    return {
+        awardPuzzleCompletionXp: jest.fn().mockResolvedValue({
+            userId: 'user-1',
+            xp: 100,
+            level: 2,
+            xpToNextLevel: 150,
+            progressPercentage: 0,
+        }),
+    };
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Test Suite
 // ──────────────────────────────────────────────────────────────────────────────
@@ -109,6 +122,7 @@ describe('SolutionSubmissionService', () => {
     let attemptRepo: ReturnType<typeof makeAttemptRepo>;
     let dataSource: ReturnType<typeof makeDataSource>;
     let antiCheatService: ReturnType<typeof makeAntiCheatService>;
+    let xpService: ReturnType<typeof makeXpService>;
 
     async function buildService(
         puzzle: Partial<Puzzle> | null = basePuzzle,
@@ -119,6 +133,7 @@ describe('SolutionSubmissionService', () => {
         attemptRepo = makeAttemptRepo(existingNonce, recentSubmissionCount);
         dataSource = makeDataSource();
         antiCheatService = makeAntiCheatService();
+        xpService = makeXpService();
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -127,6 +142,7 @@ describe('SolutionSubmissionService', () => {
                 { provide: getRepositoryToken(PuzzleSolutionAttempt), useValue: attemptRepo },
                 { provide: DataSource, useValue: dataSource },
                 { provide: AntiCheatService, useValue: antiCheatService },
+                { provide: XpService, useValue: xpService },
             ],
         }).compile();
 
@@ -178,6 +194,18 @@ describe('SolutionSubmissionService', () => {
         it('runs inside a transaction', async () => {
             await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto());
             expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+        });
+
+        it('awards xp for successful solves', async () => {
+            await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto());
+            expect(xpService.awardPuzzleCompletionXp).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 'user-1',
+                    puzzleId: 'puzzle-uuid-001',
+                    difficulty: 'medium',
+                    hintsUsed: 0,
+                }),
+            );
         });
     });
 

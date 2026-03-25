@@ -1,0 +1,30 @@
+{
+  "levels": [
+    { "level": 1, "minXp": 0 },
+    { "level": 2, "minXp": 100 },
+    { "level": 3, "minXp": 250 },
+    { "level": 4, "minXp": 450 },
+    { "level": 5, "minXp": 700 },
+    { "level": 6, "minXp": 1000 },
+    { "level": 7, "minXp": 1400 },
+    { "level": 8, "minXp": 1900 },
+    { "level": 9, "minXp": 2500 },
+    { "level": 10, "minXp": 3250 }
+  ],
+  "xpAwards": {
+    "puzzleSolvedByDifficulty": {
+      "easy": 25,
+      "medium": 50,
+      "hard": 80,
+      "expert": 120
+    },
+    "noHintsBonus": 20,
+    "firstDailySolveBonus": 30,
+    "streakMilestones": [
+      { "streak": 3, "xp": 15 },
+      { "streak": 7, "xp": 40 },
+      { "streak": 14, "xp": 90 },
+      { "streak": 30, "xp": 250 }
+    ]
+  }
+}
