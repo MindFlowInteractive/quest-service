@@ -11,10 +11,11 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { MultiplayerService } from '../services/multiplayer.service';
-import { RoomType, Player, RoomStatus } from '../interfaces/multiplayer.interface';
+import { RoomType, Player, RoomStatus, Spectator } from '../interfaces/multiplayer.interface';
 import { ValidationService } from '../../game-engine/services/validation.service';
 import { LeaderboardService } from '../../leaderboard/leaderboard.service';
 import { PuzzlesService } from '../../puzzles/puzzles.service';
+import { SpectatorService } from '../../game-session/services/spectator.service';
 import { v4 as uuidv4 } from 'uuid';
 
 @WebSocketGateway({
@@ -32,6 +33,7 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
         private readonly validationService: ValidationService,
         private readonly leaderboardService: LeaderboardService,
         private readonly puzzlesService: PuzzlesService,
+        private readonly spectatorService: SpectatorService,
     ) { }
 
     afterInit(server: Server) {
@@ -74,6 +76,12 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
         @ConnectedSocket() client: Socket,
         @MessageBody() data: { roomId: string; userId: string; username: string; skillLevel: number }
     ) {
+        // Prevent spectators from joining as players
+        if (client.data.isSpectator) {
+            client.emit('error', 'Spectators cannot join as players');
+            return;
+        }
+
         const player: Player = {
             id: data.userId,
             username: data.username,
@@ -86,7 +94,12 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
         if (room) {
             client.join(data.roomId);
             client.data.userId = data.userId;
+            
+            // Broadcast to players
             this.server.to(data.roomId).emit('playerJoined', { player, room });
+            // Broadcast to spectators
+            this.server.to(`${data.roomId}-spectators`).emit('playerJoined', { player, room });
+            
             return { event: 'joinedRoom', data: room };
         }
         return { event: 'error', data: 'Could not join room' };
@@ -97,11 +110,24 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
         @ConnectedSocket() client: Socket,
         @MessageBody() data: { roomId: string; userId: string; ready: boolean }
     ) {
+        // Prevent spectators from changing ready status
+        if (client.data.isSpectator) {
+            client.emit('error', 'Spectators cannot change ready status');
+            return;
+        }
+
         const room = this.multiplayerService.setPlayerReady(data.roomId, data.userId, data.ready);
         if (room) {
+            // Broadcast to players
             this.server.to(data.roomId).emit('roomUpdated', room);
+            // Broadcast to spectators
+            this.server.to(`${data.roomId}-spectators`).emit('roomUpdated', room);
+            
             if (room.status === RoomStatus.PLAYING) {
+                // Broadcast game start to players
                 this.server.to(data.roomId).emit('gameStarted', { startTime: room.startTime, puzzleId: room.puzzleId });
+                // Broadcast game start to spectators
+                this.server.to(`${data.roomId}-spectators`).emit('gameStarted', { startTime: room.startTime, puzzleId: room.puzzleId });
             }
         }
     }
@@ -111,9 +137,18 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
         @ConnectedSocket() client: Socket,
         @MessageBody() data: { roomId: string; state: any }
     ) {
+        // Prevent spectators from updating puzzle state
+        if (client.data.isSpectator) {
+            client.emit('error', 'Spectators cannot update puzzle state');
+            return;
+        }
+
         const room = this.multiplayerService.updatePuzzleState(data.roomId, data.state);
         if (room) {
+            // Broadcast to players
             client.to(data.roomId).emit('puzzleStateUpdated', data.state);
+            // Broadcast to spectators
+            this.server.to(`${data.roomId}-spectators`).emit('puzzleStateUpdated', data.state);
         }
     }
 
@@ -122,6 +157,12 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
         @ConnectedSocket() client: Socket,
         @MessageBody() data: { roomId: string; userId: string; puzzleId: string; solution: any }
     ) {
+        // Prevent spectators from submitting solutions
+        if (client.data.isSpectator) {
+            client.emit('error', 'Spectators cannot submit solutions');
+            return;
+        }
+
         const room = this.multiplayerService.getRoom(data.roomId);
         if (!room || room.status !== RoomStatus.PLAYING) return;
 
@@ -151,7 +192,16 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
                     player.solvedPuzzles.push(data.puzzleId);
                 }
 
+                // Broadcast to players
                 this.server.to(data.roomId).emit('solutionVerified', {
+                    userId: data.userId,
+                    correct: true,
+                    score: result.score,
+                    totalScore: player?.score
+                });
+
+                // Broadcast to spectators
+                this.server.to(`${data.roomId}-spectators`).emit('solutionVerified', {
                     userId: data.userId,
                     correct: true,
                     score: result.score,
@@ -195,5 +245,85 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
     handleGetLobbies() {
         const lobbies = this.multiplayerService.getPublicLobbies();
         return { event: 'lobbiesList', data: lobbies };
+    }
+
+    @SubscribeMessage('spectate')
+    async handleSpectate(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() data: { roomId: string; userId: string; username: string }
+    ) {
+        const spectator: Spectator = {
+            id: uuidv4(),
+            userId: data.userId,
+            username: data.username,
+            joinedAt: new Date(),
+            isActive: true,
+        };
+
+        const room = this.multiplayerService.addSpectator(data.roomId, spectator);
+        if (room) {
+            client.join(`${data.roomId}-spectators`);
+            client.data.userId = data.userId;
+            client.data.isSpectator = true;
+            client.data.roomId = data.roomId;
+
+            // Send current room state to spectator
+            client.emit('spectatorJoined', { room, spectator });
+            
+            // Notify players about new spectator
+            this.server.to(data.roomId).emit('spectatorCountUpdated', { 
+                count: this.multiplayerService.getSpectatorCount(data.roomId) 
+            });
+
+            // Notify other spectators
+            this.server.to(`${data.roomId}-spectators`).emit('spectatorJoined', { spectator });
+
+            return { event: 'spectatingStarted', data: room };
+        }
+        return { event: 'error', data: 'Could not join as spectator' };
+    }
+
+    @SubscribeMessage('leaveSpectate')
+    async handleLeaveSpectate(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() data: { roomId: string; userId: string }
+    ) {
+        const room = this.multiplayerService.removeSpectator(data.roomId, data.userId);
+        if (room) {
+            client.leave(`${data.roomId}-spectators`);
+            client.data.isSpectator = false;
+            delete client.data.roomId;
+
+            // Notify players about spectator leaving
+            this.server.to(data.roomId).emit('spectatorCountUpdated', { 
+                count: this.multiplayerService.getSpectatorCount(data.roomId) 
+            });
+
+            // Notify other spectators
+            this.server.to(`${data.roomId}-spectators`).emit('spectatorLeft', { userId: data.userId });
+
+            return { event: 'spectatingEnded' };
+        }
+        return { event: 'error', data: 'Not currently spectating' };
+    }
+
+    @SubscribeMessage('toggleSpectating')
+    async handleToggleSpectating(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() data: { roomId: string; userId: string; spectatingAllowed: boolean }
+    ) {
+        const room = this.multiplayerService.toggleSpectating(data.roomId, data.spectatingAllowed);
+        if (room) {
+            // Notify all room users
+            this.server.to(data.roomId).emit('spectatingToggled', { spectatingAllowed: data.spectatingAllowed });
+            
+            if (!data.spectatingAllowed) {
+                // Remove all spectators from spectator room
+                this.server.in(`${data.roomId}-spectators`).socketsLeave(`${data.roomId}-spectators`);
+            }
+
+            return { event: 'spectatingToggled', data: { spectatingAllowed: data.spectatingAllowed } };
+        }
+        return { event: 'error', data: 'Could not toggle spectating' };
     }
 }
