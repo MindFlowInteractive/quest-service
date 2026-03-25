@@ -34,6 +34,7 @@ import { ThemesService } from './theme.service'; // Import ThemesService
 import { ThemesController } from './theme.controller'; // Import ThemesController
 import { UserCollectionProgress } from '../collections/entities/user-collection-progress.entity';
 import { LocalizationModule } from '../common/i18n/localization.module';
+import { XpModule } from '../xp/xp.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { LocalizationModule } from '../common/i18n/localization.module';
       UserCollectionProgress,
     ]),
     AntiCheatModule,
+    XpModule,
   ],
   controllers: [
     PuzzlesController,

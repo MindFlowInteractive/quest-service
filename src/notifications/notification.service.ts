@@ -1,4 +1,5 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ClientProxy } from '@nestjs/microservices';
@@ -8,6 +9,8 @@ import { User } from '../users/entities/user.entity';
 import { EmailService } from './email.service';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { Device } from './entities/device.entity';
+import { PushService } from './push.service';
+import { PLAYER_LEVEL_UP_EVENT } from '../xp/xp.constants';
 
 @Injectable()
 export class NotificationService {
@@ -236,5 +239,24 @@ export class NotificationService {
     await this.notificationRepo.save(notif);
     await this.recordDelivery(notificationId, 'feedback', 'received', feedback.action);
     return notif;
+  }
+
+  @OnEvent(PLAYER_LEVEL_UP_EVENT)
+  async handlePlayerLevelUp(payload: {
+    userId: string;
+    oldLevel: number;
+    newLevel: number;
+    totalXP: number;
+  }) {
+    const notif = this.notificationRepo.create({
+      userId: payload.userId,
+      type: 'level_up',
+      title: `Level ${payload.newLevel} reached`,
+      body: `You advanced from level ${payload.oldLevel} to level ${payload.newLevel}.`,
+      meta: { totalXP: payload.totalXP },
+    });
+
+    await this.notificationRepo.save(notif);
+    await this.recordDelivery(notif.id, 'in_app', 'delivered');
   }
 }
