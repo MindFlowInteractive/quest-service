@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { MultiplayerRoom, RoomStatus, RoomType, Player } from '../interfaces/multiplayer.interface';
+import { MultiplayerRoom, RoomStatus, RoomType, Player, Spectator } from '../interfaces/multiplayer.interface';
 
 @Injectable()
 export class MultiplayerService {
@@ -14,11 +14,13 @@ export class MultiplayerService {
             type,
             status: RoomStatus.LOBBY,
             players: [creator],
+            spectators: [],
             settings: {
                 maxPlayers: settings?.maxPlayers || 4,
                 minPlayers: settings?.minPlayers || 2,
                 timeLimit: settings?.timeLimit || 600,
                 difficulty: settings?.difficulty || 'medium',
+                spectatingAllowed: settings?.spectatingAllowed ?? true,
             },
         };
         this.rooms.set(room.id, room);
@@ -113,5 +115,55 @@ export class MultiplayerService {
             }
         }
         return null;
+    }
+
+    // Spectator methods
+    addSpectator(roomId: string, spectator: Spectator): MultiplayerRoom | null {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+        if (!room.settings.spectatingAllowed) return null;
+
+        // Check if spectator is already in the room
+        if (!room.spectators.find(s => s.userId === spectator.userId)) {
+            room.spectators.push(spectator);
+            this.logger.log(`Spectator ${spectator.userId} joined room ${roomId}`);
+        }
+        return room;
+    }
+
+    removeSpectator(roomId: string, userId: string): MultiplayerRoom | null {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+
+        room.spectators = room.spectators.filter(s => s.userId !== userId);
+        this.logger.log(`Spectator ${userId} left room ${roomId}`);
+        return room;
+    }
+
+    toggleSpectating(roomId: string, spectatingAllowed: boolean): MultiplayerRoom | null {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+
+        room.settings.spectatingAllowed = spectatingAllowed;
+        
+        // If disabling, remove all spectators
+        if (!spectatingAllowed) {
+            room.spectators = [];
+            this.logger.log(`Spectating disabled for room ${roomId}, all spectators removed`);
+        } else {
+            this.logger.log(`Spectating enabled for room ${roomId}`);
+        }
+        
+        return room;
+    }
+
+    getSpectatorCount(roomId: string): number {
+        const room = this.rooms.get(roomId);
+        return room ? room.spectators.filter(s => s.isActive).length : 0;
+    }
+
+    isUserSpectating(roomId: string, userId: string): boolean {
+        const room = this.rooms.get(roomId);
+        return room ? !!room.spectators.find(s => s.userId === userId && s.isActive) : false;
     }
 }

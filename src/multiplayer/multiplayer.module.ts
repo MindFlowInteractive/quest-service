@@ -5,6 +5,7 @@ import { LeaderboardModule } from '../leaderboard/leaderboard.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { GameEngineModule } from '../game-engine/game-engine.module';
 import { PuzzlesModule } from '../puzzles/puzzles.module';
+import { GameSessionModule } from '../game-session/game-session.module';
 
 @Module({
     imports: [
@@ -12,6 +13,7 @@ import { PuzzlesModule } from '../puzzles/puzzles.module';
         CacheModule.register(),
         GameEngineModule,
         PuzzlesModule,
+        GameSessionModule,
     ],
     providers: [MultiplayerService, MultiplayerGateway],
     exports: [MultiplayerService],
