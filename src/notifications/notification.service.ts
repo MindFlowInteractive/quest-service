@@ -9,7 +9,7 @@ import { User } from '../users/entities/user.entity';
 import { EmailService } from './email.service';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { Device } from './entities/device.entity';
-import { PushService } from './push.service';
+// import { PushService } from './push.service';
 import { PLAYER_LEVEL_UP_EVENT } from '../xp/xp.constants';
 
 @Injectable()

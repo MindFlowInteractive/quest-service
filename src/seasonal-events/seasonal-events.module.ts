@@ -16,6 +16,7 @@ import {
 } from './services';
 import { SeasonalEventsController } from './seasonal-events.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     PlayerEventService,
     LeaderboardService,
     EventRewardService,
+    RolesGuard,
   ],
   exports: [
     SeasonalEventService,

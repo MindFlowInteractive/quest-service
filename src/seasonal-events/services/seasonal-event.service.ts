@@ -5,6 +5,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { SeasonalEvent } from '../entities/seasonal-event.entity';
 import { EventPuzzle } from '../entities/event-puzzle.entity';
 import { EventReward } from '../entities/event-reward.entity';
+import { PlayerEvent } from '../entities/player-event.entity';
 import { CreateEventDto } from '../dto/create-event.dto';
 import { NotificationService } from '../../notifications/notification.service';
 
@@ -19,6 +20,8 @@ export class SeasonalEventService {
     private readonly puzzleRepository: Repository<EventPuzzle>,
     @InjectRepository(EventReward)
     private readonly rewardRepository: Repository<EventReward>,
+    @InjectRepository(PlayerEvent)
+    private readonly playerEventRepository: Repository<PlayerEvent>,
     private readonly notificationService: NotificationService,
   ) {}
 
@@ -63,6 +66,8 @@ export class SeasonalEventService {
         event.isActive = false;
         await this.eventRepository.save(event);
         this.logger.log(`Deactivated event: ${event.name} (${event.id})`);
+        // Trigger end-of-event processing: compute winners, distribute rewards, archive leaderboard
+        await this.handleEventEnd(event);
       }
 
       // Auto-archive events that ended more than 7 days ago and are not yet archived
@@ -256,10 +261,20 @@ export class SeasonalEventService {
   }
 
   /**
-   * Get active events only
+   * Compute a human-readable status string for an event.
    */
-  async findActiveEvents(): Promise<SeasonalEvent[]> {
-    return await this.eventRepository.find({
+  computeStatus(event: Pick<SeasonalEvent, 'isActive' | 'isArchived' | 'startDate' | 'endDate'>): 'upcoming' | 'active' | 'ended' {
+    const now = new Date();
+    if (event.isArchived || event.endDate <= now) return 'ended';
+    if (event.isActive && event.startDate <= now && event.endDate > now) return 'active';
+    return 'upcoming';
+  }
+
+  /**
+   * Get active events with time remaining in seconds.
+   */
+  async findActiveEvents(): Promise<Array<SeasonalEvent & { status: string; timeRemainingSeconds: number }>> {
+    const events = await this.eventRepository.find({
       where: {
         isActive: true,
         isPublished: true,
@@ -268,6 +283,13 @@ export class SeasonalEventService {
       relations: ['puzzles', 'rewards'],
       order: { startDate: 'DESC' },
     });
+
+    const now = new Date();
+    return events.map((event) => ({
+      ...event,
+      status: this.computeStatus(event),
+      timeRemainingSeconds: Math.max(0, Math.floor((event.endDate.getTime() - now.getTime()) / 1000)),
+    }));
   }
 
   /**
@@ -457,5 +479,91 @@ export class SeasonalEventService {
 
   private async announceEventOnActivation(event: SeasonalEvent): Promise<void> {
     await this.announceEvent(event);
+  }
+
+  /**
+   * End-of-event handler: snapshot the leaderboard, distribute exclusive cosmetic rewards
+   * to top-3 finishers, and notify them. Idempotent via endRewardsDistributed flag.
+   */
+  async handleEventEnd(event: SeasonalEvent): Promise<void> {
+    if (event.endRewardsDistributed) {
+      this.logger.log(`End-of-event already processed for: ${event.name} (${event.id})`);
+      return;
+    }
+
+    try {
+      // 1. Fetch final standings ordered by score desc, puzzlesCompleted desc
+      const allParticipants = await this.playerEventRepository.find({
+        where: { eventId: event.id },
+        order: { score: 'DESC', puzzlesCompleted: 'DESC', lastActivityAt: 'ASC' },
+      });
+
+      // 2. Archive leaderboard snapshot
+      const snapshot = allParticipants.map((pe, index) => ({
+        rank: index + 1,
+        playerId: pe.playerId,
+        score: pe.score,
+        puzzlesCompleted: pe.puzzlesCompleted,
+      }));
+
+      event.leaderboardSnapshot = snapshot;
+      this.logger.log(`Leaderboard archived for event: ${event.name} (${event.id}) — ${snapshot.length} entries`);
+
+      // 3. Distribute cosmetic rewards to top-3 winners
+      const cosmeticRewards = await this.rewardRepository.find({
+        where: { eventId: event.id, type: 'badge', isActive: true },
+        order: { requiredScore: 'DESC' },
+      });
+
+      const winnersCount = Math.min(3, allParticipants.length);
+      const topWinners = allParticipants.slice(0, winnersCount);
+
+      for (let i = 0; i < topWinners.length; i++) {
+        const winner = topWinners[i];
+        const reward = cosmeticRewards[i] ?? cosmeticRewards[0];
+
+        if (!reward) continue;
+
+        // Award reward to winner's PlayerEvent record if not already granted
+        const alreadyHasReward = winner.rewards.some((r) => r.rewardId === reward.id);
+        if (!alreadyHasReward) {
+          winner.rewards.push({
+            rewardId: reward.id,
+            rewardName: reward.name,
+            rewardType: reward.type,
+            earnedAt: new Date(),
+          });
+          await this.playerEventRepository.save(winner);
+          await this.rewardRepository.increment({ id: reward.id }, 'claimedCount', 1);
+
+          this.logger.log(
+            `Distributed reward "${reward.name}" to player ${winner.playerId} (rank ${i + 1}) for event ${event.name}`,
+          );
+        }
+
+        // Notify winner
+        try {
+          await this.notificationService.createNotificationForUsers({
+            userIds: [winner.playerId],
+            type: 'event_winner',
+            title: `You placed #${i + 1} in ${event.name}!`,
+            body: `Congratulations! You earned the exclusive reward: ${reward.name}.`,
+            meta: { eventId: event.id, rank: i + 1, rewardId: reward.id },
+          });
+        } catch (err) {
+          this.logger.error(`Failed to notify winner ${winner.playerId}`, err);
+        }
+      }
+
+      // 4. Mark event as rewards-distributed and persist snapshot
+      event.endRewardsDistributed = true;
+      await this.eventRepository.save(event);
+
+      this.logger.log(
+        `End-of-event processing complete for: ${event.name} (${event.id}) — ${winnersCount} rewards distributed`,
+      );
+    } catch (error) {
+      this.logger.error(`Error in end-of-event handler for event ${event.id}`, error);
+    }
   }
 }
