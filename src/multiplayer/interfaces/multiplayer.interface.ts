@@ -28,6 +28,7 @@ export interface Spectator {
 
 export interface MultiplayerRoom {
     id: string;
+    inviteCode: string;
     type: RoomType;
     status: RoomStatus;
     players: Player[];
@@ -43,6 +44,7 @@ export interface MultiplayerRoom {
         difficulty: string;
         spectatingAllowed: boolean;
     };
+    disconnectedPlayers?: Map<string, Date>; // userId -> disconnect time
 }
 
 export interface MatchmakingMatch {
