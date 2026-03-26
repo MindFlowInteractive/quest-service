@@ -15,6 +15,6 @@ import { ConfigModule } from '@nestjs/config';
   imports: [TypeOrmModule.forFeature([Notification, NotificationDelivery, Device, User]), ConfigModule],
   providers: [NotificationService, EmailService],
   controllers: [NotificationsController, DevicesController, StaleTokenListener],
-  exports: [NotificationService],
+  exports: [NotificationService, EmailService],
 })
 export class NotificationsModule {}

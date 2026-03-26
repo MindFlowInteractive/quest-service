@@ -12,6 +12,7 @@ import { ConsentLog } from './entities/consent-log.entity';
 import { DataAccessAudit } from './entities/data-access-audit.entity';
 import { DataExportRequest } from './entities/data-export-request.entity';
 import { DataDeletionRequest } from './entities/data-deletion-request.entity';
+import { User } from '../users/entities/user.entity';
 
 import {
   PrivacySettingsService,
@@ -20,6 +21,8 @@ import {
   DataRetentionService,
   AuditService,
 } from './services';
+import { ExportCompletedListener } from './listeners/export-completed.listener';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -29,10 +32,12 @@ import {
       DataAccessAudit,
       DataExportRequest,
       DataDeletionRequest,
+      User,
     ]),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     ConfigModule,
+    NotificationsModule,
   ],
   controllers: [PrivacyController],
   providers: [
@@ -42,6 +47,7 @@ import {
     DataDeletionService,
     DataRetentionService,
     AuditService,
+    ExportCompletedListener,
   ],
   exports: [
     PrivacyService,

@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { GameSession } from '../entities/game-session.entity';
 import { PlayerEventsService } from '../../player-events/player-events.service';
+import { PuzzleVersionService } from '../../puzzles/services/puzzle-version.service';
 
 @Injectable()
 export class GameSessionService {
@@ -11,11 +12,20 @@ export class GameSessionService {
     @InjectRepository(GameSession)
     private readonly sessionRepo: Repository<GameSession>,
     private readonly playerEventsService: PlayerEventsService,
+    private readonly puzzleVersionService: PuzzleVersionService,
   ) {}
 
-  async create(userId: string) {
+  async create(userId: string, puzzleId?: string) {
+    // Resolve the current puzzle version id (if a puzzle is specified)
+    let puzzleVersionId: string | undefined;
+    if (puzzleId) {
+      puzzleVersionId = (await this.puzzleVersionService.getCurrentVersionId(puzzleId)) ?? undefined;
+    }
+
     const session = this.sessionRepo.create({
       userId,
+      puzzleId,
+      puzzleVersionId,
       status: 'IN_PROGRESS',
       state: {},
       lastActiveAt: new Date(),

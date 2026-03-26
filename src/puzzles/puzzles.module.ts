@@ -22,6 +22,8 @@ import { CreatorRewardsService } from './services/creator-rewards.service';
 import { FeaturedPuzzlesService } from './services/featured-puzzles.service';
 import { PuzzleRatingController } from './controllers/puzzle-rating.controller';
 import { PuzzleReviewController } from './controllers/puzzle-review.controller';
+import { PuzzleVersion } from './entities/puzzle-version.entity';
+import { PuzzleVersionService } from './services/puzzle-version.service';
 
 // Import entities and components for categories, collections, and themes
 import { Category } from './entities/category.entity';
@@ -58,6 +60,7 @@ import { TagsController } from './tags.controller';
       Theme,
       PuzzleSolutionAttempt,
       UserCollectionProgress,
+      PuzzleVersion,
       Tag,
     ]),
     AntiCheatModule,
@@ -85,8 +88,15 @@ import { TagsController } from './tags.controller';
     CollectionsService,
     ThemesService,
     SolutionSubmissionService,
+    PuzzleVersionService,
+  ],
+  exports: [
+    PuzzlesService,
+    PuzzleModerationService,
+    PuzzleValidationService,
+    SolutionSubmissionService,
+    PuzzleVersionService,
     TagsService,
   ],
-  exports: [PuzzlesService, PuzzleModerationService, PuzzleValidationService, SolutionSubmissionService]
 })
 export class PuzzlesModule { }

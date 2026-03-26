@@ -8,9 +8,14 @@ import { SpectatorService } from './services/spectator.service';
 import { CleanupSessionJob } from './services/cleanup-session.job';
 import { AutosaveSessionJob } from './services/autosave-session.job';
 import { GameSessionController } from './controllers/game-session.controller';
+import { PuzzlesModule } from '../puzzles/puzzles.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([GameSession, Spectator]), forwardRef(() => PlayerEventsModule)],
+  imports: [
+    TypeOrmModule.forFeature([GameSession, Spectator]),
+    forwardRef(() => PlayerEventsModule),
+    forwardRef(() => PuzzlesModule),
+  ],
   controllers: [GameSessionController],
   providers: [
     GameSessionService,
