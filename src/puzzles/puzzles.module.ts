@@ -39,6 +39,11 @@ import { UserCollectionProgress } from '../collections/entities/user-collection-
 import { LocalizationModule } from '../common/i18n/localization.module';
 import { XpModule } from '../xp/xp.module';
 
+// Tagging system
+import { Tag } from './entities/tag.entity';
+import { TagsService } from './tags.service';
+import { TagsController } from './tags.controller';
+
 @Module({
   imports: [
     LocalizationModule,
@@ -56,6 +61,7 @@ import { XpModule } from '../xp/xp.module';
       PuzzleSolutionAttempt,
       UserCollectionProgress,
       PuzzleVersion,
+      Tag,
     ]),
     AntiCheatModule,
     XpModule,
@@ -67,7 +73,8 @@ import { XpModule } from '../xp/xp.module';
     PuzzleReviewController,
     CategoriesController,
     CollectionsController,
-    ThemesController // Add ThemesController
+    ThemesController, // Add ThemesController
+    TagsController,
   ],
   providers: [
     PuzzlesService,
@@ -89,6 +96,7 @@ import { XpModule } from '../xp/xp.module';
     PuzzleValidationService,
     SolutionSubmissionService,
     PuzzleVersionService,
+    TagsService,
   ],
 })
 export class PuzzlesModule { }

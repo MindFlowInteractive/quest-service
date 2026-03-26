@@ -40,16 +40,107 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
         this.logger.log('Multiplayer Gateway Initialized');
     }
 
-    handleConnection(client: Socket, ...args: any[]) {
+    async handleConnection(client: Socket, ...args: any[]) {
         this.logger.log(`Client connected: ${client.id}`);
     }
 
-    handleDisconnect(client: Socket) {
+    async handleDisconnect(client: Socket) {
         this.logger.log(`Client disconnected: ${client.id}`);
         const userId = client.data.userId;
+        const roomId = client.data.roomId;
+        
+        if (userId && roomId) {
+            await this.multiplayerService.handlePlayerDisconnection(roomId, userId);
+            
+            // Notify other players in the room
+            this.server.to(roomId).emit('playerDisconnected', { userId });
+            this.server.to(`${roomId}-spectators`).emit('playerDisconnected', { userId });
+        }
+        
         if (userId) {
             this.multiplayerService.removeFromQueue(userId);
         }
+    }
+
+    @SubscribeMessage('createMultiplayerSession')
+    async handleCreateMultiplayerSession(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() data: { userId: string; username: string; skillLevel: number; type: RoomType; settings: any; puzzleId?: string }
+    ) {
+        const player: Player = {
+            id: data.userId,
+            username: data.username,
+            skillLevel: data.skillLevel,
+            ready: false,
+            score: 0,
+            solvedPuzzles: [],
+        };
+        
+        const session = await this.multiplayerService.createMultiplayerSession(
+            data.type, 
+            player, 
+            data.settings, 
+            data.puzzleId
+        );
+        
+        client.join(session.id);
+        client.data.userId = data.userId;
+        client.data.roomId = session.id;
+        
+        return { event: 'multiplayerSessionCreated', data: session };
+    }
+
+    @SubscribeMessage('joinSessionByCode')
+    async handleJoinSessionByCode(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() data: { inviteCode: string; userId: string; username: string; skillLevel: number }
+    ) {
+        const player: Player = {
+            id: data.userId,
+            username: data.username,
+            skillLevel: data.skillLevel,
+            ready: false,
+            score: 0,
+            solvedPuzzles: [],
+        };
+        
+        const session = await this.multiplayerService.joinSessionByCode(data.inviteCode, player);
+        
+        if (session) {
+            client.join(session.id);
+            client.data.userId = data.userId;
+            client.data.roomId = session.id;
+            
+            // Broadcast to all players in the session
+            this.server.to(session.id).emit('playerJoinedSession', { player, session });
+            this.server.to(`${session.id}-spectators`).emit('playerJoinedSession', { player, session });
+            
+            return { event: 'joinedSessionByCode', data: session };
+        }
+        
+        return { event: 'error', data: 'Failed to join session - invalid code or session full' };
+    }
+
+    @SubscribeMessage('reconnectToSession')
+    async handleReconnectToSession(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() data: { roomId: string; userId: string }
+    ) {
+        const session = await this.multiplayerService.handlePlayerReconnection(data.roomId, data.userId);
+        
+        if (session) {
+            client.join(session.id);
+            client.data.userId = data.userId;
+            client.data.roomId = session.id;
+            
+            // Notify other players
+            this.server.to(session.id).emit('playerReconnected', { userId: data.userId });
+            this.server.to(`${session.id}-spectators`).emit('playerReconnected', { userId: data.userId });
+            
+            return { event: 'reconnectedToSession', data: session };
+        }
+        
+        return { event: 'error', data: 'Failed to reconnect - grace period expired' };
     }
 
     @SubscribeMessage('createRoom')
@@ -192,28 +283,125 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
                     player.solvedPuzzles.push(data.puzzleId);
                 }
 
-                // Broadcast to players
-                this.server.to(data.roomId).emit('solutionVerified', {
-                    userId: data.userId,
-                    correct: true,
-                    score: result.score,
-                    totalScore: player?.score
-                });
+                // Handle different game modes
+                if (room.type === RoomType.COLLABORATIVE) {
+                    // Co-op mode: All players share the victory
+                    const allPlayersSolved = room.players.every(p => p.solvedPuzzles.includes(data.puzzleId));
+                    
+                    // Broadcast to players
+                    this.server.to(data.roomId).emit('collaborativeSolutionVerified', {
+                        userId: data.userId,
+                        correct: true,
+                        score: result.score,
+                        totalScore: player?.score,
+                        allPlayersSolved,
+                        puzzleCompleted: allPlayersSolved
+                    });
 
-                // Broadcast to spectators
-                this.server.to(`${data.roomId}-spectators`).emit('solutionVerified', {
-                    userId: data.userId,
-                    correct: true,
-                    score: result.score,
-                    totalScore: player?.score
-                });
+                    // Broadcast to spectators
+                    this.server.to(`${data.roomId}-spectators`).emit('collaborativeSolutionVerified', {
+                        userId: data.userId,
+                        correct: true,
+                        score: result.score,
+                        totalScore: player?.score,
+                        allPlayersSolved,
+                        puzzleCompleted: allPlayersSolved
+                    });
 
-                if (room.type === RoomType.COMPETITIVE) {
+                    // End session if all players solved the puzzle
+                    if (allPlayersSolved) {
+                        room.status = RoomStatus.FINISHED;
+                        room.endTime = new Date();
+                        
+                        // Update Redis
+                        await this.multiplayerService['cacheManager'].set(`session:${room.inviteCode}`, room, 3600);
+                        
+                        this.server.to(data.roomId).emit('collaborativeSessionCompleted', {
+                            session: room,
+                            finalScores: room.players.map(p => ({ userId: p.id, username: p.username, score: p.score }))
+                        });
+                        
+                        this.server.to(`${data.roomId}-spectators`).emit('collaborativeSessionCompleted', {
+                            session: room,
+                            finalScores: room.players.map(p => ({ userId: p.id, username: p.username, score: p.score }))
+                        });
+                    }
+                } else if (room.type === RoomType.COMPETITIVE) {
+                    // Versus mode: Individual competition
+                    this.server.to(data.roomId).emit('competitiveSolutionVerified', {
+                        userId: data.userId,
+                        correct: true,
+                        score: result.score,
+                        totalScore: player?.score,
+                        leaderboard: room.players.sort((a, b) => b.score - a.score).map(p => ({
+                            userId: p.id,
+                            username: p.username,
+                            score: p.score,
+                            solvedCount: p.solvedPuzzles.length
+                        }))
+                    });
+
+                    this.server.to(`${data.roomId}-spectators`).emit('competitiveSolutionVerified', {
+                        userId: data.userId,
+                        correct: true,
+                        score: result.score,
+                        totalScore: player?.score,
+                        leaderboard: room.players.sort((a, b) => b.score - a.score).map(p => ({
+                            userId: p.id,
+                            username: p.username,
+                            score: p.score,
+                            solvedCount: p.solvedPuzzles.length
+                        }))
+                    });
+
+                    // Update leaderboard for competitive mode
                     await this.leaderboardService.createEntry({
                         leaderboardId: 1,
                         userId: parseInt(data.userId) || 0,
                         score: player?.score || 0,
                     } as any);
+
+                    // Check if session should end (time limit or all puzzles solved)
+                    const sessionDuration = room.startTime ? (new Date().getTime() - room.startTime.getTime()) / 1000 / 60 : 0;
+                    if (sessionDuration >= room.settings.timeLimit || player?.solvedPuzzles.length >= 10) {
+                        room.status = RoomStatus.FINISHED;
+                        room.endTime = new Date();
+                        
+                        // Update Redis
+                        await this.multiplayerService['cacheManager'].set(`session:${room.inviteCode}`, room, 3600);
+                        
+                        const winner = room.players.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+                        
+                        this.server.to(data.roomId).emit('competitiveSessionCompleted', {
+                            session: room,
+                            winner: {
+                                userId: winner.id,
+                                username: winner.username,
+                                score: winner.score
+                            },
+                            finalLeaderboard: room.players.sort((a, b) => b.score - a.score).map(p => ({
+                                userId: p.id,
+                                username: p.username,
+                                score: p.score,
+                                solvedCount: p.solvedPuzzles.length
+                            }))
+                        });
+                        
+                        this.server.to(`${data.roomId}-spectators`).emit('competitiveSessionCompleted', {
+                            session: room,
+                            winner: {
+                                userId: winner.id,
+                                username: winner.username,
+                                score: winner.score
+                            },
+                            finalLeaderboard: room.players.sort((a, b) => b.score - a.score).map(p => ({
+                                userId: p.id,
+                                username: p.username,
+                                score: p.score,
+                                solvedCount: p.solvedPuzzles.length
+                            }))
+                        });
+                    }
                 }
             } else {
                 client.emit('solutionVerified', { userId: data.userId, correct: false, errors: result.errors });
@@ -222,6 +410,38 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
             this.logger.error(`Error validating solution: ${error.message}`);
             client.emit('error', 'Failed to validate solution');
         }
+    }
+
+    @SubscribeMessage('updateCollaborativeState')
+    async handleUpdateCollaborativeState(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() data: { roomId: string; state: any; userId: string }
+    ) {
+        const room = this.multiplayerService.getRoom(data.roomId);
+        if (!room || room.type !== RoomType.COLLABORATIVE) return;
+
+        // Prevent spectators from updating state
+        if (client.data.isSpectator) {
+            client.emit('error', 'Spectators cannot update collaborative state');
+            return;
+        }
+
+        // Update shared puzzle state for collaborative mode
+        room.puzzleState = { ...room.puzzleState, ...data.state, lastUpdatedBy: data.userId };
+        
+        // Broadcast collaborative state update to all players
+        this.server.to(data.roomId).emit('collaborativeStateUpdated', {
+            state: room.puzzleState,
+            updatedBy: data.userId,
+            timestamp: new Date()
+        });
+
+        // Broadcast to spectators
+        this.server.to(`${data.roomId}-spectators`).emit('collaborativeStateUpdated', {
+            state: room.puzzleState,
+            updatedBy: data.userId,
+            timestamp: new Date()
+        });
     }
 
     @SubscribeMessage('startMatchmaking')

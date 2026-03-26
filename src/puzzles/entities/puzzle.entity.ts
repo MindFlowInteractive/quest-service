@@ -11,7 +11,9 @@ import {
   ManyToOne,
   ManyToMany,
   JoinColumn,
+  JoinTable,
 } from 'typeorm';
+import { Tag } from './tag.entity';
 
 @Entity('puzzles')
 @Index(['category', 'difficulty'])
@@ -114,10 +116,19 @@ export class Puzzle {
     unlockAfter?: number; // seconds
   }>;
 
-  // Tags for categorization and search
+  // Tags for categorization and search (legacy simple-array kept for backward compat)
   @Column({ type: 'simple-array', default: [] })
   @Index()
   tags: string[];
+
+  // Relational tags — the canonical tagging system
+  @ManyToMany(() => Tag, (tag) => tag.puzzles, { cascade: false, eager: false })
+  @JoinTable({
+    name: 'puzzle_tags',
+    joinColumn: { name: 'puzzleId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tagId', referencedColumnName: 'id' },
+  })
+  tagEntities: Tag[];
 
   // Prerequisites (other puzzle IDs that should be completed first)
   @Column({ type: 'jsonb', default: [] })

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MultiplayerService } from './services/multiplayer.service';
 import { MultiplayerGateway } from './gateways/multiplayer.gateway';
+import { MultiplayerSessionController } from './controllers/multiplayer-session.controller';
 import { LeaderboardModule } from '../leaderboard/leaderboard.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { GameEngineModule } from '../game-engine/game-engine.module';
@@ -15,6 +16,7 @@ import { GameSessionModule } from '../game-session/game-session.module';
         PuzzlesModule,
         GameSessionModule,
     ],
+    controllers: [MultiplayerSessionController],
     providers: [MultiplayerService, MultiplayerGateway],
     exports: [MultiplayerService],
 })
