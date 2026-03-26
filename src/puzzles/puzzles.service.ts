@@ -158,6 +158,7 @@ export class PuzzlesService {
 
       const queryBuilder = this.puzzleRepository
         .createQueryBuilder('puzzle')
+        .leftJoinAndSelect('puzzle.tagEntities', 'tag')
         .where('puzzle.deletedAt IS NULL');
 
       // Apply filters
@@ -194,6 +195,20 @@ export class PuzzlesService {
         } else {
           queryBuilder.andWhere('puzzle.publishedAt IS NULL');
         }
+      }
+
+      if (tags && tags.length > 0) {
+        // AND logic: puzzle must have ALL requested tags
+        const normalisedTags = tags.map((t) => t.trim().toLowerCase());
+        normalisedTags.forEach((tagName, index) => {
+          const param = `tagName${index}`;
+          queryBuilder.andWhere(
+            `EXISTS (SELECT 1 FROM puzzle_tags pt${index}
+              INNER JOIN tags t${index} ON t${index}.id = pt${index}."tagId"
+              WHERE pt${index}."puzzleId" = puzzle.id AND t${index}.name = :${param})`,
+            { [param]: tagName },
+          );
+        });
       }
 
       if (createdBy) {
