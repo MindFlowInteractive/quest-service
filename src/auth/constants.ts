@@ -4,6 +4,7 @@ export const jwtConstants = {
   refreshExpiresIn: "7d", // Refresh token expiry
   emailVerificationExpiresIn: "1h", // Email verification token expiry
   passwordResetExpiresIn: "1h", // Password reset token expiry
+  mfaPendingExpiresIn: "5m", // MFA pending token expiry (short-lived)
 }
 
 export const BCRYPT_SALT_ROUNDS = 10
