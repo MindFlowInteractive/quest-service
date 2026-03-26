@@ -25,7 +25,7 @@ export class GameSessionController {
 
   @Post()
   async createSession(@Body() dto: CreateSessionDto) {
-    const session = await this.sessionService.create(dto.userId);
+    const session = await this.sessionService.create(dto.userId, dto.puzzleId);
     return {
       message: 'Game session created',
       session,

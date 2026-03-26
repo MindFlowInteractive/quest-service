@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('game_sessions')
@@ -13,6 +14,22 @@ export class GameSession {
 
   @Column()
   userId: string;
+
+  /**
+   * Optional puzzle that this session is tied to.
+   */
+  @Column({ type: 'uuid', nullable: true })
+  @Index()
+  puzzleId?: string;
+
+  /**
+   * Version of the puzzle active when this session was started.
+   * Immutable after session creation — subsequent puzzle edits do not affect
+   * in-flight sessions.
+   */
+  @Column({ type: 'uuid', name: 'puzzle_version_id', nullable: true })
+  @Index()
+  puzzleVersionId?: string;
 
   @Column({ default: 'IN_PROGRESS' })
   status: 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';

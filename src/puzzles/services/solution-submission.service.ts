@@ -25,6 +25,7 @@ import { AntiCheatService } from '../../anti-cheat/services/anti-cheat.service';
 import { ViolationType } from '../../anti-cheat/constants';
 import { XpService } from '../../xp/xp.service';
 import { PlayerEventsService } from '../../player-events/player-events.service';
+import { PuzzleVersionService } from './puzzle-version.service';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -54,6 +55,7 @@ export class SolutionSubmissionService {
         private readonly antiCheatService: AntiCheatService,
         private readonly xpService: XpService,
         private readonly playerEventsService: PlayerEventsService,
+        private readonly puzzleVersionService: PuzzleVersionService,
     ) { }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -91,6 +93,10 @@ export class SolutionSubmissionService {
             throw new NotFoundException(`Puzzle ${puzzleId} not found`);
         }
 
+        // Resolve the version that was live at submission time
+        const puzzleVersionId =
+            (await this.puzzleVersionService.getCurrentVersionId(puzzleId)) ?? undefined;
+
         const sessionStartedAt = new Date(dto.sessionStartedAt);
         const now = new Date();
         const timeTakenSeconds = Math.floor(
@@ -113,6 +119,7 @@ export class SolutionSubmissionService {
                 fraudFlags: {},
                 ipAddress,
                 metadata: dto.clientMetadata ?? {},
+                puzzleVersionId,
             });
 
             await this.incrementAttempts(puzzle);
@@ -169,6 +176,7 @@ export class SolutionSubmissionService {
                 fraudFlags: fraudResult.flags,
                 ipAddress,
                 metadata: dto.clientMetadata ?? {},
+                puzzleVersionId,
             });
             const saved = await manager.save(PuzzleSolutionAttempt, newAttempt);
 
@@ -572,6 +580,7 @@ export class SolutionSubmissionService {
         fraudFlags: any;
         ipAddress?: string;
         metadata: any;
+        puzzleVersionId?: string;
     }): Promise<PuzzleSolutionAttempt> {
         const attempt = this.attemptRepo.create({
             ...data,

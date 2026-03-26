@@ -5,6 +5,7 @@ import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
 import { LocalizationService } from '../common/i18n/localization.service';
+import { PuzzleVersionService } from './services/puzzle-version.service';
 import {
   CreatePuzzleDto,
   UpdatePuzzleDto,
@@ -87,6 +88,7 @@ export class PuzzlesService {
     @InjectRepository(PuzzleRating)
     private ratingRepository: Repository<PuzzleRating>,
     private readonly localizationService: LocalizationService,
+    private readonly puzzleVersionService: PuzzleVersionService,
   ) { }
 
   async create(createPuzzleDto: CreatePuzzleDto, createdBy: string): Promise<Puzzle> {
@@ -267,17 +269,29 @@ export class PuzzlesService {
         throw new BadRequestException('You can only update puzzles you created');
       }
 
+      // ── Snapshot current state BEFORE applying changes ──────────────────
+      const puzzleEntity = await this.puzzleRepository.findOne({ where: { id } });
+      if (puzzleEntity) {
+        await this.puzzleVersionService.snapshotBefore(
+          puzzleEntity,
+          userId,
+          updatePuzzleDto.updateReason,
+        );
+      }
+      // ────────────────────────────────────────────────────────────────────
+
       // Handle publish/unpublish
       const updateData: any = { ...updatePuzzleDto };
       if (updateData.isPublished !== undefined) {
         updateData.publishedAt = updateData.isPublished ? new Date() : null;
         delete updateData.isPublished;
       }
+      delete updateData.updateReason; // not a DB column
 
       await this.puzzleRepository.update(id, updateData);
 
       const updatedPuzzle = await this.findOne(id, userId);
-      this.logger.log(`Updated puzzle: ${id}`);
+      this.logger.log(`Updated puzzle: ${id} (new version snapshot created)`);
 
       return updatedPuzzle;
     } catch (error) {

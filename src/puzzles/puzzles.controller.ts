@@ -23,6 +23,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { PuzzlesService, PuzzleWithStats, SearchResult, PuzzleAnalytics } from './puzzles.service';
 import { SolutionSubmissionService } from './services/solution-submission.service';
+import { PuzzleVersionService } from './services/puzzle-version.service';
 import {
   CreatePuzzleDto,
   UpdatePuzzleDto,
@@ -41,6 +42,7 @@ export class PuzzlesController {
   constructor(
     private readonly puzzlesService: PuzzlesService,
     private readonly submissionService: SolutionSubmissionService,
+    private readonly puzzleVersionService: PuzzleVersionService,
   ) { }
 
   @Post()
@@ -208,5 +210,49 @@ export class PuzzlesController {
   ): Promise<SubmissionHistoryDto> {
     const userId = req.user?.id ?? 'temp-user-id';
     return this.submissionService.getSubmissionHistory(userId, undefined, page, limit);
+  }
+
+  // ──────────────────────────────────────────────────────────────────
+  // Puzzle Version History
+  // ──────────────────────────────────────────────────────────────────
+
+  /**
+   * List all version snapshots for a puzzle, newest first.
+   * Each item includes author, change note, and diff (changed field names).
+   */
+  @Get(':id/versions')
+  async listVersions(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.puzzleVersionService.listVersions(id);
+  }
+
+  /**
+   * Retrieve the full content snapshot for a specific version number.
+   */
+  @Get(':id/versions/:version')
+  async getVersion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('version', ParseIntPipe) version: number,
+  ) {
+    return this.puzzleVersionService.getVersion(id, version);
+  }
+
+  /**
+   * Roll back a puzzle to a prior version (admin only).
+   * Creates a snapshot of the current state before overwriting — the rollback
+   * itself is versioned and auditable.
+   */
+  @Post(':id/versions/:version/restore')
+  async restoreVersion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('version', ParseIntPipe) version: number,
+    @Body('changeNote') changeNote: string | undefined,
+    @Req() req: any,
+  ) {
+    const adminId = req.user?.id ?? 'temp-admin-id'; // TODO: enforce RolesGuard
+    this.logger.log(`Rolling puzzle ${id} back to v${version} by admin ${adminId}`);
+    const restored = await this.puzzleVersionService.rollbackTo(id, version, adminId, changeNote);
+    return { message: `Puzzle restored to version ${version}`, puzzle: restored };
   }
 }

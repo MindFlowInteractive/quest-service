@@ -1,6 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { User } from '../../users/entities/user.entity'; // Assuming User entity is at this path
-import { Puzzle } from '../../puzzles/entities/puzzle.entity'; // Assuming Puzzle entity is at this path
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Index, CreateDateColumn } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
+import { Puzzle } from '../../puzzles/entities/puzzle.entity';
 
 @Entity('user_puzzle_completions')
 export class UserPuzzleCompletion {
@@ -17,5 +17,13 @@ export class UserPuzzleCompletion {
     completedAt: Date;
 
     @Column({ nullable: true })
-    comboMultiplier: number; // To store the combo multiplier at the time of completion
+    comboMultiplier: number;
+
+    /**
+     * Version of the puzzle that the player solved.
+     * References puzzle_versions.id — preserved even if the puzzle is later edited.
+     */
+    @Column({ type: 'uuid', name: 'puzzle_version_id', nullable: true })
+    @Index()
+    puzzleVersionId?: string;
 }
