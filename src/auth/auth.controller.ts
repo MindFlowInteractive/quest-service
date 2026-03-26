@@ -1,4 +1,4 @@
-import { Controller, Post, HttpCode, HttpStatus, UseGuards, Get, Req } from "@nestjs/common"
+import { Controller, Post, HttpCode, HttpStatus, UseGuards, Get, Req, Body } from "@nestjs/common"
 import type { AuthService } from "./auth.service"
 import { RegisterUserDto } from "./dto/register-user.dto"
 import { LoginUserDto } from "./dto/login-user.dto"
@@ -7,12 +7,14 @@ import { ResetPasswordDto } from "./dto/reset-password.dto"
 import { VerifyEmailDto } from "./dto/verify-email.dto"
 import { JwtAuthGuard } from "./guards/jwt-auth.guard"
 import { RefreshJwtAuthGuard } from "./guards/refresh-jwt-auth.guard"
+import { MfaPendingAuthGuard } from "./guards/mfa-pending-auth.guard"
 import type { RequestWithUser } from "./interfaces/request-with-user.interface"
 import { Roles } from "./decorators/roles.decorator"
 import { RolesGuard } from "./guards/roles.guard"
 import { UserRole } from "./constants"
 import { AuthGuard } from "@nestjs/passport"
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from "@nestjs/swagger"
+import { VerifyTwoFactorDto, ChallengeTwoFactorDto, DisableTwoFactorDto } from "./dto/two-factor.dto"
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -211,6 +213,130 @@ export class AuthController {
         role: user.role?.name,
       },
       ...tokens,
+    }
+  }
+
+  // Two-Factor Authentication Endpoints
+  @Post("2fa/setup")
+  @ApiOperation({ summary: "Setup 2FA - generate TOTP secret and QR code" })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 201,
+    description: "2FA secret generated. Scan QR code with authenticator app.",
+    schema: {
+      example: {
+        secret: "JBSWY3DPEHPK3PXP",
+        otpauthUrl: "otpauth://totp/Quest%20Service:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Quest%20Service",
+        qrCodeDataUri: "data:image/png;base64,...",
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: "2FA already enabled." })
+  @ApiResponse({ status: 401, description: "Unauthorized." })
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async setupTwoFactor(@Req() req: RequestWithUser) {
+    const result = await this.authService.generateTwoFactorSecret(req.user.id)
+    return result
+  }
+
+  @Post("2fa/verify")
+  @ApiOperation({ summary: "Verify 2FA setup with TOTP code" })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: "2FA enabled successfully. Backup codes returned.",
+    schema: {
+      example: {
+        message: "2FA enabled successfully",
+        backupCodes: ["ABCD1234", "EFGH5678", "IJKL9012", "MNOP3456", "QRST7890", "UVWX1234", "YZAB5678", "CDEF9012"],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: "Invalid TOTP code or 2FA already enabled." })
+  @ApiResponse({ status: 401, description: "Unauthorized." })
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async verifyTwoFactor(@Req() req: RequestWithUser, @Body() verifyDto: VerifyTwoFactorDto) {
+    const result = await this.authService.verifyTwoFactorSetup(req.user.id, verifyDto.code)
+    return result
+  }
+
+  @Post("2fa/challenge")
+  @ApiOperation({ summary: "Challenge endpoint to exchange mfa_pending token for full JWT tokens" })
+  @ApiResponse({
+    status: 200,
+    description: "2FA verified, full JWT tokens issued.",
+    schema: { example: { accessToken: "...", refreshToken: "..." } },
+  })
+  @ApiResponse({ status: 401, description: "Invalid MFA pending token or 2FA code." })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        mfaPendingToken: { type: "string", example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
+        code: { type: "string", example: "123456" },
+      },
+      required: ["mfaPendingToken", "code"],
+    },
+  })
+  @HttpCode(HttpStatus.OK)
+  async challengeTwoFactor(@Body() challengeDto: ChallengeTwoFactorDto & { mfaPendingToken: string }) {
+    const result = await this.authService.challengeTwoFactor(challengeDto.mfaPendingToken, challengeDto.code)
+    return result
+  }
+
+  @Post("2fa/disable")
+  @ApiOperation({ summary: "Disable 2FA (requires current TOTP code + password)" })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: "2FA disabled successfully." })
+  @ApiResponse({ status: 400, description: "Invalid TOTP code or 2FA not enabled." })
+  @ApiResponse({ status: 401, description: "Unauthorized (invalid password)." })
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async disableTwoFactor(@Req() req: RequestWithUser, @Body() disableDto: DisableTwoFactorDto) {
+    const result = await this.authService.disableTwoFactor(req.user.id, disableDto.code, disableDto.password)
+    return result
+  }
+
+  @Get("2fa/status")
+  @ApiOperation({ summary: "Get 2FA status for authenticated user" })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: "2FA status.",
+    schema: { example: { isTwoFactorEnabled: true } },
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized." })
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async getTwoFactorStatus(@Req() req: RequestWithUser) {
+    const result = await this.authService.getTwoFactorStatus(req.user.id)
+    return result
+  }
+
+  @Post("2fa/backup-codes/regenerate")
+  @ApiOperation({ summary: "Regenerate backup codes (invalidates old ones)" })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 201,
+    description: "Backup codes regenerated.",
+    schema: {
+      example: {
+        message: "Backup codes regenerated",
+        backupCodes: ["ABCD1234", "EFGH5678", "IJKL9012", "MNOP3456", "QRST7890", "UVWX1234", "YZAB5678", "CDEF9012"],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: "2FA not enabled." })
+  @ApiResponse({ status: 401, description: "Unauthorized." })
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async regenerateBackupCodes(@Req() req: RequestWithUser) {
+    const backupCodes = await this.authService.regenerateBackupCodes(req.user.id)
+    return {
+      message: "Backup codes regenerated",
+      backupCodes,
     }
   }
 }

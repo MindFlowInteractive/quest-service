@@ -10,6 +10,7 @@ import {
 } from "typeorm"
 import { Role } from "./role.entity"
 import { RefreshToken } from "./refresh-token.entity"
+import { TwoFactorBackupCode } from "./two-factor-backup-code.entity"
 
 @Entity("users")
 export class User {
@@ -51,6 +52,12 @@ export class User {
   )
   refreshTokens: RefreshToken[]
 
+  @OneToMany(
+    () => TwoFactorBackupCode,
+    (backupCode) => backupCode.user,
+  )
+  backupCodes: TwoFactorBackupCode[]
+
   @CreateDateColumn()
   createdAt: Date
 
@@ -69,4 +76,11 @@ export class User {
 
   @Column({ nullable: true })
   twitterId?: string
+
+  // Two-Factor Authentication fields
+  @Column({ nullable: true, select: false })
+  twoFactorSecret?: string
+
+  @Column({ default: false })
+  isTwoFactorEnabled: boolean
 }
