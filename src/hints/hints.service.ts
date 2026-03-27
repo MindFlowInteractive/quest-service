@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, MoreThanOrEqual } from 'typeorm';
+import { PlayerEventsService } from '../player-events/player-events.service';
 import { Hint } from './entities/hint.entity';
 import { HintUsage } from './entities/hint-usage.entity';
 import { HintTemplate } from './entities/hint-template.entity';
@@ -18,6 +19,7 @@ export class HintsService {
     private readonly usageRepo: Repository<HintUsage>,
     @InjectRepository(HintTemplate)
     private readonly templateRepo: Repository<HintTemplate>,
+    private readonly playerEventsService: PlayerEventsService,
   ) {}
 
   async createHint(dto: CreateHintDto): Promise<Hint> {
@@ -89,6 +91,21 @@ export class HintsService {
       usageCount: (selected.usageCount ?? 0) + 1,
       analytics: {
         ...selected.analytics,
+      },
+    });
+
+    // Emit audit event for hint usage
+    void this.playerEventsService.emitPlayerEvent({
+      userId: dto.userId,
+      sessionId: null,
+      eventType: 'hint.used',
+      payload: {
+        puzzleId: dto.puzzleId,
+        hintId: selected.id,
+        attemptNumber: dto.attemptNumber,
+        timeSpent: dto.timeSpent,
+        puzzleState: dto.puzzleState,
+        playerState: dto.playerState,
       },
     });
 

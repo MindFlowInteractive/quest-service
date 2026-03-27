@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import {
   SeasonalEventService,
@@ -23,6 +24,10 @@ import {
   CreateRewardDto,
   SubmitAnswerDto,
 } from './dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/constants';
 @Controller('seasonal-events')
 export class SeasonalEventsController {
   constructor(
@@ -123,6 +128,8 @@ export class SeasonalEventsController {
    * Create a new event (Admin only)
    */
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async createEvent(@Body() createEventDto: CreateEventDto) {
     return await this.eventService.createEvent(createEventDto);
@@ -132,6 +139,8 @@ export class SeasonalEventsController {
    * Update an event (Admin only)
    */
   @Put(':eventId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   async updateEvent(
     @Param('eventId') eventId: string,
     @Body() updateData: Partial<CreateEventDto>,
@@ -143,6 +152,8 @@ export class SeasonalEventsController {
    * Delete an event (Admin only)
    */
   @Delete(':eventId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteEvent(@Param('eventId') eventId: string) {
     await this.eventService.deleteEvent(eventId);
@@ -152,6 +163,8 @@ export class SeasonalEventsController {
    * Archive an event (Admin only) — soft archive for history retention
    */
   @Post(':eventId/archive')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   async archiveEvent(@Param('eventId') eventId: string) {
     return await this.eventService.archiveEvent(eventId);
   }
@@ -205,6 +218,8 @@ export class SeasonalEventsController {
    * Create a new puzzle for an event (Admin only)
    */
   @Post(':eventId/puzzles')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async createPuzzle(@Body() createPuzzleDto: CreatePuzzleDto) {
     return await this.puzzleService.createPuzzle(createPuzzleDto);
@@ -214,6 +229,8 @@ export class SeasonalEventsController {
    * Update a puzzle (Admin only)
    */
   @Put(':eventId/puzzles/:puzzleId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   async updatePuzzle(
     @Param('puzzleId') puzzleId: string,
     @Body() updateData: Partial<CreatePuzzleDto>,
@@ -225,6 +242,8 @@ export class SeasonalEventsController {
    * Delete a puzzle (Admin only)
    */
   @Delete(':eventId/puzzles/:puzzleId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePuzzle(@Param('puzzleId') puzzleId: string) {
     await this.puzzleService.deletePuzzle(puzzleId);
@@ -387,6 +406,8 @@ export class SeasonalEventsController {
    * Create a new reward (Admin only)
    */
   @Post(':eventId/rewards')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async createReward(@Body() createRewardDto: CreateRewardDto) {
     return await this.rewardService.createReward(createRewardDto);
@@ -396,6 +417,8 @@ export class SeasonalEventsController {
    * Update a reward (Admin only)
    */
   @Put(':eventId/rewards/:rewardId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   async updateReward(
     @Param('rewardId') rewardId: string,
     @Body() updateData: Partial<CreateRewardDto>,
@@ -407,6 +430,8 @@ export class SeasonalEventsController {
    * Delete a reward (Admin only)
    */
   @Delete(':eventId/rewards/:rewardId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteReward(@Param('rewardId') rewardId: string) {
     await this.rewardService.deleteReward(rewardId);
@@ -418,6 +443,8 @@ export class SeasonalEventsController {
    * Announce an event — broadcasts notification to all active users
    */
   @Post(':eventId/announce')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   async announceEvent(@Param('eventId') eventId: string) {
     const event = await this.eventService.findOne(eventId);
     await this.eventService.announceEvent(event);

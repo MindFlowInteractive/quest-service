@@ -163,6 +163,15 @@ export class GameSession {
   @Index()
   isActive: boolean;
 
+  /**
+   * Version of the puzzle that was active when this session was started.
+   * Immutable after session creation — subsequent puzzle edits do not affect
+   * in-flight sessions.
+   */
+  @Column({ type: 'uuid', name: 'puzzle_version_id', nullable: true })
+  @Index()
+  puzzleVersionId?: string;
+
   @Column({ type: 'varchar', length: 20, default: 'ongoing' })
   @Index()
   status: 'ongoing' | 'completed' | 'abandoned' | 'paused' | 'error';

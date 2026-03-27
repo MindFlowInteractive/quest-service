@@ -23,6 +23,8 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { PuzzlesService, PuzzleWithStats, SearchResult, PuzzleAnalytics } from './puzzles.service';
 import { SolutionSubmissionService } from './services/solution-submission.service';
+import { PuzzleVersionService } from './services/puzzle-version.service';
+import { TagsService } from './tags.service';
 import {
   CreatePuzzleDto,
   UpdatePuzzleDto,
@@ -32,6 +34,7 @@ import {
 } from './dto';
 import { SubmitSolutionDto } from './dto/submit-solution.dto';
 import { SubmissionResultDto, SubmissionHistoryDto } from './dto/submission-result.dto';
+import { AttachTagsDto } from './dto/tag.dto';
 
 @Controller('puzzles')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -41,6 +44,8 @@ export class PuzzlesController {
   constructor(
     private readonly puzzlesService: PuzzlesService,
     private readonly submissionService: SolutionSubmissionService,
+    private readonly puzzleVersionService: PuzzleVersionService,
+    private readonly tagsService: TagsService,
   ) { }
 
   @Post()
@@ -161,6 +166,33 @@ export class PuzzlesController {
     return await this.puzzlesService.create(duplicateDto, userId);
   }
 
+  /**
+   * POST /puzzles/:id/tags
+   * Attach one or more tags to a puzzle (array of tag names; auto-created if new).
+   */
+  @Post(':id/tags')
+  async attachTags(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AttachTagsDto,
+  ) {
+    this.logger.log(`Attaching tags [${dto.tags.join(', ')}] to puzzle: ${id}`);
+    return this.tagsService.attachTags(id, dto.tags);
+  }
+
+  /**
+   * DELETE /puzzles/:id/tags/:tagId
+   * Remove a specific tag from a puzzle.
+   */
+  @Delete(':id/tags/:tagId')
+  @HttpCode(HttpStatus.OK)
+  async detachTag(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('tagId', ParseUUIDPipe) tagId: string,
+  ) {
+    this.logger.log(`Detaching tag ${tagId} from puzzle: ${id}`);
+    return this.tagsService.detachTag(id, tagId);
+  }
+
   // ──────────────────────────────────────────────────────────────────
   // Solution Submission & Verification
   // ──────────────────────────────────────────────────────────────────
@@ -208,5 +240,49 @@ export class PuzzlesController {
   ): Promise<SubmissionHistoryDto> {
     const userId = req.user?.id ?? 'temp-user-id';
     return this.submissionService.getSubmissionHistory(userId, undefined, page, limit);
+  }
+
+  // ──────────────────────────────────────────────────────────────────
+  // Puzzle Version History
+  // ──────────────────────────────────────────────────────────────────
+
+  /**
+   * List all version snapshots for a puzzle, newest first.
+   * Each item includes author, change note, and diff (changed field names).
+   */
+  @Get(':id/versions')
+  async listVersions(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.puzzleVersionService.listVersions(id);
+  }
+
+  /**
+   * Retrieve the full content snapshot for a specific version number.
+   */
+  @Get(':id/versions/:version')
+  async getVersion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('version', ParseIntPipe) version: number,
+  ) {
+    return this.puzzleVersionService.getVersion(id, version);
+  }
+
+  /**
+   * Roll back a puzzle to a prior version (admin only).
+   * Creates a snapshot of the current state before overwriting — the rollback
+   * itself is versioned and auditable.
+   */
+  @Post(':id/versions/:version/restore')
+  async restoreVersion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('version', ParseIntPipe) version: number,
+    @Body('changeNote') changeNote: string | undefined,
+    @Req() req: any,
+  ) {
+    const adminId = req.user?.id ?? 'temp-admin-id'; // TODO: enforce RolesGuard
+    this.logger.log(`Rolling puzzle ${id} back to v${version} by admin ${adminId}`);
+    const restored = await this.puzzleVersionService.rollbackTo(id, version, adminId, changeNote);
+    return { message: `Puzzle restored to version ${version}`, puzzle: restored };
   }
 }

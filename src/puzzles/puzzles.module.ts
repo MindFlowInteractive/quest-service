@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PuzzlesService } from './puzzles.service';
 import { PuzzlesController } from './puzzles.controller';
 import { CommunityPuzzlesModule } from './community-puzzles.module';
+import { PlayerEventsModule } from '../player-events/player-events.module';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
@@ -21,6 +22,8 @@ import { CreatorRewardsService } from './services/creator-rewards.service';
 import { FeaturedPuzzlesService } from './services/featured-puzzles.service';
 import { PuzzleRatingController } from './controllers/puzzle-rating.controller';
 import { PuzzleReviewController } from './controllers/puzzle-review.controller';
+import { PuzzleVersion } from './entities/puzzle-version.entity';
+import { PuzzleVersionService } from './services/puzzle-version.service';
 
 // Import entities and components for categories, collections, and themes
 import { Category } from './entities/category.entity';
@@ -35,6 +38,11 @@ import { ThemesController } from './theme.controller'; // Import ThemesControlle
 import { UserCollectionProgress } from '../collections/entities/user-collection-progress.entity';
 import { LocalizationModule } from '../common/i18n/localization.module';
 import { XpModule } from '../xp/xp.module';
+
+// Tagging system
+import { Tag } from './entities/tag.entity';
+import { TagsService } from './tags.service';
+import { TagsController } from './tags.controller';
 
 @Module({
   imports: [
@@ -52,9 +60,12 @@ import { XpModule } from '../xp/xp.module';
       Theme,
       PuzzleSolutionAttempt,
       UserCollectionProgress,
+      PuzzleVersion,
+      Tag,
     ]),
     AntiCheatModule,
     XpModule,
+    PlayerEventsModule,
   ],
   controllers: [
     PuzzlesController,
@@ -62,7 +73,8 @@ import { XpModule } from '../xp/xp.module';
     PuzzleReviewController,
     CategoriesController,
     CollectionsController,
-    ThemesController // Add ThemesController
+    ThemesController, // Add ThemesController
+    TagsController,
   ],
   providers: [
     PuzzlesService,
@@ -76,7 +88,15 @@ import { XpModule } from '../xp/xp.module';
     CollectionsService,
     ThemesService,
     SolutionSubmissionService,
+    PuzzleVersionService,
   ],
-  exports: [PuzzlesService, PuzzleModerationService, PuzzleValidationService, SolutionSubmissionService]
+  exports: [
+    PuzzlesService,
+    PuzzleModerationService,
+    PuzzleValidationService,
+    SolutionSubmissionService,
+    PuzzleVersionService,
+    TagsService,
+  ],
 })
 export class PuzzlesModule { }

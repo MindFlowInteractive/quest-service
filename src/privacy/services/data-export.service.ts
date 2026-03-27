@@ -1,22 +1,40 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
+import * as zlib from 'zlib';
+import * as fs from 'fs';
+import * as path from 'path';
+import { promisify } from 'util';
 import {
   DataExportRequest,
   ExportStatus,
   ExportFormat,
 } from '../entities/data-export-request.entity';
-import { DataAccessAudit, DataAccessType, DataAccessEntity, AccessReason } from '../entities/data-access-audit.entity';
+import {
+  DataAccessAudit,
+  DataAccessType,
+  DataAccessEntity,
+  AccessReason,
+} from '../entities/data-access-audit.entity';
 import { DataExportRequestDto } from '../dto/data-export-request.dto';
 import { UserDataExport } from '../interfaces';
+
+const gzip = promisify(zlib.gzip);
 
 @Injectable()
 export class DataExportService {
   private readonly logger = new Logger(DataExportService.name);
+  /** Hours before download link expires (default 24) */
   private readonly exportExpirationHours: number;
+  /** Local temp directory for stored exports */
+  private readonly exportStorageDir: string;
 
   constructor(
     @InjectRepository(DataExportRequest)
@@ -26,24 +44,39 @@ export class DataExportService {
     private eventEmitter: EventEmitter2,
     private configService: ConfigService,
   ) {
-    this.exportExpirationHours = this.configService.get<number>('DATA_EXPORT_EXPIRATION_HOURS', 72);
+    this.exportExpirationHours = this.configService.get<number>(
+      'DATA_EXPORT_EXPIRATION_HOURS',
+      24,
+    );
+    this.exportStorageDir = this.configService.get<string>(
+      'EXPORT_STORAGE_DIR',
+      path.join(process.cwd(), 'tmp', 'exports'),
+    );
+    // Ensure storage directory exists
+    fs.mkdirSync(this.exportStorageDir, { recursive: true });
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Public API
+  // ─────────────────────────────────────────────────────────────────────────
+
   /**
-   * Request data export
+   * Queue an async data-export job.
+   * Returns immediately with a PENDING request; processing happens in background.
    */
   async requestExport(
     userId: string,
     dto: DataExportRequestDto,
     metadata?: { ipAddress?: string; userAgent?: string },
   ): Promise<DataExportRequest> {
-    // Check for existing pending exports
-    const existingExport = await this.exportRequestRepository.findOne({
+    // Prevent duplicate pending exports
+    const existing = await this.exportRequestRepository.findOne({
       where: { userId, status: ExportStatus.PENDING },
     });
-
-    if (existingExport) {
-      throw new Error('You already have a pending export request. Please wait for it to complete.');
+    if (existing) {
+      throw new BadRequestException(
+        'You already have a pending export request. Please wait for it to complete.',
+      );
     }
 
     const exportRequest = this.exportRequestRepository.create({
@@ -57,7 +90,7 @@ export class DataExportService {
 
     const saved = await this.exportRequestRepository.save(exportRequest);
 
-    // Log the access
+    // Audit log
     await this.logDataAccess({
       userId,
       accessedBy: userId,
@@ -69,14 +102,112 @@ export class DataExportService {
       accessDetails: { scope: dto.scope, format: dto.format },
     });
 
-    // Process export asynchronously
-    this.processExport(saved.id, userId);
+    // Fire-and-forget async processing
+    setImmediate(() => this.processExport(saved.id, userId));
 
+    this.logger.log(`Export job queued: ${saved.id} for user ${userId}`);
     return saved;
   }
 
   /**
-   * Process data export
+   * Get the status of a specific export request.
+   */
+  async getExportStatus(exportId: string, userId: string): Promise<DataExportRequest> {
+    const exportRequest = await this.exportRequestRepository.findOne({
+      where: { id: exportId, userId },
+    });
+    if (!exportRequest) {
+      throw new NotFoundException('Export request not found');
+    }
+    return exportRequest;
+  }
+
+  /**
+   * Get export history for a user.
+   */
+  async getExportHistory(userId: string): Promise<DataExportRequest[]> {
+    return this.exportRequestRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
+   * Stream the zipped JSON archive to the caller.
+   */
+  async downloadExport(
+    exportId: string,
+    userId: string,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+    const exportRequest = await this.getExportStatus(exportId, userId);
+
+    if (exportRequest.status !== ExportStatus.COMPLETED) {
+      throw new BadRequestException('Export is not ready for download yet.');
+    }
+
+    if (exportRequest.expiresAt && new Date() > exportRequest.expiresAt) {
+      await this.exportRequestRepository.update(exportId, {
+        status: ExportStatus.EXPIRED,
+      });
+      throw new BadRequestException(
+        'Export link has expired. Please request a new export.',
+      );
+    }
+
+    // Read stored zip file
+    const filePath = this.buildFilePath(exportId);
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Export file not found. Please request a new export.');
+    }
+
+    const buffer = fs.readFileSync(filePath);
+
+    // Increment download counter
+    await this.exportRequestRepository.update(exportId, {
+      downloadCount: exportRequest.downloadCount + 1,
+      downloadedAt: new Date(),
+    });
+
+    return {
+      buffer,
+      filename: `gdpr-export-${exportId}.json.gz`,
+      contentType: 'application/gzip',
+    };
+  }
+
+  /**
+   * Cron-safe cleanup: mark expired COMPLETED exports and remove their files.
+   */
+  async cleanupExpiredExports(): Promise<number> {
+    const expired = await this.exportRequestRepository.find({
+      where: {
+        status: ExportStatus.COMPLETED,
+        expiresAt: LessThan(new Date()),
+      },
+    });
+
+    for (const exportRequest of expired) {
+      // Delete physical file
+      const filePath = this.buildFilePath(exportRequest.id);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      await this.exportRequestRepository.update(exportRequest.id, {
+        status: ExportStatus.EXPIRED,
+        fileUrl: null,
+      });
+    }
+
+    this.logger.log(`Cleaned up ${expired.length} expired exports`);
+    return expired.length;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Internal helpers – data gathering & file generation
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Async processing loop.
    */
   private async processExport(exportId: string, userId: string): Promise<void> {
     try {
@@ -85,15 +216,13 @@ export class DataExportService {
         processedAt: new Date(),
       });
 
-      // Gather user data from all relevant entities
       const userData = await this.gatherUserData(userId);
+      const { filePath, fileSize } = await this.generateZippedExport(exportId, userData);
 
-      // Generate file based on format
-      const { fileUrl, fileSize } = await this.generateExportFile(exportId, userData);
-
-      // Calculate expiration
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + this.exportExpirationHours);
+
+      const fileUrl = `/account/export/${exportId}/download`;
 
       await this.exportRequestRepository.update(exportId, {
         status: ExportStatus.COMPLETED,
@@ -105,13 +234,14 @@ export class DataExportService {
       this.eventEmitter.emit('privacy.data_export_completed', {
         userId,
         exportId,
+        downloadUrl: fileUrl,
+        expiresAt,
         timestamp: new Date(),
       });
 
-      this.logger.log(`Data export ${exportId} completed for user ${userId}`);
+      this.logger.log(`Export ${exportId} completed for user ${userId}`);
     } catch (error) {
-      this.logger.error(`Error processing export ${exportId}:`, error);
-      
+      this.logger.error(`Export processing failed for ${exportId}:`, error);
       await this.exportRequestRepository.update(exportId, {
         status: ExportStatus.FAILED,
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
@@ -120,150 +250,122 @@ export class DataExportService {
   }
 
   /**
-   * Gather all user data
+   * Gather all user data from every relevant table.
+   * Each data source is fetched via event so that domain modules stay decoupled.
    */
-  private async gatherUserData(userId: string): Promise<UserDataExport> {
-    // This would integrate with your existing services
-    // For now, returning a structured template
-    const exportData: UserDataExport = {
+  async gatherUserData(userId: string): Promise<UserDataExport> {
+    // Emit collection events; listeners respond with data
+    const results: Record<string, any> = {};
+
+    const collectPromises = [
+      'privacy.gather.profile',
+      'privacy.gather.achievements',
+      'privacy.gather.sessions',
+      'privacy.gather.puzzleCompletions',
+      'privacy.gather.skillRatings',
+      'privacy.gather.wallet',
+      'privacy.gather.friends',
+      'privacy.gather.notifications',
+      'privacy.gather.privacySettings',
+      'privacy.gather.consentHistory',
+    ].map(async (event) => {
+      try {
+        const key = event.split('.').pop()!;
+        const data = await this.eventEmitter.emitAsync(event, { userId });
+        results[key] = data?.[0] ?? null;
+      } catch {
+        // Non-fatal: missing module data leaves section empty
+      }
+    });
+
+    await Promise.allSettled(collectPromises);
+
+    const profile = results['profile'] ?? {};
+    const achievements = results['achievements'] ?? [];
+    const sessions = results['sessions'] ?? [];
+    const puzzleCompletions = results['puzzleCompletions'] ?? [];
+    const skillRatings = results['skillRatings'] ?? [];
+    const wallet = results['wallet'] ?? { addresses: [], balanceHistory: [] };
+    const friends = results['friends'] ?? { friends: [], friendRequests: [] };
+    const notifications = results['notifications'] ?? { preferences: {}, history: [] };
+    const privacySettings = results['privacySettings'] ?? {};
+    const consentHistory = results['consentHistory'] ?? [];
+
+    return {
       userId,
       exportDate: new Date().toISOString(),
-      version: '1.0.0',
+      version: '2.0.0',
+      exportFormat: 'JSON/GZIP',
       personalInfo: {
-        email: '', // Would be fetched from user service
-        username: '',
-        createdAt: new Date().toISOString(),
+        email: profile.email ?? '',
+        username: profile.username ?? '',
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        dateOfBirth: profile.dateOfBirth,
+        country: profile.country,
+        avatar: profile.avatar,
+        createdAt: profile.createdAt ?? new Date().toISOString(),
+        lastLoginAt: profile.lastLoginAt,
+        isVerified: profile.isVerified,
+      },
+      profile: {
+        bio: profile.profile?.bio,
+        website: profile.profile?.website,
+        socialLinks: profile.profile?.socialLinks,
+        level: profile.level,
+        experience: profile.experience,
+        totalScore: profile.totalScore,
+        preferences: profile.preferences,
       },
       gameData: {
-        sessions: [],
-        achievements: [],
+        sessions,
+        achievements,
         progress: [],
-        statistics: {},
+        statistics: profile.statistics ?? {},
+        puzzleCompletions,
+        skillRatings,
       },
-      transactions: [],
+      wallet: {
+        addresses: wallet.addresses ?? [],
+        balanceHistory: wallet.balanceHistory ?? [],
+      },
+      notifications: {
+        preferences: notifications.preferences ?? {},
+        history: notifications.history ?? [],
+      },
       socialData: {
-        friends: [],
-        messages: [],
-        activities: [],
+        friends: friends.friends ?? [],
+        friendRequests: friends.friendRequests ?? [],
+        activities: friends.activities ?? [],
       },
-      privacySettings: {},
-      consentHistory: [],
+      privacySettings,
+      consentHistory,
+      transactions: wallet.transactions ?? [],
     };
-
-    // TODO: Integrate with actual services to fetch:
-    // - User profile data
-    // - Game sessions and progress
-    // - Achievements
-    // - Blockchain transactions
-    // - Social connections
-    // - Privacy settings and consent history
-
-    return exportData;
   }
 
   /**
-   * Generate export file
+   * Serialise data as JSON, gzip it, persist to local storage.
    */
-  private async generateExportFile(
+  private async generateZippedExport(
     exportId: string,
     data: UserDataExport,
-  ): Promise<{ fileUrl: string; fileSize: number }> {
-    // In production, this would:
-    // 1. Write to a secure storage (S3, etc.)
-    // 2. Encrypt the file
-    // 3. Generate a signed URL
-    
-    const fileName = `export-${exportId}.json`;
-    const fileContent = JSON.stringify(data, null, 2);
-    const fileSize = Buffer.byteLength(fileContent, 'utf8');
+  ): Promise<{ filePath: string; fileSize: number }> {
+    const json = JSON.stringify(data, null, 2);
+    const compressed = await gzip(Buffer.from(json, 'utf8'));
+    const filePath = this.buildFilePath(exportId);
 
-    // Placeholder - in production, upload to secure storage
-    const fileUrl = `/api/privacy/exports/${exportId}/download`;
+    fs.writeFileSync(filePath, compressed);
 
-    return { fileUrl, fileSize };
+    return { filePath, fileSize: compressed.byteLength };
+  }
+
+  private buildFilePath(exportId: string): string {
+    return path.join(this.exportStorageDir, `export-${exportId}.json.gz`);
   }
 
   /**
-   * Get export status
-   */
-  async getExportStatus(exportId: string, userId: string): Promise<DataExportRequest> {
-    const exportRequest = await this.exportRequestRepository.findOne({
-      where: { id: exportId, userId },
-    });
-
-    if (!exportRequest) {
-      throw new NotFoundException('Export request not found');
-    }
-
-    return exportRequest;
-  }
-
-  /**
-   * Get user's export history
-   */
-  async getExportHistory(userId: string): Promise<DataExportRequest[]> {
-    return this.exportRequestRepository.find({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-    });
-  }
-
-  /**
-   * Download export file
-   */
-  async downloadExport(exportId: string, userId: string): Promise<{
-    data: UserDataExport;
-    filename: string;
-  }> {
-    const exportRequest = await this.getExportStatus(exportId, userId);
-
-    if (exportRequest.status !== ExportStatus.COMPLETED) {
-      throw new Error('Export is not ready for download');
-    }
-
-    if (exportRequest.expiresAt && new Date() > exportRequest.expiresAt) {
-      await this.exportRequestRepository.update(exportId, { status: ExportStatus.EXPIRED });
-      throw new Error('Export has expired. Please request a new export.');
-    }
-
-    // Update download count
-    await this.exportRequestRepository.update(exportId, {
-      downloadCount: exportRequest.downloadCount + 1,
-      downloadedAt: new Date(),
-    });
-
-    // In production, fetch from secure storage
-    const data = await this.gatherUserData(userId);
-    const filename = `quest-service-data-export-${exportId}.json`;
-
-    return { data, filename };
-  }
-
-  /**
-   * Clean up expired exports
-   */
-  async cleanupExpiredExports(): Promise<number> {
-    const expired = await this.exportRequestRepository.find({
-      where: {
-        status: ExportStatus.COMPLETED,
-        expiresAt: LessThan(new Date()),
-      },
-    });
-
-    for (const exportRequest of expired) {
-      await this.exportRequestRepository.update(exportRequest.id, {
-        status: ExportStatus.EXPIRED,
-        fileUrl: null,
-      });
-      
-      // In production, also delete from storage
-    }
-
-    return expired.length;
-  }
-
-  /**
-   * Log data access
+   * Internal audit helper.
    */
   private async logDataAccess(data: {
     userId: string;
@@ -279,6 +381,3 @@ export class DataExportService {
     await this.auditRepository.save(audit);
   }
 }
-
-// Helper for LessThan
-import { LessThan } from 'typeorm';

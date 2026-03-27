@@ -43,6 +43,12 @@ export class DailyChallengeCompletion {
   @Column({ type: 'int', default: 0 })
   streakBonusAwarded: number;
 
+  @Column({ type: 'int', default: 0 })
+  bonusXPAwarded: number; // Bonus XP awarded from the daily challenge
+
+  @Column({ type: 'boolean', default: false })
+  bonusXPClaimed: boolean; // Whether the bonus XP has been claimed (prevents double claims)
+
   @CreateDateColumn({ type: 'timestamp with time zone' })
   completedAt: Date;
 }

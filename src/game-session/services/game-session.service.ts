@@ -3,22 +3,46 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { GameSession } from '../entities/game-session.entity';
+import { PlayerEventsService } from '../../player-events/player-events.service';
+import { PuzzleVersionService } from '../../puzzles/services/puzzle-version.service';
 
 @Injectable()
 export class GameSessionService {
   constructor(
     @InjectRepository(GameSession)
     private readonly sessionRepo: Repository<GameSession>,
+    private readonly playerEventsService: PlayerEventsService,
+    private readonly puzzleVersionService: PuzzleVersionService,
   ) {}
 
-  async create(userId: string) {
+  async create(userId: string, puzzleId?: string) {
+    // Resolve the current puzzle version id (if a puzzle is specified)
+    let puzzleVersionId: string | undefined;
+    if (puzzleId) {
+      puzzleVersionId = (await this.puzzleVersionService.getCurrentVersionId(puzzleId)) ?? undefined;
+    }
+
     const session = this.sessionRepo.create({
       userId,
+      puzzleId,
+      puzzleVersionId,
       status: 'IN_PROGRESS',
       state: {},
       lastActiveAt: new Date(),
     });
-    return this.sessionRepo.save(session);
+    const savedSession = await this.sessionRepo.save(session);
+
+    await this.playerEventsService.emitPlayerEvent({
+      userId,
+      sessionId: savedSession.id,
+      eventType: 'puzzle.started',
+      payload: {
+        sessionId: savedSession.id,
+        startedAt: savedSession.createdAt || new Date(),
+      },
+    });
+
+    return savedSession;
   }
 
   async updateState(sessionId: string, partialState: Record<string, any>) {
@@ -44,10 +68,29 @@ export class GameSessionService {
     session.status = status;
     session.lastActiveAt = new Date();
 
-    return this.sessionRepo.save(session);
+    const savedSession = await this.sessionRepo.save(session);
+
+    if (status === 'ABANDONED') {
+      await this.playerEventsService.emitPlayerEvent({
+        userId: savedSession.userId,
+        sessionId: savedSession.id,
+        eventType: 'puzzle.abandoned',
+        payload: {
+          sessionId: savedSession.id,
+          reason: 'session ended as abandoned',
+          endedAt: savedSession.lastActiveAt,
+        },
+      });
+    }
+
+    return savedSession;
   }
 
   async getActiveSessions() {
     return this.sessionRepo.find({ where: { status: 'IN_PROGRESS' } });
+  }
+
+  async getById(sessionId: string) {
+    return this.sessionRepo.findOne({ where: { id: sessionId } });
   }
 }

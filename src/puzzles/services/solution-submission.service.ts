@@ -24,6 +24,8 @@ import {
 import { AntiCheatService } from '../../anti-cheat/services/anti-cheat.service';
 import { ViolationType } from '../../anti-cheat/constants';
 import { XpService } from '../../xp/xp.service';
+import { PlayerEventsService } from '../../player-events/player-events.service';
+import { PuzzleVersionService } from './puzzle-version.service';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -52,6 +54,8 @@ export class SolutionSubmissionService {
         private readonly dataSource: DataSource,
         private readonly antiCheatService: AntiCheatService,
         private readonly xpService: XpService,
+        private readonly playerEventsService: PlayerEventsService,
+        private readonly puzzleVersionService: PuzzleVersionService,
     ) { }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -89,6 +93,10 @@ export class SolutionSubmissionService {
             throw new NotFoundException(`Puzzle ${puzzleId} not found`);
         }
 
+        // Resolve the version that was live at submission time
+        const puzzleVersionId =
+            (await this.puzzleVersionService.getCurrentVersionId(puzzleId)) ?? undefined;
+
         const sessionStartedAt = new Date(dto.sessionStartedAt);
         const now = new Date();
         const timeTakenSeconds = Math.floor(
@@ -111,6 +119,7 @@ export class SolutionSubmissionService {
                 fraudFlags: {},
                 ipAddress,
                 metadata: dto.clientMetadata ?? {},
+                puzzleVersionId,
             });
 
             await this.incrementAttempts(puzzle);
@@ -167,6 +176,7 @@ export class SolutionSubmissionService {
                 fraudFlags: fraudResult.flags,
                 ipAddress,
                 metadata: dto.clientMetadata ?? {},
+                puzzleVersionId,
             });
             const saved = await manager.save(PuzzleSolutionAttempt, newAttempt);
 
@@ -201,6 +211,23 @@ export class SolutionSubmissionService {
             explanation: isCorrect ? (puzzle.content?.explanation ?? undefined) : undefined,
         };
 
+        // Track every answer submission as an audit event
+        void this.playerEventsService.emitPlayerEvent({
+            userId,
+            sessionId: null,
+            eventType: 'answer.submitted',
+            payload: {
+                puzzleId,
+                answer: dto.answer,
+                status: finalStatus,
+                correct: isCorrect && !fraudResult.isFraud,
+                timeTakenSeconds,
+                hintsUsed: dto.hintsUsed ?? 0,
+                scoreAwarded,
+                fraud: fraudResult.isFraud,
+            },
+        });
+
         if (result.isCorrect) {
             await this.xpService.awardPuzzleCompletionXp({
                 userId,
@@ -210,6 +237,34 @@ export class SolutionSubmissionService {
                 sourceEventId: attempt.id,
                 solvedAt: now,
             });
+
+            // Record a specific puzzle.solved event for analytics and audit
+            void this.playerEventsService.emitPlayerEvent({
+                userId,
+                sessionId: null,
+                eventType: 'puzzle.solved',
+                payload: {
+                    puzzleId,
+                    solveTimeSeconds: timeTakenSeconds,
+                    hintsUsed: dto.hintsUsed ?? 0,
+                    scoreAwarded,
+                },
+            });
+
+            // Each achievement unlocked should produce an audit event
+            for (const achievement of result.rewards?.achievements ?? []) {
+                void this.playerEventsService.emitPlayerEvent({
+                    userId,
+                    sessionId: null,
+                    eventType: 'achievement.unlocked',
+                    payload: {
+                        puzzleId,
+                        achievementId: achievement,
+                        timeTakenSeconds,
+                        hintsUsed: dto.hintsUsed ?? 0,
+                    },
+                });
+            }
         }
 
         if (fraudResult.isFraud) {
@@ -525,6 +580,7 @@ export class SolutionSubmissionService {
         fraudFlags: any;
         ipAddress?: string;
         metadata: any;
+        puzzleVersionId?: string;
     }): Promise<PuzzleSolutionAttempt> {
         const attempt = this.attemptRepo.create({
             ...data,

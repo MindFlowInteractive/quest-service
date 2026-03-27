@@ -56,6 +56,25 @@ export class PlayerEventService {
       // Increment participant count
       await this.eventRepository.increment({ id: eventId }, 'participantCount', 1);
 
+      // Grant EventParticipation badge on first join
+      const participationBadge = await this.rewardRepository.findOne({
+        where: { eventId, type: 'badge', name: 'EventParticipation' },
+      });
+      if (participationBadge) {
+        const alreadyHas = playerEvent.rewards.some((r) => r.rewardId === participationBadge.id);
+        if (!alreadyHas) {
+          playerEvent.rewards.push({
+            rewardId: participationBadge.id,
+            rewardName: participationBadge.name,
+            rewardType: participationBadge.type,
+            earnedAt: new Date(),
+          });
+          await this.playerEventRepository.save(playerEvent);
+          await this.rewardRepository.increment({ id: participationBadge.id }, 'claimedCount', 1);
+          this.logger.log(`Granted EventParticipation badge to player ${playerId} for event ${eventId}`);
+        }
+      }
+
       this.logger.log(`Player ${playerId} joined event ${eventId}`);
     }
 

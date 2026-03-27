@@ -51,6 +51,8 @@ import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
 import { XpModule } from './xp/xp.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { PlayerEventsModule } from './player-events/player-events.module';
+import { AccountModule } from './account/account.module';
 
 @Module({
   imports: [
@@ -129,8 +131,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     PuzzleModule,
     EventModule,
     SeasonalEventsModule,
-    MultiplayerModule,
-    RecommendationsModule,
+    MultiplayerModule,    PlayerEventsModule,    RecommendationsModule,
     AntiCheatModule,
     QuestsModule,
     IntegrationsModule,
@@ -143,6 +144,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     WalletAuthModule,
     XpModule,
     WebhooksModule,
+    AccountModule,
   ],
   controllers: [AppController],
   providers: [
