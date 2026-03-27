@@ -56,6 +56,27 @@ export class GameSessionController {
     };
   }
 
+  @Post(':id/resume')
+  async resumeSession(
+    @Param('id') sessionId: string,
+    @Query('userId') userId: string,
+  ) {
+    const session = await this.sessionService.resumeById(sessionId, userId);
+    return {
+      message: 'Session resumed successfully',
+      session,
+    };
+  }
+
+  @Get('suspended')
+  async getSuspendedSessions(@Query('userId') userId: string) {
+    const sessions = await this.sessionService.getSuspendedSessions(userId);
+    return {
+      message: 'Suspended sessions retrieved',
+      sessions,
+    };
+  }
+
   @Post(':id/end')
   async endSession(
     @Param('id') sessionId: string,

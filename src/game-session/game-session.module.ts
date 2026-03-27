@@ -7,14 +7,17 @@ import { GameSessionService } from './services/game-session.service';
 import { SpectatorService } from './services/spectator.service';
 import { CleanupSessionJob } from './services/cleanup-session.job';
 import { AutosaveSessionJob } from './services/autosave-session.job';
+import { CrashRecoveryJob } from './services/crash-recovery.job';
 import { GameSessionController } from './controllers/game-session.controller';
 import { PuzzlesModule } from '../puzzles/puzzles.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([GameSession, Spectator]),
     forwardRef(() => PlayerEventsModule),
     forwardRef(() => PuzzlesModule),
+    NotificationsModule,
   ],
   controllers: [GameSessionController],
   providers: [
@@ -22,6 +25,7 @@ import { PuzzlesModule } from '../puzzles/puzzles.module';
     SpectatorService,
     CleanupSessionJob,
     AutosaveSessionJob,
+    CrashRecoveryJob,
   ],
 })
 export class GameSessionModule {}
