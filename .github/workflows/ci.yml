@@ -1,0 +1,34 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Matches modern NextJs/NestJs standards
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint Check
+        run: npm run lint # Ensures code quality before testing
+
+      - name: Run Unit Tests
+        run: npm run test
+
+      - name: Run E2E Tests (Optional)
+        run: npm run test:e2e
+        continue-on-error: true # Prevents blocking if E2E is still in progress
