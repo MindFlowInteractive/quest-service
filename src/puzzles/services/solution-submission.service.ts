@@ -7,6 +7,7 @@ import {
     HttpException,
     HttpStatus,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, MoreThan } from 'typeorm';
 import * as crypto from 'crypto';
@@ -26,6 +27,7 @@ import { ViolationType } from '../../anti-cheat/constants';
 import { XpService } from '../../xp/xp.service';
 import { PlayerEventsService } from '../../player-events/player-events.service';
 import { PuzzleVersionService } from './puzzle-version.service';
+import { WEBHOOK_INTERNAL_EVENTS } from '../../webhooks/webhook.constants';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -56,6 +58,7 @@ export class SolutionSubmissionService {
         private readonly xpService: XpService,
         private readonly playerEventsService: PlayerEventsService,
         private readonly puzzleVersionService: PuzzleVersionService,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -251,6 +254,15 @@ export class SolutionSubmissionService {
                 },
             });
 
+            this.eventEmitter.emit(WEBHOOK_INTERNAL_EVENTS.puzzleSolved, {
+                userId,
+                puzzleId,
+                solveTimeSeconds: timeTakenSeconds,
+                hintsUsed: dto.hintsUsed ?? 0,
+                scoreAwarded,
+                solvedAt: now.toISOString(),
+            });
+
             // Each achievement unlocked should produce an audit event
             for (const achievement of result.rewards?.achievements ?? []) {
                 void this.playerEventsService.emitPlayerEvent({
@@ -263,6 +275,15 @@ export class SolutionSubmissionService {
                         timeTakenSeconds,
                         hintsUsed: dto.hintsUsed ?? 0,
                     },
+                });
+
+                this.eventEmitter.emit(WEBHOOK_INTERNAL_EVENTS.achievementUnlocked, {
+                    userId,
+                    puzzleId,
+                    achievementId: achievement,
+                    unlockedAt: now.toISOString(),
+                    hintsUsed: dto.hintsUsed ?? 0,
+                    solveTimeSeconds: timeTakenSeconds,
                 });
             }
         }

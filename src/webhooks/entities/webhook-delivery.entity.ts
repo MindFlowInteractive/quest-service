@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { Webhook } from './webhook.entity';
 
 export type DeliveryStatus = 'pending' | 'success' | 'failed' | 'retry';
@@ -40,12 +48,12 @@ export class WebhookDelivery {
   @Column({ default: 0 })
   retryCount: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   nextRetryAt?: Date;
 
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   deliveredAt?: Date;
 }

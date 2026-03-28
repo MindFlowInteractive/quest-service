@@ -1,10 +1,12 @@
 // services/game-session.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { GameSession } from '../entities/game-session.entity';
 import { PlayerEventsService } from '../../player-events/player-events.service';
 import { PuzzleVersionService } from '../../puzzles/services/puzzle-version.service';
+import { WEBHOOK_INTERNAL_EVENTS } from '../../webhooks/webhook.constants';
 
 @Injectable()
 export class GameSessionService {
@@ -13,6 +15,7 @@ export class GameSessionService {
     private readonly sessionRepo: Repository<GameSession>,
     private readonly playerEventsService: PlayerEventsService,
     private readonly puzzleVersionService: PuzzleVersionService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(userId: string, puzzleId?: string) {
@@ -82,6 +85,14 @@ export class GameSessionService {
         },
       });
     }
+
+    this.eventEmitter.emit(WEBHOOK_INTERNAL_EVENTS.sessionEnded, {
+      sessionId: savedSession.id,
+      userId: savedSession.userId,
+      puzzleId: savedSession.puzzleId,
+      status: savedSession.status,
+      endedAt: savedSession.lastActiveAt.toISOString(),
+    });
 
     return savedSession;
   }

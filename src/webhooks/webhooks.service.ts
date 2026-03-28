@@ -1,119 +1,200 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Webhook, WebhookEvent } from './entities/webhook.entity';
+import { Queue } from 'bullmq';
+import { Webhook } from './entities/webhook.entity';
 import { WebhookDelivery } from './entities/webhook-delivery.entity';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
-import * as crypto from 'crypto';
-import * as https from 'https';
+import {
+  WEBHOOK_DELIVERY_RETENTION_LIMIT,
+  WEBHOOK_DELIVERY_TTL_DAYS,
+  WEBHOOK_INITIAL_RETRY_DELAY_MS,
+  WEBHOOK_JOB,
+  WEBHOOK_QUEUE,
+  WEBHOOK_TOTAL_ATTEMPTS,
+  WebhookEvent,
+} from './webhook.constants';
+import { createWebhookSignature } from './webhook-signature.util';
+import { WebhookUrlValidatorService } from './webhook-url-validator.service';
 
 @Injectable()
 export class WebhooksService {
+  private readonly logger = new Logger(WebhooksService.name);
+
   constructor(
     @InjectRepository(Webhook)
-    private webhookRepository: Repository<Webhook>,
+    private readonly webhookRepository: Repository<Webhook>,
     @InjectRepository(WebhookDelivery)
-    private deliveryRepository: Repository<WebhookDelivery>,
-    @InjectQueue('webhook-delivery') private deliveryQueue: Queue,
+    private readonly deliveryRepository: Repository<WebhookDelivery>,
+    @InjectQueue(WEBHOOK_QUEUE)
+    private readonly deliveryQueue: Queue,
+    private readonly webhookUrlValidator: WebhookUrlValidatorService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async create(createWebhookDto: CreateWebhookDto): Promise<Webhook> {
-    // Validate URL is HTTPS
-    const url = new URL(createWebhookDto.url);
-    if (url.protocol !== 'https:') {
-      throw new BadRequestException('Webhook URL must use HTTPS');
+  async create(ownerUserId: string, createWebhookDto: CreateWebhookDto): Promise<Webhook> {
+    await this.webhookUrlValidator.validate(createWebhookDto.url);
+
+    const webhook = this.webhookRepository.create({
+      ...createWebhookDto,
+      userId: ownerUserId,
+      active: true,
+    });
+
+    const savedWebhook = await this.webhookRepository.save(webhook);
+    return this.findOwnedWebhook(ownerUserId, savedWebhook.id);
+  }
+
+  async findAll(ownerUserId: string, appId?: string): Promise<Webhook[]> {
+    const where: Record<string, string> = { userId: ownerUserId };
+
+    if (appId) {
+      where.appId = appId;
     }
 
-    // Validate URL is reachable
-    await this.validateUrlReachable(createWebhookDto.url);
-
-    const webhook = this.webhookRepository.create(createWebhookDto);
-    return this.webhookRepository.save(webhook);
+    return this.webhookRepository.find({
+      where,
+      order: { createdAt: 'DESC' },
+    });
   }
 
-  async findAll(userId?: string, appId?: string): Promise<Webhook[]> {
-    const where: any = {};
-    if (userId) where.userId = userId;
-    if (appId) where.appId = appId;
+  async findOwnedWebhook(ownerUserId: string, id: string): Promise<Webhook> {
+    const webhook = await this.webhookRepository.findOne({ where: { id, userId: ownerUserId } });
 
-    return this.webhookRepository.find({ where });
-  }
-
-  async findOne(id: string): Promise<Webhook> {
-    const webhook = await this.webhookRepository.findOne({ where: { id } });
     if (!webhook) {
       throw new NotFoundException('Webhook not found');
     }
+
     return webhook;
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.webhookRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException('Webhook not found');
-    }
+  async remove(ownerUserId: string, id: string): Promise<void> {
+    const webhook = await this.findOwnedWebhook(ownerUserId, id);
+    await this.webhookRepository.remove(webhook);
   }
 
-  async getDeliveries(webhookId: string, limit = 100): Promise<WebhookDelivery[]> {
+  async getDeliveries(ownerUserId: string, webhookId: string, limit = 100): Promise<WebhookDelivery[]> {
+    await this.findOwnedWebhook(ownerUserId, webhookId);
+
     return this.deliveryRepository.find({
       where: { webhookId },
       order: { createdAt: 'DESC' },
-      take: limit,
+      take: Math.min(limit, WEBHOOK_DELIVERY_RETENTION_LIMIT),
     });
   }
 
-  async triggerEvent(event: WebhookEvent, payload: any): Promise<void> {
-    const webhooks = await this.webhookRepository.find({
-      where: { events: event, active: true },
-    });
+  async enqueueEvent(event: WebhookEvent, payload: Record<string, unknown>): Promise<void> {
+    const webhooks = await this.webhookRepository
+      .createQueryBuilder('webhook')
+      .addSelect('webhook.secret')
+      .where('webhook.active = :active', { active: true })
+      .andWhere(':event = ANY(webhook.events)', { event })
+      .getMany();
 
     for (const webhook of webhooks) {
       await this.queueDelivery(webhook, event, payload);
     }
   }
 
-  private async queueDelivery(webhook: Webhook, event: string, payload: any): Promise<void> {
-    const signature = this.generateSignature(JSON.stringify(payload), webhook.secret);
+  toResponse(webhook: Webhook) {
+    return {
+      id: webhook.id,
+      url: webhook.url,
+      events: webhook.events,
+      active: webhook.active,
+      userId: webhook.userId,
+      appId: webhook.appId,
+      createdAt: webhook.createdAt,
+      updatedAt: webhook.updatedAt,
+    };
+  }
 
-    const delivery = await this.deliveryRepository.save({
+  buildSignature(payload: Record<string, unknown> | string, secret: string): string {
+    const serializedPayload = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    return createWebhookSignature(serializedPayload, secret);
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async cleanupExpiredDeliveries(): Promise<void> {
+    const ttlDays = this.configService.get<number>('WEBHOOK_DELIVERY_TTL_DAYS', WEBHOOK_DELIVERY_TTL_DAYS);
+
+    if (ttlDays <= 0) {
+      return;
+    }
+
+    const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000);
+    const result = await this.deliveryRepository
+      .createQueryBuilder()
+      .delete()
+      .from(WebhookDelivery)
+      .where('createdAt < :cutoff', { cutoff })
+      .execute();
+
+    if (result.affected) {
+      this.logger.log(`Cleaned up ${result.affected} expired webhook deliveries`);
+    }
+  }
+
+  private async queueDelivery(
+    webhook: Webhook & { secret?: string },
+    event: WebhookEvent,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
+    const signature = this.buildSignature(payload, webhook.secret || '');
+
+    const delivery = await this.deliveryRepository.save(
+      this.deliveryRepository.create({
       webhookId: webhook.id,
       event,
       payload,
       signature,
       status: 'pending',
-    });
+      }),
+    );
 
-    await this.deliveryQueue.add('deliver', {
-      deliveryId: delivery.id,
-    });
+    await this.pruneDeliveryHistory(webhook.id);
+
+    const ttlDays = this.configService.get<number>('WEBHOOK_DELIVERY_TTL_DAYS', WEBHOOK_DELIVERY_TTL_DAYS);
+    const ageSeconds = Math.max(ttlDays, 1) * 24 * 60 * 60;
+
+    await this.deliveryQueue.add(
+      WEBHOOK_JOB,
+      { deliveryId: delivery.id },
+      {
+        jobId: delivery.id,
+        attempts: WEBHOOK_TOTAL_ATTEMPTS,
+        backoff: {
+          type: 'exponential',
+          delay: WEBHOOK_INITIAL_RETRY_DELAY_MS,
+        },
+        removeOnComplete: {
+          count: WEBHOOK_DELIVERY_RETENTION_LIMIT,
+          age: ageSeconds,
+        },
+        removeOnFail: {
+          count: WEBHOOK_DELIVERY_RETENTION_LIMIT,
+          age: ageSeconds,
+        },
+      },
+    );
   }
 
-  private generateSignature(payload: string, secret: string): string {
-    return crypto.createHmac('sha256', secret).update(payload).digest('hex');
-  }
+  private async pruneDeliveryHistory(webhookId: string): Promise<void> {
+    const staleDeliveries = await this.deliveryRepository
+      .createQueryBuilder('delivery')
+      .select('delivery.id', 'id')
+      .where('delivery.webhookId = :webhookId', { webhookId })
+      .orderBy('delivery.createdAt', 'DESC')
+      .offset(WEBHOOK_DELIVERY_RETENTION_LIMIT)
+      .getRawMany<{ id: string }>();
 
-  private async validateUrlReachable(url: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const req = https.request(url, { method: 'HEAD' }, (res) => {
-        if (res.statusCode >= 200 && res.statusCode < 400) {
-          resolve();
-        } else {
-          reject(new BadRequestException(`URL returned status ${res.statusCode}`));
-        }
-      });
+    if (staleDeliveries.length === 0) {
+      return;
+    }
 
-      req.on('error', () => {
-        reject(new BadRequestException('URL is not reachable'));
-      });
-
-      req.setTimeout(5000, () => {
-        req.destroy();
-        reject(new BadRequestException('URL validation timed out'));
-      });
-
-      req.end();
-    });
+    await this.deliveryRepository.delete(staleDeliveries.map((delivery) => delivery.id));
   }
 }

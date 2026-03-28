@@ -1,9 +1,17 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  Index,
+} from 'typeorm';
 import { WebhookDelivery } from './webhook-delivery.entity';
-
-export type WebhookEvent = 'puzzle.solved' | 'achievement.unlocked' | 'session.ended' | 'user.registered' | 'leaderboard.updated';
+import { WebhookEvent } from '../webhook.constants';
 
 @Entity('webhooks')
+@Index(['userId', 'appId'])
 export class Webhook {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -11,20 +19,20 @@ export class Webhook {
   @Column()
   url: string;
 
-  @Column()
+  @Column({ select: false })
   secret: string;
 
-  @Column('simple-array')
+  @Column('text', { array: true })
   events: WebhookEvent[];
 
   @Column({ default: true })
   active: boolean;
 
-  @Column({ nullable: true })
-  userId?: string; // For user-specific webhooks
+  @Column({ type: 'uuid' })
+  userId: string;
 
   @Column({ nullable: true })
-  appId?: string; // For app-specific webhooks
+  appId?: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -32,6 +40,6 @@ export class Webhook {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => WebhookDelivery, delivery => delivery.webhook)
+  @OneToMany(() => WebhookDelivery, (delivery) => delivery.webhook)
   deliveries: WebhookDelivery[];
 }

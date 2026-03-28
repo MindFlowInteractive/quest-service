@@ -1,23 +1,24 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { WebhooksService } from '../webhooks.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WebhookDelivery } from '../entities/webhook-delivery.entity';
 import axios, { AxiosError } from 'axios';
+import {
+  WEBHOOK_INITIAL_RETRY_DELAY_MS,
+  WEBHOOK_MAX_RETRIES,
+  WEBHOOK_QUEUE,
+} from '../webhook.constants';
 
 @Injectable()
-@Processor('webhook-delivery')
+@Processor(WEBHOOK_QUEUE)
 export class WebhookDeliveryProcessor extends WorkerHost {
   private readonly logger = new Logger(WebhookDeliveryProcessor.name);
-  private readonly maxRetries = 3;
-  private readonly retryDelays = [1000, 2000, 4000]; // 1s, 2s, 4s
 
   constructor(
-    private readonly webhooksService: WebhooksService,
     @InjectRepository(WebhookDelivery)
-    private deliveryRepository: Repository<WebhookDelivery>,
+    private readonly deliveryRepository: Repository<WebhookDelivery>,
   ) {
     super();
   }
@@ -41,38 +42,48 @@ export class WebhookDeliveryProcessor extends WorkerHost {
           'Content-Type': 'application/json',
           'X-Webhook-Signature': delivery.signature,
           'X-Webhook-Event': delivery.event,
-          'X-Webhook-ID': delivery.id,
+          'X-Webhook-Delivery-ID': delivery.id,
+          'X-Webhook-Timestamp': delivery.createdAt.toISOString(),
         },
-        timeout: 10000, // 10 seconds
+        timeout: 10000,
       });
 
       delivery.status = 'success';
       delivery.responseCode = response.status;
+      delivery.responseBody = this.serializeResponseBody(response.data);
+      delivery.error = undefined;
+      delivery.nextRetryAt = undefined;
+      delivery.retryCount = job.attemptsMade;
       delivery.deliveredAt = new Date();
 
       this.logger.log(`Webhook delivered successfully: ${deliveryId}`);
     } catch (error) {
       const axiosError = error as AxiosError;
+      const currentAttempt = job.attemptsMade + 1;
+      const shouldRetry = currentAttempt <= WEBHOOK_MAX_RETRIES;
+
       delivery.responseCode = axiosError.response?.status;
-      delivery.responseBody = axiosError.response?.data as string;
+      delivery.responseBody = this.serializeResponseBody(axiosError.response?.data);
       delivery.error = axiosError.message;
+      delivery.retryCount = Math.min(currentAttempt, WEBHOOK_MAX_RETRIES);
 
-      if (delivery.retryCount < this.maxRetries) {
+      if (shouldRetry) {
         delivery.status = 'retry';
-        delivery.retryCount++;
-        delivery.nextRetryAt = new Date(Date.now() + this.retryDelays[delivery.retryCount - 1]);
+        delivery.nextRetryAt = new Date(
+          Date.now() + WEBHOOK_INITIAL_RETRY_DELAY_MS * Math.pow(2, currentAttempt - 1),
+        );
 
-        // Re-queue the job
-        await job.queue.add('deliver', { deliveryId }, {
-          delay: this.retryDelays[delivery.retryCount - 1],
-          priority: 10 - delivery.retryCount, // Higher priority for earlier retries
-        });
-
-        this.logger.warn(`Webhook delivery failed, retrying (${delivery.retryCount}/${this.maxRetries}): ${deliveryId}`);
+        this.logger.warn(
+          `Webhook delivery failed, retrying (${delivery.retryCount}/${WEBHOOK_MAX_RETRIES}): ${deliveryId}`,
+        );
       } else {
         delivery.status = 'failed';
+        delivery.nextRetryAt = undefined;
         this.logger.error(`Webhook delivery failed permanently: ${deliveryId}`);
       }
+
+      await this.deliveryRepository.save(delivery);
+      throw error;
     }
 
     await this.deliveryRepository.save(delivery);
@@ -81,5 +92,13 @@ export class WebhookDeliveryProcessor extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job, err: Error) {
     this.logger.error(`Job ${job.id} failed with error: ${err.message}`);
+  }
+
+  private serializeResponseBody(data: unknown): string | undefined {
+    if (data == null) {
+      return undefined;
+    }
+
+    return typeof data === 'string' ? data : JSON.stringify(data);
   }
 }
