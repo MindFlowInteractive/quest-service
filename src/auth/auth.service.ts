@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from "@nestjs/common"
+import { EventEmitter2 } from "@nestjs/event-emitter"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
 import type { DeepPartial } from "typeorm"
@@ -18,6 +19,7 @@ import type { VerifyEmailDto } from "./dto/verify-email.dto"
 import type { JwtPayload } from "./interfaces/jwt-payload.interface"
 import { BCRYPT_SALT_ROUNDS, jwtConstants, UserRole } from "./constants"
 import { v4 as uuidv4 } from "uuid"
+import { WEBHOOK_INTERNAL_EVENTS } from "../webhooks/webhook.constants"
 
 @Injectable()
 export class AuthService {
@@ -31,6 +33,7 @@ export class AuthService {
     @InjectRepository(TwoFactorBackupCode)
     private backupCodesRepository: Repository<TwoFactorBackupCode>,
     private jwtService: JwtService,
+    private eventEmitter: EventEmitter2,
   ) { }
 
   async hashPassword(password: string): Promise<string> {
@@ -93,6 +96,13 @@ export class AuthService {
     })
 
     await this.usersRepository.save(user)
+
+    this.eventEmitter.emit(WEBHOOK_INTERNAL_EVENTS.userRegistered, {
+      userId: user.id,
+      email: user.email,
+      role: role.name,
+      registeredAt: new Date().toISOString(),
+    })
 
     // TODO: Send verification email (mocked for now)
     console.log(`Verification email sent to ${user.email} with token: ${verificationToken}`)

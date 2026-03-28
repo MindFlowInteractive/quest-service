@@ -10,6 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MultiplayerService } from '../services/multiplayer.service';
 import { RoomType, Player, RoomStatus, Spectator } from '../interfaces/multiplayer.interface';
 import { ValidationService } from '../../game-engine/services/validation.service';
@@ -33,6 +34,7 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
         private readonly validationService: ValidationService,
         private readonly leaderboardService: LeaderboardService,
         private readonly puzzlesService: PuzzlesService,
+        private readonly eventEmitter: EventEmitter2,
         private readonly spectatorService: SpectatorService,
     ) { }
 
@@ -298,6 +300,14 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
                         puzzleCompleted: allPlayersSolved
                     });
 
+                this.eventEmitter.emit('puzzle.solved', {
+                    userId: data.userId,
+                    puzzleId: data.puzzleId,
+                    score: result.score,
+                    totalScore: player?.score,
+                });
+
+                if (room.type === RoomType.COMPETITIVE) {
                     // Broadcast to spectators
                     this.server.to(`${data.roomId}-spectators`).emit('collaborativeSolutionVerified', {
                         userId: data.userId,

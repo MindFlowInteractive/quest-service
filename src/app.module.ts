@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -50,6 +51,7 @@ import { EnergyModule } from './energy/energy.module';
 import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
 import { XpModule } from './xp/xp.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { PlayerEventsModule } from './player-events/player-events.module';
 import { AccountModule } from './account/account.module';
 
@@ -83,6 +85,17 @@ import { AccountModule } from './account/account.module';
           configService.get<string>('NODE_ENV') === 'production'
             ? { rejectUnauthorized: false }
             : false,
+      }),
+      inject: [ConfigService],
+    }),
+
+    BullModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+          password: configService.get<string>('REDIS_PASSWORD') || undefined,
+        },
       }),
       inject: [ConfigService],
     }),
@@ -142,6 +155,7 @@ import { AccountModule } from './account/account.module';
     SkillRatingModule,
     WalletAuthModule,
     XpModule,
+    WebhooksModule,
     AccountModule,
   ],
   controllers: [AppController],

@@ -1,10 +1,12 @@
 // services/game-session.service.ts
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { GameSession } from '../entities/game-session.entity';
 import { PlayerEventsService } from '../../player-events/player-events.service';
 import { PuzzleVersionService } from '../../puzzles/services/puzzle-version.service';
+import { WEBHOOK_INTERNAL_EVENTS } from '../../webhooks/webhook.constants';
 import { CacheService } from '../../cache/services/cache.service';
 
 const SUSPENDED_KEY = (id: string) => `session:suspended:${id}`;
@@ -18,6 +20,7 @@ export class GameSessionService {
     private readonly sessionRepo: Repository<GameSession>,
     private readonly playerEventsService: PlayerEventsService,
     private readonly puzzleVersionService: PuzzleVersionService,
+    private readonly eventEmitter: EventEmitter2,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -88,6 +91,14 @@ export class GameSessionService {
         },
       });
     }
+
+    this.eventEmitter.emit(WEBHOOK_INTERNAL_EVENTS.sessionEnded, {
+      sessionId: savedSession.id,
+      userId: savedSession.userId,
+      puzzleId: savedSession.puzzleId,
+      status: savedSession.status,
+      endedAt: savedSession.lastActiveAt.toISOString(),
+    });
 
     return savedSession;
   }
