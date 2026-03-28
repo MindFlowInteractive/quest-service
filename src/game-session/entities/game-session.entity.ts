@@ -32,7 +32,10 @@ export class GameSession {
   puzzleVersionId?: string;
 
   @Column({ default: 'IN_PROGRESS' })
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED' | 'SUSPENDED';
+
+  @Column({ type: 'timestamp', nullable: true })
+  suspendedAt: Date | null;
 
   @Column('jsonb', { default: {} })
   state: Record<string, any>; // Dynamic game state object
@@ -42,6 +45,9 @@ export class GameSession {
 
   @Column({ type: 'int', default: 0 })
   totalMoves: number;
+
+  @Column({ type: 'int', default: 0 })
+  hintsUsed: number;
 
   @Column({ type: 'float', default: 0 })
   duration: number; // in minutes

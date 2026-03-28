@@ -1,12 +1,17 @@
 // services/game-session.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { GameSession } from '../entities/game-session.entity';
 import { PlayerEventsService } from '../../player-events/player-events.service';
 import { PuzzleVersionService } from '../../puzzles/services/puzzle-version.service';
 import { WEBHOOK_INTERNAL_EVENTS } from '../../webhooks/webhook.constants';
+import { CacheService } from '../../cache/services/cache.service';
+
+const SUSPENDED_KEY = (id: string) => `session:suspended:${id}`;
+const graceWindowSecs = () =>
+  parseInt(process.env.SESSION_GRACE_WINDOW_SECONDS ?? '300', 10);
 
 @Injectable()
 export class GameSessionService {
@@ -16,6 +21,7 @@ export class GameSessionService {
     private readonly playerEventsService: PlayerEventsService,
     private readonly puzzleVersionService: PuzzleVersionService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly cacheService: CacheService,
   ) {}
 
   async create(userId: string, puzzleId?: string) {
@@ -103,5 +109,49 @@ export class GameSessionService {
 
   async getById(sessionId: string) {
     return this.sessionRepo.findOne({ where: { id: sessionId } });
+  }
+
+  async suspend(sessionId: string) {
+    const session = await this.sessionRepo.findOneBy({ id: sessionId });
+    if (!session) throw new NotFoundException('Session not found');
+
+    session.status = 'SUSPENDED';
+    session.suspendedAt = new Date();
+    session.lastActiveAt = new Date();
+    const saved = await this.sessionRepo.save(session);
+
+    // Snapshot full state to Redis so reconnect can restore it exactly
+    const ttl = graceWindowSecs() + 60; // small buffer beyond the grace window
+    await this.cacheService.set(SUSPENDED_KEY(sessionId), saved.state, { ttl });
+
+    return saved;
+  }
+
+  async resumeById(sessionId: string, userId: string) {
+    const session = await this.sessionRepo.findOneBy({ id: sessionId });
+    if (!session) throw new NotFoundException('Session not found');
+    if (session.userId !== userId) throw new ForbiddenException('Session does not belong to this user');
+    if (session.status !== 'SUSPENDED') throw new ForbiddenException('Session is not suspended');
+
+    const cutoff = new Date(Date.now() - graceWindowSecs() * 1000);
+    if (session.suspendedAt && session.suspendedAt < cutoff) {
+      throw new ForbiddenException('Grace window has expired — session cannot be resumed');
+    }
+
+    // Restore state from Redis snapshot (falls back to DB state if cache miss)
+    const snapshot = await this.cacheService.get<Record<string, any>>(SUSPENDED_KEY(sessionId));
+    if (snapshot) {
+      session.state = snapshot;
+      await this.cacheService.delete(SUSPENDED_KEY(sessionId));
+    }
+
+    session.status = 'IN_PROGRESS';
+    session.suspendedAt = null;
+    session.lastActiveAt = new Date();
+    return this.sessionRepo.save(session);
+  }
+
+  async getSuspendedSessions(userId: string) {
+    return this.sessionRepo.find({ where: { userId, status: 'SUSPENDED' } });
   }
 }
