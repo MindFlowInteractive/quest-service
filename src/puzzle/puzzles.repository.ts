@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PuzzleEntity } from './entities/puzzle.entity';
+import { Puzzle } from '../puzzles/entities/puzzle.entity';
 
 export interface PuzzleSearchParams {
   q?: string;
@@ -20,8 +20,8 @@ export interface PuzzleSearchParams {
 @Injectable()
 export class PuzzlesRepository {
   constructor(
-    @InjectRepository(PuzzleEntity)
-    private readonly repo: Repository<PuzzleEntity>,
+    @InjectRepository(Puzzle)
+    private readonly repo: Repository<Puzzle>,
   ) {}
 
   async search(params: PuzzleSearchParams, userId: string) {

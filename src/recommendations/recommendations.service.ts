@@ -36,7 +36,7 @@ export class RecommendationsService {
     const cacheKey = `recommendations:personalized:${userId}:${limit}`;
 
     // Check cache first
-    const cached = await this.cacheService.get(cacheKey);
+    const cached = await this.cacheService.get<PuzzleRecommendationDto[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -45,7 +45,12 @@ export class RecommendationsService {
     const userProgress = await this.userProgressRepo.findOne({ where: { userId } });
     if (!userProgress) {
       // Fallback to trending for new users
-      return this.getTrendingRecommendations(limit);
+      const trending = await this.getTrendingRecommendations(limit);
+      return trending.map((puzzle) => ({
+        ...puzzle,
+        score: 0,
+        reason: 'trending puzzle',
+      }));
     }
 
     // Get user's solved puzzles
@@ -134,7 +139,7 @@ export class RecommendationsService {
     const cacheKey = `recommendations:trending:${limit}`;
 
     // Check cache first
-    const cached = await this.cacheService.get(cacheKey);
+    const cached = await this.cacheService.get<TrendingPuzzleDto[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -224,6 +229,7 @@ export class RecommendationsService {
     await this.analyticsService.trackEvent({
       eventType: 'recommendation_feedback',
       playerId: userId,
+      sessionId: feedback.metadata?.sessionId || 'recommendation-feedback',
       metadata: {
         puzzleId: feedback.puzzleId,
         feedbackType: feedback.feedbackType,
@@ -231,6 +237,31 @@ export class RecommendationsService {
         ...feedback.metadata,
       },
     });
+  }
+
+  upsertPlayer(profile: { id: string; skillLevel?: number; preferences?: string[] }) {
+    this.logger.debug(`Legacy upsertPlayer called for user ${profile.id}`);
+    return { ok: true, userId: profile.id };
+  }
+
+  trackEvent(event: { playerId: string; puzzleId: string; type: 'view' | 'click' | 'start' | 'complete'; timestamp: number }) {
+    return this.analyticsService.trackEvent({
+      eventType: `recommendation_${event.type}`,
+      playerId: event.playerId,
+      sessionId: `legacy-${event.timestamp}`,
+      metadata: {
+        puzzleId: event.puzzleId,
+        timestamp: event.timestamp,
+      },
+    });
+  }
+
+  async generateRecommendations(playerId: string, limit = 10) {
+    return this.getPersonalizedRecommendations(playerId, limit);
+  }
+
+  getMetrics() {
+    return [];
   }
 
   /**

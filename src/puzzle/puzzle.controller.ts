@@ -11,9 +11,10 @@ import {
 import { Request } from 'express';
 
 import { PuzzleService } from './puzzle.service';
-import { PuzzlesService } from './puzzles.service';
+import { PuzzlesService } from '../puzzles/puzzles.service';
 import { RewardsService } from '../rewards/rewards.service';
 import { NFTService } from '../nft/nft.service';
+import { SearchPuzzleDto } from '../puzzles/dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PuzzleSearchParams } from './puzzles.repository';
@@ -104,9 +105,9 @@ export class PuzzleController {
   @Get('search')
   async search(
     @Query(new ValidationPipe({ transform: true }))
-    query: PuzzleSearchParams,
+    query: SearchPuzzleDto,
     @Req() req: AuthRequest,
   ) {
-    return this.puzzlesService.search(query, req.user.id);
+    return this.puzzlesService.findAll(query);
   }
 }

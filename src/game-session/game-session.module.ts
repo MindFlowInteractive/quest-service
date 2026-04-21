@@ -27,5 +27,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
     AutosaveSessionJob,
     CrashRecoveryJob,
   ],
+  exports: [GameSessionService, SpectatorService],
 })
 export class GameSessionModule {}

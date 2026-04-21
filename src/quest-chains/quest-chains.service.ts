@@ -1,13 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-import {
-  QuestChain,
-  QuestChainEntry,
-  UserQuestChainProgress,
-} from '@prisma/client';
-
 import { CreateQuestChainDto } from './dto/create-quest-chain.dto';
+
+type QuestChainEntry = {
+  id: string;
+  order: number;
+  puzzleId: string;
+  unlockCondition?: string | null;
+  nextEntries?: string[] | null;
+};
+
+type QuestChain = {
+  id: string;
+  title: string;
+  description: string;
+  entries: QuestChainEntry[];
+};
+
+type UserQuestChainProgress = {
+  userId: string;
+  chainId: string;
+  completedEntries: string[];
+};
 
 @Injectable()
 export class QuestChainsService {

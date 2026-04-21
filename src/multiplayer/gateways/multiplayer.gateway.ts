@@ -285,6 +285,13 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
                     player.solvedPuzzles.push(data.puzzleId);
                 }
 
+                this.eventEmitter.emit('puzzle.solved', {
+                    userId: data.userId,
+                    puzzleId: data.puzzleId,
+                    score: result.score,
+                    totalScore: player?.score,
+                });
+
                 // Handle different game modes
                 if (room.type === RoomType.COLLABORATIVE) {
                     // Co-op mode: All players share the victory
@@ -300,14 +307,6 @@ export class MultiplayerGateway implements OnGatewayInit, OnGatewayConnection, O
                         puzzleCompleted: allPlayersSolved
                     });
 
-                this.eventEmitter.emit('puzzle.solved', {
-                    userId: data.userId,
-                    puzzleId: data.puzzleId,
-                    score: result.score,
-                    totalScore: player?.score,
-                });
-
-                if (room.type === RoomType.COMPETITIVE) {
                     // Broadcast to spectators
                     this.server.to(`${data.roomId}-spectators`).emit('collaborativeSolutionVerified', {
                         userId: data.userId,

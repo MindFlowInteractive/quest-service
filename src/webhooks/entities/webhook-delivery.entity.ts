@@ -12,7 +12,7 @@ import { Webhook } from './webhook.entity';
 export type DeliveryStatus = 'pending' | 'success' | 'failed' | 'retry';
 
 @Entity('webhook_deliveries')
-@Index(['webhookId', 'createdAt'], { order: { createdAt: 'DESC' } })
+@Index('IDX_webhook_delivery_webhook_created_at', ['webhookId', 'createdAt'])
 export class WebhookDelivery {
   @PrimaryGeneratedColumn('uuid')
   id: string;
