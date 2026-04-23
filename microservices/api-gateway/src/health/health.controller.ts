@@ -38,7 +38,12 @@ export class HealthController {
     }
 
     private getServicesHealth() {
-        const services = ['social', 'quest'];
+        const services = [
+            'social', 'quest', 'achievement', 'gameSession', 'puzzle', 
+            'content', 'economy', 'reward', 'notification', 'email', 
+            'tournament', 'matchmaking', 'analytics', 'recommendation', 
+            'cache', 'websocket', 'moderation', 'replay'
+        ];
         const health: Record<string, any> = {};
 
         for (const service of services) {
