@@ -148,6 +148,61 @@ services:
       - quest-network
     logging: *logging_config
 
+  puzzle-engine:
+    build:
+      context: ./microservices/puzzle-engine
+      dockerfile: Dockerfile
+    container_name: puzzle_engine
+    ports:
+      - "3008:3008"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=puzzle_db
+      - DB_SYNC=true
+      - SERVICE_PORT=3008
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/puzzle-engine:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
+  player-service:
+    build:
+      context: ./microservices/player-service
+      dockerfile: Dockerfile
+    container_name: player_service
+    ports:
+      - "3009:3009"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=player_db
+      - DB_SYNC=true
+      - SERVICE_PORT=3009
+      - JWT_SECRET=your-super-secret-jwt-key-here
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/player-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
   moderation-service:
     build:
       context: ./microservices/moderation-service
