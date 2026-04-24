@@ -1,0 +1,250 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Primary for Main Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: quest_postgres_main
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_main_data:/var/lib/postgresql/data
+      - ./database/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    networks:
+      - quest-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Game Session Service
+  postgres-game-session:
+    image: postgres:15-alpine
+    container_name: quest_postgres_game_session
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: game_session_db
+    volumes:
+      - postgres_game_session_data:/var/lib/postgresql/data
+    networks:
+      - quest-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Economy Service
+  postgres-economy:
+    image: postgres:15-alpine
+    container_name: quest_postgres_economy
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: economy_db
+    volumes:
+      - postgres_economy_data:/var/lib/postgresql/data
+    networks:
+      - quest-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Notification Service
+  postgres-notification:
+    image: postgres:15-alpine
+    container_name: quest_postgres_notification
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: notification_db
+    volumes:
+      - postgres_notification_data:/var/lib/postgresql/data
+    networks:
+      - quest-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Social Service
+  postgres-social:
+    image: postgres:15-alpine
+    container_name: quest_postgres_social
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: social_db
+    volumes:
+      - postgres_social_data:/var/lib/postgresql/data
+    networks:
+      - quest-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Read Replica for Main Service
+  postgres-read-replica-1:
+    image: postgres:15-alpine
+    container_name: quest_postgres_read_replica_1
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: quest_db
+      PGUSER: ${DB_USER:-postgres}
+      POSTGRES_MASTER_SERVICE: postgres
+    volumes:
+      - postgres_read_replica_1_data:/var/lib/postgresql/data
+    networks:
+      - quest-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Read Replica for Game Session Service
+  postgres-game-session-read:
+    image: postgres:15-alpine
+    container_name: quest_postgres_game_session_read
+    ports:
+      - "5438:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: game_session_db
+      PGUSER: ${DB_USER:-postgres}
+      POSTGRES_MASTER_SERVICE: postgres-game-session
+    volumes:
+      - postgres_game_session_read_data:/var/lib/postgresql/data
+    networks:
+      - quest-network
+    depends_on:
+      postgres-game-session:
+        condition: service_healthy
+
+  # Redis for Session Caching
+  redis:
+    image: redis:7-alpine
+    container_name: quest_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - redis_data:/data
+    networks:
+      - quest-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Redis Cluster for Microservices
+  redis-cluster-node-1:
+    image: redis:7-alpine
+    container_name: quest_redis_cluster_node_1
+    ports:
+      - "7001:6379"
+      - "17001:16379"
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --appendfilename appendonly.aof
+    volumes:
+      - redis_cluster_1_data:/data
+    networks:
+      - quest-network
+
+  redis-cluster-node-2:
+    image: redis:7-alpine
+    container_name: quest_redis_cluster_node_2
+    ports:
+      - "7002:6379"
+      - "17002:16379"
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --appendfilename appendonly.aof
+    volumes:
+      - redis_cluster_2_data:/data
+    networks:
+      - quest-network
+
+  # Database Management Tools
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: quest_pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@quest-service.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - quest-network
+    depends_on:
+      - postgres
+      - postgres-game-session
+      - postgres-economy
+
+  # Database Monitoring
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: quest_postgres_exporter
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: quest
+      DATA_SOURCE_URI: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-password}@postgres:5432/quest_db?sslmode=disable
+    networks:
+      - quest-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.52.0
+    container_name: quest_redis_exporter
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
+    networks:
+      - quest-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_main_data:
+  postgres_game_session_data:
+  postgres_economy_data:
+  postgres_notification_data:
+  postgres_social_data:
+  postgres_read_replica_1_data:
+  postgres_game_session_read_data:
+  redis_data:
+  redis_cluster_1_data:
+  redis_cluster_2_data:
+  pgadmin_data:
+
+networks:
+  quest-network:
+    external: true
