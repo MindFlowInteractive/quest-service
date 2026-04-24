@@ -5,8 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-  ManyToOne,
-  JoinColumn,
 } from 'typeorm';
 
 @Entity('rewards')
@@ -29,25 +27,25 @@ export class Reward {
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
   @Column({ type: 'decimal', precision: 18, scale: 8, nullable: true })
-  amount?: number; // For token rewards
+  amount?: number;
 
   @Column({ type: 'int', nullable: true })
-  tokenId?: number; // For NFT rewards
+  tokenId?: number;
 
   @Column({ type: 'uuid', nullable: true })
-  achievementId?: string; // For achievement rewards
+  achievementId?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  transactionHash?: string; // Blockchain transaction hash
+  transactionHash?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  contractId?: string; // Smart contract ID
+  contractId?: string;
 
   @Column({ type: 'text', nullable: true })
-  metadata?: string; // JSON metadata
+  metadata?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  reason?: string; // Reason for the reward
+  reason?: string;
 
   @Column({ type: 'timestamp with time zone', nullable: true })
   processedAt?: Date;

@@ -49,7 +49,6 @@ export class UserAchievement {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Relationships
   @ManyToOne('Achievement', 'userAchievements')
   @JoinColumn({ name: 'achievementId' })
   achievement: any;

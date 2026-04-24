@@ -1,8 +1,17 @@
-import { Controller, Get, Post, Body, Param, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { RewardService } from '../services/reward.service';
 import { Reward } from '../entities/reward.entity';
 
-interface DistributeTokenDto {
+class DistributeRewardDto {
   userId: string;
   amount: number;
   reason?: string;
@@ -14,24 +23,33 @@ export class RewardController {
 
   constructor(private readonly rewardService: RewardService) {}
 
-  @Post('token/distribute')
-  async distributeTokenReward(@Body() dto: DistributeTokenDto): Promise<Reward> {
-    this.logger.log(`Distributing token reward: ${dto.amount} to user ${dto.userId}`);
-    return await this.rewardService.distributeTokenReward(dto.userId, dto.amount, dto.reason);
+  // ─── Token Distribution ───────────────────────────────────────────────────────
+  @Post('distribute')
+  @HttpCode(HttpStatus.CREATED)
+  async distribute(@Body() dto: DistributeRewardDto): Promise<Reward> {
+    this.logger.log(
+      `Distributing ${dto.amount} tokens to user ${dto.userId}`,
+    );
+    return this.rewardService.distributeTokenReward(
+      dto.userId,
+      dto.amount,
+      dto.reason,
+    );
   }
 
+  // ─── Queries ──────────────────────────────────────────────────────────────────
   @Get('user/:userId')
-  async getRewardsByUser(@Param('userId') userId: string): Promise<Reward[]> {
-    return await this.rewardService.getRewardsByUser(userId);
+  async getByUser(@Param('userId') userId: string): Promise<Reward[]> {
+    return this.rewardService.getRewardsByUser(userId);
+  }
+
+  @Get('balance/:userAddress')
+  async getBalance(@Param('userAddress') userAddress: string) {
+    return this.rewardService.getUserTokenBalance(userAddress);
   }
 
   @Get(':id')
-  async getRewardById(@Param('id') id: string): Promise<Reward> {
-    return await this.rewardService.getRewardById(id);
-  }
-
-  @Get('token/balance/:userAddress')
-  async getUserTokenBalance(@Param('userAddress') userAddress: string) {
-    return await this.rewardService.getUserTokenBalance(userAddress);
+  async getById(@Param('id') id: string): Promise<Reward> {
+    return this.rewardService.getRewardById(id);
   }
 }

@@ -24,14 +24,14 @@ export class Achievement {
 
   @Column({ type: 'varchar', length: 50 })
   @Index()
-  category: string; // e.g., 'puzzle_mastery', 'speed', 'consistency', 'exploration', 'social'
+  category: string;
 
   @Column({ type: 'varchar', length: 20, default: 'common' })
   @Index()
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
 
   @Column({ type: 'int', default: 10 })
-  points: number; // Points awarded for this achievement
+  points: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   iconUrl?: string;
@@ -44,24 +44,21 @@ export class Achievement {
   isActive: boolean;
 
   @Column({ type: 'boolean', default: false })
-  isSecret: boolean; // Hidden achievements
+  isSecret: boolean;
 
   @Column({ type: 'int', default: 0 })
   @Index()
-  unlockedCount: number; // How many users have unlocked this
+  unlockedCount: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-  unlockRate: number; // Percentage of users who unlocked this
+  unlockRate: number;
 
-  // Complex unlock conditions
   @Column({ type: 'jsonb' })
   unlockConditions: any;
 
-  // Prerequisites (other achievements that must be unlocked first)
   @Column({ type: 'simple-array', default: [] })
-  prerequisites: string[]; // Achievement IDs
+  prerequisites: string[];
 
-  // Progression tracking for multi-step achievements
   @Column({ type: 'jsonb', nullable: true })
   progression?: {
     steps: Array<{
@@ -71,10 +68,9 @@ export class Achievement {
       condition: any;
       points: number;
     }>;
-    isCumulative: boolean; // Whether steps build on each other
+    isCumulative: boolean;
   };
 
-  // Seasonal or event-based achievements
   @Column({ type: 'jsonb', nullable: true })
   timeConstraints?: {
     startDate?: Date;
@@ -86,12 +82,11 @@ export class Achievement {
     timezone?: string;
   };
 
-  // Achievement metadata
   @Column({ type: 'jsonb', default: {} })
   metadata: {
     tags?: string[];
-    difficulty?: number; // 1-10
-    estimatedTime?: number; // minutes to complete
+    difficulty?: number;
+    estimatedTime?: number;
     relatedPuzzles?: string[];
     relatedCategories?: string[];
     tips?: string[];
@@ -107,7 +102,6 @@ export class Achievement {
   @Index()
   updatedAt: Date;
 
-  // Relationships
   @OneToMany('UserAchievement', 'achievement')
   userAchievements: any[];
 }

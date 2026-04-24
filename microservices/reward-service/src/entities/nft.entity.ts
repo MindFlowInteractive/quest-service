@@ -35,8 +35,8 @@ export class NFT {
   @Column({ type: 'varchar', length: 500 })
   imageUrl: string;
 
-  @Column({ type: 'varchar', length: 1000 })
-  metadataUri: string;
+  @Column({ type: 'varchar', length: 1000, nullable: true })
+  metadataUri?: string;
 
   @Column({ type: 'jsonb', default: {} })
   attributes: {
