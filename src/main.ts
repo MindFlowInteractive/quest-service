@@ -7,6 +7,8 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/exceptions/http-exception.filter';
 import { SanitizeInterceptor } from './common/interceptors/sanitize.interceptor';
+import { MetricsInterceptor } from './common/metrics/metrics.interceptor';
+import { MetricsService } from './common/metrics/metrics.service';
 import * as Sentry from '@sentry/node';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
@@ -67,8 +69,11 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Global sanitize interceptor
-  app.useGlobalInterceptors(new SanitizeInterceptor());
+  // Global interceptors
+  app.useGlobalInterceptors(
+    new SanitizeInterceptor(),
+    new MetricsInterceptor(app.get(MetricsService)),
+  );
 
   app.setGlobalPrefix(apiPrefix);
 

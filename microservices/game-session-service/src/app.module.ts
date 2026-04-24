@@ -9,7 +9,7 @@ import { SessionService } from './services/session.service';
 import { StateSnapshotService } from './services/state-snapshot.service';
 import { ReplayService } from './services/replay.service';
 import { RedisCacheService } from './services/redis-cache.service';
-import { TimeoutHandlerService } from './services/timeout-handler.service';
+import { SessionTimeoutService } from './services/session-timeout.service';
 import { SessionController } from './controllers/session.controller';
 import { StateController } from './controllers/state.controller';
 import { ReplayController } from './controllers/replay.controller';
@@ -52,7 +52,7 @@ import { AppService } from './app.service';
     StateSnapshotService,
     ReplayService,
     RedisCacheService,
-    TimeoutHandlerService,
+    SessionTimeoutService,
   ],
 })
 export class AppModule {}

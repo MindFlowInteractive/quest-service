@@ -55,6 +55,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { PlayerEventsModule } from './player-events/player-events.module';
 import { AccountModule } from './account/account.module';
 import { BlockchainEventsModule } from './blockchain-events/blockchain-events.module';
+import { MetricsModule } from './common/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -159,6 +160,7 @@ import { BlockchainEventsModule } from './blockchain-events/blockchain-events.mo
     WebhooksModule,
     AccountModule,
     BlockchainEventsModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [
