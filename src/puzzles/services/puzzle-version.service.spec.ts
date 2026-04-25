@@ -216,17 +216,35 @@ describe('PuzzleVersionService', () => {
   // ───────────────────────────────────────────────────────────────────────────
 
   describe('listVersions', () => {
-    it('returns versions newest-first', async () => {
+    it('returns versions newest-first with pagination metadata', async () => {
       puzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-uuid-1' });
+      const v3 = makeVersion({ id: 'v3', version: 3, createdAt: new Date('2026-03-03') });
       const v2 = makeVersion({ id: 'v2', version: 2, createdAt: new Date('2026-02-02') });
       const v1 = makeVersion({ id: 'v1', version: 1, createdAt: new Date('2026-01-01') });
-      versionRepo.find.mockResolvedValue([v2, v1]);
+      versionRepo.findAndCount.mockResolvedValue([[v3, v2], 3]);
 
-      const list = await service.listVersions('puzzle-uuid-1');
+      const result = await service.listVersions('puzzle-uuid-1', 1, 2);
 
-      expect(list).toHaveLength(2);
-      expect(list[0].version).toBe(2);
-      expect(list[1].version).toBe(1);
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].version).toBe(3);
+      expect(result.items[1].version).toBe(2);
+      expect(result.total).toBe(3);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(2);
+      expect(result.totalPages).toBe(2);
+    });
+
+    it('returns paginated results on page 2', async () => {
+      puzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-uuid-1' });
+      const v1 = makeVersion({ id: 'v1', version: 1, createdAt: new Date('2026-01-01') });
+      versionRepo.findAndCount.mockResolvedValue([[v1], 3]);
+
+      const result = await service.listVersions('puzzle-uuid-1', 2, 2);
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].version).toBe(1);
+      expect(result.page).toBe(2);
+      expect(result.totalPages).toBe(2);
     });
 
     it('throws NotFoundException for unknown puzzle', async () => {
@@ -318,6 +336,85 @@ describe('PuzzleVersionService', () => {
 
       await expect(
         service.rollbackTo('puzzle-uuid-1', 99, 'admin-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // diffVersions endpoint
+  // ───────────────────────────────────────────────────────────────────────────
+
+  describe('diffVersions', () => {
+    it('returns field-level diff between two versions', async () => {
+      puzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-uuid-1' });
+
+      const v1 = makeVersion({
+        version: 1,
+        content: {
+          ...makeVersion().content,
+          title: 'Original Title',
+          difficulty: 'easy' as any,
+          basePoints: 100,
+        },
+      });
+
+      const v2 = makeVersion({
+        version: 2,
+        content: {
+          ...makeVersion().content,
+          title: 'Updated Title',
+          difficulty: 'hard' as any,
+          basePoints: 100,
+        },
+      });
+
+      versionRepo.findOne
+        .mockResolvedValueOnce(v1)
+        .mockResolvedValueOnce(v2);
+
+      const result = await service.diffVersions('puzzle-uuid-1', 1, 2);
+
+      expect(result.from).toBe(1);
+      expect(result.to).toBe(2);
+      expect(result.changedFields).toHaveLength(2);
+      expect(result.changedFields[0].field).toBe('title');
+      expect(result.changedFields[0].before).toBe('Original Title');
+      expect(result.changedFields[0].after).toBe('Updated Title');
+      expect(result.changedFields[1].field).toBe('difficulty');
+    });
+
+    it('returns empty changedFields when versions are identical', async () => {
+      puzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-uuid-1' });
+
+      const v1 = makeVersion({ version: 1 });
+      const v2 = makeVersion({ version: 2, content: v1.content });
+
+      versionRepo.findOne
+        .mockResolvedValueOnce(v1)
+        .mockResolvedValueOnce(v2);
+
+      const result = await service.diffVersions('puzzle-uuid-1', 1, 2);
+
+      expect(result.changedFields).toHaveLength(0);
+    });
+
+    it('throws NotFoundException when from version does not exist', async () => {
+      puzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-uuid-1' });
+      versionRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.diffVersions('puzzle-uuid-1', 99, 2),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when to version does not exist', async () => {
+      puzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-uuid-1' });
+      versionRepo.findOne
+        .mockResolvedValueOnce(makeVersion({ version: 1 }))
+        .mockResolvedValueOnce(null);
+
+      await expect(
+        service.diffVersions('puzzle-uuid-1', 1, 99),
       ).rejects.toThrow(NotFoundException);
     });
   });
