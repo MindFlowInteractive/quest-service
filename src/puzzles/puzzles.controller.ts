@@ -249,12 +249,15 @@ export class PuzzlesController {
   /**
    * List all version snapshots for a puzzle, newest first.
    * Each item includes author, change note, and diff (changed field names).
+   * Supports pagination.
    */
   @Get(':id/versions')
   async listVersions(
     @Param('id', ParseUUIDPipe) id: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ) {
-    return this.puzzleVersionService.listVersions(id);
+    return this.puzzleVersionService.listVersions(id, page, limit);
   }
 
   /**
@@ -284,5 +287,18 @@ export class PuzzlesController {
     this.logger.log(`Rolling puzzle ${id} back to v${version} by admin ${adminId}`);
     const restored = await this.puzzleVersionService.rollbackTo(id, version, adminId, changeNote);
     return { message: `Puzzle restored to version ${version}`, puzzle: restored };
+  }
+
+  /**
+   * Get a field-level diff between two specific versions.
+   * Returns exactly which fields changed and their before/after values.
+   */
+  @Get(':id/versions/diff')
+  async diffVersions(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('from', ParseIntPipe) from: number,
+    @Query('to', ParseIntPipe) to: number,
+  ) {
+    return this.puzzleVersionService.diffVersions(id, from, to);
   }
 }
