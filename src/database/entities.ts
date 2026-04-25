@@ -16,3 +16,7 @@ export { Category } from '../puzzles/entities/category.entity';
 export { Collection } from '../puzzles/entities/collection.entity';
 export { Translation } from '../common/i18n/entities/translation.entity';
 export { WalletBalanceHistory } from '../wallet/entities/wallet-balance-history.entity';
+
+// Export guild entities
+export { Guild } from '../guilds/entities/guild.entity';
+export { GuildMember } from '../guilds/entities/guild-member.entity';
