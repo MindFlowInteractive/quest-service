@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package common;
+
+// Common response wrapper
+message Response {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+}
+
+// Pagination request
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+// Pagination response
+message PaginationResponse {
+  int32 page = 1;
+  int32 limit = 2;
+  int32 total = 3;
+  int32 totalPages = 4;
+}
+
+// Health check
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string status = 1;
+  string timestamp = 2;
+  string version = 3;
+}
