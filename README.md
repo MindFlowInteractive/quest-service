@@ -95,3 +95,10 @@ This feature allows users to authenticate using their Stellar wallet (Freighter)
 - Rate limiting: 100 requests/minute
 - JWT expiry: 1 hour
 - Replay protection: timestamped challenges
+
+
+---
+
+## Auto-generated contribution
+
+Added by bounty bot.
