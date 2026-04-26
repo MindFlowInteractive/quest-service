@@ -13,7 +13,7 @@ describe('LeaderboardsService', () => {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
-    find: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
     findAndCount: jest.fn(),
   };
 
