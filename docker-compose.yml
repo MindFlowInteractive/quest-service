@@ -203,6 +203,33 @@ services:
       - quest-network
     logging: *logging_config
 
+  wallet-service:
+    build:
+      context: ./microservices/wallet-service
+      dockerfile: Dockerfile
+    container_name: wallet_service
+    ports:
+      - "3010:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=wallet_db
+      - SERVICE_PORT=3000
+      - STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
+      - STELLAR_NETWORK=Test SDF Network ; September 2015
+    volumes:
+      - ./microservices/wallet-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
   moderation-service:
     build:
       context: ./microservices/moderation-service
