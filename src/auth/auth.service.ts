@@ -5,7 +5,7 @@ import { Repository } from "typeorm"
 import type { DeepPartial } from "typeorm"
 import { JwtService } from "@nestjs/jwt"
 import * as bcrypt from "bcrypt"
-import * as otplib from "otplib"
+import { generateSecret, verify } from "otplib"
 import * as QRCode from "qrcode"
 import { User } from "./entities/user.entity"
 import { Role } from "./entities/role.entity"
@@ -182,7 +182,7 @@ export class AuthService {
       // Issue full tokens
       return this.generateTokens(user)
     } catch (error) {
-      if (error.name === "TokenExpiredError") {
+      if (error instanceof Error && error.name === "TokenExpiredError") {
         throw new UnauthorizedException("MFA pending token expired. Please login again.")
       }
       throw error
@@ -357,7 +357,7 @@ export class AuthService {
       throw new BadRequestException("2FA is already enabled for this user");
     }
 
-    const secret = otplib.generateSecret();
+    const secret = generateSecret();
     const otpauthUrl = `otpauth://totp/Quest%20Service:${encodeURIComponent(user.email)}?secret=${secret}&issuer=Quest%20Service`;
     
     // Store the secret temporarily (not enabling 2FA yet)
@@ -387,9 +387,8 @@ export class AuthService {
       throw new BadRequestException("2FA is already enabled for this user");
     }
 
-    const isValid = speakeasy.authenticator.verify({
+    const isValid = verify({
       secret: user.twoFactorSecret,
-      encoding: "base32",
       token: code,
     });
 
@@ -431,9 +430,8 @@ export class AuthService {
     }
 
     // Verify TOTP code
-    const isValid = otplib.authenticator.verify({
+    const isValid = verify({
       secret: user.twoFactorSecret!,
-      encoding: "base32",
       token: code,
     });
 
@@ -479,7 +477,7 @@ export class AuthService {
     }
 
     // Verify TOTP code
-    const isValid = otplib.verify({
+    const isValid = verify({
       secret: user.twoFactorSecret,
       token: code,
     });

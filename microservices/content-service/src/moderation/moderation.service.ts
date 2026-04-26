@@ -6,7 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, MoreThan, In } from 'typeorm';
 import { ModerationQueue, QueueStatus, QueuePriority } from '../entities/moderation-queue.entity.js';
 import { ModerationAction, ModerationActionType, ModerationDecision } from '../entities/moderation-action.entity.js';
 import { Submission, SubmissionStatus } from '../entities/submission.entity.js';
@@ -110,7 +110,7 @@ export class ModerationService {
       throw new BadRequestException(`Queue entry is already ${queueEntry.status}`);
     }
 
-    queueEntry.status = QueueStatus.ASSIGNED;
+    queueEntry.status = QueueStatus.IN_PROGRESS;
     queueEntry.assignedTo = moderatorId;
     queueEntry.assignedAt = new Date();
 
@@ -286,11 +286,11 @@ export class ModerationService {
       overdueCount,
     ] = await Promise.all([
       this.queueRepository.count({ where: { status: QueueStatus.PENDING } }),
-      this.queueRepository.count({ where: { status: QueueStatus.IN_PROGRESS } }),
+      this.queueRepository.count({ where: { status: In([QueueStatus.ASSIGNED, QueueStatus.IN_PROGRESS]) } }),
       this.queueRepository.count({
         where: {
           status: QueueStatus.COMPLETED,
-          updatedAt: LessThan(todayStart),
+          updatedAt: MoreThan(todayStart),
         },
       }),
       this.queueRepository.count({ where: { isEscalated: true, status: QueueStatus.PENDING } }),

@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package achievement;
+
+import "common.proto";
+
+// Achievement service definition
+service AchievementService {
+  rpc GetAchievement (GetAchievementRequest) returns (GetAchievementResponse);
+  rpc UnlockAchievement (UnlockAchievementRequest) returns (UnlockAchievementResponse);
+  rpc GetUserAchievements (GetUserAchievementsRequest) returns (GetUserAchievementsResponse);
+  rpc HealthCheck (common.HealthCheckRequest) returns (common.HealthCheckResponse);
+}
+
+// Achievement message
+message Achievement {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string iconUrl = 4;
+  int32 points = 5;
+  string category = 6;
+  string createdAt = 7;
+}
+
+// User achievement message
+message UserAchievement {
+  string id = 1;
+  string userId = 2;
+  string achievementId = 3;
+  Achievement achievement = 4;
+  string unlockedAt = 5;
+  int32 progress = 6;
+}
+
+// Get achievement request/response
+message GetAchievementRequest {
+  string id = 1;
+}
+
+message GetAchievementResponse {
+  Achievement achievement = 1;
+  string error = 2;
+}
+
+// Unlock achievement request/response
+message UnlockAchievementRequest {
+  string userId = 1;
+  string achievementId = 2;
+  int32 progress = 3;
+}
+
+message UnlockAchievementResponse {
+  UserAchievement userAchievement = 1;
+  bool isNewUnlock = 2;
+  string error = 3;
+}
+
+// Get user achievements request/response
+message GetUserAchievementsRequest {
+  string userId = 1;
+  common.PaginationRequest pagination = 2;
+}
+
+message GetUserAchievementsResponse {
+  repeated UserAchievement achievements = 1;
+  common.PaginationResponse pagination = 2;
+  string error = 3;
+}

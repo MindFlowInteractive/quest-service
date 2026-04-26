@@ -48,7 +48,7 @@ export class GameSessionController {
   }
 
   @Get('resume/:userId')
-  async resumeSession(@Param('userId') userId: string) {
+  async resumeLatestSession(@Param('userId') userId: string) {
     const session = await this.sessionService.resume(userId);
     return {
       message: 'Game session resumed',

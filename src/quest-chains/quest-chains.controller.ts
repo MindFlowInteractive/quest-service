@@ -11,6 +11,7 @@ import { Request } from 'express';
 
 import { QuestChainsService } from './quest-chains.service';
 import { CreateQuestChainDto } from './dto/create-quest-chain.dto';
+import { UserRole } from '../auth/constants';
 
 // Guards / RBAC (adjust paths based on your project structure)
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -23,7 +24,7 @@ export class QuestChainsController {
   constructor(private readonly service: QuestChainsService) {}
 
   @Post()
-  @Roles('admin', 'editor')
+  @Roles(UserRole.ADMIN)
   async createChain(@Body() dto: CreateQuestChainDto) {
     return this.service.createChain(dto);
   }

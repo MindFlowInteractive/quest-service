@@ -89,6 +89,7 @@ import { TagsController } from './tags.controller';
     ThemesService,
     SolutionSubmissionService,
     PuzzleVersionService,
+    TagsService,
   ],
   exports: [
     PuzzlesService,

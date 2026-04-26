@@ -40,6 +40,14 @@ export interface PuzzleVersionListItem {
   createdAt: Date;
 }
 
+export interface PaginatedVersionsResponse {
+  items: PuzzleVersionListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface PuzzleVersionDetail extends PuzzleVersionListItem {
   content: PuzzleVersion['content'];
 }
@@ -136,17 +144,30 @@ export class PuzzleVersionService {
   /**
    * List all versions for a puzzle, newest first.
    * Includes author and diff summary; omits the heavy content blob.
+   * Supports pagination.
    */
-  async listVersions(puzzleId: string): Promise<PuzzleVersionListItem[]> {
+  async listVersions(
+    puzzleId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedVersionsResponse> {
     await this.assertPuzzleExists(puzzleId);
 
-    const versions = await this.versionRepository.find({
+    const [versions, total] = await this.versionRepository.findAndCount({
       where: { puzzleId },
       order: { version: 'DESC' },
       select: ['id', 'puzzleId', 'version', 'changedBy', 'changeNote', 'diff', 'createdAt'],
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
-    return versions;
+    return {
+      items: versions,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
@@ -256,6 +277,65 @@ export class PuzzleVersionService {
       );
       return restored;
     });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Diff endpoint
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Returns a detailed field-level diff between two specific versions.
+   * Shows exactly which fields changed and their before/after values.
+   */
+  async diffVersions(
+    puzzleId: string,
+    fromVersion: number,
+    toVersion: number,
+  ): Promise<{
+    from: number;
+    to: number;
+    changedFields: Array<{
+      field: string;
+      before: any;
+      after: any;
+    }>;
+  }> {
+    await this.assertPuzzleExists(puzzleId);
+
+    const fromRecord = await this.versionRepository.findOne({
+      where: { puzzleId, version: fromVersion },
+    });
+    const toRecord = await this.versionRepository.findOne({
+      where: { puzzleId, version: toVersion },
+    });
+
+    if (!fromRecord) {
+      throw new NotFoundException(`Version ${fromVersion} not found for puzzle ${puzzleId}`);
+    }
+    if (!toRecord) {
+      throw new NotFoundException(`Version ${toVersion} not found for puzzle ${puzzleId}`);
+    }
+
+    const changedFields: Array<{ field: string; before: any; after: any }> = [];
+
+    for (const field of DIFFABLE_FIELDS) {
+      const before = (fromRecord.content as any)[field];
+      const after = (toRecord.content as any)[field];
+
+      if (JSON.stringify(before) !== JSON.stringify(after)) {
+        changedFields.push({
+          field,
+          before,
+          after,
+        });
+      }
+    }
+
+    return {
+      from: fromVersion,
+      to: toVersion,
+      changedFields,
+    };
   }
 
   // ─────────────────────────────────────────────────────────────────────────

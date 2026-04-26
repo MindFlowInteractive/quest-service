@@ -148,29 +148,83 @@ services:
       - quest-network
     logging: *logging_config
 
-  leaderboard-service:
+  puzzle-engine:
     build:
-      context: ./microservices/leaderboard-service
+      context: ./microservices/puzzle-engine
       dockerfile: Dockerfile
-    container_name: leaderboard_service
+    container_name: puzzle_engine
     ports:
-      - "3008:3000"
+      - "3008:3008"
     environment:
       - NODE_ENV=development
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-password}
-      - DB_DATABASE=leaderboard_db
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - DB_NAME=puzzle_db
+      - DB_SYNC=true
+      - SERVICE_PORT=3008
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
     volumes:
-      - ./microservices/leaderboard-service:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./microservices/puzzle-engine:/app
+      - /app/node_modules
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+    networks:
+      - quest-network
+    logging: *logging_config
+
+  player-service:
+    build:
+      context: ./microservices/player-service
+      dockerfile: Dockerfile
+    container_name: player_service
+    ports:
+      - "3009:3009"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=player_db
+      - DB_SYNC=true
+      - SERVICE_PORT=3009
+      - JWT_SECRET=your-super-secret-jwt-key-here
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/player-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
+  wallet-service:
+    build:
+      context: ./microservices/wallet-service
+      dockerfile: Dockerfile
+    container_name: wallet_service
+    ports:
+      - "3010:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=wallet_db
+      - SERVICE_PORT=3000
+      - STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
+      - STELLAR_NETWORK=Test SDF Network ; September 2015
+    volumes:
+      - ./microservices/wallet-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
         condition: service_healthy
     networks:
       - quest-network

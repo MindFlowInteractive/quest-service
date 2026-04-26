@@ -123,11 +123,11 @@ export class PrivacyController {
     @Param('exportId') exportId: string,
     @Res() res: Response,
   ) {
-    const { data, filename } = await this.exportService.downloadExport(exportId, userId);
+    const { buffer, filename, contentType } = await this.exportService.downloadExport(exportId, userId);
     
-    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(JSON.stringify(data, null, 2));
+    res.send(buffer);
   }
 
   // ==================== Data Deletion (Right to be Forgotten) ====================

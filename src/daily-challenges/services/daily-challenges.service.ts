@@ -83,7 +83,7 @@ export class DailyChallengesService {
   /**
    * Retrieves user's challenge history.
    */
-  async getHistory(userId: string, limit = 30) {
+  async getDailyHistory(userId: string, limit = 30) {
     const completions = await this.completionRepo.find({
       where: { userId },
       relations: ['dailyChallenge', 'dailyChallenge.puzzle'],

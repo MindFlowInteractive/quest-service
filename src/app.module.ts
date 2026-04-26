@@ -54,6 +54,9 @@ import { XpModule } from './xp/xp.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { PlayerEventsModule } from './player-events/player-events.module';
 import { AccountModule } from './account/account.module';
+import { BlockchainEventsModule } from './blockchain-events/blockchain-events.module';
+import { MetricsModule } from './common/metrics/metrics.module';
+import { GuildsModule } from './guilds/guilds.module';
 
 @Module({
   imports: [
@@ -157,6 +160,9 @@ import { AccountModule } from './account/account.module';
     XpModule,
     WebhooksModule,
     AccountModule,
+    BlockchainEventsModule,
+    MetricsModule,
+    GuildsModule,
   ],
   controllers: [AppController],
   providers: [
