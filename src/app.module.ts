@@ -57,6 +57,7 @@ import { AccountModule } from './account/account.module';
 import { BlockchainEventsModule } from './blockchain-events/blockchain-events.module';
 import { MetricsModule } from './common/metrics/metrics.module';
 import { GuildsModule } from './guilds/guilds.module';
+import { AbTestingModule } from './ab-testing/ab-testing.module';
 
 @Module({
   imports: [
@@ -80,7 +81,7 @@ import { GuildsModule } from './guilds/guilds.module';
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', ''),
-        database: configService.get<string>('DB_NAME', 'quest_db'),
+        database: configService.get<string>('DB_NAME', 'myapp'),
         autoLoadEntities: true,
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: configService.get<string>('NODE_ENV') === 'development',
@@ -163,6 +164,7 @@ import { GuildsModule } from './guilds/guilds.module';
     BlockchainEventsModule,
     MetricsModule,
     GuildsModule,
+    AbTestingModule,
   ],
   controllers: [AppController],
   providers: [
