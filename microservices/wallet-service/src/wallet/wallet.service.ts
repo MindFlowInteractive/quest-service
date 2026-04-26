@@ -44,4 +44,20 @@ export class WalletService {
     }
     return wallet;
   }
+
+  async Stellartransfer(fromWalletId: string, toAddress: string, amount: number) {
+    const fromWallet = await this.getWalletById(fromWalletId);
+    if (fromWallet.status !== WalletStatus.ACTIVE) {
+      throw new ConflictException('Source wallet is not active');
+    }
+
+    const isValid = await this.stellarService.verifyAddress(toAddress);
+    if (!isValid) {
+      throw new NotFoundException('Destination address is invalid');
+    }
+
+    // In a real app, we would also check the balance and handle errors from Stellar
+    return this.stellarService.transfer(fromWallet.address, toAddress, amount);
+  }
+
 }
