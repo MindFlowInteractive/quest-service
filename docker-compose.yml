@@ -148,6 +148,34 @@ services:
       - quest-network
     logging: *logging_config
 
+  leaderboard-service:
+    build:
+      context: ./microservices/leaderboard-service
+      dockerfile: Dockerfile
+    container_name: leaderboard_service
+    ports:
+      - "3008:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_DATABASE=leaderboard_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./microservices/leaderboard-service:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
   moderation-service:
     build:
       context: ./microservices/moderation-service
