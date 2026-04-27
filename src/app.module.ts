@@ -57,6 +57,7 @@ import { AccountModule } from './account/account.module';
 import { BlockchainEventsModule } from './blockchain-events/blockchain-events.module';
 import { MetricsModule } from './common/metrics/metrics.module';
 import { GuildsModule } from './guilds/guilds.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -163,6 +164,7 @@ import { GuildsModule } from './guilds/guilds.module';
     BlockchainEventsModule,
     MetricsModule,
     GuildsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [
