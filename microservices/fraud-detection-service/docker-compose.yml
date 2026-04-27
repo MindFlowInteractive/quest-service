@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  fraud-detection-service:
+    build: .
+    container_name: fraud-detection-service
+    ports:
+      - "3020:3020"
+    environment:
+      - SERVICE_PORT=3020
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=fraud_detection_db
+      - DB_SYNC=true
+      - RISK_THRESHOLD_ALERT=60
+      - RISK_THRESHOLD_SUSPEND=85
+      - ANOMALY_WINDOW_MINUTES=60
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: fraud-detection-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: fraud_detection_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - fraud_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  fraud_pg_data:
