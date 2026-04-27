@@ -57,6 +57,7 @@ import { AccountModule } from './account/account.module';
 import { BlockchainEventsModule } from './blockchain-events/blockchain-events.module';
 import { MetricsModule } from './common/metrics/metrics.module';
 import { GuildsModule } from './guilds/guilds.module';
+import { SupportModule } from './support/support.module';
 <<<<<<< feature/ab-testing-task-238
 import { AbTestingModule } from './ab-testing/ab-testing.module';
 =======
@@ -168,6 +169,7 @@ import { ReportsModule } from './reports/reports.module';
     BlockchainEventsModule,
     MetricsModule,
     GuildsModule,
+    SupportModule,
 <<<<<<< feature/ab-testing-task-238
     AbTestingModule,
 =======
