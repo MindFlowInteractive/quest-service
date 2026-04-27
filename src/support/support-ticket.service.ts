@@ -240,20 +240,13 @@ export class SupportTicketService {
           ? 'A support agent has replied to your ticket.'
           : `Your ticket status changed from ${previousStatus} to ${ticket.status}.`;
 
-      const notification = this.notificationService['notificationRepo'].create({
-        userId: ticket.playerId,
+      await this.notificationService.createNotificationForUsers({
+        userIds: [ticket.playerId],
         type: `support_ticket_${event}`,
         title,
         body,
         meta: { ticketId: ticket.id, status: ticket.status },
       });
-
-      await this.notificationService['notificationRepo'].save(notification);
-      await this.notificationService['recordDelivery'](
-        notification.id,
-        'in_app',
-        'delivered',
-      );
     } catch (err) {
       this.logger.error(`Failed to send ticket notification: ${err}`);
     }
