@@ -3,6 +3,9 @@ import { NotificationProcessor } from '../notification.processor';
 import { NotificationGateway } from '../../common/gateways/notification.gateway';
 import { PushNotificationProvider } from '../../notifications/providers/push-notification.provider';
 import { RabbitMQService } from '@quest-service/shared';
+import { WebhooksService } from '../../webhooks/webhooks.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Notification } from '../../notifications/entities/notification.entity';
 
 jest.mock('@quest-service/shared', () => ({
   RabbitMQService: class RabbitMQService {},
@@ -13,6 +16,8 @@ describe('NotificationProcessor', () => {
   let mockPushProvider: any;
   let mockGateway: any;
   let mockRabbitMQ: any;
+  let mockWebhooksService: any;
+  let mockNotificationRepo: any;
 
   beforeEach(async () => {
     mockPushProvider = {
@@ -21,6 +26,10 @@ describe('NotificationProcessor', () => {
     };
     mockGateway = { sendToUser: jest.fn().mockReturnValue(true) };
     mockRabbitMQ = { publish: jest.fn().mockResolvedValue(undefined) };
+    mockWebhooksService = { triggerWebhooks: jest.fn().mockResolvedValue([]) };
+    mockNotificationRepo = {
+      update: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -28,6 +37,8 @@ describe('NotificationProcessor', () => {
         { provide: NotificationGateway, useValue: mockGateway },
         { provide: PushNotificationProvider, useValue: mockPushProvider },
         { provide: RabbitMQService, useValue: mockRabbitMQ },
+        { provide: WebhooksService, useValue: mockWebhooksService },
+        { provide: getRepositoryToken(Notification), useValue: mockNotificationRepo },
       ],
     }).compile();
 
