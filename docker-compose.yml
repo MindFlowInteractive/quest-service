@@ -92,6 +92,34 @@ services:
       - quest-network
     logging: *logging_config
   
+  analytics-service:
+    build:
+      context: ./microservices/analytics-service
+      dockerfile: ../../Dockerfile
+    container_name: analytics_service
+    ports:
+      - "3015:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - ANALYTICS_DB_NAME=analytics_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - ./microservices/analytics-service:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+  
   recommendation-service:
     build:
       context: ./microservices/recommendation-service
