@@ -57,7 +57,11 @@ import { AccountModule } from './account/account.module';
 import { BlockchainEventsModule } from './blockchain-events/blockchain-events.module';
 import { MetricsModule } from './common/metrics/metrics.module';
 import { GuildsModule } from './guilds/guilds.module';
+<<<<<<< feature/ab-testing-task-238
 import { AbTestingModule } from './ab-testing/ab-testing.module';
+=======
+import { ReportsModule } from './reports/reports.module';
+>>>>>>> main
 
 @Module({
   imports: [
@@ -164,7 +168,11 @@ import { AbTestingModule } from './ab-testing/ab-testing.module';
     BlockchainEventsModule,
     MetricsModule,
     GuildsModule,
+<<<<<<< feature/ab-testing-task-238
     AbTestingModule,
+=======
+    ReportsModule,
+>>>>>>> main
   ],
   controllers: [AppController],
   providers: [
