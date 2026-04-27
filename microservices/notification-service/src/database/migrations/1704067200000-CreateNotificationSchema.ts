@@ -60,9 +60,29 @@ export class CreateNotificationSchema1704067200000 implements MigrationInterface
                 CONSTRAINT "UQ_user_preferences_composite" UNIQUE ("userId", "channel", "notificationType")
             )
         `);
+
+        // Create webhooks table
+        await queryRunner.query(`
+            CREATE TABLE "notifications"."webhooks" (
+                "id" uuid NOT NULL DEFAULT gen_random_uuid(), 
+                "userId" character varying NOT NULL, 
+                "url" character varying NOT NULL, 
+                "isActive" boolean NOT NULL DEFAULT true, 
+                "events" jsonb, 
+                "secret" character varying, 
+                "failureCount" integer NOT NULL DEFAULT 0, 
+                "lastTriggeredAt" TIMESTAMP, 
+                "lastSuccessAt" TIMESTAMP, 
+                "lastFailureAt" TIMESTAMP, 
+                "createdAt" TIMESTAMP NOT NULL DEFAULT now(), 
+                "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), 
+                CONSTRAINT "PK_webhooks_id" PRIMARY KEY ("id")
+            )
+        `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`DROP TABLE "notifications"."webhooks"`);
         await queryRunner.query(`DROP TABLE "notifications"."user_notification_preferences"`);
         await queryRunner.query(`DROP TABLE "notifications"."notification_templates"`);
         await queryRunner.query(`DROP TABLE "notifications"."notifications"`);
