@@ -7,6 +7,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { TemplatesModule } from './templates/templates.module';
 import { GatewayModule } from './common/gateways/gateway.module';
 import { EventSubscriberModule } from './events/event-subscriber.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { ServiceRegistrationService } from './services/service-registration.service';
 import { AppDataSource } from './config/orm-config';
 import { 
@@ -15,6 +16,9 @@ import {
   AchievementUnlockedHandler,
   FriendRequestSentHandler,
   FriendRequestAcceptedHandler,
+  DailyChallengeAvailableHandler,
+  TournamentStartingSoonHandler,
+  SessionInviteReceivedHandler,
 } from './event-handlers';
 
 @Module({
@@ -38,6 +42,7 @@ import {
     NotificationsModule,
     TemplatesModule,
     GatewayModule,
+    WebhooksModule,
   ],
   providers: [
     ServiceRegistrationService,
@@ -46,6 +51,9 @@ import {
     AchievementUnlockedHandler,
     FriendRequestSentHandler,
     FriendRequestAcceptedHandler,
+    DailyChallengeAvailableHandler,
+    TournamentStartingSoonHandler,
+    SessionInviteReceivedHandler,
   ],
 })
 export class AppModule { }
