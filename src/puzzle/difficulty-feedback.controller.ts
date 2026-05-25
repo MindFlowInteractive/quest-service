@@ -7,7 +7,11 @@ export class DifficultyFeedbackController {
   constructor(private readonly service: DifficultyFeedbackService) {}
 
   @Post(':id/feedback')
-  async submit(@Param('id') id: string, @Req() req, @Body('rating') rating: string) {
+  async submit(
+    @Param('id') id: string,
+    @Req() req,
+    @Body('rating') rating: 'too_easy' | 'just_right' | 'too_hard',
+  ) {
     return this.service.submitFeedback(id, req.user.id, rating);
   }
 

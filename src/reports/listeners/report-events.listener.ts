@@ -1,6 +1,10 @@
+
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationsService } from '../notifications/notifications.service';
+
+interface NotificationsService {
+  createNotification(payload: any): Promise<any>;
+}
 
 @Injectable()
 export class ReportEventsListener {

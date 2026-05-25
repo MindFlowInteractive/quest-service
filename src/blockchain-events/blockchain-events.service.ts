@@ -38,7 +38,7 @@ interface HorizonEventsResponse {
 @Injectable()
 export class BlockchainEventsService {
   private readonly logger = new Logger(BlockchainEventsService.name);
-  private readonly registeredContracts: string[] = [];
+  private registeredContracts: string[] = [];
   private readonly horizonBaseUrl: string;
   private lastProcessedLedger: number = 0;
 

@@ -44,8 +44,26 @@ export class SessionReplayService {
   }
 
   async flagSuspiciousSessions(difficulty: 'easy' | 'medium' | 'hard') {
-    const sessions = await this.repo.query(/* aggregate sessions */);
-    return sessions.filter(s => s.totalTime < MIN_SOLVE_TIME[difficulty]);
+    // Aggregate sessions in-memory (safer for type-checking and avoids raw SQL here)
+    const events = await this.repo.find({ select: ['sessionId', 'timestamp'] as any });
+    const map = new Map<string, { min: Date; max: Date }>();
+    for (const e of events as any[]) {
+      const sid = e.sessionId;
+      const t: Date = e.timestamp;
+      const cur = map.get(sid);
+      if (!cur) map.set(sid, { min: t, max: t });
+      else {
+        if (t < cur.min) cur.min = t;
+        if (t > cur.max) cur.max = t;
+      }
+    }
+
+    const sessions = Array.from(map.entries()).map(([sessionId, { min, max }]) => ({
+      sessionId,
+      totalTime: (max.getTime() - min.getTime()) / 1000,
+    }));
+
+    return sessions.filter((s) => s.totalTime < MIN_SOLVE_TIME[difficulty]);
   }
 
   async applyRetentionTTL() {

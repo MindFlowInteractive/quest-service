@@ -7,7 +7,7 @@ import { DifficultyFeedback } from './difficulty-feedback.entity';
 export class DifficultyFeedbackService {
   constructor(private readonly repo: Repository<DifficultyFeedback>) {}
 
-  async submitFeedback(puzzleId: string, playerId: string, rating: string) {
+  async submitFeedback(puzzleId: string, playerId: string, rating: 'too_easy' | 'just_right' | 'too_hard') {
     const existing = await this.repo.findOne({ where: { puzzleId, playerId } });
     if (existing) throw new Error('Duplicate feedback not allowed');
 
