@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  blockchain-sync-service:
+    build: .
+    ports:
+      - '4005:4005'
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: blockchain_sync
+    ports:
+      - '5432:5432'
