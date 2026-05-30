@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  slot-machine-service:
+    build: .
+    ports:
+      - "3333:3333"
+    environment:
+      - NODE_ENV=production
