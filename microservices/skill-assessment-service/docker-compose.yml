@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  skill-assessment-service:
+    build: .
+    ports:
+      - '3015:3015'
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: skill_assessment_db
+      DB_SYNC: true
+      SERVICE_PORT: 3015
+      INITIAL_DIFFICULTY: 1
+      MAX_DIFFICULTY: 10
+      MIN_DIFFICULTY: 1
+      DIFFICULTY_ADJUSTMENT_THRESHOLD: 0.7
+      REASSESSMENT_INTERVAL_DAYS: 30
+      TIER_BRONZE_THRESHOLD: 30
+      TIER_SILVER_THRESHOLD: 50
+      TIER_GOLD_THRESHOLD: 70
+      TIER_PLATINUM_THRESHOLD: 85
+      TIER_DIAMOND_THRESHOLD: 95
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: skill_assessment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
