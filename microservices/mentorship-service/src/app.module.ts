@@ -14,6 +14,13 @@ import { MentorRating } from './ratings/entities/rating.entity';
 import { MentorReward } from './rewards/entities/reward.entity';
 import { MentorshipCertificate } from './certificates/entities/certificate.entity';
 import { MentorshipsModule } from './mentorships/mentorships.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { MilestonesModule } from './milestones/milestones.module';
+import { ProfilesModule } from './profiles/profiles.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { RewardsModule } from './rewards/rewards.module';
+import { CertificatesModule } from './certificates/certificates.module';
+import { MarketplaceModule } from './marketplace/marketplace.module';
 
 @Module({
   imports: [
@@ -47,6 +54,13 @@ import { MentorshipsModule } from './mentorships/mentorships.module';
     ScheduleModule.forRoot(),
     TerminusModule,
     MentorshipsModule,
+    SessionsModule,
+    MilestonesModule,
+    ProfilesModule,
+    RatingsModule,
+    RewardsModule,
+    CertificatesModule,
+    MarketplaceModule,
   ],
 })
 export class AppModule {}
