@@ -4,6 +4,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TerminusModule } from '@nestjs/terminus';
 
+import { MentorshipsModule } from './mentorships/mentorships.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { MilestonesModule } from './milestones/milestones.module';
+import { ProfilesModule } from './profiles/profiles.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { RewardsModule } from './rewards/rewards.module';
+import { CertificatesModule } from './certificates/certificates.module';
+import { MarketplaceModule } from './marketplace/marketplace.module';
+
 import { Mentorship } from './mentorships/entities/mentorship.entity';
 import { MentorshipSession } from './sessions/entities/session.entity';
 import { MentorshipMilestone } from './milestones/entities/milestone.entity';
@@ -13,14 +22,6 @@ import { StudentProfile } from './profiles/entities/student-profile.entity';
 import { MentorRating } from './ratings/entities/rating.entity';
 import { MentorReward } from './rewards/entities/reward.entity';
 import { MentorshipCertificate } from './certificates/entities/certificate.entity';
-import { MentorshipsModule } from './mentorships/mentorships.module';
-import { SessionsModule } from './sessions/sessions.module';
-import { MilestonesModule } from './milestones/milestones.module';
-import { ProfilesModule } from './profiles/profiles.module';
-import { RatingsModule } from './ratings/ratings.module';
-import { RewardsModule } from './rewards/rewards.module';
-import { CertificatesModule } from './certificates/certificates.module';
-import { MarketplaceModule } from './marketplace/marketplace.module';
 
 @Module({
   imports: [
