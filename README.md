@@ -56,9 +56,21 @@ Once running, you can access the services at:
 - **Social Service**: http://localhost:3002
 - **Database (PostgreSQL)**: localhost:5432
 
+## Quick start (one command)
+
+```bash
+npm run setup          # installs deps, copies .env, starts docker, smoke-tests
+npm run start:dev     # starts the API with hot reload
+```
+
+Then open http://localhost:3000/health.
+
+See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for the full local dev guide, style rules, and PR checklist.
+
 ## Common Commands
 - **Stop everything**: Press Ctrl+C or run docker-compose down
 - **Rebuild after adding new dependencies**: docker-compose up --build
+- **Run all CI checks locally**: `npm run verify` (lint + format + typecheck + tests)
 
 ## 💡 Contribute
 We welcome contributions from the community! Whether you're a developer, designer, or just passionate about logic games, Quest Service is open for you to add new puzzles, features, or help improve the game!

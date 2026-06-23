@@ -17,18 +17,23 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Matches modern NextJs/NestJs standards
+          node-version: '20'
           cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci
 
       - name: Lint Check
-        run: npm run lint # Ensures code quality before testing
+        run: npm run lint:check
+
+      - name: Format Check
+        run: npm run format:check
+
+      - name: TypeScript Type Check
+        run: npm run typecheck
 
       - name: Run Unit Tests
-        run: npm run test
+        run: npm test
 
-      - name: Run E2E Tests (Optional)
-        run: npm run test:e2e
-        continue-on-error: true # Prevents blocking if E2E is still in progress
+      - name: Build
+        run: npm run build
