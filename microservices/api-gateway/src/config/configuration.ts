@@ -113,6 +113,11 @@ export default () => ({
             prefix: '/api/replays',
             healthPath: '/health',
         },
+        payment: {
+            url: process.env.PAYMENT_SERVICE_URL || 'http://localhost:3019',
+            prefix: '/api/payments',
+            healthPath: '/health',
+        },
     },
 
     rateLimit: {

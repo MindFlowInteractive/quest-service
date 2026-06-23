@@ -258,6 +258,33 @@ services:
       - quest-network
     logging: *logging_config
 
+  payment-service:
+    build:
+      context: ./microservices/payment-service
+      dockerfile: Dockerfile
+    container_name: payment_service
+    ports:
+      - "3019:3019"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=payment_db
+      - SERVICE_PORT=3019
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-mock}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_test}
+    volumes:
+      - ./microservices/payment-service:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
+
   moderation-service:
     build:
       context: ./microservices/moderation-service
