@@ -1,6 +1,7 @@
 name: Bug report
 description: Report broken or unexpected behavior
 labels: ["bug", "triage"]
+
 ---
 
 ## Describe the bug

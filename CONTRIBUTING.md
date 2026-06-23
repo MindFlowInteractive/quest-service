@@ -48,12 +48,12 @@ All four must pass. If `format:check` fails, run `npm run format` to auto-fix.
 
 ### Common bug sources to avoid
 
-| Symptom | Fix |
-| --- | --- |
-| `Type 'undefined' is not assignable` after an `await` | Add a null-check or use `?? defaultValue` |
-| Service method returns `Promise<undefined>` | Return a value or annotate as `Promise<void>` |
-| Config value is `string \| undefined` | Use `configService.get<...>('KEY', defaultValue)` and provide a default |
-| Circular dependency crash | Move shared code into a third module; never import services across `app.module.ts` siblings |
+| Symptom                                               | Fix                                                                                         |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `Type 'undefined' is not assignable` after an `await` | Add a null-check or use `?? defaultValue`                                                   |
+| Service method returns `Promise<undefined>`           | Return a value or annotate as `Promise<void>`                                               |
+| Config value is `string \| undefined`                 | Use `configService.get<...>('KEY', defaultValue)` and provide a default                     |
+| Circular dependency crash                             | Move shared code into a third module; never import services across `app.module.ts` siblings |
 
 ---
 
