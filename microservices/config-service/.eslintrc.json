@@ -1,0 +1,11 @@
+{
+  "extends": "@nestjs/schematics",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "webpack": true,
+    "tsLoader": {
+      "transpileOnly": true
+    }
+  }
+}
