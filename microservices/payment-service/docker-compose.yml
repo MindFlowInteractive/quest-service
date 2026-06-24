@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  payment-service:
+    build: .
+    ports:
+      - '3019:3019'
+    environment:
+      NODE_ENV: development
+      SERVICE_PORT: 3019
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: payment_db
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-mock}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_test}
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: payment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5439:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

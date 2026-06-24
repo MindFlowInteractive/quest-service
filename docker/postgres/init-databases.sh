@@ -22,5 +22,6 @@ create_db "puzzle_db"
 create_db "player_db"
 create_db "moderation_db"
 create_db "analytics_db"
+create_db "payment_db"
 
 echo "All microservice databases created successfully!"
