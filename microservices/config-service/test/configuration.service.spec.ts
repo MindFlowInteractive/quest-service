@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigurationService } from './configuration.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Config, Environment } from '../../entities';
+import { Config, Environment } from '../src/entities';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { AuditLogService } from '../audit/audit-log.service';
-import { ValidationService } from '../../common';
+import { AuditLogService } from '../src/modules/audit/audit-log.service';
+import { ValidationService } from '../src/common';
+import { ConfigurationService } from '../src/modules/configuration/configuration.service';
 
 describe('ConfigurationService', () => {
   let service: ConfigurationService;
