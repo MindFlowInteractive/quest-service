@@ -1,0 +1,7 @@
+{
+  "collection": "src",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "tsConfigPath": "tsconfig.json"
+  }
+}
