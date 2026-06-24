@@ -3,6 +3,8 @@
     "module": "commonjs",
     "target": "ES2021",
     "lib": ["ES2021"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "declaration": true,
     "outDir": "./dist",
     "baseUrl": "./",
