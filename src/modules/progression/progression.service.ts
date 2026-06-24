@@ -1,4 +1,5 @@
 // src/modules/progression/progression.service.ts
+import { Season } from '../season/season.entity';
 export class ProgressionService {
   addXp(pass, xp: number, season: Season) {
     const totalXp = xp * season.bonusXpMultiplier;

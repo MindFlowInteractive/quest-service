@@ -14,7 +14,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./",
-    "ignoreDeprecations": "5.0",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -23,9 +22,7 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "types": ["jest", "node", "express", "multer"],
-    "typeRoots": ["node_modules/@types"]
+    "esModuleInterop": true
   },
   "include": ["src/**/*", "src/types.d.ts"],
   "exclude": [

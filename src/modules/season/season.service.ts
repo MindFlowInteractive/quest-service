@@ -1,4 +1,5 @@
 // src/modules/season/season.service.ts
+import { Season } from './season.entity';
 export class SeasonService {
   private seasons: Season[] = [];
 
