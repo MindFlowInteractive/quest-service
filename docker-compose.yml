@@ -119,6 +119,38 @@ services:
     networks:
       - quest-network
     logging: *logging_config
+
+  cache-warming-service:
+    build:
+      context: ./microservices/cache-warming-service
+      dockerfile: Dockerfile
+    container_name: cache_warming_service
+    ports:
+      - "${CACHE_WARMING_PORT:-3021}:3021"
+    environment:
+      - NODE_ENV=development
+      - PORT=3021
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=cache_warming_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      - CACHE_WARM_ON_STARTUP=${CACHE_WARM_ON_STARTUP:-true}
+      - CACHE_WARMING_LIMIT=${CACHE_WARMING_LIMIT:-50}
+      - CACHE_ADAPTIVE_WARMING_LIMIT=${CACHE_ADAPTIVE_WARMING_LIMIT:-30}
+      - CACHE_HIT_RATE_TARGET=${CACHE_HIT_RATE_TARGET:-0.85}
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quest-network
+    logging: *logging_config
   
   recommendation-service:
     build:
@@ -373,14 +405,18 @@ services:
     container_name: redis_main
     ports:
       - '${REDIS_PORT:-6379}:6379'
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
     healthcheck:
-      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" --raw incr ping']
       interval: 10s
       timeout: 3s
       retries: 5
+    networks:
+      - quest-network
     restart: unless-stopped
 
   rabbitmq:
