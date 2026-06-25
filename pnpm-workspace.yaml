@@ -1,0 +1,7 @@
+allowBuilds:
+  '@nestjs/core': false
+  '@scarf/scarf': false
+  bcrypt: true
+  msgpackr-extract: false
+  sharp: true
+  sqlite3: true

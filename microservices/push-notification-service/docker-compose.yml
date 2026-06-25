@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  push-notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quest-push-notification-service
+    ports:
+      - '3020:3020'
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+      SERVICE_PORT: 3020
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: quest-push-notification-db
+    ports:
+      - '5435:5432'
+    environment:
+      POSTGRES_DB: push_notification_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - push_notification_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: quest-push-notification-redis
+    ports:
+      - '6382:6379'
+    restart: unless-stopped
+
+volumes:
+  push_notification_postgres_data:
