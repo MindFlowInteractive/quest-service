@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  cache-warming-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cache_warming_service
+    ports:
+      - '${CACHE_WARMING_PORT:-3021}:3021'
+    environment:
+      - NODE_ENV=development
+      - PORT=3021
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${CACHE_WARMING_DB_NAME:-cache_warming_db}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      - CACHE_WARM_ON_STARTUP=${CACHE_WARM_ON_STARTUP:-true}
+      - CACHE_WARMING_LIMIT=${CACHE_WARMING_LIMIT:-50}
+      - CACHE_ADAPTIVE_WARMING_LIMIT=${CACHE_ADAPTIVE_WARMING_LIMIT:-30}
+      - CACHE_HIT_RATE_TARGET=${CACHE_HIT_RATE_TARGET:-0.85}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cache-warming-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: cache_warming_postgres
+    ports:
+      - '${CACHE_WARMING_DB_PORT:-5434}:5432'
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${CACHE_WARMING_DB_NAME:-cache_warming_db}
+    volumes:
+      - cache_warming_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cache-warming-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: cache_warming_redis
+    ports:
+      - '${CACHE_WARMING_REDIS_PORT:-6381}:6379'
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - cache_warming_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-redis123}', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cache-warming-network
+
+volumes:
+  cache_warming_postgres_data:
+  cache_warming_redis_data:
+
+networks:
+  cache-warming-network:
+    driver: bridge
