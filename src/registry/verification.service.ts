@@ -22,15 +22,20 @@ export class VerificationService {
    * Compares uploaded source compilation directly to live ledger states
    */
   async verifyContractBytecode(contractId: string, uploadedWasm: Buffer): Promise<boolean> {
-    if (!StrKey.isValidContractId(contractId)) {
+    if (!StrKey.isValidContract(contractId)) {
       throw new BadRequestException('Invalid Soroban Contract ID format.');
     }
 
     try {
-      // Fetch structural ledger ledger entry directly from network RPC
+      // Fetch the on-chain contract binary from the network RPC
       const contractData = await this.rpcInstance.getContractWasmByContractId(contractId);
-      
-      const onChainHash = Buffer.from(contractData.hash).toString('hex');
+      const contractBytes = Buffer.isBuffer(contractData)
+        ? contractData
+        : typeof contractData === 'string'
+        ? Buffer.from(contractData, 'hex')
+        : Buffer.from(contractData as ArrayBuffer);
+
+      const onChainHash = this.calculateHash(contractBytes);
       const uploadedHash = this.calculateHash(uploadedWasm);
 
       return onChainHash === uploadedHash;
