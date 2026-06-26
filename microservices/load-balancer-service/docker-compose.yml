@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  load-balancer-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3005:3005'
+    environment:
+      - PORT=3005
+    restart: unless-stopped
