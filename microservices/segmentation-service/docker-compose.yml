@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  segmentation-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: segmentation_service
+    ports:
+      - '${SEGMENTATION_PORT:-3023}:3023'
+    environment:
+      - NODE_ENV=development
+      - PORT=3023
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${SEGMENTATION_DB_NAME:-segmentation_db}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      - SEGMENTATION_SCHEDULER_ENABLED=${SEGMENTATION_SCHEDULER_ENABLED:-true}
+      - SEGMENTATION_EVAL_INTERVAL_MS=${SEGMENTATION_EVAL_INTERVAL_MS:-60000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - segmentation-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: segmentation_postgres
+    ports:
+      - '${SEGMENTATION_DB_PORT:-5436}:5432'
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${SEGMENTATION_DB_NAME:-segmentation_db}
+    volumes:
+      - segmentation_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - segmentation-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: segmentation_redis
+    ports:
+      - '${SEGMENTATION_REDIS_PORT:-6383}:6379'
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - segmentation_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-redis123}', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - segmentation-network
+
+volumes:
+  segmentation_postgres_data:
+  segmentation_redis_data:
+
+networks:
+  segmentation-network:
+    driver: bridge
