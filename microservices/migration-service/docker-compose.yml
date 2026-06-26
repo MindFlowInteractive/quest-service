@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  migration-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quest_migration_service
+    ports:
+      - "3022:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_HOST=postgres
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - quest-network
+
+networks:
+  quest-network:
+    external: true

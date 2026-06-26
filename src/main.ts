@@ -1,25 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
-import { CustomValidationPipe } from './common/exceptions/validation-exception.pipe';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import helmet from 'helmet';
+import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/exceptions/http-exception.filter';
-import { SanitizeInterceptor } from './common/interceptors/sanitize.interceptor';
-import { MetricsInterceptor } from './common/metrics/metrics.interceptor';
-import { MetricsService } from './common/metrics/metrics.service';
-import * as Sentry from '@sentry/node';
-import { ThrottlerGuard } from '@nestjs/throttler';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+// import { CustomValidationPipe } from './common/exceptions/validation-exception.pipe'; // Uncomment if you copy this pipe
+// import { SanitizeInterceptor } from './common/interceptors/sanitize.interceptor';
+// import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
 
 async function bootstrap() {
   // Initialize Sentry
   Sentry.init({
-    dsn: process.env.SENTRY_DSN || '', // Set your Sentry DSN in environment variables
-    tracesSampleRate: 1.0,
+    dsn: process.env.SENTRY_DSN || '',
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.5 : 1.0,
     environment: process.env.NODE_ENV || 'development',
   });
+
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
@@ -30,21 +28,19 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Access nested config properties from appConfig
-  const port = configService.get('app.port') || 3000;
-  const apiPrefix = configService.get('app.apiPrefix') || 'api/v1';
-  const corsOrigin =
-    configService.get('app.cors.origin') || 'http://localhost:3000';
+  const port = configService.get<number>('app.port') || 3003;
+  const apiPrefix = configService.get<string>('app.apiPrefix') || 'api/v1';
 
   // Security middleware
-  app.use(helmet(
-    {
-    contentSecurityPolicy: process.env.NODE_ENV === 'production',
-    crossOriginEmbedderPolicy: false,
-  }
-  ));
+  app.use(
+    helmet({
+      contentSecurityPolicy: process.env.NODE_ENV === 'production',
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
-  // CORS configuration
+  // CORS
+  const corsOrigin = configService.get<string>('app.cors.origin') || 'http://localhost:3000';
   app.enableCors({
     origin: corsOrigin,
     credentials: true,
@@ -52,53 +48,36 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
-
-
-  // Global validation pipe
+  // Global pipes
   app.useGlobalPipes(
-  new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }),);
-
-  //Global Guards 
-  // ThrottlerGuard is auto-provided by ThrottlerModule, use app.get() instead
-  // app.useGlobalGuards(new ThrottlerGuard());
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+    // new CustomValidationPipe(), // Uncomment if you have it
+  );
 
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Global interceptors
-  app.useGlobalInterceptors(
-    new SanitizeInterceptor(),
-    new MetricsInterceptor(app.get(MetricsService)),
-  );
+  // Global interceptors (optional for migration service)
+  // app.useGlobalInterceptors(
+  //   new SanitizeInterceptor(),
+  //   new MetricsInterceptor(app.get(MetricsService)),
+  // );
 
   app.setGlobalPrefix(apiPrefix);
-
-  // Connect RabbitMQ microservice for stale token cleanup
-  const rabbitmqUrl = configService.get<string>('RABBITMQ_URL') || 'amqp://admin:rabbitmq123@rabbitmq:5672';
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
-    options: {
-      urls: [rabbitmqUrl],
-      queue: 'notification_stale_tokens_queue',
-      queueOptions: { durable: true },
-      noAck: false,
-    },
-  });
-  await app.startAllMicroservices();
 
   await app.listen(port);
 
   logger.log(
-    `🚀 LogiQuest Backend is running on: http://localhost:${port}/${apiPrefix}`,
+    `🚀 Migration Service is running on: http://localhost:${port}/${apiPrefix}`,
     'Bootstrap',
   );
 }
 
 bootstrap().catch((error) => {
-  Logger.error('Failed to start the application', error);
+  Logger.error('Failed to start the Migration Service', error);
   process.exit(1);
 });
