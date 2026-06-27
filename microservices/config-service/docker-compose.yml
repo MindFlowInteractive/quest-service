@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  config-service:
+    container_name: config-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3020:3020'
+    environment:
+      - SERVICE_NAME=config-service
+      - SERVICE_PORT=3020
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=config_db
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - ENCRYPTION_KEY=your-secret-encryption-key-32-chars-min
+      - ENCRYPTION_ALGORITHM=aes-256-cbc
+      - CACHE_TTL=3600
+      - LOG_LEVEL=debug
+    depends_on:
+      - postgres
+    networks:
+      - config-network
+    volumes:
+      - ./src:/app/src
+      - /app/node_modules
+
+  postgres:
+    container_name: config-postgres
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: config_db
+    ports:
+      - '5433:5432'
+    networks:
+      - config-network
+    volumes:
+      - config-db-data:/var/lib/postgresql/data
+
+volumes:
+  config-db-data:
+
+networks:
+  config-network:
+    driver: bridge
