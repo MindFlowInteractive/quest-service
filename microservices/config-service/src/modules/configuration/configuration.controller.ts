@@ -49,10 +49,7 @@ export class ConfigurationController {
   }
 
   @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateConfigDto: UpdateConfigDto,
-  ): Promise<Config> {
+  async update(@Param('id') id: string, @Body() updateConfigDto: UpdateConfigDto): Promise<Config> {
     return this.configurationService.updateConfig(id, updateConfigDto);
   }
 
@@ -62,9 +59,7 @@ export class ConfigurationController {
   }
 
   @Get('environment/:environmentId')
-  async getByEnvironment(
-    @Param('environmentId') environmentId: string,
-  ): Promise<Config[]> {
+  async getByEnvironment(@Param('environmentId') environmentId: string): Promise<Config[]> {
     return this.configurationService.getConfigsByEnvironment(environmentId);
   }
 

@@ -7,9 +7,7 @@ export class AuditLogController {
   constructor(private auditLogService: AuditLogService) {}
 
   @Get()
-  async getRecentLogs(
-    @Query('limit') limit: string = '100',
-  ): Promise<AuditLog[]> {
+  async getRecentLogs(@Query('limit') limit: string = '100'): Promise<AuditLog[]> {
     return this.auditLogService.getRecentAuditLogs(parseInt(limit, 10));
   }
 
@@ -19,11 +17,7 @@ export class AuditLogController {
     @Param('entityId') entityId: string,
     @Query('limit') limit: string = '50',
   ): Promise<AuditLog[]> {
-    return this.auditLogService.getEntityAuditLogs(
-      entityType,
-      entityId,
-      parseInt(limit, 10),
-    );
+    return this.auditLogService.getEntityAuditLogs(entityType, entityId, parseInt(limit, 10));
   }
 
   @Get('action/:action')
@@ -31,9 +25,6 @@ export class AuditLogController {
     @Param('action') action: string,
     @Query('limit') limit: string = '50',
   ): Promise<AuditLog[]> {
-    return this.auditLogService.getActionAuditLogs(
-      action,
-      parseInt(limit, 10),
-    );
+    return this.auditLogService.getActionAuditLogs(action, parseInt(limit, 10));
   }
 }

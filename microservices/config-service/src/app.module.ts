@@ -10,13 +10,7 @@ import { EnvironmentModule } from './modules/environment/environment.module';
 import { SecretModule } from './modules/secret/secret.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
-import {
-  Config,
-  Environment,
-  Secret,
-  AuditLog,
-  WebhookSubscription,
-} from './entities';
+import { Config, Environment, Secret, AuditLog, WebhookSubscription } from './entities';
 
 @Module({
   imports: [

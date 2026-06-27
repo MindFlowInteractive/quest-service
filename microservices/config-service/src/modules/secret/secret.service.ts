@@ -15,23 +15,16 @@ export class SecretService {
     private auditLogService: AuditLogService,
   ) {}
 
-  async createSecret(
-    createSecretDto: CreateSecretDto,
-    userId?: string,
-  ): Promise<Secret> {
+  async createSecret(createSecretDto: CreateSecretDto, userId?: string): Promise<Secret> {
     const existingSecret = await this.secretRepository.findOne({
       where: { name: createSecretDto.name },
     });
 
     if (existingSecret) {
-      throw new BadRequestException(
-        `Secret with name "${createSecretDto.name}" already exists`,
-      );
+      throw new BadRequestException(`Secret with name "${createSecretDto.name}" already exists`);
     }
 
-    const { encryptedText, iv } = this.encryptionService.encrypt(
-      createSecretDto.value,
-    );
+    const { encryptedText, iv } = this.encryptionService.encrypt(createSecretDto.value);
 
     const secret = this.secretRepository.create({
       name: createSecretDto.name,
@@ -74,9 +67,7 @@ export class SecretService {
     }
 
     if (updateSecretDto.value) {
-      const { encryptedText, iv } = this.encryptionService.encrypt(
-        updateSecretDto.value,
-      );
+      const { encryptedText, iv } = this.encryptionService.encrypt(updateSecretDto.value);
       secret.encryptedValue = encryptedText;
       secret.iv = iv;
       secret.value = updateSecretDto.value;
@@ -176,11 +167,7 @@ export class SecretService {
     );
   }
 
-  async rotateSecret(
-    id: string,
-    newValue: string,
-    userId?: string,
-  ): Promise<Secret> {
+  async rotateSecret(id: string, newValue: string, userId?: string): Promise<Secret> {
     const secret = await this.secretRepository.findOne({ where: { id } });
 
     if (!secret) {
@@ -223,9 +210,7 @@ export class SecretService {
 
     for (const secret of secrets) {
       const lastRotated = secret.lastRotatedAt || secret.createdAt;
-      const rotationDue = new Date(
-        lastRotated.getTime() + secret.rotationIntervalSeconds * 1000,
-      );
+      const rotationDue = new Date(lastRotated.getTime() + secret.rotationIntervalSeconds * 1000);
 
       if (now > rotationDue) {
         secret.requiresRotation = true;

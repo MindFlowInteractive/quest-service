@@ -26,9 +26,7 @@ export class EnvironmentService {
     });
 
     if (existingEnv) {
-      throw new BadRequestException(
-        `Environment "${createEnvironmentDto.name}" already exists`,
-      );
+      throw new BadRequestException(`Environment "${createEnvironmentDto.name}" already exists`);
     }
 
     const environment = this.environmentRepository.create(createEnvironmentDto);
@@ -62,13 +60,7 @@ export class EnvironmentService {
 
     const updatedEnvironment = await this.environmentRepository.save(environment);
 
-    await this.auditLogService.log(
-      'UPDATE',
-      'Environment',
-      id,
-      updateEnvironmentDto,
-      userId,
-    );
+    await this.auditLogService.log('UPDATE', 'Environment', id, updateEnvironmentDto, userId);
 
     return updatedEnvironment;
   }
@@ -117,12 +109,6 @@ export class EnvironmentService {
 
     await this.environmentRepository.remove(environment);
 
-    await this.auditLogService.log(
-      'DELETE',
-      'Environment',
-      id,
-      { name: environment.name },
-      userId,
-    );
+    await this.auditLogService.log('DELETE', 'Environment', id, { name: environment.name }, userId);
   }
 }

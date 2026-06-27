@@ -34,11 +34,7 @@ export class AuditLogService {
     return this.auditLogRepository.save(auditLog);
   }
 
-  async getEntityAuditLogs(
-    entityType: string,
-    entityId: string,
-    limit = 50,
-  ): Promise<AuditLog[]> {
+  async getEntityAuditLogs(entityType: string, entityId: string, limit = 50): Promise<AuditLog[]> {
     return this.auditLogRepository.find({
       where: { entityType, entityId },
       order: { createdAt: 'DESC' },
@@ -46,10 +42,7 @@ export class AuditLogService {
     });
   }
 
-  async getActionAuditLogs(
-    action: string,
-    limit = 50,
-  ): Promise<AuditLog[]> {
+  async getActionAuditLogs(action: string, limit = 50): Promise<AuditLog[]> {
     return this.auditLogRepository.find({
       where: { action },
       order: { createdAt: 'DESC' },

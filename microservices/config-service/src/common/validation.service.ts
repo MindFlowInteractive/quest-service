@@ -8,7 +8,9 @@ export class ValidationService {
     }
 
     if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
-      throw new BadRequestException('Configuration key can only contain alphanumeric characters, underscores, and hyphens');
+      throw new BadRequestException(
+        'Configuration key can only contain alphanumeric characters, underscores, and hyphens',
+      );
     }
 
     if (key.length > 255) {
@@ -22,18 +24,13 @@ export class ValidationService {
     const validNames = ['development', 'staging', 'production', 'test'];
 
     if (!validNames.includes(name.toLowerCase())) {
-      throw new BadRequestException(
-        `Environment must be one of: ${validNames.join(', ')}`,
-      );
+      throw new BadRequestException(`Environment must be one of: ${validNames.join(', ')}`);
     }
 
     return true;
   }
 
-  validateConfigType(
-    type: 'string' | 'number' | 'boolean' | 'json',
-    value: any,
-  ): boolean {
+  validateConfigType(type: 'string' | 'number' | 'boolean' | 'json', value: any): boolean {
     switch (type) {
       case 'number':
         if (isNaN(Number(value))) {
@@ -48,7 +45,7 @@ export class ValidationService {
       case 'json':
         try {
           JSON.parse(typeof value === 'string' ? value : JSON.stringify(value));
-        } catch (e) {
+        } catch {
           throw new BadRequestException(`Value must be valid JSON`);
         }
         break;

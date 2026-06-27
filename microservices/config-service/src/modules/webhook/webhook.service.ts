@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { createHmac } from 'crypto';
 import { WebhookSubscription } from '../../entities';
 import { CreateWebhookSubscriptionDto, UpdateWebhookSubscriptionDto } from '../../common';
 import { AuditLogService } from '../audit/audit-log.service';
@@ -50,13 +51,7 @@ export class WebhookService {
     Object.assign(webhook, updateWebhookDto);
     const updatedWebhook = await this.webhookRepository.save(webhook);
 
-    await this.auditLogService.log(
-      'UPDATE',
-      'WebhookSubscription',
-      id,
-      updateWebhookDto,
-      userId,
-    );
+    await this.auditLogService.log('UPDATE', 'WebhookSubscription', id, updateWebhookDto, userId);
 
     return updatedWebhook;
   }
@@ -113,9 +108,7 @@ export class WebhookService {
       webhooks = await this.getAllWebhooks();
     }
 
-    const targetWebhooks = webhooks.filter(
-      (w) => w.events && w.events.includes(event),
-    );
+    const targetWebhooks = webhooks.filter((w) => w.events && w.events.includes(event));
 
     for (const webhook of targetWebhooks) {
       await this.sendWebhookWithRetry(webhook, event, data);
@@ -140,9 +133,7 @@ export class WebhookService {
         );
 
         if (attempt < webhook.retryAttempts - 1) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, webhook.retryDelayMs * (attempt + 1)),
-          );
+          await new Promise((resolve) => setTimeout(resolve, webhook.retryDelayMs * (attempt + 1)));
         }
       }
     }
@@ -181,24 +172,16 @@ export class WebhookService {
       );
 
       if (response.status >= 200 && response.status < 300) {
-        this.logger.debug(
-          `Webhook delivered successfully to ${webhook.webhookUrl}`,
-        );
+        this.logger.debug(`Webhook delivered successfully to ${webhook.webhookUrl}`);
       } else {
         throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
-      throw new Error(
-        `Failed to deliver webhook: ${error.message || error.toString()}`,
-      );
+      throw new Error(`Failed to deliver webhook: ${error.message || error.toString()}`);
     }
   }
 
   private generateSignature(secret: string, payload: string): string {
-    const crypto = require('crypto');
-    return crypto
-      .createHmac('sha256', secret)
-      .update(payload)
-      .digest('hex');
+    return createHmac('sha256', secret).update(payload).digest('hex');
   }
 }

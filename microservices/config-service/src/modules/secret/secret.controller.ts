@@ -46,10 +46,7 @@ export class SecretController {
   }
 
   @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateSecretDto: UpdateSecretDto,
-  ): Promise<Secret> {
+  async update(@Param('id') id: string, @Body() updateSecretDto: UpdateSecretDto): Promise<Secret> {
     return this.secretService.updateSecret(id, updateSecretDto);
   }
 

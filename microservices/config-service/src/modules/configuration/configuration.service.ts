@@ -23,10 +23,7 @@ export class ConfigurationService {
     private validationService: ValidationService,
   ) {}
 
-  async createConfig(
-    createConfigDto: CreateConfigDto,
-    userId?: string,
-  ): Promise<Config> {
+  async createConfig(createConfigDto: CreateConfigDto, userId?: string): Promise<Config> {
     this.validationService.validateConfigKey(createConfigDto.key);
     this.validationService.validateConfigType(
       createConfigDto.type || 'string',
@@ -53,13 +50,7 @@ export class ConfigurationService {
 
     const savedConfig = await this.configRepository.save(config);
 
-    await this.auditLogService.log(
-      'CREATE',
-      'Config',
-      savedConfig.id,
-      createConfigDto,
-      userId,
-    );
+    await this.auditLogService.log('CREATE', 'Config', savedConfig.id, createConfigDto, userId);
 
     await this.invalidateCache(savedConfig.key);
 
@@ -185,7 +176,7 @@ export class ConfigurationService {
   }
 
   async invalidateAllCache(): Promise<void> {
-    await this.cacheManager.reset();
+    await this.cacheManager.clear();
   }
 
   async getConfigsByEnvironment(environmentId: string): Promise<Config[]> {
@@ -194,9 +185,7 @@ export class ConfigurationService {
     });
 
     if (!environment) {
-      throw new NotFoundException(
-        `Environment with ID "${environmentId}" not found`,
-      );
+      throw new NotFoundException(`Environment with ID "${environmentId}" not found`);
     }
 
     return this.configRepository.find({

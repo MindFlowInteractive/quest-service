@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { EnvironmentService } from './environment.service';
 import { CreateEnvironmentDto, UpdateEnvironmentDto } from '../../common';
 import { Environment } from '../../entities';

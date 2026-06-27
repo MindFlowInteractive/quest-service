@@ -32,9 +32,7 @@ export class WebhookController {
   }
 
   @Get('service/:serviceName')
-  async getByService(
-    @Param('serviceName') serviceName: string,
-  ): Promise<WebhookSubscription[]> {
+  async getByService(@Param('serviceName') serviceName: string): Promise<WebhookSubscription[]> {
     return this.webhookService.getWebhooksByService(serviceName);
   }
 

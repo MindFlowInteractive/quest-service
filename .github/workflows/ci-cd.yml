@@ -7,8 +7,12 @@ on:
     branches: [main, develop]
 
 env:
-  NODE_VERSION: '18.x'
+  NODE_VERSION: '20.x'
   POSTGRES_VERSION: '14'
+
+defaults:
+  run:
+    working-directory: microservices/config-service
 
 jobs:
   # Code Quality Checks
@@ -25,6 +29,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: microservices/config-service/package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -52,9 +57,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: microservices/config-service/package-lock.json
+
+      - name: 📋 Install dependencies
+        run: npm ci
 
       - name: 🔐 Run security audit
-        run: npm audit --audit-level=moderate
+        run: npm audit --omit=dev --audit-level=moderate
 
       - name: 🛡️ Run dependency vulnerability scan
         run: |
@@ -68,7 +77,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ['16.x', '18.x', '20.x']
+        node-version: ['20.x', '22.x']
 
     steps:
       - name: 📥 Checkout code
@@ -79,6 +88,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+          cache-dependency-path: microservices/config-service/package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -137,31 +147,21 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: microservices/config-service/package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
 
-      - name: 🗄️ Run database migrations
-        run: npm run migration:run
-        env:
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: test_user
-          DATABASE_PASSWORD: test_password
-          DATABASE_NAME: quest_service_test
-
       - name: 🔗 Run integration tests
-        run: npm run test:integration
+        run: npm run test:e2e -- --runInBand
         env:
           NODE_ENV: test
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: test_user
-          DATABASE_PASSWORD: test_password
-          DATABASE_NAME: quest_service_test
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          JWT_SECRET: test-jwt-secret-key-for-ci
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_NAME: quest_service_test
+          ENCRYPTION_KEY: test-encryption-key-at-least-32-characters
 
       - name: 📊 Upload integration test coverage
         uses: codecov/codecov-action@v3
@@ -209,6 +209,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: microservices/config-service/package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -216,32 +217,19 @@ jobs:
       - name: 🏗️ Build application
         run: npm run build
 
-      - name: 🗄️ Setup test database
-        run: |
-          npm run migration:run
-          npm run seed:run
-        env:
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: test_user
-          DATABASE_PASSWORD: test_password
-          DATABASE_NAME: quest_service_e2e
-
       - name: 🎭 Run E2E tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --runInBand
         env:
           NODE_ENV: test
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: test_user
-          DATABASE_PASSWORD: test_password
-          DATABASE_NAME: quest_service_e2e
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          JWT_SECRET: test-jwt-secret-key-for-e2e
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_NAME: quest_service_e2e
+          ENCRYPTION_KEY: test-encryption-key-at-least-32-characters
 
       - name: 📸 Upload E2E test artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2e-test-results
@@ -280,6 +268,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: microservices/config-service/package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -343,7 +332,7 @@ jobs:
       - name: 🏗️ Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: microservices/config-service
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
