@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  bounty-security-service:
+    build: .
+    container_name: bounty-security-service
+    ports:
+      - "3030:3030"
+    environment:
+      - SERVICE_PORT=3030
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=bounty_security_db
+      - DB_SYNC=true
+      - REPUTATION_ACCEPTED_CRITICAL=100
+      - REPUTATION_ACCEPTED_HIGH=60
+      - REPUTATION_ACCEPTED_MEDIUM=30
+      - REPUTATION_ACCEPTED_LOW=10
+      - REPUTATION_REJECTED_PENALTY=5
+      - DEFAULT_REWARD_CRITICAL=5000
+      - DEFAULT_REWARD_HIGH=2000
+      - DEFAULT_REWARD_MEDIUM=750
+      - DEFAULT_REWARD_LOW=250
+      - DEFAULT_REWARD_INFO=50
+      - SLA_TRIAGE_HOURS=48
+      - SLA_VERIFY_HOURS=120
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: bounty-security-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bounty_security_db
+    ports:
+      - "5437:5432"
+    volumes:
+      - bounty_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  bounty_pg_data:
