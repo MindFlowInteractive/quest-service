@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  sms-service:
+    container_name: sms-service
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - '3007:3007'
+    environment:
+      - NODE_ENV=development
+      - SERVICE_PORT=3007
+      - DB_TYPE=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=${DB_NAME:-sms_service}
+      - DB_SYNC=true
+      - SMS_PROVIDER=${SMS_PROVIDER:-mock}
+      - SMS_DEFAULT_COUNTRY=${SMS_DEFAULT_COUNTRY:-US}
+      - SMS_SENDER_ID=${SMS_SENDER_ID:-Quest}
+      - SMS_STATUS_CALLBACK_URL=${SMS_STATUS_CALLBACK_URL:-http://localhost:3007/receipts/webhook}
+      - SMS_OTP_SECRET=${SMS_OTP_SECRET:-replace-me}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_FROM_NUMBER=${TWILIO_FROM_NUMBER:-}
+      - TWILIO_MESSAGING_SERVICE_SID=${TWILIO_MESSAGING_SERVICE_SID:-}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_SNS_SENDER_ID=${AWS_SNS_SENDER_ID:-Quest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sms-network
+    restart: unless-stopped
+
+  postgres:
+    container_name: postgres-sms
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-sms_service}
+    ports:
+      - '5437:5432'
+    volumes:
+      - postgres_sms_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sms-network
+    restart: unless-stopped
+
+volumes:
+  postgres_sms_data:
+    driver: local
+
+networks:
+  sms-network:
+    driver: bridge
