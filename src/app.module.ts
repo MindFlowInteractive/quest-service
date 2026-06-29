@@ -1,51 +1,35 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { WinstonModule } from 'nest-winston';
-import { MigrationModule } from './migration/migration.module';
-import { Migration } from './migration/entities/migration.entity';
-import { SchemaVersion } from './migration/entities/version.entity';
-import { createLoggerConfig } from '../config/logger.config'; // Adjust path if needed
-import { validateEnvironment } from '../config/env.validation'; // Adjust path if needed
+import { CacheWarmingModule } from './cache-warming/cache-warming.module';
+import { CacheJob } from './cache-warming/entities/cache-job.entity';
+import { Metric } from './cache-warming/entities/metric.entity';
+import { PreloadData } from './cache-warming/entities/preload-data.entity';
 
 @Module({
   imports: [
-    // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      validate: validateEnvironment,
       envFilePath: ['.env.local', '.env'],
     }),
-
-    // Logging (Winston) - matching main app
-    WinstonModule.forRootAsync({
-      useFactory: (configService: ConfigService) => createLoggerConfig(configService),
-      inject: [ConfigService],
-    }),
-
-    // Database Configuration
     TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
-        username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', ''),
-        database: configService.get<string>('DB_NAME', 'quest_db'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        migrations: [__dirname + '/migrations/*{.ts,.js}'],
+        username: configService.get<string>('DB_USER', 'postgres'),
+        password: configService.get<string>('DB_PASSWORD', 'password'),
+        database: configService.get<string>('DB_NAME', 'cache_warming_db'),
+        entities: [CacheJob, PreloadData, Metric],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: configService.get<string>('NODE_ENV') === 'development',
-        ssl:
-          configService.get<string>('NODE_ENV') === 'production'
-            ? { rejectUnauthorized: false }
-            : false,
       }),
       inject: [ConfigService],
     }),
-
-    // Migration Feature Module
-    MigrationModule,
+    ScheduleModule.forRoot(),
+    CacheWarmingModule,
   ],
 })
 export class AppModule {}
