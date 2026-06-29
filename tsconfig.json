@@ -31,10 +31,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "test",
-    "src/**/*.spec.ts",
-    "src/**/__tests__/**",
-    "src/**/tests/**",
     "src/File Storage and CDN Service Setup/**",
     "src/Scheduler and Cron Service Setup/**"
   ]
