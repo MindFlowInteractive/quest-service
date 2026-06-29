@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Reward } from '../entities/reward.entity';
@@ -9,34 +9,51 @@ import { nativeToScVal, Address } from '@stellar/stellar-sdk';
 @Injectable()
 export class RewardService {
   private readonly logger = new Logger(RewardService.name);
-  private rewardContractId: string;
+  private readonly rewardContractId: string;
 
   constructor(
     @InjectRepository(Reward)
-    private rewardRepository: Repository<Reward>,
-    private stellarService: StellarService,
-    private configService: ConfigService,
+    private readonly rewardRepository: Repository<Reward>,
+    private readonly stellarService: StellarService,
+    private readonly configService: ConfigService,
   ) {
     this.rewardContractId = this.configService.get<string>('REWARD_CONTRACT_ID');
   }
 
-  async distributeTokenReward(userId: string, amount: number, reason?: string): Promise<Reward> {
-    // Create a pending reward record
-    const reward = new Reward();
-    reward.userId = userId;
-    reward.type = 'token';
-    reward.amount = amount;
-    reward.reason = reason || 'token_distribution';
-    reward.status = 'pending';
-    reward.createdAt = new Date();
+  // ─── Token Distribution ──────────────────────────────────────────────────────
+  /**
+   * pending reward record
+   * @param userId recipient wallet address
+   * @param amount token amount call the Stellar contract, then update
+   * the record with the final on-chain status.
+   * @param reason optional reason for reward
+   * @returns Reward record
+   *
+   * Amount is stored as whole tokens in the DB and converted to stroops
+   * (1 token = 10_000_000 stroops) for the contract call.
+   */
+  async distributeTokenReward(
+    userId: string,
+    amount: number,
+    reason?: string,
+  ): Promise<Reward> {
+    // Persist before touching the chain we must never lose the intent
+    const reward = this.rewardRepository.create({
+      userId,
+      type: 'token',
+      amount,
+      reason: reason ?? 'token_distribution',
+      status: 'pending',
+    });
 
-    const savedReward = await this.rewardRepository.save(reward);
+    const saved = await this.rewardRepository.save(reward);
 
     try {
-      // Interact with Stellar blockchain to distribute tokens
       const params = [
-        new Address(userId).toScVal(), // Assuming userId is a Stellar address
-        nativeToScVal(BigInt(amount) * 10000000n, { type: 'i128' }), // Convert to stroops
+        new Address(userId).toScVal(),
+        nativeToScVal(BigInt(Math.round(amount)) * 10_000_000n, {
+          type: 'i128',
+        }),
       ];
 
       const result = await this.stellarService.invokeContract(
@@ -45,60 +62,69 @@ export class RewardService {
         params,
       );
 
-      // Update reward record with transaction details
-      savedReward.status = result.status === 'SUCCESS' ? 'completed' : 'failed';
-      savedReward.transactionHash = result.hash;
-      savedReward.processedAt = new Date();
-      
-      return await this.rewardRepository.save(savedReward);
+      saved.status = result.status === 'SUCCESS' ? 'completed' : 'failed';
+      saved.transactionHash = result.hash;
+      saved.processedAt = new Date();
+      return this.rewardRepository.save(saved);
     } catch (error) {
-      this.logger.error(`Error distributing token reward for user ${userId}:`, error);
-      savedReward.status = 'failed';
-      savedReward.metadata = JSON.stringify({ error: error.message });
-      return await this.rewardRepository.save(savedReward);
+      this.logger.error(
+        `Error distributing token reward for user ${userId}:`,
+        error,
+      );
+      saved.status = 'failed';
+      saved.metadata = JSON.stringify({ error: error.message });
+      return this.rewardRepository.save(saved);
     }
   }
 
+  // ─── Queries ─────────────────────────────────────────────────────────────────
+
   async getRewardsByUser(userId: string): Promise<Reward[]> {
-    return await this.rewardRepository.find({
+    return this.rewardRepository.find({
       where: { userId },
       order: { createdAt: 'DESC' },
     });
   }
 
   async getRewardById(id: string): Promise<Reward> {
-    return await this.rewardRepository.findOneOrFail({ where: { id } });
+    const reward = await this.rewardRepository.findOne({ where: { id } });
+    if (!reward) throw new NotFoundException(`Reward ${id} not found`);
+    return reward;
   }
 
   async getUserTokenBalance(userAddress: string): Promise<any> {
-    try {
-      const params = [new Address(userAddress).toScVal()];
-      
-      const result = await this.stellarService.invokeContract(
-        this.rewardContractId,
-        'get_user_rewards',
-        params,
-      );
-
-      return result.result;
-    } catch (error) {
-      this.logger.error(`Error getting token balance for user ${userAddress}:`, error);
-      throw error;
-    }
+    const params = [new Address(userAddress).toScVal()];
+    const result = await this.stellarService.invokeContract(
+      this.rewardContractId,
+      'get_user_rewards',
+      params,
+    );
+    return result.result;
   }
 
+  // ─── Scheduled Retry ─────────────────────────────────────────────────────────
+  /**
+   * Re-attempt all rewards that are still in 'pending' status.
+   * Called by a cron job or by TransactionMonitoringService.retryFailedTransactions().
+   */
   async processScheduledRewards(): Promise<void> {
-    // Process pending rewards that might have failed previously
     const pendingRewards = await this.rewardRepository.find({
       where: { status: 'pending' },
     });
+
+    this.logger.log(
+      `processScheduledRewards: ${pendingRewards.length} pending reward(s)`,
+    );
 
     for (const reward of pendingRewards) {
       try {
         if (reward.type === 'token' && reward.amount) {
           const params = [
             new Address(reward.userId).toScVal(),
-            nativeToScVal(BigInt(reward.amount) * 10000000n, { type: 'i128' }),
+            nativeToScVal(
+              BigInt(Math.round(Number(reward.amount))) * 10_000_000n,
+              { type: 'i128' },
+            ),
           ];
 
           const result = await this.stellarService.invokeContract(
@@ -110,11 +136,13 @@ export class RewardService {
           reward.status = result.status === 'SUCCESS' ? 'completed' : 'failed';
           reward.transactionHash = result.hash;
           reward.processedAt = new Date();
-          
           await this.rewardRepository.save(reward);
         }
       } catch (error) {
-        this.logger.error(`Error processing scheduled reward ${reward.id}:`, error);
+        this.logger.error(
+          `Error processing scheduled reward ${reward.id}:`,
+          error,
+        );
         reward.status = 'failed';
         reward.metadata = JSON.stringify({ error: error.message });
         await this.rewardRepository.save(reward);

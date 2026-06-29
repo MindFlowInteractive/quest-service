@@ -1,0 +1,71 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Main Quest Service
+  - job_name: 'quest-service'
+    static_configs:
+      - targets: ['quest-service:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Notification Service
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Social Service
+  - job_name: 'social-service'
+    static_configs:
+      - targets: ['social-service:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Game Session Service
+  - job_name: 'game-session-service'
+    static_configs:
+      - targets: ['game-session-service:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Economy Service
+  - job_name: 'economy-service'
+    static_configs:
+      - targets: ['economy-service:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Node Exporter for System Metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # PostgreSQL Exporter
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # Redis Exporter
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s

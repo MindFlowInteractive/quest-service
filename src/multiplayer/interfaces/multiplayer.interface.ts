@@ -18,11 +18,21 @@ export interface Player {
     solvedPuzzles: string[];
 }
 
+export interface Spectator {
+    id: string;
+    userId: string;
+    username: string;
+    joinedAt: Date;
+    isActive: boolean;
+}
+
 export interface MultiplayerRoom {
     id: string;
+    inviteCode: string;
     type: RoomType;
     status: RoomStatus;
     players: Player[];
+    spectators: Spectator[];
     puzzleId?: string;
     startTime?: Date;
     endTime?: Date;
@@ -32,7 +42,9 @@ export interface MultiplayerRoom {
         minPlayers: number;
         timeLimit: number;
         difficulty: string;
+        spectatingAllowed: boolean;
     };
+    disconnectedPlayers?: Map<string, Date>; // userId -> disconnect time
 }
 
 export interface MatchmakingMatch {

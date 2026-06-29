@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Leaderboard } from './entities/leaderboard.entity';
@@ -8,6 +9,7 @@ import { CreateLeaderboardDto } from './dto/create-leaderboard.dto';
 import { CreateLeaderboardEntryDto } from './dto/create-leaderboard-entry.dto';
 import { Cache } from 'cache-manager';
 import { AchievementsService } from '../achievements/achievements.service';
+import { WEBHOOK_INTERNAL_EVENTS } from '../webhooks/webhook.constants';
 
 @Injectable()
 export class LeaderboardService {
@@ -18,6 +20,7 @@ export class LeaderboardService {
     private entryRepository: Repository<LeaderboardEntry>,
     @Inject(CACHE_MANAGER) private cacheManager: any,
     private achievementsService: AchievementsService,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   async createLeaderboard(dto: CreateLeaderboardDto): Promise<Leaderboard> {
@@ -35,6 +38,15 @@ export class LeaderboardService {
     await this.cacheManager.reset();
     // Award leaderboard achievements if criteria met
     await this.checkAndAwardLeaderboardAchievements(dto.leaderboardId, dto.userId);
+
+    this.eventEmitter.emit(WEBHOOK_INTERNAL_EVENTS.leaderboardUpdated, {
+      leaderboardId: dto.leaderboardId,
+      entryId: saved.id,
+      userId: dto.userId,
+      score: saved.score,
+      updatedAt: new Date().toISOString(),
+    });
+
     return saved;
   }
 
@@ -131,6 +143,12 @@ export class LeaderboardService {
     // (If you want to delete, use delete instead of update above)
     // Invalidate cache
     await this.cacheManager.reset();
+
+    this.eventEmitter.emit(WEBHOOK_INTERNAL_EVENTS.leaderboardUpdated, {
+      leaderboardId,
+      archivedAt: now.toISOString(),
+      reset: true,
+    });
   }
 
   async getUserRankSummary(leaderboardId: number, userId: number) {

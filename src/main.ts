@@ -7,8 +7,11 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/exceptions/http-exception.filter';
 import { SanitizeInterceptor } from './common/interceptors/sanitize.interceptor';
+import { MetricsInterceptor } from './common/metrics/metrics.interceptor';
+import { MetricsService } from './common/metrics/metrics.service';
 import * as Sentry from '@sentry/node';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   // Initialize Sentry
@@ -66,10 +69,26 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Global sanitize interceptor
-  app.useGlobalInterceptors(new SanitizeInterceptor());
+  // Global interceptors
+  app.useGlobalInterceptors(
+    new SanitizeInterceptor(),
+    new MetricsInterceptor(app.get(MetricsService)),
+  );
 
   app.setGlobalPrefix(apiPrefix);
+
+  // Connect RabbitMQ microservice for stale token cleanup
+  const rabbitmqUrl = configService.get<string>('RABBITMQ_URL') || 'amqp://admin:rabbitmq123@rabbitmq:5672';
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [rabbitmqUrl],
+      queue: 'notification_stale_tokens_queue',
+      queueOptions: { durable: true },
+      noAck: false,
+    },
+  });
+  await app.startAllMicroservices();
 
   await app.listen(port);
 

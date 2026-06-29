@@ -4,3 +4,4 @@ export * from './search-puzzle.dto';
 export * from './bulk-operations.dto';
 export * from './submit-solution.dto';
 export * from './submission-result.dto';
+export * from './tag.dto';

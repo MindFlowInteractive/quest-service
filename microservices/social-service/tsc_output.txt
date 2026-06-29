@@ -1,0 +1,27 @@
+src/common/gateways/social.gateway.ts(9,18): error TS2305: Module '"ws"' has no exported member 'Socket'.
+src/common/gateways/social.gateway.ts(24,13): error TS6133: 'server' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(77,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(102,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(127,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(152,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(181,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(227,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(251,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(278,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(302,5): error TS6133: 'client' is declared but its value is never read.
+src/common/gateways/social.gateway.ts(342,31): error TS6133: 'socket' is declared but its value is never read.
+src/event-handlers/index.ts(2,25): error TS6133: 'BaseEvent' is declared but its value is never read.
+src/event-handlers/index.ts(12,73): error TS6133: 'email' is declared but its value is never read.
+src/event-handlers/index.ts(60,66): error TS6133: 'finalStandings' is declared but its value is never read.
+src/friends/friend-request.entity.ts(8,3): error TS6133: 'ManyToOne' is declared but its value is never read.
+src/friends/friend-request.entity.ts(9,3): error TS6133: 'JoinColumn' is declared but its value is never read.
+src/friends/friends.controller.ts(1,61): error TS6133: 'UseGuards' is declared but its value is never read.
+src/friends/friends.controller.ts(3,34): error TS6133: 'UpdateFriendRequestDto' is declared but its value is never read.
+src/friends/friends.service.ts(4,24): error TS2307: Cannot find module '../friend.entity' or its corresponding type declarations.
+src/friends/friends.service.ts(5,52): error TS2307: Cannot find module '../friend-request.entity' or its corresponding type declarations.
+src/friends/friends.service.ts(6,34): error TS6133: 'UpdateFriendRequestDto' is declared but its value is never read.
+src/leaderboards/dto/index.ts(1,55): error TS6133: 'Max' is declared but its value is never read.
+src/leaderboards/leaderboards.service.ts(8,34): error TS2307: Cannot find module '../leaderboard-entry.entity' or its corresponding type declarations.
+src/leaderboards/leaderboards.service.ts(282,11): error TS6133: 'entries' is declared but its value is never read.
+src/rooms/rooms.controller.ts(6,3): error TS6133: 'Delete' is declared but its value is never read.
+src/rooms/rooms.service.ts(9,45): error TS2307: Cannot find module '../multiplayer-room.entity' or its corresponding type declarations.

@@ -11,8 +11,6 @@ import { PlayerEvent } from './entities/player-event.entity';
 import { EventReward } from './entities/event-reward.entity';
 import { NotificationService } from '../notifications/notification.service';
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-
 const mockRepo = () => ({
   create: jest.fn((d) => d),
   save: jest.fn((d) => Promise.resolve({ ...d, id: d.id ?? 'generated-id' })),
@@ -92,6 +90,7 @@ describe('SeasonalEventService', () => {
         { provide: getRepositoryToken(SeasonalEvent), useValue: eventRepo },
         { provide: getRepositoryToken(EventPuzzle), useValue: puzzleRepo },
         { provide: getRepositoryToken(EventReward), useValue: rewardRepo },
+        { provide: getRepositoryToken(PlayerEvent), useValue: mockRepo() },
         { provide: NotificationService, useValue: notifService },
       ],
     }).compile();
@@ -477,11 +476,11 @@ describe('EventPuzzleService', () => {
   });
 
   describe('findPuzzlesByEvent()', () => {
-    it('throws ForbiddenException when event is not active', async () => {
+    it('throws NotFoundException when event is not active', async () => {
       const inactiveEvent = { ...baseEvent(), isActive: false };
       eventRepo.findOne.mockResolvedValueOnce(inactiveEvent);
 
-      await expect(service.findPuzzlesByEvent('event-1')).rejects.toThrow(ForbiddenException);
+      await expect(service.findPuzzlesByEvent('event-1')).rejects.toThrow(NotFoundException);
     });
 
     it('returns active puzzles for an active event', async () => {
@@ -497,11 +496,11 @@ describe('EventPuzzleService', () => {
   });
 
   describe('findOne()', () => {
-    it('throws ForbiddenException when puzzle event is inactive', async () => {
+    it('throws NotFoundException when puzzle event is inactive', async () => {
       const puzzle = { ...basePuzzle(), event: { isActive: false } };
       puzzleRepo.findOne.mockResolvedValueOnce(puzzle);
 
-      await expect(service.findOne('puzzle-1')).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne('puzzle-1')).rejects.toThrow(NotFoundException);
     });
 
     it('throws NotFoundException when puzzle does not exist', async () => {
@@ -752,6 +751,7 @@ describe('LeaderboardService', () => {
         { id: 'pe-1', playerId: 'p1', score: 300, puzzlesCompleted: 5, currentStreak: 3, bestStreak: 5, lastActivityAt: new Date() },
         { id: 'pe-2', playerId: 'p2', score: 200, puzzlesCompleted: 3, currentStreak: 1, bestStreak: 3, lastActivityAt: new Date() },
       ];
+      eventRepo.findOne.mockResolvedValueOnce(baseEvent());
       playerEventRepo.find.mockResolvedValueOnce(entries);
 
       const result = await service.getEventLeaderboard('event-1', 10);
@@ -763,11 +763,261 @@ describe('LeaderboardService', () => {
     });
 
     it('returns empty array for event with no participants', async () => {
+      eventRepo.findOne.mockResolvedValueOnce(baseEvent());
       playerEventRepo.find.mockResolvedValueOnce([]);
 
       const result = await service.getEventLeaderboard('event-1', 10);
 
       expect(result).toEqual([]);
     });
+  });
+});
+
+// ─── SeasonalEventService — handleEventEnd ────────────────────────────────────
+
+describe('SeasonalEventService — handleEventEnd()', () => {
+  let service: SeasonalEventService;
+  let eventRepo: ReturnType<typeof mockRepo>;
+  let puzzleRepo: ReturnType<typeof mockRepo>;
+  let rewardRepo: ReturnType<typeof mockRepo>;
+  let playerEventRepo: ReturnType<typeof mockRepo>;
+  let notifService: typeof mockNotificationService;
+
+  beforeEach(async () => {
+    eventRepo = mockRepo();
+    puzzleRepo = mockRepo();
+    rewardRepo = mockRepo();
+    playerEventRepo = mockRepo();
+    notifService = { createNotificationForUsers: jest.fn().mockResolvedValue(undefined) };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        SeasonalEventService,
+        { provide: getRepositoryToken(SeasonalEvent), useValue: eventRepo },
+        { provide: getRepositoryToken(EventPuzzle), useValue: puzzleRepo },
+        { provide: getRepositoryToken(EventReward), useValue: rewardRepo },
+        { provide: getRepositoryToken(PlayerEvent), useValue: playerEventRepo },
+        { provide: NotificationService, useValue: notifService },
+      ],
+    }).compile();
+
+    service = module.get<SeasonalEventService>(SeasonalEventService);
+  });
+
+  it('skips processing when endRewardsDistributed is already true', async () => {
+    const event = { ...baseEvent(), endRewardsDistributed: true } as any;
+
+    await service.handleEventEnd(event);
+
+    expect(playerEventRepo.find).not.toHaveBeenCalled();
+    expect(eventRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('archives leaderboard snapshot and distributes badge to top-3 winners', async () => {
+    const event = { ...baseEvent(), endRewardsDistributed: false, leaderboardSnapshot: null } as any;
+
+    const participants = [
+      { id: 'pe-1', playerId: 'p1', eventId: 'event-1', score: 300, puzzlesCompleted: 5, lastActivityAt: new Date(), rewards: [] },
+      { id: 'pe-2', playerId: 'p2', eventId: 'event-1', score: 200, puzzlesCompleted: 3, lastActivityAt: new Date(), rewards: [] },
+      { id: 'pe-3', playerId: 'p3', eventId: 'event-1', score: 100, puzzlesCompleted: 1, lastActivityAt: new Date(), rewards: [] },
+    ];
+
+    const badge = { id: 'badge-1', name: 'Champion', type: 'badge', isActive: true, requiredScore: 0 };
+
+    playerEventRepo.find.mockResolvedValueOnce(participants);
+    rewardRepo.find.mockResolvedValueOnce([badge]);
+    playerEventRepo.save.mockResolvedValue({});
+    rewardRepo.increment.mockResolvedValue(undefined);
+    eventRepo.save.mockResolvedValueOnce(event);
+
+    await service.handleEventEnd(event);
+
+    // Leaderboard snapshot stored
+    expect(event.leaderboardSnapshot).toHaveLength(3);
+    expect(event.leaderboardSnapshot[0]).toMatchObject({ rank: 1, playerId: 'p1', score: 300 });
+
+    // Rewards distributed to all 3 participants
+    expect(playerEventRepo.save).toHaveBeenCalledTimes(3);
+    expect(rewardRepo.increment).toHaveBeenCalledTimes(3);
+
+    // Winner notifications sent
+    expect(notifService.createNotificationForUsers).toHaveBeenCalledTimes(3);
+    expect(notifService.createNotificationForUsers).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userIds: ['p1'],
+        type: 'event_winner',
+        title: expect.stringContaining('#1'),
+      }),
+    );
+
+    // Marked as distributed
+    expect(event.endRewardsDistributed).toBe(true);
+    expect(eventRepo.save).toHaveBeenCalledWith(event);
+  });
+
+  it('does not re-award badge if winner already has it', async () => {
+    const event = { ...baseEvent(), endRewardsDistributed: false } as any;
+    const badge = { id: 'badge-1', name: 'Champion', type: 'badge', isActive: true };
+
+    const participants = [
+      {
+        id: 'pe-1', playerId: 'p1', eventId: 'event-1', score: 300, puzzlesCompleted: 5,
+        lastActivityAt: new Date(),
+        // already has the badge
+        rewards: [{ rewardId: 'badge-1', rewardName: 'Champion', rewardType: 'badge', earnedAt: new Date() }],
+      },
+    ];
+
+    playerEventRepo.find.mockResolvedValueOnce(participants);
+    rewardRepo.find.mockResolvedValueOnce([badge]);
+    eventRepo.save.mockResolvedValueOnce(event);
+
+    await service.handleEventEnd(event);
+
+    // No re-save for the duplicate badge
+    expect(playerEventRepo.save).not.toHaveBeenCalled();
+    // Notification is still sent
+    expect(notifService.createNotificationForUsers).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles events with no cosmetic rewards gracefully (no crash)', async () => {
+    const event = { ...baseEvent(), endRewardsDistributed: false } as any;
+    const participants = [
+      { id: 'pe-1', playerId: 'p1', eventId: 'event-1', score: 150, puzzlesCompleted: 2, lastActivityAt: new Date(), rewards: [] },
+    ];
+
+    playerEventRepo.find.mockResolvedValueOnce(participants);
+    rewardRepo.find.mockResolvedValueOnce([]); // no badge rewards configured
+    eventRepo.save.mockResolvedValueOnce(event);
+
+    await expect(service.handleEventEnd(event)).resolves.not.toThrow();
+    expect(event.endRewardsDistributed).toBe(true);
+  });
+
+  it('handles events with zero participants gracefully', async () => {
+    const event = { ...baseEvent(), endRewardsDistributed: false } as any;
+
+    playerEventRepo.find.mockResolvedValueOnce([]);
+    rewardRepo.find.mockResolvedValueOnce([]);
+    eventRepo.save.mockResolvedValueOnce(event);
+
+    await service.handleEventEnd(event);
+
+    expect(event.leaderboardSnapshot).toHaveLength(0);
+    expect(event.endRewardsDistributed).toBe(true);
+    expect(notifService.createNotificationForUsers).not.toHaveBeenCalled();
+  });
+});
+
+// ─── PlayerEventService — EventParticipation badge ───────────────────────────
+
+describe('PlayerEventService — EventParticipation badge on first join', () => {
+  let service: PlayerEventService;
+  let playerEventRepo: ReturnType<typeof mockRepo>;
+  let rewardRepo: ReturnType<typeof mockRepo>;
+  let eventRepo: ReturnType<typeof mockRepo>;
+  let puzzleRepo: ReturnType<typeof mockRepo>;
+
+  beforeEach(async () => {
+    playerEventRepo = mockRepo();
+    rewardRepo = mockRepo();
+    eventRepo = mockRepo();
+    puzzleRepo = mockRepo();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PlayerEventService,
+        { provide: getRepositoryToken(PlayerEvent), useValue: playerEventRepo },
+        { provide: getRepositoryToken(EventReward), useValue: rewardRepo },
+        { provide: getRepositoryToken(SeasonalEvent), useValue: eventRepo },
+        { provide: getRepositoryToken(EventPuzzle), useValue: puzzleRepo },
+      ],
+    }).compile();
+
+    service = module.get<PlayerEventService>(PlayerEventService);
+  });
+
+  it('grants EventParticipation badge on first join when badge exists', async () => {
+    const activeEvent = { ...baseEvent(), isActive: true };
+    const badge = { id: 'badge-ep', name: 'EventParticipation', type: 'badge', isActive: true };
+    const newPlayerEvent: any = {
+      id: 'pe-new', playerId: 'p1', eventId: 'event-1', rewards: [],
+      score: 0, completedPuzzles: [], puzzlesCompleted: 0, totalAttempts: 0,
+      correctAnswers: 0, hintsUsed: 0, currentStreak: 0, bestStreak: 0,
+      averageCompletionTime: 0, statistics: {},
+    };
+
+    // first findOne: no existing PlayerEvent → create new
+    playerEventRepo.findOne.mockResolvedValueOnce(null);
+    eventRepo.findOne.mockResolvedValueOnce(activeEvent);
+    playerEventRepo.create.mockReturnValue(newPlayerEvent);
+    playerEventRepo.save.mockResolvedValueOnce(newPlayerEvent);
+    eventRepo.increment.mockResolvedValue(undefined);
+
+    // EventParticipation badge lookup
+    rewardRepo.findOne.mockResolvedValueOnce(badge);
+    // badge not yet on player rewards (rewards: []) — grant it
+    playerEventRepo.save.mockResolvedValueOnce({ ...newPlayerEvent, rewards: [{ rewardId: badge.id }] });
+    rewardRepo.increment.mockResolvedValue(undefined);
+
+    const result = await service.getOrCreatePlayerEvent('p1', 'event-1');
+
+    expect(rewardRepo.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ name: 'EventParticipation' }) }),
+    );
+    expect(playerEventRepo.save).toHaveBeenCalledTimes(2); // once for create, once for badge
+    expect(rewardRepo.increment).toHaveBeenCalledWith({ id: badge.id }, 'claimedCount', 1);
+  });
+
+  it('does not grant badge on subsequent joins (player already has PlayerEvent record)', async () => {
+    const existingPlayerEvent = {
+      id: 'pe-1', playerId: 'p1', eventId: 'event-1', rewards: [],
+      score: 50, completedPuzzles: [], puzzlesCompleted: 1,
+    };
+
+    // Already has a record — skip create path entirely
+    playerEventRepo.findOne.mockResolvedValueOnce(existingPlayerEvent);
+
+    const result = await service.getOrCreatePlayerEvent('p1', 'event-1');
+
+    expect(rewardRepo.findOne).not.toHaveBeenCalled();
+    expect(playerEventRepo.save).not.toHaveBeenCalled();
+    expect(result).toEqual(existingPlayerEvent);
+  });
+});
+
+// ─── EventPuzzleService — 404 outside event window ───────────────────────────
+
+describe('EventPuzzleService — 404 outside event window', () => {
+  let service: EventPuzzleService;
+  let puzzleRepo: ReturnType<typeof mockRepo>;
+  let eventRepo: ReturnType<typeof mockRepo>;
+
+  beforeEach(async () => {
+    puzzleRepo = mockRepo();
+    eventRepo = mockRepo();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        EventPuzzleService,
+        { provide: getRepositoryToken(EventPuzzle), useValue: puzzleRepo },
+        { provide: getRepositoryToken(SeasonalEvent), useValue: eventRepo },
+      ],
+    }).compile();
+
+    service = module.get<EventPuzzleService>(EventPuzzleService);
+  });
+
+  it('throws NotFoundException (404) — not ForbiddenException — for inactive event puzzles list', async () => {
+    eventRepo.findOne.mockResolvedValueOnce({ ...baseEvent(), isActive: false });
+
+    await expect(service.findPuzzlesByEvent('event-1')).rejects.toThrow(NotFoundException);
+  });
+
+  it('throws NotFoundException (404) — not ForbiddenException — for individual puzzle in inactive event', async () => {
+    const puzzle = { ...basePuzzle(), event: { isActive: false } };
+    puzzleRepo.findOne.mockResolvedValueOnce(puzzle);
+
+    await expect(service.findOne('puzzle-1')).rejects.toThrow(NotFoundException);
   });
 });

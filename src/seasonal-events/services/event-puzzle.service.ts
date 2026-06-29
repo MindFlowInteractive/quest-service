@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventPuzzle } from '../entities/event-puzzle.entity';
@@ -50,9 +50,9 @@ export class EventPuzzleService {
       throw new NotFoundException(`Event with ID ${eventId} not found`);
     }
 
-    // Check if event is active
+    // Check if event is active — exclusive puzzles return 404 outside the event window
     if (!event.isActive && !includeInactive) {
-      throw new ForbiddenException('This event is not currently active');
+      throw new NotFoundException('Event puzzles are not available outside the event window');
     }
 
     const where: any = { eventId };
@@ -80,7 +80,7 @@ export class EventPuzzleService {
     }
 
     if (!event.isActive) {
-      throw new ForbiddenException('This event is not currently active');
+      throw new NotFoundException('Event puzzles are not available outside the event window');
     }
 
     return await this.puzzleRepository.find({
@@ -107,7 +107,7 @@ export class EventPuzzleService {
     }
 
     if (!puzzle.event.isActive) {
-      throw new ForbiddenException('This puzzle belongs to an inactive event');
+      throw new NotFoundException('This puzzle is not available outside the event window');
     }
 
     return puzzle;

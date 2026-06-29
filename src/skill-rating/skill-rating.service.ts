@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, MoreThan } from 'typeorm';
+import { Repository, In, MoreThan, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PlayerRating, SkillTier, SeasonStatus } from './entities/player-rating.entity';
 import { RatingHistory, RatingChangeReason } from './entities/rating-history.entity';
@@ -8,6 +8,23 @@ import { Season, SeasonStatus as SeasonEntityStatus } from './entities/season.en
 import { ELOService, PuzzleCompletionData } from './elo.service';
 import { User } from '../users/entities/user.entity';
 import { Puzzle } from '../puzzles/entities/puzzle.entity';
+
+export interface PlayerRatingDetails {
+  playerRating: PlayerRating;
+  rank: number;
+  percentile: number;
+}
+
+export interface AbandonRatingInput {
+  userId: string;
+  puzzleId: string;
+  timeTaken: number; // seconds elapsed at time of abandon
+  hintsUsed: number;
+  attempts: number;
+}
+
+/** Fraction of timeLimit that must have elapsed before an abandon affects rating */
+const ABANDON_TIME_THRESHOLD = 0.8;
 
 @Injectable()
 export class SkillRatingService {
@@ -385,5 +402,102 @@ export class SkillRatingService {
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 3);
     return endDate;
+  }
+
+  /**
+   * Compute the percentile rank for a player within the current season.
+   * Percentile = (players with a strictly lower rating / total active players) × 100.
+   */
+  async getPercentile(userId: string): Promise<number> {
+    const playerRating = await this.getPlayerRating(userId);
+    const currentSeason = await this.eloService.getCurrentSeason();
+
+    const [lowerCount, totalCount] = await Promise.all([
+      this.playerRatingRepository.count({
+        where: {
+          seasonId: currentSeason.seasonId,
+          seasonStatus: SeasonStatus.ACTIVE,
+          rating: LessThan(playerRating.rating),
+        },
+      }),
+      this.playerRatingRepository.count({
+        where: {
+          seasonId: currentSeason.seasonId,
+          seasonStatus: SeasonStatus.ACTIVE,
+        },
+      }),
+    ]);
+
+    if (totalCount === 0) return 100;
+    return Math.round((lowerCount / totalCount) * 100);
+  }
+
+  /**
+   * Return a player's own rating augmented with rank and percentile.
+   */
+  async getPlayerRatingWithDetails(userId: string): Promise<PlayerRatingDetails> {
+    const [playerRating, rank, percentile] = await Promise.all([
+      this.getPlayerRating(userId),
+      this.getPlayerRank(userId),
+      this.getPercentile(userId),
+    ]);
+    return { playerRating, rank, percentile };
+  }
+
+  /**
+   * Return another player's rating if their privacy settings allow it.
+   * Pass requestingUserId to bypass the check when a player views their own rating.
+   */
+  async getPublicPlayerRating(
+    targetUserId: string,
+    requestingUserId?: string,
+  ): Promise<PlayerRatingDetails> {
+    // Always allow self-access
+    if (requestingUserId !== targetUserId) {
+      const user = await this.userRepository.findOne({ where: { id: targetUserId } });
+      if (!user) throw new NotFoundException('User not found');
+
+      const showStats = user.preferences?.privacy?.showStats !== false; // default: visible
+      if (!showStats) {
+        throw new ForbiddenException('This player has set their rating to private');
+      }
+    }
+
+    return this.getPlayerRatingWithDetails(targetUserId);
+  }
+
+  /**
+   * Trigger a rating loss for an abandoned puzzle, but only when the player
+   * has consumed at least 80 % of the time limit (they were genuinely engaged).
+   * Returns null when the threshold is not met (no rating change).
+   */
+  async triggerAbandonRatingUpdate(
+    input: AbandonRatingInput,
+  ): Promise<PlayerRating | null> {
+    const puzzle = await this.puzzleRepository.findOne({
+      where: { id: input.puzzleId },
+    });
+    if (!puzzle) throw new NotFoundException(`Puzzle not found: ${input.puzzleId}`);
+
+    const timeLimit = puzzle.timeLimit || 300;
+    if (input.timeTaken < ABANDON_TIME_THRESHOLD * timeLimit) {
+      this.logger.log(
+        `Abandon for user ${input.userId} on puzzle ${input.puzzleId} ignored — ` +
+          `only ${input.timeTaken}s elapsed of ${timeLimit}s limit (< 80%)`,
+      );
+      return null;
+    }
+
+    return this.updateRatingOnPuzzleCompletion({
+      userId: input.userId,
+      puzzleId: input.puzzleId,
+      puzzleDifficulty: puzzle.difficulty,
+      difficultyRating: puzzle.difficultyRating || 5,
+      wasCompleted: false,
+      timeTaken: input.timeTaken,
+      hintsUsed: input.hintsUsed,
+      attempts: input.attempts,
+      basePoints: puzzle.basePoints || 100,
+    });
   }
 }

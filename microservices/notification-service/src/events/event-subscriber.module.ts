@@ -1,14 +1,19 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { EventBusService, RabbitMQService } from '@quest-service/shared';
-import { 
+import {
   UserRegisteredHandler,
   PuzzleCompletedHandler,
   AchievementUnlockedHandler,
   FriendRequestSentHandler,
   FriendRequestAcceptedHandler,
+  DailyChallengeAvailableHandler,
+  TournamentStartingSoonHandler,
+  SessionInviteReceivedHandler,
 } from '../event-handlers';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
+  imports: [NotificationsModule],
   providers: [
     RabbitMQService,
     EventBusService,
@@ -17,6 +22,9 @@ import {
     AchievementUnlockedHandler,
     FriendRequestSentHandler,
     FriendRequestAcceptedHandler,
+    DailyChallengeAvailableHandler,
+    TournamentStartingSoonHandler,
+    SessionInviteReceivedHandler,
   ],
   exports: [EventBusService],
 })
@@ -28,6 +36,9 @@ export class EventSubscriberModule implements OnModuleInit {
     private readonly achievementUnlockedHandler: AchievementUnlockedHandler,
     private readonly friendRequestSentHandler: FriendRequestSentHandler,
     private readonly friendRequestAcceptedHandler: FriendRequestAcceptedHandler,
+    private readonly dailyChallengeHandler: DailyChallengeAvailableHandler,
+    private readonly tournamentHandler: TournamentStartingSoonHandler,
+    private readonly sessionInviteHandler: SessionInviteReceivedHandler,
   ) {}
 
   async onModuleInit() {
@@ -37,6 +48,9 @@ export class EventSubscriberModule implements OnModuleInit {
     this.eventBus.registerHandler('AchievementUnlocked', this.achievementUnlockedHandler);
     this.eventBus.registerHandler('FriendRequestSent', this.friendRequestSentHandler);
     this.eventBus.registerHandler('FriendRequestAccepted', this.friendRequestAcceptedHandler);
+    this.eventBus.registerHandler('DailyChallengeAvailable', this.dailyChallengeHandler);
+    this.eventBus.registerHandler('TournamentStartingSoon', this.tournamentHandler);
+    this.eventBus.registerHandler('SessionInviteReceived', this.sessionInviteHandler);
 
     // Subscribe to message broker events
     await this.setupMessageBrokerSubscriptions();

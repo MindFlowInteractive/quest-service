@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MultiplayerRoom, RoomStatus } from '../multiplayer-room.entity';
-import { CreateRoomDto, UpdateRoomDto } from '../dto';
+import { MultiplayerRoom, RoomStatus } from './multiplayer-room.entity';
+import { CreateRoomDto, UpdateRoomDto } from './dto';
 
 @Injectable()
 export class RoomsService {

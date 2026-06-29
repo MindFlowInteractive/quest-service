@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package user;
+
+import "common.proto";
+
+// User service definition
+service UserService {
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (common.Response);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+  rpc HealthCheck (common.HealthCheckRequest) returns (common.HealthCheckResponse);
+}
+
+// User message
+message User {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string displayName = 4;
+  string avatarUrl = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+// Get user request/response
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+  string error = 2;
+}
+
+// Create user request/response
+message CreateUserRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
+  string displayName = 4;
+}
+
+message CreateUserResponse {
+  User user = 1;
+  string error = 2;
+}
+
+// Update user request/response
+message UpdateUserRequest {
+  string id = 1;
+  string displayName = 2;
+  string avatarUrl = 3;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+  string error = 2;
+}
+
+// Delete user request
+message DeleteUserRequest {
+  string id = 1;
+}
+
+// List users request/response
+message ListUsersRequest {
+  common.PaginationRequest pagination = 1;
+  string search = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  common.PaginationResponse pagination = 2;
+  string error = 3;
+}

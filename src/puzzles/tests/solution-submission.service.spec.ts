@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm';
 import {
     ConflictException,
     NotFoundException,
-    TooManyRequestsException,
+    HttpException,
 } from '@nestjs/common';
 import { SolutionSubmissionService } from '../services/solution-submission.service';
 import { Puzzle } from '../entities/puzzle.entity';
@@ -15,6 +15,8 @@ import {
 import { AntiCheatService } from '../../anti-cheat/services/anti-cheat.service';
 import { SubmitSolutionDto } from '../dto/submit-solution.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { XpService } from '../../xp/xp.service';
+import { PlayerEventsService } from '../../player-events/player-events.service';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -99,6 +101,24 @@ function makeAntiCheatService() {
     };
 }
 
+function makeXpService() {
+    return {
+        awardPuzzleCompletionXp: jest.fn().mockResolvedValue({
+            userId: 'user-1',
+            xp: 100,
+            level: 2,
+            xpToNextLevel: 150,
+            progressPercentage: 0,
+        }),
+    };
+}
+
+function makePlayerEventsService() {
+    return {
+        emitPlayerEvent: jest.fn().mockResolvedValue(undefined),
+    };
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Test Suite
 // ──────────────────────────────────────────────────────────────────────────────
@@ -109,6 +129,8 @@ describe('SolutionSubmissionService', () => {
     let attemptRepo: ReturnType<typeof makeAttemptRepo>;
     let dataSource: ReturnType<typeof makeDataSource>;
     let antiCheatService: ReturnType<typeof makeAntiCheatService>;
+    let xpService: ReturnType<typeof makeXpService>;
+    let playerEventsService: ReturnType<typeof makePlayerEventsService>;
 
     async function buildService(
         puzzle: Partial<Puzzle> | null = basePuzzle,
@@ -119,6 +141,8 @@ describe('SolutionSubmissionService', () => {
         attemptRepo = makeAttemptRepo(existingNonce, recentSubmissionCount);
         dataSource = makeDataSource();
         antiCheatService = makeAntiCheatService();
+        xpService = makeXpService();
+        playerEventsService = makePlayerEventsService();
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -127,8 +151,12 @@ describe('SolutionSubmissionService', () => {
                 { provide: getRepositoryToken(PuzzleSolutionAttempt), useValue: attemptRepo },
                 { provide: DataSource, useValue: dataSource },
                 { provide: AntiCheatService, useValue: antiCheatService },
+                { provide: XpService, useValue: xpService },
+                { provide: PlayerEventsService, useValue: playerEventsService },
             ],
         }).compile();
+
+        service = module.get<SolutionSubmissionService>(SolutionSubmissionService);
 
         service = module.get<SolutionSubmissionService>(SolutionSubmissionService);
     }
@@ -170,14 +198,54 @@ describe('SolutionSubmissionService', () => {
         });
 
         it('awards speed_demon achievement when solved in < 30% of time limit', async () => {
-            // Time limit is 300s, 30% = 90s, so if we complete in 20s we should get speed_demon
-            const result = await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto({ sessionStartedAt: makeSessionStart(20) }));
+            // Time limit is 300s, 30% = 90s, so if we complete in 80s we should get speed_demon and avoid the anti-cheat 25s threshold.
+            const result = await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto({ sessionStartedAt: makeSessionStart(80) }));
             expect(result.rewards!.achievements).toContain('speed_demon');
         });
 
         it('runs inside a transaction', async () => {
             await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto());
             expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+        });
+
+        it('awards xp for successful solves', async () => {
+            await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto());
+            expect(xpService.awardPuzzleCompletionXp).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 'user-1',
+                    puzzleId: 'puzzle-uuid-001',
+                    difficulty: 'medium',
+                    hintsUsed: 0,
+                }),
+            );
+        });
+
+        it('emits player event audit entries for solves', async () => {
+            await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto());
+
+            expect(playerEventsService.emitPlayerEvent).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 'user-1',
+                    eventType: 'answer.submitted',
+                }),
+            );
+            expect(playerEventsService.emitPlayerEvent).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 'user-1',
+                    eventType: 'puzzle.solved',
+                }),
+            );
+        });
+
+        it('emits achievement.unlocked for each earned achievement', async () => {
+            await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto({ hintsUsed: 0 }));
+
+            expect(playerEventsService.emitPlayerEvent).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 'user-1',
+                    eventType: 'achievement.unlocked',
+                }),
+            );
         });
     });
 
@@ -214,6 +282,17 @@ describe('SolutionSubmissionService', () => {
                 makeDto({ answer: 'wrong_answer' }),
             );
             expect(result.message).toBeTruthy();
+        });
+
+        it('emits only answer.submitted for incorrect submissions', async () => {
+            await service.submitSolution('user-1', 'puzzle-uuid-001', makeDto({ answer: 'wrong_answer' }));
+
+            expect(playerEventsService.emitPlayerEvent).toHaveBeenCalledWith(
+                expect.objectContaining({ eventType: 'answer.submitted' }),
+            );
+            expect(playerEventsService.emitPlayerEvent).not.toHaveBeenCalledWith(
+                expect.objectContaining({ eventType: 'puzzle.solved' }),
+            );
         });
     });
 
@@ -364,7 +443,7 @@ describe('SolutionSubmissionService', () => {
 
             await expect(
                 service.submitSolution('user-1', 'puzzle-uuid-001', makeDto()),
-            ).rejects.toThrow(TooManyRequestsException);
+            ).rejects.toThrow(HttpException);
         });
 
         it('allows submission when under rate limit', async () => {

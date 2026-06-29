@@ -8,17 +8,19 @@ const entityGlob = path.join(__dirname, '../**/*.entity.{ts,js}');
 
 export function buildDataSourceOptions(
   env: NodeJS.ProcessEnv = process.env,
+  includeEntityGlob = false,
 ): DataSourceOptions {
   const type = env.DB_TYPE || 'postgres';
+  const common = includeEntityGlob ? { entities: [entityGlob] } : {};
 
   if (type === 'sqljs') {
     return {
       type: 'sqljs',
       autoSave: false,
       location: env.DB_NAME || 'sms-service',
-      entities: [entityGlob],
       synchronize: true,
       logging: false,
+      ...common,
     };
   }
 
@@ -29,10 +31,10 @@ export function buildDataSourceOptions(
     username: env.DB_USER || 'postgres',
     password: env.DB_PASSWORD || 'postgres',
     database: env.DB_NAME || 'sms_service',
-    entities: [entityGlob],
     synchronize: (env.DB_SYNC || 'true') === 'true',
     logging: env.NODE_ENV === 'development',
+    ...common,
   };
 }
 
-export const AppDataSource = new DataSource(buildDataSourceOptions());
+export const AppDataSource = new DataSource(buildDataSourceOptions(process.env, true));

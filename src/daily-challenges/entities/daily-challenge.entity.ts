@@ -37,6 +37,12 @@ export class DailyChallenge {
   @Column({ type: 'int', default: 100 })
   baseRewardPoints: number;
 
+  @Column({ type: 'int', default: 50 })
+  bonusXP: number; // Bonus XP awarded for completing the daily challenge
+
+  @Column({ type: 'int', default: 0 })
+  completionCount: number; // Number of users who completed this daily challenge
+
   @Column({ default: true })
   isActive: boolean;
 

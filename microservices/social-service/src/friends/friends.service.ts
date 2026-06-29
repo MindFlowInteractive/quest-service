@@ -1,9 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Friend } from '../friend.entity';
-import { FriendRequest, FriendRequestStatus } from '../friend-request.entity';
-import { CreateFriendRequestDto, UpdateFriendRequestDto } from '../dto';
+import { Friend } from './friend.entity';
+import { FriendRequest, FriendRequestStatus } from './friend-request.entity';
+import { CreateFriendRequestDto, UpdateFriendRequestDto } from './dto';
 
 @Injectable()
 export class FriendsService {

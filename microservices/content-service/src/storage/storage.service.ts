@@ -1,6 +1,7 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
+import FormData from 'form-data';
 import { ContentFile, FileType } from '../entities/content-file.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -43,12 +44,12 @@ export class StorageService {
   ): Promise<ContentFile> {
     try {
       const formData = new FormData();
-      formData.append('file', new Blob([new Uint8Array(file)]), originalName);
+      formData.append('file', file, { filename: originalName, contentType: mimeType });
       formData.append('contentId', contentId);
 
       const response = await this.httpClient.post<UploadResult>('/storage/upload', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          ...formData.getHeaders(),
         },
       });
 
@@ -81,13 +82,17 @@ export class StorageService {
     }
   }
 
+  async getFile(fileId: string): Promise<ContentFile> {
+    const file = await this.contentFileRepository.findOne({ where: { id: fileId } });
+    if (!file) {
+      throw new HttpException('File not found', HttpStatus.NOT_FOUND);
+    }
+    return file;
+  }
+
   async getSignedUrl(fileId: string): Promise<SignedUrlResult> {
     try {
-      const file = await this.contentFileRepository.findOne({ where: { id: fileId } });
-
-      if (!file) {
-        throw new HttpException('File not found', HttpStatus.NOT_FOUND);
-      }
+      const file = await this.getFile(fileId);
 
       const response = await this.httpClient.get<SignedUrlResult>(
         `/storage/files/${file.storageKey}/signed-url`,
@@ -107,11 +112,7 @@ export class StorageService {
 
   async deleteFile(fileId: string): Promise<void> {
     try {
-      const file = await this.contentFileRepository.findOne({ where: { id: fileId } });
-
-      if (!file) {
-        throw new HttpException('File not found', HttpStatus.NOT_FOUND);
-      }
+      const file = await this.getFile(fileId);
 
       await this.httpClient.delete(`/storage/files/${file.storageKey}`);
 

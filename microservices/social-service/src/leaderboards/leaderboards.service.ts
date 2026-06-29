@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { LeaderboardEntry } from '../leaderboard-entry.entity';
-import { CreateLeaderboardEntryDto, UpdateLeaderboardScoreDto } from '../dto';
+import { LeaderboardEntry } from './leaderboard-entry.entity';
+import { CreateLeaderboardEntryDto, UpdateLeaderboardScoreDto } from './dto';
 
 @Injectable()
 export class LeaderboardsService {

@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'quest-service-dashboards'
+    orgId: 1
+    folder: 'Quest Service'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

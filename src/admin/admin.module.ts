@@ -13,6 +13,7 @@ import { AuthModule } from '../auth/auth.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { User } from '../auth/entities/user.entity';
 import { Role } from '../auth/entities/role.entity';
+import { PrivacyModule } from '../privacy/privacy.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { Role } from '../auth/entities/role.entity';
         PuzzlesModule,
         AuthModule,
         AnalyticsModule,
+        PrivacyModule,
     ],
     controllers: [
         AdminPuzzlesController,

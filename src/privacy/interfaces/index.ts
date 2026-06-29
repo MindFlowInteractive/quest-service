@@ -2,27 +2,52 @@ export interface UserDataExport {
   userId: string;
   exportDate: string;
   version: string;
+  exportFormat: string;
   personalInfo: {
     email: string;
     username: string;
+    firstName?: string;
+    lastName?: string;
+    dateOfBirth?: string;
+    country?: string;
+    avatar?: string;
     createdAt: string;
     lastLoginAt?: string;
+    isVerified?: boolean;
   };
-  profile?: any;
+  profile?: {
+    bio?: string;
+    website?: string;
+    socialLinks?: Record<string, string>;
+    level?: number;
+    experience?: number;
+    totalScore?: number;
+    preferences?: any;
+  };
   gameData?: {
     sessions: any[];
     achievements: any[];
     progress: any[];
     statistics: any;
+    puzzleCompletions?: any[];
+    skillRatings?: any[];
   };
-  transactions?: any[];
+  wallet?: {
+    addresses: any[];
+    balanceHistory?: any[];
+  };
+  notifications?: {
+    preferences: any;
+    history: any[];
+  };
   socialData?: {
     friends: any[];
-    messages: any[];
-    activities: any[];
+    friendRequests?: any[];
+    activities?: any[];
   };
   privacySettings?: any;
   consentHistory?: any[];
+  transactions?: any[];
 }
 
 export interface AnonymizationResult {
@@ -40,4 +65,3 @@ export interface DataRetentionPolicy {
   anonymizeAfterDays?: number;
   deleteAfterDays?: number;
 }
-

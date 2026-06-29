@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('game_sessions')
@@ -14,8 +15,27 @@ export class GameSession {
   @Column()
   userId: string;
 
+  /**
+   * Optional puzzle that this session is tied to.
+   */
+  @Column({ type: 'uuid', nullable: true })
+  @Index()
+  puzzleId?: string;
+
+  /**
+   * Version of the puzzle active when this session was started.
+   * Immutable after session creation — subsequent puzzle edits do not affect
+   * in-flight sessions.
+   */
+  @Column({ type: 'uuid', name: 'puzzle_version_id', nullable: true })
+  @Index()
+  puzzleVersionId?: string;
+
   @Column({ default: 'IN_PROGRESS' })
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED' | 'SUSPENDED';
+
+  @Column({ type: 'timestamp', nullable: true })
+  suspendedAt: Date | null;
 
   @Column('jsonb', { default: {} })
   state: Record<string, any>; // Dynamic game state object
@@ -25,6 +45,9 @@ export class GameSession {
 
   @Column({ type: 'int', default: 0 })
   totalMoves: number;
+
+  @Column({ type: 'int', default: 0 })
+  hintsUsed: number;
 
   @Column({ type: 'float', default: 0 })
   duration: number; // in minutes

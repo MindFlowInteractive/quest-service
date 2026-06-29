@@ -10,10 +10,11 @@ export class Device {
   userId: string;
 
   @Column({ type: 'varchar', length: 255 })
+  @Index({ unique: true })
   token: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  platform?: string; // android, ios, web
+  @Column({ type: 'varchar', length: 50, default: 'web' })
+  platform: string; // ios, android, web
 
   @Column({ type: 'jsonb', default: {} })
   meta?: any;

@@ -5,6 +5,7 @@ import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
 import { LocalizationService } from '../common/i18n/localization.service';
+import { PuzzleVersionService } from './services/puzzle-version.service';
 import {
   CreatePuzzleDto,
   UpdatePuzzleDto,
@@ -87,6 +88,7 @@ export class PuzzlesService {
     @InjectRepository(PuzzleRating)
     private ratingRepository: Repository<PuzzleRating>,
     private readonly localizationService: LocalizationService,
+    private readonly puzzleVersionService: PuzzleVersionService,
   ) { }
 
   async create(createPuzzleDto: CreatePuzzleDto, createdBy: string): Promise<Puzzle> {
@@ -158,6 +160,7 @@ export class PuzzlesService {
 
       const queryBuilder = this.puzzleRepository
         .createQueryBuilder('puzzle')
+        .leftJoinAndSelect('puzzle.tagEntities', 'tag')
         .where('puzzle.deletedAt IS NULL');
 
       // Apply filters
@@ -194,6 +197,20 @@ export class PuzzlesService {
         } else {
           queryBuilder.andWhere('puzzle.publishedAt IS NULL');
         }
+      }
+
+      if (tags && tags.length > 0) {
+        // AND logic: puzzle must have ALL requested tags
+        const normalisedTags = tags.map((t) => t.trim().toLowerCase());
+        normalisedTags.forEach((tagName, index) => {
+          const param = `tagName${index}`;
+          queryBuilder.andWhere(
+            `EXISTS (SELECT 1 FROM puzzle_tags pt${index}
+              INNER JOIN tags t${index} ON t${index}.id = pt${index}."tagId"
+              WHERE pt${index}."puzzleId" = puzzle.id AND t${index}.name = :${param})`,
+            { [param]: tagName },
+          );
+        });
       }
 
       if (createdBy) {
@@ -267,17 +284,29 @@ export class PuzzlesService {
         throw new BadRequestException('You can only update puzzles you created');
       }
 
+      // ── Snapshot current state BEFORE applying changes ──────────────────
+      const puzzleEntity = await this.puzzleRepository.findOne({ where: { id } });
+      if (puzzleEntity) {
+        await this.puzzleVersionService.snapshotBefore(
+          puzzleEntity,
+          userId,
+          updatePuzzleDto.updateReason,
+        );
+      }
+      // ────────────────────────────────────────────────────────────────────
+
       // Handle publish/unpublish
       const updateData: any = { ...updatePuzzleDto };
       if (updateData.isPublished !== undefined) {
         updateData.publishedAt = updateData.isPublished ? new Date() : null;
         delete updateData.isPublished;
       }
+      delete updateData.updateReason; // not a DB column
 
       await this.puzzleRepository.update(id, updateData);
 
       const updatedPuzzle = await this.findOne(id, userId);
-      this.logger.log(`Updated puzzle: ${id}`);
+      this.logger.log(`Updated puzzle: ${id} (new version snapshot created)`);
 
       return updatedPuzzle;
     } catch (error) {

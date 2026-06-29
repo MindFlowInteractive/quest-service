@@ -8,6 +8,7 @@ import { CircuitBreakerModule } from './circuit-breaker/circuit-breaker.module';
 import { LoadBalancerModule } from './load-balancer/load-balancer.module';
 import { HealthModule } from './health/health.module';
 import { LoggingModule } from './logging/logging.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
     imports: [
@@ -26,6 +27,7 @@ import { LoggingModule } from './logging/logging.module';
         CircuitBreakerModule,
         LoadBalancerModule,
         HealthModule,
+        AdminModule,
         ProxyModule,
     ],
 })

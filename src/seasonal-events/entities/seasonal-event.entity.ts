@@ -69,6 +69,17 @@ export class SeasonalEvent {
   @Column({ type: 'timestamp with time zone', nullable: true })
   archivedAt?: Date;
 
+  @Column({ type: 'jsonb', nullable: true })
+  leaderboardSnapshot?: Array<{
+    rank: number;
+    playerId: string;
+    score: number;
+    puzzlesCompleted: number;
+  }>;
+
+  @Column({ type: 'boolean', default: false })
+  endRewardsDistributed: boolean;
+
   @Column({ type: 'boolean', default: false })
   isRecurring: boolean;
 

@@ -1,35 +1,45 @@
-import { Controller, Post, Body, Param, Delete, Get } from '@nestjs/common';
+import { Controller, Post, Body, Param, Delete, Get, UseGuards, BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Device } from './entities/device.entity';
+import { RegisterDeviceDto } from './dto/register-device.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ActiveUser } from '../auth/decorators/active-user.decorator';
 
-@Controller('devices')
+@Controller('notifications/device-tokens')
+@UseGuards(JwtAuthGuard)
 export class DevicesController {
   constructor(@InjectRepository(Device) private readonly repo: Repository<Device>) {}
 
-  @Post(':userId/register')
-  async register(@Param('userId') userId: string, @Body() body: { token: string; platform?: string; meta?: any }) {
+  @Post()
+  async register(@ActiveUser() user: any, @Body() body: RegisterDeviceDto) {
+    const userId = user.userId;
+
     let device = await this.repo.findOne({ where: { token: body.token } });
-    if (!device) {
-      device = this.repo.create({ userId, token: body.token, platform: body.platform, meta: body.meta ?? {} });
-    } else {
+    if (device) {
       device.userId = userId;
-      device.platform = body.platform ?? device.platform;
-      device.meta = { ...(device.meta ?? {}), ...(body.meta ?? {}) };
+      device.platform = body.platform;
+    } else {
+      const count = await this.repo.count({ where: { userId } });
+      if (count >= 10) {
+        throw new BadRequestException('Maximum of 10 device tokens per user');
+      }
+      device = this.repo.create({ userId, token: body.token, platform: body.platform });
     }
+
     await this.repo.save(device);
     return { ok: true, device };
   }
 
-  @Delete(':userId/:token')
-  async deregister(@Param('userId') userId: string, @Param('token') token: string) {
-    await this.repo.delete({ token, userId } as any);
+  @Delete(':token')
+  async deregister(@ActiveUser() user: any, @Param('token') token: string) {
+    await this.repo.delete({ token, userId: user.userId });
     return { ok: true };
   }
 
-  @Get(':userId')
-  async list(@Param('userId') userId: string) {
-    const devices = await this.repo.find({ where: { userId } });
+  @Get()
+  async list(@ActiveUser() user: any) {
+    const devices = await this.repo.find({ where: { userId: user.userId } });
     return { ok: true, devices };
   }
 }

@@ -4,6 +4,7 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { User } from "./entities/user.entity"
 import { Role } from "./entities/role.entity"
 import { RefreshToken } from "./entities/refresh-token.entity"
+import { TwoFactorBackupCode } from "./entities/two-factor-backup-code.entity"
 import { JwtService } from "@nestjs/jwt"
 import * as bcrypt from "bcrypt"
 import type { Repository } from "typeorm"
@@ -32,6 +33,13 @@ const mockRefreshTokenRepository = () => ({
   update: jest.fn(),
 })
 
+const mockBackupCodeRepository = () => ({
+  findOne: jest.fn(),
+  create: jest.fn(),
+  save: jest.fn(),
+  update: jest.fn(),
+})
+
 // Mock JwtService
 const mockJwtService = () => ({
   sign: jest.fn(() => "mockAccessToken"),
@@ -43,6 +51,7 @@ describe("AuthService", () => {
   let userRepository: Repository<User>
   let roleRepository: Repository<Role>
   let refreshTokenRepository: Repository<RefreshToken>
+  let backupCodeRepository: Repository<TwoFactorBackupCode>
   let jwtService: JwtService
 
   beforeEach(async () => {
@@ -52,6 +61,7 @@ describe("AuthService", () => {
         { provide: getRepositoryToken(User), useFactory: mockUserRepository },
         { provide: getRepositoryToken(Role), useFactory: mockRoleRepository },
         { provide: getRepositoryToken(RefreshToken), useFactory: mockRefreshTokenRepository },
+        { provide: getRepositoryToken(TwoFactorBackupCode), useFactory: mockBackupCodeRepository },
         { provide: JwtService, useFactory: mockJwtService },
       ],
     }).compile()
@@ -60,6 +70,7 @@ describe("AuthService", () => {
     userRepository = module.get<Repository<User>>(getRepositoryToken(User))
     roleRepository = module.get<Repository<Role>>(getRepositoryToken(Role))
     refreshTokenRepository = module.get<Repository<RefreshToken>>(getRepositoryToken(RefreshToken))
+    backupCodeRepository = module.get<Repository<TwoFactorBackupCode>>(getRepositoryToken(TwoFactorBackupCode))
     jwtService = module.get<JwtService>(JwtService)
 
     // Mock bcrypt.hash and bcrypt.compare
@@ -146,7 +157,7 @@ describe("AuthService", () => {
       } as User
 
       jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
-      jest.spyOn(bcrypt, "compare").mockResolvedValue(true)
+      jest.spyOn(bcrypt, "compare").mockImplementation(() => Promise.resolve(true))
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException)
       expect(userRepository.findOne).toHaveBeenCalledWith(
@@ -450,6 +461,118 @@ describe("AuthService", () => {
       await expect(service.findOrCreateOAuthUser("github", oauthUser)).rejects.toThrow(
         "Default user role not found. Please seed roles.",
       )
+    })
+  })
+
+  describe("Two-Factor Authentication", () => {
+    describe("generateTwoFactorSecret", () => {
+      it("should generate TOTP secret and QR code for user", async () => {
+        const mockUser = { id: "uuid-1", email: "test@example.com", isTwoFactorEnabled: false } as User
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
+        jest.spyOn(userRepository, "save").mockResolvedValue(mockUser)
+
+        const result = await service.generateTwoFactorSecret("uuid-1")
+        expect(result).toHaveProperty("secret")
+        expect(result).toHaveProperty("otpauthUrl")
+        expect(result).toHaveProperty("qrCodeDataUri")
+      })
+
+      it("should throw error if user not found", async () => {
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(null)
+        await expect(service.generateTwoFactorSecret("invalid-id")).rejects.toThrow(UnauthorizedException)
+      })
+
+      it("should throw error if 2FA already enabled", async () => {
+        const mockUser = { id: "uuid-1", email: "test@example.com", isTwoFactorEnabled: true } as User
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
+        await expect(service.generateTwoFactorSecret("uuid-1")).rejects.toThrow(BadRequestException)
+      })
+    })
+
+    describe("verifyTwoFactorSetup", () => {
+      it("should enable 2FA and return backup codes on valid code", async () => {
+        const mockUser = {
+          id: "uuid-1",
+          email: "test@example.com",
+          twoFactorSecret: "TESTSECRET",
+          isTwoFactorEnabled: false,
+        } as User
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
+        jest.spyOn(userRepository, "save").mockResolvedValue({ ...mockUser, isTwoFactorEnabled: true })
+        jest.spyOn(backupCodeRepository, "create").mockReturnValue({} as TwoFactorBackupCode)
+        jest.spyOn(backupCodeRepository, "save").mockResolvedValue({} as TwoFactorBackupCode)
+
+        const result = await service.verifyTwoFactorSetup("uuid-1", "123456")
+        expect(result.message).toBe("2FA enabled successfully")
+        expect(result.backupCodes).toHaveLength(8)
+      })
+
+      it("should throw error if secret not generated", async () => {
+        const mockUser = { id: "uuid-1", email: "test@example.com", twoFactorSecret: null } as User
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
+        await expect(service.verifyTwoFactorSetup("uuid-1", "123456")).rejects.toThrow(BadRequestException)
+      })
+    })
+
+    describe("disableTwoFactor", () => {
+      it("should disable 2FA with valid code and password", async () => {
+        const mockUser = {
+          id: "uuid-1",
+          email: "test@example.com",
+          password: "hashedPassword",
+          twoFactorSecret: "TESTSECRET",
+          isTwoFactorEnabled: true,
+        } as User
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
+        jest.spyOn(userRepository, "save").mockResolvedValue({ ...mockUser, isTwoFactorEnabled: false, twoFactorSecret: null })
+        jest.spyOn(bcrypt, "compare").mockImplementation(() => Promise.resolve(true))
+        jest.spyOn(backupCodeRepository, "update").mockResolvedValue({ affected: 8 } as any)
+
+        const result = await service.disableTwoFactor("uuid-1", "123456", "password123")
+        expect(result.message).toBe("2FA disabled successfully")
+      })
+
+      it("should throw error if 2FA not enabled", async () => {
+        const mockUser = { id: "uuid-1", email: "test@example.com", isTwoFactorEnabled: false } as User
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
+        await expect(service.disableTwoFactor("uuid-1", "123456", "password123")).rejects.toThrow(BadRequestException)
+      })
+    })
+
+    describe("challengeTwoFactor", () => {
+      it("should exchange mfa_pending token for full tokens", async () => {
+        const mockPayload = { sub: "uuid-1", email: "test@example.com", isMfaPending: true }
+        const mockUser = { id: "uuid-1", email: "test@example.com", role: { name: UserRole.USER } } as User
+
+        jest.spyOn(jwtService, "verifyAsync").mockResolvedValue(mockPayload)
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
+        jest.spyOn(refreshTokenRepository, "create").mockReturnValue({} as RefreshToken)
+        jest.spyOn(refreshTokenRepository, "save").mockResolvedValue({} as RefreshToken)
+
+        const result = await service.challengeTwoFactor("mfa-pending-token", "123456")
+        expect(result).toHaveProperty("accessToken")
+        expect(result).toHaveProperty("refreshToken")
+      })
+
+      it("should throw error if mfa_pending token is invalid", async () => {
+        jest.spyOn(jwtService, "verifyAsync").mockRejectedValue(new Error("Invalid token"))
+        await expect(service.challengeTwoFactor("invalid-token", "123456")).rejects.toThrow()
+      })
+    })
+
+    describe("getTwoFactorStatus", () => {
+      it("should return 2FA status", async () => {
+        const mockUser = { id: "uuid-1", email: "test@example.com", isTwoFactorEnabled: true } as User
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(mockUser)
+
+        const result = await service.getTwoFactorStatus("uuid-1")
+        expect(result.isTwoFactorEnabled).toBe(true)
+      })
+
+      it("should throw error if user not found", async () => {
+        jest.spyOn(userRepository, "findOne").mockResolvedValue(null)
+        await expect(service.getTwoFactorStatus("invalid-id")).rejects.toThrow(UnauthorizedException)
+      })
     })
   })
 })

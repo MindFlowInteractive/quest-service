@@ -1,5 +1,6 @@
 
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { CreateAchievementDto } from './dto/create-achievement.dto';
 import { UpdateAchievementDto } from './dto/update-achievement.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,6 +9,7 @@ import { Achievement } from './entities/achievement.entity';
 import { UserAchievement } from './entities/user-achievement.entity';
 import { NotificationService } from '../notifications/notification.service';
 import { AchievementConditionEngine } from './achievement-condition.engine';
+import { PLAYER_LEVEL_UP_EVENT } from '../xp/xp.constants';
 
 @Injectable()
 export class AchievementsService {
@@ -170,5 +172,19 @@ export class AchievementsService {
       progressTotal: 100,
     });
     return this.userAchievementRepository.save(userAchievement);
+  }
+
+  @OnEvent(PLAYER_LEVEL_UP_EVENT)
+  async handlePlayerLevelUp(payload: {
+    userId: string;
+    oldLevel: number;
+    newLevel: number;
+    totalXP: number;
+  }) {
+    await this.retroactiveUnlock(payload.userId, {
+      level: payload.newLevel,
+      totalXP: payload.totalXP,
+      previousLevel: payload.oldLevel,
+    });
   }
 }

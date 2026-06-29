@@ -53,5 +53,7 @@ export class CreateEventDto {
     intervalDays: number;
     /** Maximum number of times this event will recur. Omit for infinite. */
     maxOccurrences?: number;
+    /** Tracks how many occurrences have been spawned. Defaults to 0. */
+    occurrenceCount?: number;
   };
 }

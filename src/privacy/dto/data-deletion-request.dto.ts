@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsArray, IsString, IsIn } from 'class-validator';
+import { IsEnum, IsOptional, IsArray, IsString, IsNotEmpty } from 'class-validator';
 import { DeletionType, DeletionReason } from '../entities/data-deletion-request.entity';
 
 export class DataDeletionRequestDto {
@@ -18,6 +18,13 @@ export class DataDeletionRequestDto {
   @IsString({ each: true })
   @IsOptional()
   entitiesToDelete?: string[];
+
+  /**
+   * Password confirmation required for GDPR account deletion (DELETE /account).
+   */
+  @IsString()
+  @IsOptional()
+  password?: string;
 }
 
 export class ConfirmDeletionDto {
@@ -29,4 +36,13 @@ export class CancelDeletionDto {
   @IsString()
   @IsOptional()
   cancellationReason?: string;
+}
+
+/**
+ * DTO for password-only confirmation (used by DELETE /account).
+ */
+export class ConfirmPasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  password: string;
 }

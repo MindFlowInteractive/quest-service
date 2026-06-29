@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  badge-service:
+    build: .
+    ports:
+      - '4010:4010'
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: badge_service
+    ports:
+      - '5432:5432'

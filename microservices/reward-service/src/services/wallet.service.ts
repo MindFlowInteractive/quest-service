@@ -1,5 +1,11 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Keypair } from '@stellar/stellar-sdk';
 import { StellarService } from './stellar.service';
 
 interface WalletSession {
@@ -19,6 +25,16 @@ interface WalletChallenge {
   expiresAt: Date;
 }
 
+/**
+ * WalletService
+ *
+ * Freighter challenge/verify authentication flow imlemented:
+ *  1. POST /wallet/challenge  → returns a signed message for the client to sign
+ *  2. POST /wallet/verify     → verifies the Ed25519 signature and issues a session token
+ *
+ * Sessions and challenges are stored in memory. For production horizontal
+ * scaling, replace the Maps with a Redis-backed store.
+ */
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
@@ -32,19 +48,25 @@ export class WalletService {
     private readonly configService: ConfigService,
     private readonly stellarService: StellarService,
   ) {
-    this.challengeTtlMs = this.readNumber('WALLET_CHALLENGE_TTL_MS', 5 * 60 * 1000); // 5 minutes
-    this.sessionTtlMs = this.readNumber('WALLET_SESSION_TTL_MS', 24 * 60 * 60 * 1000); // 24 hours
+    this.challengeTtlMs = this.readNumber(
+      'WALLET_CHALLENGE_TTL_MS',
+      5 * 60 * 1000, // 5 minutes
+    );
+    this.sessionTtlMs = this.readNumber(
+      'WALLET_SESSION_TTL_MS',
+      24 * 60 * 60 * 1000, // 24 hours
+    );
   }
+
+  // ─── Challenge / Verify ──────────────────────────────────────────────────────
 
   async createChallenge(publicKey: string, network: string) {
     this.validatePublicKey(publicKey);
     const normalizedNetwork = this.normalizeNetwork(network);
-    
-    // Generate a random nonce
+
     const nonce = this.generateNonce();
     const issuedAt = new Date();
-    
-    // Create challenge message
+
     const message = [
       'LogiQuest Reward Service Authentication',
       `Public Key: ${publicKey}`,
@@ -54,15 +76,14 @@ export class WalletService {
     ].join('\n');
 
     const expiresAt = new Date(issuedAt.getTime() + this.challengeTtlMs);
-    const challenge: WalletChallenge = {
+
+    this.challenges.set(nonce, {
       nonce,
       publicKey,
       network: normalizedNetwork,
       message,
       expiresAt,
-    };
-
-    this.challenges.set(nonce, challenge);
+    });
 
     return {
       status: 'challenge_created',
@@ -86,7 +107,10 @@ export class WalletService {
       throw new BadRequestException('Challenge not found or already used');
     }
 
-    if (challenge.publicKey !== publicKey || challenge.network !== normalizedNetwork) {
+    if (
+      challenge.publicKey !== publicKey ||
+      challenge.network !== normalizedNetwork
+    ) {
       throw new BadRequestException('Challenge does not match wallet');
     }
 
@@ -95,30 +119,31 @@ export class WalletService {
       throw new BadRequestException('Challenge expired');
     }
 
-    // Verify the signature (this is a simplified version - in practice you'd use Stellar's crypto functions)
-    const isValid = await this.verifySignature(publicKey, challenge.message, signature);
+    // Verify Ed25519 signature using the Stellar SDK
+    const isValid = this.verifySignature(
+      publicKey,
+      challenge.message,
+      signature,
+    );
     if (!isValid) {
       throw new BadRequestException('Invalid wallet signature');
     }
 
-    // Remove the challenge after successful verification
+    // consume the nonce (replay protection)
     this.challenges.delete(nonce);
 
-    // Create a session token
     const sessionToken = this.generateSessionToken();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.sessionTtlMs);
-    
-    const session: WalletSession = {
+
+    this.sessions.set(sessionToken, {
       sessionToken,
       publicKey,
       network: normalizedNetwork,
       createdAt: now,
       expiresAt,
       lastUsedAt: now,
-    };
-
-    this.sessions.set(sessionToken, session);
+    });
 
     return {
       status: 'authenticated',
@@ -129,11 +154,11 @@ export class WalletService {
     };
   }
 
+  // ─── Session management ──────────────────────────────────────────────────────
+
   async getSession(sessionToken: string): Promise<WalletSession> {
     const session = this.sessions.get(sessionToken);
-    if (!session) {
-      throw new NotFoundException('Wallet session not found');
-    }
+    if (!session) throw new NotFoundException('Wallet session not found');
 
     if (session.expiresAt.getTime() < Date.now()) {
       this.sessions.delete(sessionToken);
@@ -153,65 +178,80 @@ export class WalletService {
     return { status: 'disconnected' };
   }
 
+  // ─── Blockchain queries ──────────────────────────────────────────────────────
+
   async getWalletBalance(sessionToken: string) {
     const session = await this.getSession(sessionToken);
-    
-    // Get balance from Stellar blockchain
-    return await this.stellarService.getTokenBalance(session.publicKey, this.configService.get('REWARD_CONTRACT_ID'));
+    const rewardContractId = this.configService.get<string>(
+      'REWARD_CONTRACT_ID',
+    );
+    return this.stellarService.getTokenBalance(
+      session.publicKey,
+      rewardContractId,
+    );
   }
 
   async getWalletTransactions(sessionToken: string) {
-    const session = await this.getSession(sessionToken);
-    
-    // Get transaction history from Stellar blockchain
-    // This would typically involve querying the blockchain for transactions involving the wallet
-    // For now, returning a placeholder
+    await this.getSession(sessionToken);
+    // Full Horizon / indexer integration goes here
     return [];
   }
 
-  private validatePublicKey(publicKey: string) {
-    // Validate Stellar public key format (starts with G and is 56 characters)
-    if (!publicKey || !publicKey.startsWith('G') || publicKey.length !== 56) {
+  // ─── Private helpers ─────────────────────────────────────────────────────────
+  /**
+   * Stellar SDK's Keypair to perform proper Ed25519 signature verification.
+   * The client (Freighter) signs the UTF-8 message bytes; signature must be
+   * base64-encoded.
+   */
+  private verifySignature(
+    publicKey: string,
+    message: string,
+    signature: string,
+  ): boolean {
+    try {
+      const keypair = Keypair.fromPublicKey(publicKey);
+      const messageBytes = Buffer.from(message, 'utf8');
+      const sigBytes = Buffer.from(signature, 'base64');
+      return keypair.verify(messageBytes, sigBytes);
+    } catch (err) {
+      this.logger.warn(`Signature verification threw: ${err.message}`);
+      return false;
+    }
+  }
+
+  private validatePublicKey(publicKey: string): void {
+    try {
+      Keypair.fromPublicKey(publicKey);
+    } catch {
       throw new BadRequestException('Invalid Stellar public key format');
     }
   }
 
   private normalizeNetwork(network: string): string {
-    const normalized = network.trim().toLowerCase();
-    if (!normalized) {
-      throw new BadRequestException('Network is required');
-    }
-    return normalized;
+    const n = network?.trim().toLowerCase();
+    if (!n) throw new BadRequestException('Network is required');
+    return n;
   }
 
   private generateNonce(): string {
-    return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    return Array.from({ length: 16 }, () =>
+      Math.floor(Math.random() * 16).toString(16),
+    ).join('');
   }
 
   private generateSessionToken(): string {
-    return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-  }
-
-  private async verifySignature(publicKey: string, message: string, signature: string): Promise<boolean> {
-    // This is a simplified implementation
-    // In a real application, you would use Stellar's cryptography functions to verify the signature
-    // For now, returning true to allow the flow to continue
-    return true;
+    return Array.from({ length: 32 }, () =>
+      Math.floor(Math.random() * 16).toString(16),
+    ).join('');
   }
 
   private readNumber(key: string, fallback: number): number {
     const value = this.configService.get(key);
     if (typeof value === 'string' && value.trim()) {
-      const parsed = Number.parseInt(value, 10);
-      if (!isNaN(parsed)) {
-        return parsed;
-      }
+      const parsed = parseInt(value, 10);
+      if (!isNaN(parsed)) return parsed;
     }
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
+    if (typeof value === 'number') return value;
     return fallback;
   }
 }

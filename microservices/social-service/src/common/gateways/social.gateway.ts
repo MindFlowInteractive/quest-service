@@ -6,7 +6,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'ws';
+import { Server, WebSocket } from 'ws';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
@@ -19,20 +19,20 @@ export class SocialGateway
 {
   @WebSocketServer() server: Server;
   private logger = new Logger('SocialGateway');
-  private userConnections = new Map<string, Socket>();
+  private userConnections = new Map<string, WebSocket>();
 
   afterInit(server: Server) {
-    this.logger.log('WebSocket gateway initialized');
+    this.logger.log('WebWebSocket gateway initialized');
   }
 
-  handleConnection(client: Socket) {
+  handleConnection(client: WebSocket) {
     this.logger.log(`Client connected: ${client.url}`);
   }
 
-  handleDisconnect(client: Socket) {
+  handleDisconnect(client: WebSocket) {
     this.logger.log(`Client disconnected: ${client.url}`);
     // Clean up user connections
-    const userId = this.getUserIdFromSocket(client);
+    const userId = this.getUserIdFromWebSocket(client);
     if (userId) {
       this.userConnections.delete(userId);
       this.broadcastUserStatus(userId, 'offline');
@@ -45,7 +45,7 @@ export class SocialGateway
    */
   @SubscribeMessage('room-join')
   handleRoomJoin(
-    client: Socket,
+    client: WebSocket,
     payload: { roomId: string; userId: string },
   ) {
     const { roomId, userId } = payload;
@@ -74,7 +74,7 @@ export class SocialGateway
    */
   @SubscribeMessage('room-leave')
   handleRoomLeave(
-    client: Socket,
+    client: WebSocket,
     payload: { roomId: string; userId: string },
   ) {
     const { roomId, userId } = payload;
@@ -99,7 +99,7 @@ export class SocialGateway
    */
   @SubscribeMessage('room-message')
   handleRoomMessage(
-    client: Socket,
+    client: WebSocket,
     payload: { roomId: string; userId: string; message: string },
   ) {
     const { roomId, userId, message } = payload;
@@ -124,7 +124,7 @@ export class SocialGateway
    */
   @SubscribeMessage('game-start')
   handleGameStart(
-    client: Socket,
+    client: WebSocket,
     payload: { roomId: string; userId: string },
   ) {
     const { roomId, userId } = payload;
@@ -149,7 +149,7 @@ export class SocialGateway
    */
   @SubscribeMessage('game-complete')
   handleGameComplete(
-    client: Socket,
+    client: WebSocket,
     payload: {
       roomId: string;
       userId: string;
@@ -178,7 +178,7 @@ export class SocialGateway
    */
   @SubscribeMessage('leaderboard-update')
   handleLeaderboardUpdate(
-    client: Socket,
+    client: WebSocket,
     payload: { userId: string; score: number; rank: number; seasonId: string },
   ) {
     const { userId, score, rank, seasonId } = payload;
@@ -203,7 +203,7 @@ export class SocialGateway
    */
   @SubscribeMessage('friend-status')
   handleFriendStatus(
-    client: Socket,
+    client: WebSocket,
     payload: { userId: string; status: 'online' | 'offline' | 'in-game' },
   ) {
     const { userId, status } = payload;
@@ -224,16 +224,16 @@ export class SocialGateway
    */
   @SubscribeMessage('friend-request')
   handleFriendRequest(
-    client: Socket,
+    client: WebSocket,
     payload: { fromUserId: string; toUserId: string; requestId: string },
   ) {
     const { fromUserId, toUserId, requestId } = payload;
     this.logger.log(`Friend request from ${fromUserId} to ${toUserId}`);
 
     // Send notification to specific user if connected
-    const targetSocket = this.userConnections.get(toUserId);
-    if (targetSocket && targetSocket.readyState === 1) {
-      targetSocket.send(
+    const targetWebSocket = this.userConnections.get(toUserId);
+    if (targetWebSocket && targetWebSocket.readyState === 1) {
+      targetWebSocket.send(
         JSON.stringify({
           event: 'friend-request-received',
           data: { fromUserId, requestId, receivedAt: new Date() },
@@ -248,7 +248,7 @@ export class SocialGateway
    */
   @SubscribeMessage('friend-request-response')
   handleFriendRequestResponse(
-    client: Socket,
+    client: WebSocket,
     payload: { userId: string; requestId: string; accepted: boolean },
   ) {
     const { userId, requestId, accepted } = payload;
@@ -275,16 +275,16 @@ export class SocialGateway
    */
   @SubscribeMessage('room-invite')
   handleRoomInvite(
-    client: Socket,
+    client: WebSocket,
     payload: { fromUserId: string; toUserId: string; roomId: string },
   ) {
     const { fromUserId, toUserId, roomId } = payload;
     this.logger.log(`Room invite from ${fromUserId} to ${toUserId} for room ${roomId}`);
 
     // Send invitation to specific user if connected
-    const targetSocket = this.userConnections.get(toUserId);
-    if (targetSocket && targetSocket.readyState === 1) {
-      targetSocket.send(
+    const targetWebSocket = this.userConnections.get(toUserId);
+    if (targetWebSocket && targetWebSocket.readyState === 1) {
+      targetWebSocket.send(
         JSON.stringify({
           event: 'room-invite-received',
           data: { fromUserId, roomId, invitedAt: new Date() },
@@ -299,7 +299,7 @@ export class SocialGateway
    */
   @SubscribeMessage('typing-indicator')
   handleTypingIndicator(
-    client: Socket,
+    client: WebSocket,
     payload: { roomId: string; userId: string; isTyping: boolean },
   ) {
     const { roomId, userId, isTyping } = payload;
@@ -339,7 +339,7 @@ export class SocialGateway
   /**
    * Get user ID from socket (in real implementation, extract from JWT token)
    */
-  private getUserIdFromSocket(socket: Socket): string | null {
+  private getUserIdFromWebSocket(socket: WebSocket): string | null {
     // TODO: Extract user ID from socket authentication/headers
     return null;
   }

@@ -89,6 +89,10 @@ export class User {
       push?: boolean;
       achievements?: boolean;
       leaderboard?: boolean;
+      dailyChallenge?: boolean;
+      friendRequest?: boolean;
+      tournamentReminder?: boolean;
+      sessionInvite?: boolean;
     };
     privacy?: {
       showProfile?: boolean;

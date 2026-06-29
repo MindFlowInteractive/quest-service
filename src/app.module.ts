@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -48,6 +50,16 @@ import { DailyChallengesModule } from './daily-challenges/daily-challenges.modul
 import { EnergyModule } from './energy/energy.module';
 import { SkillRatingModule } from './skill-rating/skill-rating.module';
 import { WalletAuthModule } from './auth/wallet-auth.module';
+import { XpModule } from './xp/xp.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { PlayerEventsModule } from './player-events/player-events.module';
+import { AccountModule } from './account/account.module';
+import { BlockchainEventsModule } from './blockchain-events/blockchain-events.module';
+import { MetricsModule } from './common/metrics/metrics.module';
+import { GuildsModule } from './guilds/guilds.module';
+import { SupportModule } from './support/support.module';
+import { AbTestingModule } from './ab-testing/ab-testing.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -61,6 +73,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
 
     // Scheduling for cron jobs
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
 
     // Database
     TypeOrmModule.forRootAsync({
@@ -70,7 +83,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', ''),
-        database: configService.get<string>('DB_NAME', 'quest_db'),
+        database: configService.get<string>('DB_NAME', 'myapp'),
         autoLoadEntities: true,
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: configService.get<string>('NODE_ENV') === 'development',
@@ -78,6 +91,17 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
           configService.get<string>('NODE_ENV') === 'production'
             ? { rejectUnauthorized: false }
             : false,
+      }),
+      inject: [ConfigService],
+    }),
+
+    BullModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+          password: configService.get<string>('REDIS_PASSWORD') || undefined,
+        },
       }),
       inject: [ConfigService],
     }),
@@ -125,8 +149,7 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
     PuzzleModule,
     EventModule,
     SeasonalEventsModule,
-    MultiplayerModule,
-    RecommendationsModule,
+    MultiplayerModule,    PlayerEventsModule,    RecommendationsModule,
     AntiCheatModule,
     QuestsModule,
     IntegrationsModule,
@@ -137,6 +160,15 @@ import { WalletAuthModule } from './auth/wallet-auth.module';
     DailyChallengesModule,
     SkillRatingModule,
     WalletAuthModule,
+    XpModule,
+    WebhooksModule,
+    AccountModule,
+    BlockchainEventsModule,
+    MetricsModule,
+    GuildsModule,
+    SupportModule,
+    AbTestingModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [

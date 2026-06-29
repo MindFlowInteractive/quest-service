@@ -1,0 +1,12 @@
+{
+  "name": "social-service",
+  "language": "ts",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "monorepo": false,
+  "entryFile": "main",
+  "rootDir": ".",
+  "compilerOptions": {
+    "deleteOutDir": true
+  }
+}

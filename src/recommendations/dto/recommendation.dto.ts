@@ -63,3 +63,53 @@ export class TrackInteractionDto {
   @IsOptional()
   metadata?: any;
 }
+
+export class SubmitFeedbackDto {
+  @IsUUID()
+  puzzleId: string;
+
+  @IsEnum(['helpful', 'not_helpful', 'already_played'])
+  feedbackType: 'helpful' | 'not_helpful' | 'already_played';
+
+  @IsOptional()
+  @IsString()
+  comment?: string;
+
+  @IsOptional()
+  metadata?: {
+    recommendationId?: string;
+    algorithm?: string;
+    score?: number;
+    source?: string;
+    sessionId?: string;
+  };
+}
+
+export class PuzzleRecommendationDto {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  difficultyRating: number;
+  basePoints: number;
+  timeLimit: number;
+  tags: string[];
+  createdAt: Date;
+  score: number;
+  reason: string;
+}
+
+export class TrendingPuzzleDto {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  difficultyRating: number;
+  basePoints: number;
+  timeLimit: number;
+  tags: string[];
+  createdAt: Date;
+  completionsLast7Days: number;
+}

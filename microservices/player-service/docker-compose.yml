@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  player-service:
+    build: .
+    ports:
+      - '3009:3009'
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: player_db
+      DB_SYNC: true
+      SERVICE_PORT: 3009
+      JWT_SECRET: your-super-secret-jwt-key-here
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: player_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password

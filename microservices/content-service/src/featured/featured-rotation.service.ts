@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, MoreThan } from 'typeorm';
+import { Repository, LessThan, In, IsNull } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { FeaturedContent, FeaturedSlot, FeaturedReason, SelectionCriteria } from '../entities/featured-content.entity.js';
 import { Content, ContentStatus } from '../entities/content.entity.js';
@@ -108,6 +108,7 @@ export class FeaturedRotationService {
     const config = this.defaultConfig[slot];
 
     await this.unfeatureExpiredContent(slot);
+    await this.clearAutoFeaturedForSlot(slot);
 
     const candidates = await this.selectCandidates(slot, config);
 
@@ -125,11 +126,16 @@ export class FeaturedRotationService {
       },
       { isActive: false },
     );
+  }
 
+  private async clearAutoFeaturedForSlot(slot: FeaturedSlot): Promise<void> {
+    // Rotation should replace only algorithmic/auto entries; manual admin picks should remain.
     await this.featuredRepository.update(
       {
         slot,
         isActive: true,
+        reason: In([FeaturedReason.ALGORITHM, FeaturedReason.AUTO_SELECTED]),
+        endDate: IsNull(),
       },
       { isActive: false },
     );

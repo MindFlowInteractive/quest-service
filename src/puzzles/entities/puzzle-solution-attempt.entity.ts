@@ -132,6 +132,14 @@ export class PuzzleSolutionAttempt {
   ipAddress?: string;
 
   /**
+   * Version of the puzzle that was live when this attempt was submitted.
+   * References puzzle_versions.id — preserved even if the puzzle is later edited.
+   */
+  @Column({ type: 'uuid', name: 'puzzle_version_id', nullable: true })
+  @Index()
+  puzzleVersionId?: string;
+
+  /**
    * Extensible metadata (user-agent, device fingerprint, geo, etc.)
    */
   @Column({ type: 'jsonb', default: {} })
