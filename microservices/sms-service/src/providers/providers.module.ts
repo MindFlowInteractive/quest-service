@@ -1,15 +1,17 @@
 import { Module } from '@nestjs/common';
-import { AwsSnsSmsProvider } from './aws-sns.provider';
-import { ConsoleSmsProvider } from './console.provider';
+import { ConfigModule } from '@nestjs/config';
+import { MockProvider } from './mock.provider';
+import { SnsProvider } from './sns.provider';
 import { SmsProviderFactory } from './sms-provider.factory';
-import { TwilioSmsProvider } from './twilio.provider';
+import { TwilioProvider } from './twilio.provider';
 
 @Module({
+  imports: [ConfigModule],
   providers: [
-    AwsSnsSmsProvider,
-    ConsoleSmsProvider,
+    MockProvider,
+    SnsProvider,
     SmsProviderFactory,
-    TwilioSmsProvider,
+    TwilioProvider,
   ],
   exports: [SmsProviderFactory],
 })

@@ -27,7 +27,7 @@ export class Sms {
   @Column({ default: true })
   active: boolean;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'simple-json', nullable: true })
   metadata: Record<string, any>;
 
   @OneToMany(() => Message, (message) => message.sender)

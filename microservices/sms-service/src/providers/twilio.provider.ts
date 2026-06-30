@@ -1,59 +1,68 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import Twilio from 'twilio';
 import {
+  SmsPayload,
   SmsProvider,
-  SmsProviderRequest,
-  SmsProviderResponse,
+  SmsSendResult,
 } from './interfaces/sms-provider.interface';
 
 @Injectable()
-export class TwilioSmsProvider implements SmsProvider {
-  readonly name = 'twilio';
+export class TwilioProvider implements SmsProvider {
+  name = 'twilio';
 
   constructor(private readonly configService: ConfigService) {}
 
-  async send(request: SmsProviderRequest): Promise<SmsProviderResponse> {
-    const accountSid = this.configService.get<string>('sms.twilio.accountSid');
-    const authToken = this.configService.get<string>('sms.twilio.authToken');
-    const callbackUrl = this.configService.get<string>(
-      'sms.twilio.statusCallbackUrl',
+  validateConfig(): boolean {
+    return Boolean(
+      this.configService.get<string>('sms.twilio.accountSid') &&
+        this.configService.get<string>('sms.twilio.authToken') &&
+        (this.configService.get<string>('sms.twilio.fromNumber') ||
+          this.configService.get<string>('sms.twilio.messagingServiceSid')),
     );
+  }
 
-    if (!accountSid || !authToken) {
-      throw new Error('Twilio credentials are not configured');
+  async send(payload: SmsPayload): Promise<SmsSendResult> {
+    if (!this.validateConfig()) {
+      return {
+        success: false,
+        provider: this.name,
+        error: 'Twilio credentials are not configured',
+      };
     }
 
-    const body = new URLSearchParams({
-      To: request.to,
-      From: request.from,
-      Body: request.body,
-    });
+    try {
+      const client = Twilio(
+        this.configService.get<string>('sms.twilio.accountSid'),
+        this.configService.get<string>('sms.twilio.authToken'),
+      );
 
-    if (callbackUrl) {
-      body.set('StatusCallback', callbackUrl);
-    }
+      const response = await client.messages.create({
+        to: payload.to,
+        body: payload.body,
+        from: this.configService.get<string>('sms.twilio.fromNumber') || undefined,
+        messagingServiceSid:
+          this.configService.get<string>('sms.twilio.messagingServiceSid') || undefined,
+        statusCallback: payload.statusCallbackUrl,
+      });
 
-    const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
+      return {
+        success: true,
+        provider: this.name,
+        messageId: response.sid,
+        segments: parseInt(response.numSegments || '1', 10),
+        deliveryStatus: 'sent',
+        rawResponse: {
+          sid: response.sid,
+          status: response.status,
         },
-        body,
-      },
-    );
-
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload?.message || 'Twilio SMS send failed');
+      };
+    } catch (error) {
+      return {
+        success: false,
+        provider: this.name,
+        error: error.message,
+      };
     }
-
-    return {
-      provider: this.name,
-      messageId: payload.sid,
-      status: payload.status === 'queued' ? 'queued' : 'sent',
-    };
   }
 }

@@ -1,17 +1,23 @@
-export type SmsProviderRequest = {
+export interface SmsPayload {
   to: string;
-  from: string;
   body: string;
+  from?: string;
   metadata?: Record<string, any>;
-};
+  statusCallbackUrl?: string;
+}
 
-export type SmsProviderResponse = {
+export interface SmsSendResult {
+  success: boolean;
   provider: string;
-  messageId: string;
-  status: 'sent' | 'queued';
-};
+  messageId?: string;
+  segments?: number;
+  error?: string;
+  rawResponse?: Record<string, any>;
+  deliveryStatus?: 'sent' | 'delivered';
+}
 
 export interface SmsProvider {
-  readonly name: string;
-  send(request: SmsProviderRequest): Promise<SmsProviderResponse>;
+  name: string;
+  send(payload: SmsPayload): Promise<SmsSendResult>;
+  validateConfig(): boolean;
 }

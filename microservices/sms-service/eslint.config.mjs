@@ -1,8 +1,8 @@
 import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import prettierPlugin from 'eslint-plugin-prettier';
-import configPrettier from 'eslint-config-prettier';
+import prettier from 'eslint-plugin-prettier';
+import globals from 'globals';
 
 export default [
   js.configs.recommended,
@@ -12,31 +12,27 @@ export default [
       parser: tsParser,
       parserOptions: {
         project: './tsconfig.json',
-        tsconfigRootDir: import.meta.dirname,
         sourceType: 'module',
       },
       globals: {
-        console: 'readonly',
-        process: 'readonly',
-        Buffer: 'readonly',
-        fetch: 'readonly',
-        describe: 'readonly',
-        beforeEach: 'readonly',
-        it: 'readonly',
-        expect: 'readonly',
-        jest: 'readonly',
+        ...globals.node,
+        ...globals.jest,
       },
     },
     plugins: {
-      '@typescript-eslint': tsPlugin,
-      prettier: prettierPlugin,
+      '@typescript-eslint': tseslint,
+      prettier,
     },
     rules: {
-      ...tsPlugin.configs.recommended.rules,
-      'prettier/prettier': 'error',
+      ...tseslint.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+        },
+      ],
+      'prettier/prettier': 'error',
     },
   },
-  configPrettier,
 ];

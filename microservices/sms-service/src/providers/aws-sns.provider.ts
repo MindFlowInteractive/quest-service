@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  SmsPayload,
   SmsProvider,
-  SmsProviderRequest,
-  SmsProviderResponse,
+  SmsSendResult,
 } from './interfaces/sms-provider.interface';
 
 @Injectable()
@@ -12,11 +12,21 @@ export class AwsSnsSmsProvider implements SmsProvider {
 
   constructor(private readonly configService: ConfigService) {}
 
-  async send(_request: SmsProviderRequest): Promise<SmsProviderResponse> {
+  validateConfig(): boolean {
+    return Boolean(
+      this.configService.get<string>('sms.aws.region') &&
+        this.configService.get<string>('sms.aws.accessKeyId') &&
+        this.configService.get<string>('sms.aws.secretAccessKey'),
+    );
+  }
+
+  async send(_request: SmsPayload): Promise<SmsSendResult> {
     const region = this.configService.get<string>('sms.aws.region');
 
-    throw new Error(
-      `AWS SNS provider selected for ${region}, but the lightweight service build does not bundle the AWS SDK. Use SMS_PROVIDER=twilio or SMS_PROVIDER=console, or add @aws-sdk/client-sns to enable SNS sends.`,
-    );
+    return {
+      success: false,
+      provider: this.name,
+      error: `AWS SNS provider selected for ${region}, but this compatibility provider is disabled. Use the branch's \`sns\` provider implementation instead.`,
+    };
   }
 }

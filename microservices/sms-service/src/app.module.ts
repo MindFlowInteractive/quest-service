@@ -1,53 +1,38 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm/dist/interfaces/typeorm-options.interface';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { buildDataSourceOptions } from './config/orm-config';
 import smsConfig from './config/sms.config';
+import { OtpModule } from './otp/otp.module';
+import { ProvidersModule } from './providers/providers.module';
+import { ReceiptsModule } from './receipts/receipts.module';
 import { SmsModule } from './sms/sms.module';
-import { Sms } from './sms/entities/sms.entity';
-import { Message } from './sms/entities/message.entity';
-import { Receipt } from './sms/entities/receipt.entity';
+import { TemplatesModule } from './templates/templates.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [smsConfig],
+      envFilePath: ['.env'],
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('sms.database.host'),
-        port: configService.get<number>('sms.database.port'),
-        username: configService.get<string>('sms.database.user'),
-        password: configService.get<string>('sms.database.password'),
-        database: configService.get<string>('sms.database.name'),
-        entities: [Sms, Message, Receipt],
-        synchronize: configService.get<boolean>('sms.database.synchronize'),
-      }),
-      inject: [ConfigService],
+      useFactory: async () =>
+        ({
+          ...buildDataSourceOptions(),
+          autoLoadEntities: true,
+        }) as TypeOrmModuleOptions,
     }),
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => [
-        {
-          ttl: configService.get<number>('sms.rateLimit.windowSeconds'),
-          limit: configService.get<number>('sms.rateLimit.max'),
-        },
-      ],
-    }),
-    ScheduleModule.forRoot(),
+    ProvidersModule,
+    TemplatesModule,
+    ReceiptsModule,
     SmsModule,
+    OtpModule,
   ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -1,36 +1,106 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import * as Handlebars from 'handlebars';
-
-type TemplateDefinition = {
-  body: string;
-};
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TemplateEngineService } from './template-engine.service';
+import {
+  CreateSmsTemplateDto,
+  RenderSmsTemplateDto,
+  UpdateSmsTemplateDto,
+} from './dto';
+import { SmsTemplate } from './entities/sms-template.entity';
 
 @Injectable()
 export class TemplatesService {
-  private readonly templates = new Map<string, TemplateDefinition>([
-    [
-      'otp',
-      {
-        body: 'Your Quest verification code is {{code}}. It expires in {{minutes}} minutes.',
-      },
-    ],
-    ['alert', { body: '{{title}}: {{message}}' }],
-    ['time-sensitive', { body: '{{message}} Reply STOP to opt out.' }],
-  ]);
+  constructor(
+    @InjectRepository(SmsTemplate)
+    private readonly templateRepository: Repository<SmsTemplate>,
+    private readonly templateEngine: TemplateEngineService,
+  ) {}
 
-  render(templateName: string, variables: Record<string, any> = {}): string {
-    const template = this.templates.get(templateName);
-    if (!template) {
-      throw new NotFoundException(`SMS template "${templateName}" not found`);
+  async create(dto: CreateSmsTemplateDto): Promise<SmsTemplate> {
+    const validation = this.templateEngine.validateTemplate(dto.body);
+    if (!validation.valid) {
+      throw new BadRequestException(validation.error);
     }
 
-    return Handlebars.compile(template.body)(variables);
+    const template = this.templateRepository.create({
+      ...dto,
+      variables: dto.variables?.length
+        ? dto.variables
+        : this.templateEngine.extractVariables(dto.body),
+    });
+
+    return this.templateRepository.save(template);
   }
 
-  list(): Array<{ name: string; body: string }> {
-    return Array.from(this.templates.entries()).map(([name, template]) => ({
-      name,
-      body: template.body,
-    }));
+  findAll(): Promise<SmsTemplate[]> {
+    return this.templateRepository.find({
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOne(id: string): Promise<SmsTemplate> {
+    const template = await this.templateRepository.findOne({ where: { id } });
+    if (!template) {
+      throw new NotFoundException(`Template with ID ${id} not found`);
+    }
+    return template;
+  }
+
+  async findByName(name: string): Promise<SmsTemplate> {
+    const template = await this.templateRepository.findOne({ where: { name } });
+    if (!template) {
+      throw new NotFoundException(`Template ${name} not found`);
+    }
+    return template;
+  }
+
+  findByNameOrNull(name: string): Promise<SmsTemplate | null> {
+    return this.templateRepository.findOne({ where: { name } });
+  }
+
+  async update(id: string, dto: UpdateSmsTemplateDto): Promise<SmsTemplate> {
+    const template = await this.findOne(id);
+
+    if (dto.body) {
+      const validation = this.templateEngine.validateTemplate(dto.body);
+      if (!validation.valid) {
+        throw new BadRequestException(validation.error);
+      }
+    }
+
+    const merged = this.templateRepository.merge(template, dto);
+    if (dto.body) {
+      merged.version += 1;
+      merged.variables =
+        dto.variables?.length || dto.variables === undefined
+          ? dto.variables || this.templateEngine.extractVariables(dto.body)
+          : [];
+    }
+
+    return this.templateRepository.save(merged);
+  }
+
+  async remove(id: string): Promise<void> {
+    const template = await this.findOne(id);
+    await this.templateRepository.remove(template);
+  }
+
+  async render(dto: RenderSmsTemplateDto): Promise<{ body: string }> {
+    const template = await this.findByName(dto.templateName);
+    return {
+      body: this.templateEngine.render(template.body, dto.variables, template.name),
+    };
+  }
+
+  async preview(id: string, variables: Record<string, any>) {
+    const template = await this.findOne(id);
+    return {
+      body: this.templateEngine.render(template.body, variables, template.name),
+    };
   }
 }

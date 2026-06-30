@@ -5,27 +5,32 @@ services:
     container_name: sms-service
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     ports:
-      - '3010:3010'
+      - '3007:3007'
     environment:
       - NODE_ENV=development
-      - SERVICE_PORT=3010
+      - SERVICE_PORT=3007
+      - DB_TYPE=postgres
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_NAME=${DB_NAME:-sms_service}
-      - SMS_PROVIDER=${SMS_PROVIDER:-console}
-      - SMS_DEFAULT_FROM=${SMS_DEFAULT_FROM:-Quest}
+      - DB_SYNC=true
+      - SMS_PROVIDER=${SMS_PROVIDER:-mock}
+      - SMS_DEFAULT_COUNTRY=${SMS_DEFAULT_COUNTRY:-US}
+      - SMS_SENDER_ID=${SMS_SENDER_ID:-Quest}
+      - SMS_STATUS_CALLBACK_URL=${SMS_STATUS_CALLBACK_URL:-http://localhost:3007/receipts/webhook}
+      - SMS_OTP_SECRET=${SMS_OTP_SECRET:-replace-me}
       - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
       - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
       - TWILIO_FROM_NUMBER=${TWILIO_FROM_NUMBER:-}
-      - TWILIO_STATUS_CALLBACK_URL=${TWILIO_STATUS_CALLBACK_URL:-}
-      - OTP_TTL_SECONDS=${OTP_TTL_SECONDS:-300}
-      - OTP_LENGTH=${OTP_LENGTH:-6}
-      - SMS_RATE_LIMIT_MAX=${SMS_RATE_LIMIT_MAX:-5}
-      - SMS_RATE_LIMIT_WINDOW_SECONDS=${SMS_RATE_LIMIT_WINDOW_SECONDS:-60}
+      - TWILIO_MESSAGING_SERVICE_SID=${TWILIO_MESSAGING_SERVICE_SID:-}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_SNS_SENDER_ID=${AWS_SNS_SENDER_ID:-Quest}
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,19 +44,18 @@ services:
     environment:
       - POSTGRES_USER=${DB_USER:-postgres}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
-      - POSTGRES_DB=sms_service
+      - POSTGRES_DB=${DB_NAME:-sms_service}
     ports:
-      - '5440:5432'
+      - '5437:5432'
     volumes:
       - postgres_sms_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    networks:
-      - sms-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - sms-network
     restart: unless-stopped
 
 volumes:

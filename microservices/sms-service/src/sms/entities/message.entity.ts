@@ -59,21 +59,21 @@ export class Message {
   body: string;
 
   @Column({
-    type: 'enum',
+    type: 'simple-enum',
     enum: MessageType,
     default: MessageType.TRANSACTIONAL,
   })
   type: MessageType;
 
   @Column({
-    type: 'enum',
+    type: 'simple-enum',
     enum: MessagePriority,
     default: MessagePriority.NORMAL,
   })
   priority: MessagePriority;
 
   @Column({
-    type: 'enum',
+    type: 'simple-enum',
     enum: MessageStatus,
     default: MessageStatus.PENDING,
   })
@@ -88,10 +88,10 @@ export class Message {
   @Column({ nullable: true })
   templateName: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'simple-json', nullable: true })
   templateData: Record<string, any>;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'simple-json', nullable: true })
   metadata: Record<string, any>;
 
   @Column({ nullable: true })

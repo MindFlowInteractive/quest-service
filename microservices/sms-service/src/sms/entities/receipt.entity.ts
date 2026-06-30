@@ -32,7 +32,7 @@ export class Receipt {
   providerMessageId: string;
 
   @Column({
-    type: 'enum',
+    type: 'simple-enum',
     enum: MessageStatus,
   })
   status: MessageStatus;
@@ -43,7 +43,7 @@ export class Receipt {
   @Column({ nullable: true })
   errorMessage: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'simple-json', nullable: true })
   rawPayload: Record<string, any>;
 
   @CreateDateColumn()

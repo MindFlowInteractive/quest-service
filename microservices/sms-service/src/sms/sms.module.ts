@@ -1,21 +1,23 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProvidersModule } from '../providers/providers.module';
+import { ReceiptsModule } from '../receipts/receipts.module';
 import { TemplatesModule } from '../templates/templates.module';
-import { Message } from './entities/message.entity';
-import { Receipt } from './entities/receipt.entity';
-import { Sms } from './entities/sms.entity';
+import { SmsMessage } from './entities/sms-message.entity';
+import { PhoneNumberService } from './phone-number.service';
 import { SmsController } from './sms.controller';
+import { SmsDispatcherService } from './sms-dispatcher.service';
 import { SmsService } from './sms.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Sms, Message, Receipt]),
+    TypeOrmModule.forFeature([SmsMessage]),
     ProvidersModule,
+    ReceiptsModule,
     TemplatesModule,
   ],
   controllers: [SmsController],
-  providers: [SmsService],
-  exports: [SmsService],
+  providers: [PhoneNumberService, SmsDispatcherService, SmsService],
+  exports: [PhoneNumberService, SmsService],
 })
 export class SmsModule {}

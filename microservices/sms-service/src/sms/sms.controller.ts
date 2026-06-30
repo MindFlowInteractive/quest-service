@@ -1,107 +1,56 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Query,
 } from '@nestjs/common';
-import { MessageStatus } from './entities/message.entity';
+import { QuerySmsHistoryDto, SendSmsDto, SendTemplatedSmsDto } from './dto';
+import { SmsMessageType } from './entities/sms-message.entity';
 import { SmsService } from './sms.service';
-import {
-  DeliveryReceiptDto,
-  GenerateOtpDto,
-  SendSmsDto,
-  SendTemplatedSmsDto,
-  VerifyOtpDto,
-} from './dto';
-import { TemplatesService } from '../templates/templates.service';
 
-@Controller()
+@Controller('sms')
 export class SmsController {
-  constructor(
-    private readonly smsService: SmsService,
-    private readonly templatesService: TemplatesService,
-  ) {}
+  constructor(private readonly smsService: SmsService) {}
 
-  @Get('health')
-  health() {
-    return { status: 'ok', service: 'sms-service' };
-  }
-
-  @Post('sms/send')
+  @Post('send')
   send(@Body() dto: SendSmsDto) {
     return this.smsService.send(dto);
   }
 
-  @Post('sms/send-template')
+  @Post('send-templated')
   sendTemplated(@Body() dto: SendTemplatedSmsDto) {
     return this.smsService.sendTemplated(dto);
   }
 
-  @Post('sms/otp')
-  generateOtp(@Body() dto: GenerateOtpDto) {
-    return this.smsService.generateOtp(dto);
+  @Get('stats')
+  getStats(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('userId') userId?: string,
+    @Query('type') type?: SmsMessageType,
+  ) {
+    return this.smsService.getStats({ from, to, userId, type });
   }
 
-  @Post('sms/otp/verify')
-  verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.smsService.verifyOtp(dto);
+  @Get('history')
+  getHistory(@Query() query: QuerySmsHistoryDto) {
+    return this.smsService.getHistory(query);
   }
 
-  @Post('sms/receipts')
-  receipt(@Body() dto: DeliveryReceiptDto) {
-    return this.smsService.recordReceipt(dto);
-  }
-
-  @Get('sms/:id')
+  @Get(':id')
   findOne(@Param('id') id: string) {
     return this.smsService.findOne(id);
   }
 
-  @Get('sms')
-  history(
-    @Query('userId') userId?: string,
-    @Query('phone') phone?: string,
-    @Query('status') status?: MessageStatus,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
-    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit?: number,
-    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
-  ) {
-    return this.smsService.history({
-      userId,
-      phone,
-      status,
-      from: from ? new Date(from) : undefined,
-      to: to ? new Date(to) : undefined,
-      limit,
-      offset,
-    });
-  }
-
-  @Get('sms-analytics')
-  analytics(
-    @Query('userId') userId?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
-  ) {
-    return this.smsService.analytics({
-      userId,
-      from: from ? new Date(from) : undefined,
-      to: to ? new Date(to) : undefined,
-    });
-  }
-
-  @Post('sms/:id/cancel')
+  @Post(':id/cancel')
   cancel(@Param('id') id: string) {
     return this.smsService.cancel(id);
   }
 
-  @Get('sms-templates')
-  templates() {
-    return this.templatesService.list();
+  @Post(':id/retry')
+  retry(@Param('id') id: string) {
+    return this.smsService.retry(id);
   }
 }
