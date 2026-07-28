@@ -1,9 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseInterceptors,
+  UploadedFile,
+  Query,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { fileFilter } from '../common/validators/file-upload.validator';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { PageOptionsDto } from '../common/pagination';
 
 type UploadedFile = {
   originalname: string;
@@ -19,8 +31,8 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() pageOptionsDto: PageOptionsDto) {
+    return this.usersService.findAll(pageOptionsDto);
   }
 
   @Get(':id')
@@ -40,12 +52,20 @@ export class UsersController {
 
   // Example: File upload with validation (avatar upload)
   @Post('avatar')
-  @UseInterceptors(FileInterceptor('file', {
-    fileFilter: fileFilter(['.png', '.jpg', '.jpeg'], ['image/png', 'image/jpeg']),
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-  }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: fileFilter(
+        ['.png', '.jpg', '.jpeg'],
+        ['image/png', 'image/jpeg'],
+      ),
+      limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+    }),
+  )
   uploadAvatar(@UploadedFile() file: UploadedFile) {
     // Only validation logic shown; file storage logic can be added as needed
-    return { message: 'Avatar uploaded successfully', filename: file.originalname };
+    return {
+      message: 'Avatar uploaded successfully',
+      filename: file.originalname,
+    };
   }
 }
