@@ -1,3 +1,4 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -6,12 +7,27 @@ import { CacheWarmingModule } from './cache-warming/cache-warming.module';
 import { CacheJob } from './cache-warming/entities/cache-job.entity';
 import { Metric } from './cache-warming/entities/metric.entity';
 import { PreloadData } from './cache-warming/entities/preload-data.entity';
+import { DeadLetterEvent } from './events/dead-letter-event.entity';
+import { Event } from './events/event.entity';
+import { EventsModule } from './events/events.module';
+import { JobsModule } from './jobs/jobs.module';
+import { Job } from './jobs/job.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
+    }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+        },
+      }),
+      inject: [ConfigService],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -22,7 +38,7 @@ import { PreloadData } from './cache-warming/entities/preload-data.entity';
         username: configService.get<string>('DB_USER', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'password'),
         database: configService.get<string>('DB_NAME', 'cache_warming_db'),
-        entities: [CacheJob, PreloadData, Metric, Event, DeadLetterEvent],
+        entities: [CacheJob, PreloadData, Metric, Event, DeadLetterEvent, Job],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: configService.get<string>('NODE_ENV') === 'development',
       }),
@@ -30,6 +46,8 @@ import { PreloadData } from './cache-warming/entities/preload-data.entity';
     }),
     ScheduleModule.forRoot(),
     CacheWarmingModule,
+    EventsModule,
+    JobsModule,
   ],
 })
 export class AppModule {}
