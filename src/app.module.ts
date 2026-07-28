@@ -22,7 +22,7 @@ import { PreloadData } from './cache-warming/entities/preload-data.entity';
         username: configService.get<string>('DB_USER', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'password'),
         database: configService.get<string>('DB_NAME', 'cache_warming_db'),
-        entities: [CacheJob, PreloadData, Metric],
+        entities: [CacheJob, PreloadData, Metric, Event, DeadLetterEvent],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: configService.get<string>('NODE_ENV') === 'development',
       }),
