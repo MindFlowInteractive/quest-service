@@ -1,11 +1,26 @@
-import { IsString, IsEnum, IsNumber, IsBoolean, IsOptional, IsArray, IsObject, Min, Max, MinLength, MaxLength, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  IsObject,
+  Min,
+  Max,
+  MinLength,
+  MaxLength,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
+import { IsSafeString, Trim } from '../../validators';
 
 export enum PuzzleDifficulty {
   EASY = 'easy',
   MEDIUM = 'medium',
   HARD = 'hard',
-  EXPERT = 'expert'
+  EXPERT = 'expert',
 }
 
 export enum PuzzleContentType {
@@ -14,7 +29,7 @@ export enum PuzzleContentType {
   DRAG_DROP = 'drag-drop',
   CODE = 'code',
   VISUAL = 'visual',
-  LOGIC_GRID = 'logic-grid'
+  LOGIC_GRID = 'logic-grid',
 }
 
 export class PuzzleContentDto {
@@ -23,16 +38,22 @@ export class PuzzleContentDto {
 
   @IsString()
   @MinLength(10)
+  @IsSafeString()
+  @Trim()
   question: string;
 
   @IsOptional()
   @IsArray()
+  @IsString({ each: true })
+  @Trim()
   options?: string[];
 
   correctAnswer: any;
 
   @IsOptional()
   @IsString()
+  @IsSafeString()
+  @Trim()
   explanation?: string;
 
   @IsOptional()
@@ -59,6 +80,8 @@ export class PuzzleHintDto {
 
   @IsString()
   @MinLength(5)
+  @IsSafeString()
+  @Trim()
   text: string;
 
   @IsNumber()
@@ -98,16 +121,22 @@ export class CreatePuzzleDto {
   @IsString()
   @MinLength(5)
   @MaxLength(200)
+  @IsSafeString()
+  @Trim()
   title: string;
 
   @IsString()
   @MinLength(20)
   @MaxLength(1000)
+  @IsSafeString()
+  @Trim()
   description: string;
 
   @IsString()
   @MinLength(3)
   @MaxLength(50)
+  @IsSafeString()
+  @Trim()
   category: string;
 
   @IsEnum(PuzzleDifficulty)
@@ -146,6 +175,7 @@ export class CreatePuzzleDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @Trim()
   tags?: string[];
 
   @IsOptional()
