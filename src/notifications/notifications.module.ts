@@ -1,20 +1,47 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
+
+import { NotificationsController } from './controllers/notifications.controller';
+import { NotificationsGateway } from './gateways/notifications.gateway';
+import { NotificationsProcessor } from './processors/notifications.processor';
+
 import { Notification } from './entities/notification.entity';
 import { NotificationDelivery } from './entities/notification-delivery.entity';
-import { Device } from './entities/device.entity';
-import { NotificationService } from './notification.service';
-import { EmailService } from './email.service';
-import { NotificationsController } from './notifications.controller';
-import { DevicesController } from './devices.controller';
-import { StaleTokenListener } from './listeners/stale-token.listener';
-import { User } from '../users/entities/user.entity';
-import { ConfigModule } from '@nestjs/config';
+import { NotificationPreference } from './entities/notification-preference.entity';
+
+import { NotificationsService } from './services/notifications.service';
+import { NotificationPreferencesService } from './services/notification-preferences.service';
+import { NotificationDeliveryService } from './services/notification-delivery.service';
+import { NotificationAggregationService } from './services/notification-aggregation.service';
+
+import { NotificationSocketAuth } from './auth/notification-socket-auth';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Notification, NotificationDelivery, Device, User]), ConfigModule],
-  providers: [NotificationService, EmailService],
-  controllers: [NotificationsController, DevicesController, StaleTokenListener],
-  exports: [NotificationService, EmailService],
+  imports: [
+    TypeOrmModule.forFeature([
+      Notification,
+      NotificationDelivery,
+      NotificationPreference,
+    ]),
+    BullModule.registerQueue({
+      name: 'notifications',
+    }),
+  ],
+  controllers: [NotificationsController],
+  providers: [
+    NotificationsService,
+    NotificationPreferencesService,
+    NotificationDeliveryService,
+    NotificationAggregationService,
+    NotificationsGateway,
+    NotificationsProcessor,
+    NotificationSocketAuth,
+  ],
+  exports: [
+    NotificationsService,
+    NotificationPreferencesService,
+    NotificationDeliveryService,
+  ],
 })
 export class NotificationsModule {}
