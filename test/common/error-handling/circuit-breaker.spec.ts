@@ -1,4 +1,8 @@
-import { CircuitBreaker, CircuitBreakerState, CircuitBreakerRegistry } from '../../../src/common/error-handling/circuit-breaker';
+import {
+  CircuitBreaker,
+  CircuitBreakerState,
+  CircuitBreakerRegistry,
+} from '../../../src/common/error-handling/circuit-breaker';
 
 describe('CircuitBreaker', () => {
   describe('CircuitBreaker class', () => {
@@ -19,7 +23,9 @@ describe('CircuitBreaker', () => {
 
     it('should initialize in CLOSED state', () => {
       expect(circuitBreaker.getState()).toBe(CircuitBreakerState.CLOSED);
-      expect(circuitBreaker.getStats().currentState).toBe(CircuitBreakerState.CLOSED);
+      expect(circuitBreaker.getStats().currentState).toBe(
+        CircuitBreakerState.CLOSED,
+      );
     });
 
     it('should allow requests in CLOSED state', () => {
@@ -49,7 +55,7 @@ describe('CircuitBreaker', () => {
 
     it('should transition to HALF_OPEN after recovery timeout', () => {
       jest.useFakeTimers();
-      
+
       // Open the circuit
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
@@ -66,12 +72,12 @@ describe('CircuitBreaker', () => {
 
     it('should transition from HALF_OPEN to CLOSED on successful probe', () => {
       jest.useFakeTimers();
-      
+
       // Open the circuit
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
-      
+
       // Advance to HALF_OPEN
       jest.advanceTimersByTime(150);
       expect(circuitBreaker.getState()).toBe(CircuitBreakerState.HALF_OPEN);
@@ -84,12 +90,12 @@ describe('CircuitBreaker', () => {
 
     it('should transition from HALF_OPEN to OPEN on failure', () => {
       jest.useFakeTimers();
-      
+
       // Open the circuit
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
-      
+
       // Advance to HALF_OPEN
       jest.advanceTimersByTime(150);
       expect(circuitBreaker.getState()).toBe(CircuitBreakerState.HALF_OPEN);
@@ -114,7 +120,7 @@ describe('CircuitBreaker', () => {
 
     it('should use fallback when circuit is OPEN', async () => {
       jest.useFakeTimers();
-      
+
       // Open the circuit
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
@@ -124,7 +130,9 @@ describe('CircuitBreaker', () => {
       const operation = jest.fn();
       const fallback = jest.fn().mockResolvedValue('fallback-success');
 
-      await expect(circuitBreaker.execute(operation, fallback)).rejects.toThrow();
+      await expect(
+        circuitBreaker.execute(operation, fallback),
+      ).rejects.toThrow();
 
       expect(operation).not.toHaveBeenCalled();
       expect(fallback).not.toHaveBeenCalled(); // Should reject before calling fallback
@@ -132,7 +140,7 @@ describe('CircuitBreaker', () => {
 
     it('should execute operation in HALF_OPEN state', async () => {
       jest.useFakeTimers();
-      
+
       // Open then transition to HALF_OPEN
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
@@ -152,12 +160,12 @@ describe('CircuitBreaker', () => {
 
     it('should get remaining recovery time', () => {
       jest.useFakeTimers();
-      
+
       // Open the circuit
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
-      
+
       const remainingTime = circuitBreaker.getRemainingRecoveryTime();
       expect(remainingTime).toBeGreaterThan(0);
       expect(remainingTime).toBeLessThanOrEqual(100);
@@ -170,7 +178,7 @@ describe('CircuitBreaker', () => {
 
     it('should return 0 remaining time when not OPEN', () => {
       expect(circuitBreaker.getRemainingRecoveryTime()).toBe(0);
-      
+
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
       expect(circuitBreaker.getRemainingRecoveryTime()).toBe(0); // Still CLOSED
@@ -179,13 +187,13 @@ describe('CircuitBreaker', () => {
     it('should get statistics', () => {
       // Execute some operations
       const operation = jest.fn().mockResolvedValue('success');
-      
+
       circuitBreaker.execute(operation, undefined);
       circuitBreaker.execute(operation, undefined);
       circuitBreaker.execute(operation, undefined);
 
       const stats = circuitBreaker.getStats();
-      
+
       expect(stats.totalRequests).toBe(3);
       expect(stats.successfulRequests).toBe(3);
       expect(stats.failedRequests).toBe(0);
@@ -197,10 +205,7 @@ describe('CircuitBreaker', () => {
       // Record some state
       circuitBreaker.recordFailure();
       circuitBreaker.recordFailure();
-      circuitBreaker.execute(
-        jest.fn().mockResolvedValue('success'),
-        undefined,
-      );
+      circuitBreaker.execute(jest.fn().mockResolvedValue('success'), undefined);
 
       circuitBreaker.reset();
 
@@ -256,7 +261,7 @@ describe('CircuitBreaker', () => {
 
     it('should maintain success count in HALF_OPEN state', () => {
       jest.useFakeTimers();
-      
+
       // Open then transition to HALF_OPEN
       circuitBreaker.trip();
       jest.advanceTimersByTime(150);

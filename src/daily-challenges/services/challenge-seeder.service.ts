@@ -33,7 +33,7 @@ export class ChallengeSeeder {
   private getStartOfUTCWeek(date: Date = new Date()): Date {
     const d = new Date(date);
     const dayOfWeek = d.getUTCDay();
-    const daysToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     d.setUTCDate(d.getUTCDate() + daysToMonday);
     d.setUTCHours(0, 0, 0, 0);
     return d;
@@ -56,7 +56,9 @@ export class ChallengeSeeder {
       });
 
       if (puzzles.length === 0) {
-        this.logger.warn('No puzzles found in database. Cannot seed challenges.');
+        this.logger.warn(
+          'No puzzles found in database. Cannot seed challenges.',
+        );
         return;
       }
 
@@ -121,9 +123,7 @@ export class ChallengeSeeder {
 
       // Select random puzzle
       const puzzle =
-        candidatePuzzles[
-          Math.floor(Math.random() * candidatePuzzles.length)
-        ];
+        candidatePuzzles[Math.floor(Math.random() * candidatePuzzles.length)];
 
       const dailyChallenge = this.dailyChallengeRepo.create({
         puzzleId: puzzle.id,
@@ -186,9 +186,7 @@ export class ChallengeSeeder {
       }
 
       if (selectedPuzzles.length < 3) {
-        this.logger.warn(
-          `Not enough puzzles for week ${week}. Skipping.`,
-        );
+        this.logger.warn(`Not enough puzzles for week ${week}. Skipping.`);
         continue;
       }
 

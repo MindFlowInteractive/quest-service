@@ -9,10 +9,20 @@ import {
   HttpStatus,
   HttpException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { RecommendationEngineService } from '../services/recommendation-engine.service';
 import { PreferenceTrackingService } from '../services/preference-tracking.service';
-import { GetRecommendationsDto, RecommendationResponseDto, TrackInteractionDto } from '../dto/recommendation.dto';
+import {
+  GetRecommendationsDto,
+  RecommendationResponseDto,
+  TrackInteractionDto,
+} from '../dto/recommendation.dto';
 
 @ApiTags('recommendations')
 @Controller('recommendations')
@@ -24,36 +34,63 @@ export class RecommendationsController {
   ) {}
 
   @Get('puzzles/:userId')
-  @ApiOperation({ summary: 'Get personalized puzzle recommendations for a user' })
+  @ApiOperation({
+    summary: 'Get personalized puzzle recommendations for a user',
+  })
   @ApiResponse({
     status: 200,
     description: 'List of recommended puzzles',
     type: [RecommendationResponseDto],
   })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of recommendations (1-50)' })
-  @ApiQuery({ name: 'category', required: false, type: String, description: 'Filter by puzzle category' })
-  @ApiQuery({ name: 'difficulty', required: false, enum: ['easy', 'medium', 'hard', 'expert'] })
-  @ApiQuery({ name: 'algorithm', required: false, enum: ['collaborative', 'content-based', 'hybrid', 'popular'] })
-  @ApiQuery({ name: 'abTestGroup', required: false, type: String, description: 'A/B test group identifier' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of recommendations (1-50)',
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    type: String,
+    description: 'Filter by puzzle category',
+  })
+  @ApiQuery({
+    name: 'difficulty',
+    required: false,
+    enum: ['easy', 'medium', 'hard', 'expert'],
+  })
+  @ApiQuery({
+    name: 'algorithm',
+    required: false,
+    enum: ['collaborative', 'content-based', 'hybrid', 'popular'],
+  })
+  @ApiQuery({
+    name: 'abTestGroup',
+    required: false,
+    type: String,
+    description: 'A/B test group identifier',
+  })
   async getRecommendations(
     @Param('userId') userId: string,
     @Query('limit') limit?: number,
     @Query('category') category?: string,
     @Query('difficulty') difficulty?: 'easy' | 'medium' | 'hard' | 'expert',
-    @Query('algorithm') algorithm?: 'collaborative' | 'content-based' | 'hybrid' | 'popular',
+    @Query('algorithm')
+    algorithm?: 'collaborative' | 'content-based' | 'hybrid' | 'popular',
     @Query('abTestGroup') abTestGroup?: string,
   ): Promise<RecommendationResponseDto[]> {
     try {
-      const recommendations = await this.recommendationEngineService.generateRecommendations(
-        userId,
-        limit || 10,
-        category,
-        difficulty,
-        algorithm,
-        abTestGroup,
-      );
+      const recommendations =
+        await this.recommendationEngineService.generateRecommendations(
+          userId,
+          limit || 10,
+          category,
+          difficulty,
+          algorithm,
+          abTestGroup,
+        );
 
-      return recommendations.map(rec => ({
+      return recommendations.map((rec) => ({
         id: rec.puzzle.id,
         puzzleId: rec.puzzleId,
         title: rec.puzzle.title,
@@ -80,7 +117,9 @@ export class RecommendationsController {
   @Post('interactions')
   @ApiOperation({ summary: 'Track user interaction with puzzles' })
   @ApiResponse({ status: 201, description: 'Interaction tracked successfully' })
-  async trackInteraction(@Body() trackInteractionDto: TrackInteractionDto): Promise<{ success: boolean }> {
+  async trackInteraction(
+    @Body() trackInteractionDto: TrackInteractionDto,
+  ): Promise<{ success: boolean }> {
     try {
       await this.recommendationEngineService.trackInteraction(
         trackInteractionDto.userId,
@@ -103,7 +142,8 @@ export class RecommendationsController {
   @ApiOperation({ summary: 'Record puzzle completion for preference learning' })
   @ApiResponse({ status: 201, description: 'Puzzle completion recorded' })
   async recordPuzzleCompletion(
-    @Body() body: {
+    @Body()
+    body: {
       userId: string;
       puzzleId: string;
       completionTime: number;
@@ -135,7 +175,8 @@ export class RecommendationsController {
   @ApiOperation({ summary: 'Record puzzle rating for preference learning' })
   @ApiResponse({ status: 201, description: 'Puzzle rating recorded' })
   async recordPuzzleRating(
-    @Body() body: {
+    @Body()
+    body: {
       userId: string;
       puzzleId: string;
       rating: number;
@@ -164,7 +205,8 @@ export class RecommendationsController {
   @ApiResponse({ status: 200, description: 'User preference insights' })
   async getUserPreferences(@Param('userId') userId: string): Promise<any> {
     try {
-      const insights = await this.preferenceTrackingService.getPreferenceInsights(userId);
+      const insights =
+        await this.preferenceTrackingService.getPreferenceInsights(userId);
       return insights;
     } catch (error) {
       throw new HttpException(
@@ -191,12 +233,13 @@ export class RecommendationsController {
       const start = startDate ? new Date(startDate) : undefined;
       const end = endDate ? new Date(endDate) : undefined;
 
-      const metrics = await this.recommendationEngineService.getRecommendationMetrics(
-        userId,
-        algorithm,
-        start,
-        end,
-      );
+      const metrics =
+        await this.recommendationEngineService.getRecommendationMetrics(
+          userId,
+          algorithm,
+          start,
+          end,
+        );
 
       return metrics;
     } catch (error) {
@@ -211,7 +254,11 @@ export class RecommendationsController {
   @ApiOperation({ summary: 'Get popular puzzles (fallback recommendations)' })
   @ApiResponse({ status: 200, description: 'List of popular puzzles' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'difficulty', required: false, enum: ['easy', 'medium', 'hard', 'expert'] })
+  @ApiQuery({
+    name: 'difficulty',
+    required: false,
+    enum: ['easy', 'medium', 'hard', 'expert'],
+  })
   async getPopularPuzzles(
     @Param('category') category?: string,
     @Query('limit') limit?: number,
@@ -219,15 +266,16 @@ export class RecommendationsController {
   ): Promise<RecommendationResponseDto[]> {
     try {
       // Use a dummy user ID for popular recommendations
-      const recommendations = await this.recommendationEngineService.generateRecommendations(
-        'popular-fallback',
-        limit || 10,
-        category,
-        difficulty,
-        'popular',
-      );
+      const recommendations =
+        await this.recommendationEngineService.generateRecommendations(
+          'popular-fallback',
+          limit || 10,
+          category,
+          difficulty,
+          'popular',
+        );
 
-      return recommendations.map(rec => ({
+      return recommendations.map((rec) => ({
         id: rec.puzzle.id,
         puzzleId: rec.puzzleId,
         title: rec.puzzle.title,
@@ -253,8 +301,13 @@ export class RecommendationsController {
 
   @Post('refresh-preferences/:userId')
   @ApiOperation({ summary: 'Manually refresh user preferences' })
-  @ApiResponse({ status: 200, description: 'Preferences refreshed successfully' })
-  async refreshUserPreferences(@Param('userId') userId: string): Promise<{ success: boolean }> {
+  @ApiResponse({
+    status: 200,
+    description: 'Preferences refreshed successfully',
+  })
+  async refreshUserPreferences(
+    @Param('userId') userId: string,
+  ): Promise<{ success: boolean }> {
     try {
       await this.preferenceTrackingService.updateUserPreferences(userId);
       return { success: true };

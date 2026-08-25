@@ -125,10 +125,19 @@ describe('Friends System Integration Tests', () => {
         FriendshipService,
         ActivityFeedService,
         PrivacyService,
-        { provide: 'IFriendRequestRepository', useValue: mockFriendRequestRepo },
+        {
+          provide: 'IFriendRequestRepository',
+          useValue: mockFriendRequestRepo,
+        },
         { provide: 'IFriendshipRepository', useValue: mockFriendshipRepo },
-        { provide: 'IActivityEventRepository', useValue: mockActivityEventRepo },
-        { provide: 'IPrivacySettingsRepository', useValue: mockPrivacySettingsRepo },
+        {
+          provide: 'IActivityEventRepository',
+          useValue: mockActivityEventRepo,
+        },
+        {
+          provide: 'IPrivacySettingsRepository',
+          useValue: mockPrivacySettingsRepo,
+        },
         { provide: 'IBlockRepository', useValue: mockBlockRepo },
         { provide: 'ICacheService', useValue: mockCacheService },
         { provide: 'IEventPublisher', useValue: mockEventPublisher },
@@ -136,7 +145,8 @@ describe('Friends System Integration Tests', () => {
       ],
     }).compile();
 
-    friendRequestService = module.get<FriendRequestService>(FriendRequestService);
+    friendRequestService =
+      module.get<FriendRequestService>(FriendRequestService);
     friendshipService = module.get<FriendshipService>(FriendshipService);
     activityFeedService = module.get<ActivityFeedService>(ActivityFeedService);
     privacyService = module.get<PrivacyService>(PrivacyService);
@@ -156,7 +166,10 @@ describe('Friends System Integration Tests', () => {
       mockFriendRequestRepo.findByUsersPair.mockResolvedValueOnce(null);
       mockFriendRequestRepo.findByUsersPair.mockResolvedValueOnce(null);
 
-      const request = await friendRequestService.sendFriendRequest(userId1, userId2);
+      const request = await friendRequestService.sendFriendRequest(
+        userId1,
+        userId2,
+      );
       expect(request.state).toBe(FriendRequestState.PENDING);
       expect(mockEventPublisher.publishEvent).toHaveBeenCalledTimes(1);
 
@@ -167,7 +180,10 @@ describe('Friends System Integration Tests', () => {
       mockEventPublisher.publishEvent.mockResolvedValueOnce(undefined);
       mockCacheService.del.mockResolvedValue(undefined);
 
-      const result = await friendRequestService.acceptFriendRequest(request.id, userId2);
+      const result = await friendRequestService.acceptFriendRequest(
+        request.id,
+        userId2,
+      );
       expect(result.friendshipCreated).toBe(true);
       expect(mockFriendshipRepo.saveBatch).toHaveBeenCalled();
       expect(mockEventPublisher.publishEvent).toHaveBeenCalledTimes(2);
@@ -195,7 +211,10 @@ describe('Friends System Integration Tests', () => {
         friendId: new UserId(userId1),
       });
 
-      mockFriendshipRepo.findBothDirections.mockResolvedValueOnce([friendship1, friendship2]);
+      mockFriendshipRepo.findBothDirections.mockResolvedValueOnce([
+        friendship1,
+        friendship2,
+      ]);
       mockFriendshipRepo.delete.mockResolvedValueOnce(undefined);
 
       // Remove friend
@@ -220,7 +239,9 @@ describe('Friends System Integration Tests', () => {
         leaderboardVisibility: PrivacyLevel.FRIENDS_ONLY,
       };
 
-      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(privacySettings as any);
+      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(
+        privacySettings as any,
+      );
 
       // Viewer is not a friend
       mockFriendshipRepo.isFriend.mockResolvedValueOnce(false);
@@ -229,10 +250,15 @@ describe('Friends System Integration Tests', () => {
       expect(isVisible).toBe(false);
 
       // Now viewer is a friend
-      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(privacySettings as any);
+      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(
+        privacySettings as any,
+      );
       mockFriendshipRepo.isFriend.mockResolvedValueOnce(true);
 
-      const isVisibleToFriend = await privacyService.isProfileVisible(userId1, viewer);
+      const isVisibleToFriend = await privacyService.isProfileVisible(
+        userId1,
+        viewer,
+      );
       expect(isVisibleToFriend).toBe(true);
     });
 
@@ -247,14 +273,21 @@ describe('Friends System Integration Tests', () => {
         leaderboardVisibility: PrivacyLevel.PUBLIC,
       };
 
-      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(privacySettings as any);
+      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(
+        privacySettings as any,
+      );
 
       const isVisible = await privacyService.isProfileVisible(userId1, viewer);
       expect(isVisible).toBe(true);
 
-      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(privacySettings as any);
+      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(
+        privacySettings as any,
+      );
 
-      const isActivityVisible = await privacyService.isActivityVisible(userId1, viewer);
+      const isActivityVisible = await privacyService.isActivityVisible(
+        userId1,
+        viewer,
+      );
       expect(isActivityVisible).toBe(true);
     });
 
@@ -269,13 +302,18 @@ describe('Friends System Integration Tests', () => {
         leaderboardVisibility: PrivacyLevel.PRIVATE,
       };
 
-      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(privacySettings as any);
+      mockPrivacySettingsRepo.findByUserId.mockResolvedValueOnce(
+        privacySettings as any,
+      );
 
       const isVisible = await privacyService.isProfileVisible(userId1, viewer);
       expect(isVisible).toBe(false);
 
       // But owner can always see their own profile
-      const isOwnProfileVisible = await privacyService.isProfileVisible(userId1, userId1);
+      const isOwnProfileVisible = await privacyService.isProfileVisible(
+        userId1,
+        userId1,
+      );
       expect(isOwnProfileVisible).toBe(true);
     });
   });
@@ -317,7 +355,10 @@ describe('Friends System Integration Tests', () => {
 
       mockFriendshipRepo.getMutualFriendsCount.mockResolvedValueOnce(3);
 
-      const count = await friendshipService.getMutualFriendsCount(userId1, userId2);
+      const count = await friendshipService.getMutualFriendsCount(
+        userId1,
+        userId2,
+      );
       expect(count).toBe(3);
 
       mockFriendshipRepo.getMutualFriendsIds.mockResolvedValueOnce([

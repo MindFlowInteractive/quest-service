@@ -12,7 +12,12 @@ import { TutorialStep } from './tutorial-step.entity';
 import { UserTutorialProgress } from './user-tutorial-progress.entity';
 
 export type TutorialType = 'onboarding' | 'mechanic' | 'advanced' | 'refresher';
-export type DifficultyLevel = 'beginner' | 'easy' | 'medium' | 'hard' | 'expert';
+export type DifficultyLevel =
+  | 'beginner'
+  | 'easy'
+  | 'medium'
+  | 'hard'
+  | 'expert';
 
 export interface TutorialMetadata {
   version?: string;

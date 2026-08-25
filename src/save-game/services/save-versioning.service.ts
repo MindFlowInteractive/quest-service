@@ -52,7 +52,9 @@ export class SaveVersioningService {
     // Find a migration path
     let currentVersion = fromVersion;
     while (currentVersion < toVersion) {
-      const migration = this.migrations.find((m) => m.fromVersion === currentVersion);
+      const migration = this.migrations.find(
+        (m) => m.fromVersion === currentVersion,
+      );
       if (!migration) {
         return false;
       }
@@ -70,18 +72,22 @@ export class SaveVersioningService {
     if (data.version > this.CURRENT_VERSION) {
       this.logger.warn(
         `Save data version ${data.version} is newer than supported version ${this.CURRENT_VERSION}. ` +
-        'Data may not load correctly.',
+          'Data may not load correctly.',
       );
       return data;
     }
 
-    this.logger.log(`Migrating save data from v${data.version} to v${this.CURRENT_VERSION}`);
+    this.logger.log(
+      `Migrating save data from v${data.version} to v${this.CURRENT_VERSION}`,
+    );
 
     let migratedData = { ...data };
     let currentVersion = data.version;
 
     while (currentVersion < this.CURRENT_VERSION) {
-      const migration = this.migrations.find((m) => m.fromVersion === currentVersion);
+      const migration = this.migrations.find(
+        (m) => m.fromVersion === currentVersion,
+      );
 
       if (!migration) {
         throw new Error(
@@ -89,7 +95,9 @@ export class SaveVersioningService {
         );
       }
 
-      this.logger.debug(`Applying migration v${migration.fromVersion} -> v${migration.toVersion}`);
+      this.logger.debug(
+        `Applying migration v${migration.fromVersion} -> v${migration.toVersion}`,
+      );
       migratedData = migration.migrate(migratedData);
       currentVersion = migration.toVersion;
     }

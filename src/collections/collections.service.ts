@@ -26,7 +26,8 @@ export class CollectionsService {
   ) {}
 
   async createCollection(dto: Partial<CollectionEntity>) {
-    if (dto.reward_value && dto.reward_value < 0) throw new BadRequestException('reward cannot be negative');
+    if (dto.reward_value && dto.reward_value < 0)
+      throw new BadRequestException('reward cannot be negative');
     if (dto.category_id) {
       const cat = await this.categoriesRepo.findOneBy({ id: dto.category_id });
       if (!cat) throw new BadRequestException('category must exist');
@@ -38,12 +39,13 @@ export class CollectionsService {
   }
 
   async updateCollection(id: string, dto: Partial<CollectionEntity>) {
-    if (dto.reward_value !== undefined && dto.reward_value < 0) throw new BadRequestException('reward cannot be negative');
+    if (dto.reward_value !== undefined && dto.reward_value < 0)
+      throw new BadRequestException('reward cannot be negative');
     if (dto.category_id) {
       const cat = await this.categoriesRepo.findOneBy({ id: dto.category_id });
       if (!cat) throw new BadRequestException('category must exist');
     }
-    await this.collectionsRepo.update(id, dto as any);
+    await this.collectionsRepo.update(id, dto);
     return this.collectionsRepo.findOneBy({ id });
   }
 
@@ -60,20 +62,33 @@ export class CollectionsService {
   }
 
   // Assign puzzle to collection: idempotent, prevents duplicates and updates total_puzzles
-  async assignPuzzleToCollection(puzzle_id: string, collection_id: string, order_index = 0) {
-    const exists = await this.puzzleCollectionRepo.findOneBy({ puzzle_id, collection_id });
+  async assignPuzzleToCollection(
+    puzzle_id: string,
+    collection_id: string,
+    order_index = 0,
+  ) {
+    const exists = await this.puzzleCollectionRepo.findOneBy({
+      puzzle_id,
+      collection_id,
+    });
     if (exists) return exists;
 
-    const pc = this.puzzleCollectionRepo.create({ puzzle_id, collection_id, order_index });
+    const pc = this.puzzleCollectionRepo.create({
+      puzzle_id,
+      collection_id,
+      order_index,
+    });
     await this.puzzleCollectionRepo.save(pc);
 
     // update total_puzzles for all existing progress rows for the collection
     const total = await this.puzzleCollectionRepo.countBy({ collection_id });
-    await this.userCollectionProgressRepo.createQueryBuilder()
+    await this.userCollectionProgressRepo
+      .createQueryBuilder()
       .update()
       .set({
         total_puzzles: total,
-        progress_percentage: () => "CASE WHEN total_puzzles=0 THEN 0 ELSE (completed_puzzles_count * 100.0 / total_puzzles) END",
+        progress_percentage: () =>
+          'CASE WHEN total_puzzles=0 THEN 0 ELSE (completed_puzzles_count * 100.0 / total_puzzles) END',
       })
       .where('collection_id = :collection_id', { collection_id })
       .execute();
@@ -91,19 +106,32 @@ export class CollectionsService {
     try {
       // insert completion (idempotent due to PK)
       try {
-        await queryRunner.manager.insert(UserPuzzleCompletion, { user_id, puzzle_id });
+        await queryRunner.manager.insert(UserPuzzleCompletion, {
+          user_id,
+          puzzle_id,
+        });
       } catch (err) {
         // duplicate key - already completed; proceed idempotently
       }
 
       // find collections that include this puzzle
-      const pcols: PuzzleCollection[] = await queryRunner.manager.find(PuzzleCollection, { where: { puzzle_id } });
+      const pcols: PuzzleCollection[] = await queryRunner.manager.find(
+        PuzzleCollection,
+        { where: { puzzle_id } },
+      );
 
       for (const pc of pcols) {
-        const collection = await queryRunner.manager.findOne(CollectionEntity, { where: { id: pc.collection_id } });
+        const collection = await queryRunner.manager.findOne(CollectionEntity, {
+          where: { id: pc.collection_id },
+        });
         // ensure progress row exists
-        let progress = await queryRunner.manager.findOne(UserCollectionProgress, { where: { user_id, collection_id: pc.collection_id } });
-        const totalPuzzles = await queryRunner.manager.count(PuzzleCollection, { where: { collection_id: pc.collection_id } });
+        let progress = await queryRunner.manager.findOne(
+          UserCollectionProgress,
+          { where: { user_id, collection_id: pc.collection_id } },
+        );
+        const totalPuzzles = await queryRunner.manager.count(PuzzleCollection, {
+          where: { collection_id: pc.collection_id },
+        });
         if (!progress) {
           progress = queryRunner.manager.create(UserCollectionProgress, {
             user_id,
@@ -120,7 +148,10 @@ export class CollectionsService {
         }
 
         // recompute completed count from source of truth
-        const completedCount = await queryRunner.manager.count(UserPuzzleCompletion, { where: { user_id, puzzle_id: undefined } as any });
+        const completedCount = await queryRunner.manager.count(
+          UserPuzzleCompletion,
+          { where: { user_id, puzzle_id: undefined } as any },
+        );
         // above is generic count; instead count by joining puzzle_collection to user_puzzle_completion
         const completedForCollection = await queryRunner.query(
           `SELECT COUNT(1) AS cnt FROM puzzle_collection pc JOIN user_puzzle_completion upc ON pc.puzzle_id = upc.puzzle_id WHERE pc.collection_id = $1 AND upc.user_id = $2`,
@@ -128,9 +159,16 @@ export class CollectionsService {
         );
         const cnt = parseInt(completedForCollection[0]?.cnt || '0', 10);
         progress.completed_puzzles_count = cnt;
-        progress.progress_percentage = progress.total_puzzles > 0 ? Number(((cnt / progress.total_puzzles) * 100).toFixed(2)) : 0;
+        progress.progress_percentage =
+          progress.total_puzzles > 0
+            ? Number(((cnt / progress.total_puzzles) * 100).toFixed(2))
+            : 0;
 
-        if (!progress.is_completed && progress.completed_puzzles_count === progress.total_puzzles && progress.total_puzzles > 0) {
+        if (
+          !progress.is_completed &&
+          progress.completed_puzzles_count === progress.total_puzzles &&
+          progress.total_puzzles > 0
+        ) {
           progress.is_completed = true;
           progress.completed_at = new Date();
         }
@@ -139,7 +177,11 @@ export class CollectionsService {
 
         // If just completed, dispatch reward (only once)
         if (progress.is_completed && !progress.reward_claimed) {
-          await this.rewardService.dispatchReward(user_id, collection, queryRunner);
+          await this.rewardService.dispatchReward(
+            user_id,
+            collection,
+            queryRunner,
+          );
           progress.reward_claimed = true;
           await queryRunner.manager.save(progress);
         }
@@ -155,27 +197,51 @@ export class CollectionsService {
   }
 
   async getFeaturedCollections(page = 0, limit = 20) {
-    return this.collectionsRepo.find({ where: { is_featured: true }, skip: page * limit, take: limit });
+    return this.collectionsRepo.find({
+      where: { is_featured: true },
+      skip: page * limit,
+      take: limit,
+    });
   }
 
-  async searchCollections(q?: string, category?: string, difficulty?: number, reward_type?: string, page = 0, limit = 20) {
+  async searchCollections(
+    q?: string,
+    category?: string,
+    difficulty?: number,
+    reward_type?: string,
+    page = 0,
+    limit = 20,
+  ) {
     const qb = this.collectionsRepo.createQueryBuilder('c');
-    if (q) qb.andWhere("(lower(c.title) LIKE :q OR lower(c.description) LIKE :q)", { q: `%${q.toLowerCase()}%` });
+    if (q)
+      qb.andWhere('(lower(c.title) LIKE :q OR lower(c.description) LIKE :q)', {
+        q: `%${q.toLowerCase()}%`,
+      });
     if (category) qb.andWhere('c.category_id = :category', { category });
     if (difficulty) qb.andWhere('c.difficulty = :difficulty', { difficulty });
-    if (reward_type) qb.andWhere('c.reward_type = :reward_type', { reward_type });
+    if (reward_type)
+      qb.andWhere('c.reward_type = :reward_type', { reward_type });
     qb.skip(page * limit).take(limit);
     return qb.getMany();
   }
 
   async getCollectionsByCategory(category_id: string, page = 0, limit = 20) {
-    return this.collectionsRepo.find({ where: { category_id }, skip: page * limit, take: limit });
+    return this.collectionsRepo.find({
+      where: { category_id },
+      skip: page * limit,
+      take: limit,
+    });
   }
 
   async getCollectionWithProgress(collection_id: string, user_id?: string) {
-    const collection = await this.collectionsRepo.findOneBy({ id: collection_id });
+    const collection = await this.collectionsRepo.findOneBy({
+      id: collection_id,
+    });
     if (!user_id) return { collection };
-    const progress = await this.userCollectionProgressRepo.findOneBy({ user_id, collection_id });
+    const progress = await this.userCollectionProgressRepo.findOneBy({
+      user_id,
+      collection_id,
+    });
     return { collection, progress };
   }
 
@@ -194,7 +260,7 @@ export class CollectionsService {
   }
 
   async updateCategory(id: string, dto: Partial<Category>) {
-    await this.categoriesRepo.update(id, dto as any);
+    await this.categoriesRepo.update(id, dto);
     return this.categoriesRepo.findOneBy({ id });
   }
 

@@ -39,15 +39,15 @@ export class BannerThemeService {
         colors: {
           primary: '#1a0b3d',
           secondary: '#4c1d95',
-          accent: '#8b5cf6'
+          accent: '#8b5cf6',
         },
         gradient: {
           from: '#1a0b3d',
           to: '#4c1d95',
-          direction: 'to right'
+          direction: 'to right',
         },
         backgroundImage: '/themes/cosmic-bg.jpg',
-        isUnlockable: false
+        isUnlockable: false,
       },
       {
         id: BannerTheme.FOREST,
@@ -57,14 +57,14 @@ export class BannerThemeService {
         colors: {
           primary: '#064e3b',
           secondary: '#059669',
-          accent: '#10b981'
+          accent: '#10b981',
         },
         gradient: {
           from: '#064e3b',
-          to: '#059669'
+          to: '#059669',
         },
         backgroundImage: '/themes/forest-bg.jpg',
-        isUnlockable: false
+        isUnlockable: false,
       },
       {
         id: BannerTheme.OCEAN,
@@ -74,14 +74,14 @@ export class BannerThemeService {
         colors: {
           primary: '#0c4a6e',
           secondary: '#0284c7',
-          accent: '#38bdf8'
+          accent: '#38bdf8',
         },
         gradient: {
           from: '#0c4a6e',
-          to: '#0284c7'
+          to: '#0284c7',
         },
         backgroundImage: '/themes/ocean-bg.jpg',
-        isUnlockable: false
+        isUnlockable: false,
       },
       {
         id: BannerTheme.SUNSET,
@@ -91,15 +91,15 @@ export class BannerThemeService {
         colors: {
           primary: '#9a3412',
           secondary: '#ea580c',
-          accent: '#fb923c'
+          accent: '#fb923c',
         },
         gradient: {
           from: '#9a3412',
-          to: '#ea580c'
+          to: '#ea580c',
         },
         backgroundImage: '/themes/sunset-bg.jpg',
         isUnlockable: true,
-        unlockRequirement: 'Complete 50 puzzles'
+        unlockRequirement: 'Complete 50 puzzles',
       },
       {
         id: BannerTheme.NEON,
@@ -109,15 +109,15 @@ export class BannerThemeService {
         colors: {
           primary: '#0f0f23',
           secondary: '#1e1b4b',
-          accent: '#a855f7'
+          accent: '#a855f7',
         },
         gradient: {
           from: '#0f0f23',
-          to: '#1e1b4b'
+          to: '#1e1b4b',
         },
         backgroundImage: '/themes/neon-bg.jpg',
         isUnlockable: true,
-        unlockRequirement: 'Win a tournament'
+        unlockRequirement: 'Win a tournament',
       },
       {
         id: BannerTheme.MINIMAL,
@@ -127,9 +127,9 @@ export class BannerThemeService {
         colors: {
           primary: '#f8fafc',
           secondary: '#e2e8f0',
-          accent: '#64748b'
+          accent: '#64748b',
         },
-        isUnlockable: false
+        isUnlockable: false,
       },
       {
         id: BannerTheme.DARK,
@@ -139,9 +139,9 @@ export class BannerThemeService {
         colors: {
           primary: '#0f172a',
           secondary: '#1e293b',
-          accent: '#475569'
+          accent: '#475569',
         },
-        isUnlockable: false
+        isUnlockable: false,
       },
       {
         id: BannerTheme.LIGHT,
@@ -151,9 +151,9 @@ export class BannerThemeService {
         colors: {
           primary: '#ffffff',
           secondary: '#f1f5f9',
-          accent: '#3b82f6'
+          accent: '#3b82f6',
         },
-        isUnlockable: false
+        isUnlockable: false,
       },
       {
         id: BannerTheme.GRADIENT,
@@ -163,19 +163,19 @@ export class BannerThemeService {
         colors: {
           primary: '#ec4899',
           secondary: '#8b5cf6',
-          accent: '#06b6d4'
+          accent: '#06b6d4',
         },
         gradient: {
           from: '#ec4899',
           to: '#06b6d4',
-          direction: 'to right'
+          direction: 'to right',
         },
         isUnlockable: true,
-        unlockRequirement: 'Achieve perfect score on 10 puzzles'
-      }
+        unlockRequirement: 'Achieve perfect score on 10 puzzles',
+      },
     ];
 
-    defaultThemes.forEach(theme => {
+    defaultThemes.forEach((theme) => {
       this.themes.set(theme.id, theme);
     });
   }
@@ -185,11 +185,15 @@ export class BannerThemeService {
   }
 
   getAvailableThemes(): BannerThemeConfig[] {
-    return Array.from(this.themes.values()).filter(theme => !theme.isUnlockable);
+    return Array.from(this.themes.values()).filter(
+      (theme) => !theme.isUnlockable,
+    );
   }
 
   getUnlockableThemes(): BannerThemeConfig[] {
-    return Array.from(this.themes.values()).filter(theme => theme.isUnlockable);
+    return Array.from(this.themes.values()).filter(
+      (theme) => theme.isUnlockable,
+    );
   }
 
   getThemeById(id: string): BannerThemeConfig | undefined {
@@ -201,7 +205,7 @@ export class BannerThemeService {
     if (!theme) {
       return false; // Unknown themes are not unlocked
     }
-    
+
     if (!theme.isUnlockable) {
       return true; // Default themes are always unlocked
     }
@@ -220,8 +224,8 @@ export class BannerThemeService {
   }
 
   getUserUnlockedThemes(userStats: any): BannerThemeConfig[] {
-    return this.getAllThemes().filter(theme => 
-      this.isThemeUnlocked(theme.id, userStats)
+    return this.getAllThemes().filter((theme) =>
+      this.isThemeUnlocked(theme.id, userStats),
     );
   }
 }

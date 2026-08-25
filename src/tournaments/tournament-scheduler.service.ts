@@ -6,7 +6,9 @@ import { TournamentEventsService } from './tournament-events.service';
 export class TournamentSchedulerService {
   private readonly logger = new Logger(TournamentSchedulerService.name);
 
-  constructor(private readonly tournamentEventsService: TournamentEventsService) {}
+  constructor(
+    private readonly tournamentEventsService: TournamentEventsService,
+  ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleTournamentLifecycle() {

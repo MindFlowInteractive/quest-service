@@ -9,7 +9,12 @@ import {
   Request,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EnergyService } from './energy.service';
 import { SendEnergyGiftDto } from './dto/send-energy-gift.dto';
@@ -25,18 +30,24 @@ export class EnergyController {
 
   @Get('status')
   @ApiOperation({ summary: 'Get user energy status' })
-  @ApiResponse({ status: 200, description: 'Energy status retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Energy status retrieved successfully',
+  })
   async getEnergyStatus(@Request() req) {
     return await this.energyService.getEnergyStats(req.user.id);
   }
 
   @Get('history')
   @ApiOperation({ summary: 'Get energy transaction history' })
-  @ApiResponse({ status: 200, description: 'Energy history retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Energy history retrieved successfully',
+  })
   async getEnergyHistory(
     @Request() req,
     @Query('limit') limit: string = '50',
-    @Query('offset') offset: string = '0'
+    @Query('offset') offset: string = '0',
   ) {
     const limitNum = parseInt(limit, 10);
     const offsetNum = parseInt(offset, 10);
@@ -48,7 +59,7 @@ export class EnergyController {
     return await this.energyService.getEnergyHistory(
       req.user.id,
       limitNum,
-      offsetNum
+      offsetNum,
     );
   }
 
@@ -58,7 +69,7 @@ export class EnergyController {
   async refillEnergy(@Request() req, @Body() refillDto: RefillEnergyDto) {
     return await this.energyService.refillEnergyWithTokens(
       req.user.id,
-      refillDto.tokensToSpend
+      refillDto.tokensToSpend,
     );
   }
 
@@ -70,47 +81,66 @@ export class EnergyController {
       req.user.id,
       giftDto.recipientId,
       giftDto.energyAmount,
-      giftDto.message
+      giftDto.message,
     );
   }
 
   @Post('gifts/:giftId/accept')
   @ApiOperation({ summary: 'Accept a pending energy gift' })
-  @ApiResponse({ status: 200, description: 'Energy gift accepted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Energy gift accepted successfully',
+  })
   async acceptEnergyGift(@Request() req, @Param('giftId') giftId: string) {
     return await this.energyService.acceptEnergyGift(req.user.id, giftId);
   }
 
   @Get('gifts/pending')
   @ApiOperation({ summary: 'Get pending energy gifts' })
-  @ApiResponse({ status: 200, description: 'Pending gifts retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Pending gifts retrieved successfully',
+  })
   async getPendingGifts(@Request() req) {
     return await this.energyService.getPendingGifts(req.user.id);
   }
 
   @Post('boosts/apply')
   @ApiOperation({ summary: 'Apply an energy boost' })
-  @ApiResponse({ status: 200, description: 'Energy boost applied successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Energy boost applied successfully',
+  })
   async applyBoost(@Request() req, @Body() boostDto: ApplyBoostDto) {
-    return await this.energyService.applyEnergyBoost(req.user.id, boostDto.boostId);
+    return await this.energyService.applyEnergyBoost(
+      req.user.id,
+      boostDto.boostId,
+    );
   }
 
   @Post('consume')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Consume energy (internal use)',
-    description: 'This endpoint is typically called by other services when starting puzzles'
+    description:
+      'This endpoint is typically called by other services when starting puzzles',
   })
   @ApiResponse({ status: 200, description: 'Energy consumed successfully' })
   async consumeEnergy(
     @Request() req,
-    @Body() consumeDto: { amount: number; relatedEntityId?: string; relatedEntityType?: string; metadata?: any }
+    @Body()
+    consumeDto: {
+      amount: number;
+      relatedEntityId?: string;
+      relatedEntityType?: string;
+      metadata?: any;
+    },
   ) {
     return await this.energyService.consumeEnergy(
       req.user.id,
       consumeDto.amount,
       consumeDto.relatedEntityId,
       consumeDto.relatedEntityType,
-      consumeDto.metadata
+      consumeDto.metadata,
     );
   }
 }

@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
-export class CreateBlockchainEventsTables1750000000000 implements MigrationInterface {
+export class CreateBlockchainEventsTables1750000000000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create onchain_events table
     await queryRunner.createTable(
@@ -194,63 +196,100 @@ export class CreateBlockchainEventsTables1750000000000 implements MigrationInter
     // Create indexes for onchain_events table
     await queryRunner.createIndex(
       'onchain_events',
-      new TableIndex({ name: 'IDX_onchain_events_contract_address', columnNames: ['contract_address'] }),
+      new TableIndex({
+        name: 'IDX_onchain_events_contract_address',
+        columnNames: ['contract_address'],
+      }),
     );
 
     await queryRunner.createIndex(
       'onchain_events',
-      new TableIndex({ name: 'IDX_onchain_events_event_type', columnNames: ['event_type'] }),
+      new TableIndex({
+        name: 'IDX_onchain_events_event_type',
+        columnNames: ['event_type'],
+      }),
     );
 
     await queryRunner.createIndex(
       'onchain_events',
-      new TableIndex({ name: 'IDX_onchain_events_tx_hash', columnNames: ['tx_hash'], isUnique: true }),
+      new TableIndex({
+        name: 'IDX_onchain_events_tx_hash',
+        columnNames: ['tx_hash'],
+        isUnique: true,
+      }),
     );
 
     await queryRunner.createIndex(
       'onchain_events',
-      new TableIndex({ name: 'IDX_onchain_events_ledger', columnNames: ['ledger'] }),
+      new TableIndex({
+        name: 'IDX_onchain_events_ledger',
+        columnNames: ['ledger'],
+      }),
     );
 
     await queryRunner.createIndex(
       'onchain_events',
-      new TableIndex({ name: 'IDX_onchain_events_status', columnNames: ['status'] }),
+      new TableIndex({
+        name: 'IDX_onchain_events_status',
+        columnNames: ['status'],
+      }),
     );
 
     await queryRunner.createIndex(
       'onchain_events',
-      new TableIndex({ name: 'IDX_onchain_events_processed_at', columnNames: ['processed_at'] }),
+      new TableIndex({
+        name: 'IDX_onchain_events_processed_at',
+        columnNames: ['processed_at'],
+      }),
     );
 
     await queryRunner.createIndex(
       'onchain_events',
-      new TableIndex({ name: 'IDX_onchain_events_contract_event_type', columnNames: ['contract_address', 'event_type'] }),
+      new TableIndex({
+        name: 'IDX_onchain_events_contract_event_type',
+        columnNames: ['contract_address', 'event_type'],
+      }),
     );
 
     await queryRunner.createIndex(
       'onchain_events',
-      new TableIndex({ name: 'IDX_onchain_events_ledger_status', columnNames: ['ledger', 'status'] }),
+      new TableIndex({
+        name: 'IDX_onchain_events_ledger_status',
+        columnNames: ['ledger', 'status'],
+      }),
     );
 
     // Create indexes for dead_letter_events table
     await queryRunner.createIndex(
       'dead_letter_events',
-      new TableIndex({ name: 'IDX_dead_letter_events_original_event_id', columnNames: ['original_event_id'] }),
+      new TableIndex({
+        name: 'IDX_dead_letter_events_original_event_id',
+        columnNames: ['original_event_id'],
+      }),
     );
 
     await queryRunner.createIndex(
       'dead_letter_events',
-      new TableIndex({ name: 'IDX_dead_letter_events_event_type', columnNames: ['event_type'] }),
+      new TableIndex({
+        name: 'IDX_dead_letter_events_event_type',
+        columnNames: ['event_type'],
+      }),
     );
 
     await queryRunner.createIndex(
       'dead_letter_events',
-      new TableIndex({ name: 'IDX_dead_letter_events_status', columnNames: ['status'] }),
+      new TableIndex({
+        name: 'IDX_dead_letter_events_status',
+        columnNames: ['status'],
+      }),
     );
 
     await queryRunner.createIndex(
       'dead_letter_events',
-      new TableIndex({ name: 'IDX_dead_letter_events_created_at', columnNames: ['created_at'] }),
+      new TableIndex({
+        name: 'IDX_dead_letter_events_created_at',
+        columnNames: ['created_at'],
+      }),
     );
 
     // Create updated_at trigger function for both tables
@@ -280,27 +319,60 @@ export class CreateBlockchainEventsTables1750000000000 implements MigrationInter
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop triggers
-    await queryRunner.query(`DROP TRIGGER IF EXISTS update_onchain_events_updated_at ON onchain_events;`);
-    await queryRunner.query(`DROP TRIGGER IF EXISTS update_dead_letter_events_updated_at ON dead_letter_events;`);
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS update_onchain_events_updated_at ON onchain_events;`,
+    );
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS update_dead_letter_events_updated_at ON dead_letter_events;`,
+    );
 
     // Drop function
-    await queryRunner.query(`DROP FUNCTION IF EXISTS update_updated_at_column();`);
+    await queryRunner.query(
+      `DROP FUNCTION IF EXISTS update_updated_at_column();`,
+    );
 
     // Drop indexes for dead_letter_events table
-    await queryRunner.dropIndex('dead_letter_events', 'IDX_dead_letter_events_created_at');
-    await queryRunner.dropIndex('dead_letter_events', 'IDX_dead_letter_events_status');
-    await queryRunner.dropIndex('dead_letter_events', 'IDX_dead_letter_events_event_type');
-    await queryRunner.dropIndex('dead_letter_events', 'IDX_dead_letter_events_original_event_id');
+    await queryRunner.dropIndex(
+      'dead_letter_events',
+      'IDX_dead_letter_events_created_at',
+    );
+    await queryRunner.dropIndex(
+      'dead_letter_events',
+      'IDX_dead_letter_events_status',
+    );
+    await queryRunner.dropIndex(
+      'dead_letter_events',
+      'IDX_dead_letter_events_event_type',
+    );
+    await queryRunner.dropIndex(
+      'dead_letter_events',
+      'IDX_dead_letter_events_original_event_id',
+    );
 
     // Drop indexes for onchain_events table
-    await queryRunner.dropIndex('onchain_events', 'IDX_onchain_events_ledger_status');
-    await queryRunner.dropIndex('onchain_events', 'IDX_onchain_events_contract_event_type');
-    await queryRunner.dropIndex('onchain_events', 'IDX_onchain_events_processed_at');
+    await queryRunner.dropIndex(
+      'onchain_events',
+      'IDX_onchain_events_ledger_status',
+    );
+    await queryRunner.dropIndex(
+      'onchain_events',
+      'IDX_onchain_events_contract_event_type',
+    );
+    await queryRunner.dropIndex(
+      'onchain_events',
+      'IDX_onchain_events_processed_at',
+    );
     await queryRunner.dropIndex('onchain_events', 'IDX_onchain_events_status');
     await queryRunner.dropIndex('onchain_events', 'IDX_onchain_events_ledger');
     await queryRunner.dropIndex('onchain_events', 'IDX_onchain_events_tx_hash');
-    await queryRunner.dropIndex('onchain_events', 'IDX_onchain_events_event_type');
-    await queryRunner.dropIndex('onchain_events', 'IDX_onchain_events_contract_address');
+    await queryRunner.dropIndex(
+      'onchain_events',
+      'IDX_onchain_events_event_type',
+    );
+    await queryRunner.dropIndex(
+      'onchain_events',
+      'IDX_onchain_events_contract_address',
+    );
 
     // Drop tables
     await queryRunner.dropTable('dead_letter_events');

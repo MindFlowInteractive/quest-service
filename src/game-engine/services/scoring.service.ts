@@ -36,7 +36,7 @@ export class ScoringService {
   constructor(
     @Inject(gameEngineConfig.KEY)
     private readonly config: ConfigType<typeof gameEngineConfig>,
-  ) { }
+  ) {}
 
   /**
    * Calculate comprehensive score for a completed puzzle
@@ -51,14 +51,14 @@ export class ScoringService {
     const timeBonus = this.calculateTimeBonus(
       performance.timeSpent,
       puzzle.timeLimit ||
-      this.getExpectedTimeLimit(puzzle.type, puzzle.difficulty),
+        this.getExpectedTimeLimit(puzzle.type, puzzle.difficulty),
       puzzle.difficulty,
     );
 
     const efficiencyBonus = this.calculateEfficiencyBonus(
       performance.movesUsed,
       puzzle.maxMoves ||
-      this.getExpectedMaxMoves(puzzle.type, puzzle.difficulty),
+        this.getExpectedMaxMoves(puzzle.type, puzzle.difficulty),
       puzzle.difficulty,
     );
 
@@ -200,7 +200,7 @@ export class ScoringService {
       8: 2000, // Impossible
     };
 
-    return baseScores[difficulty as keyof typeof baseScores] || 350;
+    return baseScores[difficulty] || 350;
   }
 
   private calculateTimeBonus(
@@ -249,7 +249,7 @@ export class ScoringService {
       8: 4.0, // Impossible
     };
 
-    return multipliers[difficulty as keyof typeof multipliers] || 1.5;
+    return multipliers[difficulty] || 1.5;
   }
 
   private calculateStreakBonus(streak: number, baseScore: number): number {

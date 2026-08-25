@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { UserPuzzleSubmission, PuzzleSubmissionStatus } from '../entities/user-puzzle-submission.entity';
+import {
+  UserPuzzleSubmission,
+  PuzzleSubmissionStatus,
+} from '../entities/user-puzzle-submission.entity';
 
 export interface FeaturedPuzzleCriteria {
   minRating: number;
@@ -34,14 +37,14 @@ export class FeaturedPuzzlesService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async rotateFeaturedPuzzles(): Promise<void> {
     this.logger.log('Starting daily featured puzzle rotation');
-    
+
     try {
       // Unfeature puzzles that have been featured for too long
       await this.unfeatureExpiredPuzzles();
-      
+
       // Select new featured puzzles
       await this.selectNewFeaturedPuzzles();
-      
+
       this.logger.log('Completed daily featured puzzle rotation');
     } catch (error) {
       this.logger.error('Error during featured puzzle rotation:', error);
@@ -52,7 +55,7 @@ export class FeaturedPuzzlesService {
   @Cron('0 2 * * 0') // Every Sunday at 2 AM
   async weeklyFeatureSelection(): Promise<void> {
     this.logger.log('Starting weekly featured puzzle selection');
-    
+
     try {
       await this.selectWeeklyFeaturedPuzzles();
       this.logger.log('Completed weekly featured puzzle selection');
@@ -61,7 +64,9 @@ export class FeaturedPuzzlesService {
     }
   }
 
-  async getFeaturedPuzzles(limit: number = 10): Promise<UserPuzzleSubmission[]> {
+  async getFeaturedPuzzles(
+    limit: number = 10,
+  ): Promise<UserPuzzleSubmission[]> {
     return await this.submissionRepository.find({
       where: {
         status: PuzzleSubmissionStatus.FEATURED,
@@ -73,7 +78,10 @@ export class FeaturedPuzzlesService {
     });
   }
 
-  async getFeaturedPuzzlesByCategory(category: string, limit: number = 5): Promise<UserPuzzleSubmission[]> {
+  async getFeaturedPuzzlesByCategory(
+    category: string,
+    limit: number = 5,
+  ): Promise<UserPuzzleSubmission[]> {
     return await this.submissionRepository.find({
       where: {
         status: PuzzleSubmissionStatus.FEATURED,
@@ -86,7 +94,10 @@ export class FeaturedPuzzlesService {
     });
   }
 
-  async manuallyFeaturePuzzle(submissionId: string, adminId: string): Promise<UserPuzzleSubmission> {
+  async manuallyFeaturePuzzle(
+    submissionId: string,
+    adminId: string,
+  ): Promise<UserPuzzleSubmission> {
     const submission = await this.submissionRepository.findOne({
       where: { id: submissionId },
     });
@@ -113,11 +124,16 @@ export class FeaturedPuzzlesService {
     // Update creator rewards
     await this.updateCreatorRewards(submission.userId, 'featured');
 
-    this.logger.log(`Puzzle ${submissionId} manually featured by admin ${adminId}`);
+    this.logger.log(
+      `Puzzle ${submissionId} manually featured by admin ${adminId}`,
+    );
     return submission;
   }
 
-  async unfeaturePuzzle(submissionId: string, adminId: string): Promise<UserPuzzleSubmission> {
+  async unfeaturePuzzle(
+    submissionId: string,
+    adminId: string,
+  ): Promise<UserPuzzleSubmission> {
     const submission = await this.submissionRepository.findOne({
       where: { id: submissionId },
     });
@@ -188,7 +204,9 @@ export class FeaturedPuzzlesService {
 
     const topPerformers = await this.submissionRepository
       .createQueryBuilder('puzzle')
-      .where('puzzle.status = :status', { status: PuzzleSubmissionStatus.PUBLISHED })
+      .where('puzzle.status = :status', {
+        status: PuzzleSubmissionStatus.PUBLISHED,
+      })
       .andWhere('puzzle.isPublic = :isPublic', { isPublic: true })
       .andWhere('puzzle.publishedAt >= :oneWeekAgo', { oneWeekAgo })
       .andWhere('puzzle.averageRating >= :minRating', { minRating: 4.5 })
@@ -210,7 +228,9 @@ export class FeaturedPuzzlesService {
     this.logger.log(`Featured ${topPerformers.length} top weekly performers`);
   }
 
-  private async findFeaturedCandidates(criteria: FeaturedPuzzleCriteria): Promise<UserPuzzleSubmission[]> {
+  private async findFeaturedCandidates(
+    criteria: FeaturedPuzzleCriteria,
+  ): Promise<UserPuzzleSubmission[]> {
     const minDate = new Date();
     minDate.setDate(minDate.getDate() - criteria.maxAge);
 
@@ -219,18 +239,31 @@ export class FeaturedPuzzlesService {
 
     let query = this.submissionRepository
       .createQueryBuilder('puzzle')
-      .where('puzzle.status = :status', { status: PuzzleSubmissionStatus.PUBLISHED })
+      .where('puzzle.status = :status', {
+        status: PuzzleSubmissionStatus.PUBLISHED,
+      })
       .andWhere('puzzle.isPublic = :isPublic', { isPublic: true })
-      .andWhere('puzzle.averageRating >= :minRating', { minRating: criteria.minRating })
-      .andWhere('puzzle.playCount >= :minPlays', { minPlays: criteria.minPlays })
-      .andWhere('puzzle.publishedAt BETWEEN :minDate AND :maxDate', { minDate, maxDate });
+      .andWhere('puzzle.averageRating >= :minRating', {
+        minRating: criteria.minRating,
+      })
+      .andWhere('puzzle.playCount >= :minPlays', {
+        minPlays: criteria.minPlays,
+      })
+      .andWhere('puzzle.publishedAt BETWEEN :minDate AND :maxDate', {
+        minDate,
+        maxDate,
+      });
 
     if (criteria.categories && criteria.categories.length > 0) {
-      query = query.andWhere('puzzle.category IN (:...categories)', { categories: criteria.categories });
+      query = query.andWhere('puzzle.category IN (:...categories)', {
+        categories: criteria.categories,
+      });
     }
 
     if (criteria.excludeCreators && criteria.excludeCreators.length > 0) {
-      query = query.andWhere('puzzle.userId NOT IN (:...excludeCreators)', { excludeCreators: criteria.excludeCreators });
+      query = query.andWhere('puzzle.userId NOT IN (:...excludeCreators)', {
+        excludeCreators: criteria.excludeCreators,
+      });
     }
 
     return await query
@@ -272,13 +305,17 @@ export class FeaturedPuzzlesService {
 
       selected.push(candidate);
       creatorCounts[candidate.userId] = creatorCount + 1;
-      categoryCounts[candidate.category] = (categoryCounts[candidate.category] || 0) + 1;
+      categoryCounts[candidate.category] =
+        (categoryCounts[candidate.category] || 0) + 1;
     }
 
     return selected;
   }
 
-  private calculateFeaturedScore(puzzle: UserPuzzleSubmission, criteria: FeaturedPuzzleCriteria): number {
+  private calculateFeaturedScore(
+    puzzle: UserPuzzleSubmission,
+    criteria: FeaturedPuzzleCriteria,
+  ): number {
     let score = 0;
 
     // Base score from community metrics
@@ -287,14 +324,17 @@ export class FeaturedPuzzlesService {
     score += puzzle.communityScore * 20; // 20% weight
 
     // Recency bonus (newer puzzles get slight bonus)
-    const daysSincePublication = Math.floor((Date.now() - puzzle.publishedAt.getTime()) / (1000 * 60 * 60 * 24));
-    const recencyBonus = Math.max(0, 10 - (daysSincePublication / 10)); // Decay over time
+    const daysSincePublication = Math.floor(
+      (Date.now() - puzzle.publishedAt.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    const recencyBonus = Math.max(0, 10 - daysSincePublication / 10); // Decay over time
     score += recencyBonus * 10; // 10% weight
 
     // Quality indicators
     if (puzzle.ratingCount >= 10) score += 5; // Minimum ratings threshold
     if (puzzle.ratingCount >= 50) score += 5; // Good number of ratings
-    if (puzzle.averageCompletionRate && puzzle.averageCompletionRate > 0.7) score += 5; // Good completion rate
+    if (puzzle.averageCompletionRate && puzzle.averageCompletionRate > 0.7)
+      score += 5; // Good completion rate
 
     // Diversity bonus (for underrepresented categories)
     const categoryBonus = this.getCategoryDiversityBonus(puzzle.category);
@@ -310,7 +350,10 @@ export class FeaturedPuzzlesService {
     return commonCategories.includes(category) ? 0 : 5;
   }
 
-  private async updateCreatorRewards(userId: string, rewardType: string): Promise<void> {
+  private async updateCreatorRewards(
+    userId: string,
+    rewardType: string,
+  ): Promise<void> {
     // In a real implementation, this would update the creator's reward data
     this.logger.log(`Updating rewards for user ${userId}: ${rewardType}`);
   }
@@ -327,7 +370,7 @@ export class FeaturedPuzzlesService {
     });
 
     const currentlyFeatured = await this.submissionRepository.count({
-      where: { 
+      where: {
         status: PuzzleSubmissionStatus.FEATURED,
         isPublic: true,
       },
@@ -337,7 +380,9 @@ export class FeaturedPuzzlesService {
       .createQueryBuilder('puzzle')
       .select('puzzle.category', 'category')
       .addSelect('COUNT(*)', 'count')
-      .where('puzzle.status = :status', { status: PuzzleSubmissionStatus.FEATURED })
+      .where('puzzle.status = :status', {
+        status: PuzzleSubmissionStatus.FEATURED,
+      })
       .groupBy('puzzle.category')
       .getRawMany();
 
@@ -349,10 +394,13 @@ export class FeaturedPuzzlesService {
     const averageRatingResult = await this.submissionRepository
       .createQueryBuilder('puzzle')
       .select('AVG(puzzle.averageRating)', 'avgRating')
-      .where('puzzle.status = :status', { status: PuzzleSubmissionStatus.FEATURED })
+      .where('puzzle.status = :status', {
+        status: PuzzleSubmissionStatus.FEATURED,
+      })
       .getRawOne();
 
-    const averageFeaturedRating = parseFloat(averageRatingResult.avgRating) || 0;
+    const averageFeaturedRating =
+      parseFloat(averageRatingResult.avgRating) || 0;
 
     // Age distribution (how long puzzles have been featured)
     const ageDistribution = await this.getFeaturedAgeDistribution();
@@ -380,10 +428,12 @@ export class FeaturedPuzzlesService {
       select: ['featuredAt'],
     });
 
-    featuredPuzzles.forEach(puzzle => {
+    featuredPuzzles.forEach((puzzle) => {
       if (!puzzle.featuredAt) return;
 
-      const daysFeatured = Math.floor((now.getTime() - puzzle.featuredAt.getTime()) / (1000 * 60 * 60 * 24));
+      const daysFeatured = Math.floor(
+        (now.getTime() - puzzle.featuredAt.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
       if (daysFeatured <= 7) distributions['0-7 days']++;
       else if (daysFeatured <= 14) distributions['8-14 days']++;

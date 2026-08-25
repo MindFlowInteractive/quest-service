@@ -1,10 +1,19 @@
-import { Injectable, Logger, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigType } from '@nestjs/config';
 import { UserEnergy } from './entities/user-energy.entity';
-import { EnergyTransaction, EnergyTransactionType } from './entities/energy-transaction.entity';
+import {
+  EnergyTransaction,
+  EnergyTransactionType,
+} from './entities/energy-transaction.entity';
 import { EnergyGift, EnergyGiftStatus } from './entities/energy-gift.entity';
 import { EnergyBoost } from './entities/energy-boost.entity';
 import { User } from '../users/entities/user.entity';
@@ -63,7 +72,8 @@ export class EnergyService {
       maxEnergy: this.config.defaultMaxEnergy,
       lastRegeneration: new Date(),
       regenerationRate: this.config.defaultRegenerationRate,
-      regenerationIntervalMinutes: this.config.defaultRegenerationIntervalMinutes,
+      regenerationIntervalMinutes:
+        this.config.defaultRegenerationIntervalMinutes,
     });
 
     return await this.userEnergyRepository.save(userEnergy);
@@ -80,7 +90,7 @@ export class EnergyService {
 
     // Update energy based on time passed
     await this.regenerateEnergy(userEnergy);
-    
+
     return await this.userEnergyRepository.findOne({
       where: { userId },
     });
@@ -91,7 +101,7 @@ export class EnergyService {
     amount: number,
     relatedEntityId?: string,
     relatedEntityType?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<EnergyConsumptionResult> {
     const userEnergy = await this.getUserEnergy(userId);
 
@@ -112,7 +122,7 @@ export class EnergyService {
     try {
       const energyBefore = userEnergy.currentEnergy;
       userEnergy.currentEnergy -= amount;
-      
+
       await queryRunner.manager.save(userEnergy);
 
       // Record transaction
@@ -149,24 +159,31 @@ export class EnergyService {
 
   private async regenerateEnergy(userEnergy: UserEnergy): Promise<void> {
     const now = new Date();
-    const timeSinceLastRegen = now.getTime() - userEnergy.lastRegeneration.getTime();
+    const timeSinceLastRegen =
+      now.getTime() - userEnergy.lastRegeneration.getTime();
     const intervalMs = userEnergy.regenerationIntervalMinutes * 60 * 1000;
-    
-    if (timeSinceLastRegen < intervalMs || userEnergy.currentEnergy >= userEnergy.maxEnergy) {
+
+    if (
+      timeSinceLastRegen < intervalMs ||
+      userEnergy.currentEnergy >= userEnergy.maxEnergy
+    ) {
       return;
     }
 
     const intervalsToRegenerate = Math.floor(timeSinceLastRegen / intervalMs);
     const energyToAdd = Math.min(
-      intervalsToRegenerate * userEnergy.regenerationRate * userEnergy.boostMultiplier,
-      userEnergy.maxEnergy - userEnergy.currentEnergy
+      intervalsToRegenerate *
+        userEnergy.regenerationRate *
+        userEnergy.boostMultiplier,
+      userEnergy.maxEnergy - userEnergy.currentEnergy,
     );
 
     if (energyToAdd > 0) {
       const energyBefore = userEnergy.currentEnergy;
       userEnergy.currentEnergy += energyToAdd;
       userEnergy.lastRegeneration = new Date(
-        userEnergy.lastRegeneration.getTime() + (intervalsToRegenerate * intervalMs)
+        userEnergy.lastRegeneration.getTime() +
+          intervalsToRegenerate * intervalMs,
       );
 
       await this.userEnergyRepository.save(userEnergy);
@@ -190,11 +207,13 @@ export class EnergyService {
           type: 'energy_full',
           title: 'Energy Full!',
           body: 'Your energy is fully restored. Ready for more puzzles?',
-          meta: { type: 'energy_full' }
+          meta: { type: 'energy_full' },
         });
       }
 
-      this.logger.log(`Energy regenerated: ${energyToAdd} for user ${userEnergy.userId}`);
+      this.logger.log(
+        `Energy regenerated: ${energyToAdd} for user ${userEnergy.userId}`,
+      );
     }
   }
 
@@ -205,7 +224,7 @@ export class EnergyService {
 
   async refillEnergyWithTokens(
     userId: string,
-    tokensToSpend: number
+    tokensToSpend: number,
   ): Promise<EnergyRefillResult> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
@@ -216,7 +235,10 @@ export class EnergyService {
     // For now, assume 1 token = 10 energy, max 50 energy per refill
     const energyPerToken = 10;
     const maxEnergyPerRefill = 50;
-    const energyToAdd = Math.min(tokensToSpend * energyPerToken, maxEnergyPerRefill);
+    const energyToAdd = Math.min(
+      tokensToSpend * energyPerToken,
+      maxEnergyPerRefill,
+    );
 
     const userEnergy = await this.getUserEnergy(userId);
     const maxPossibleEnergy = userEnergy.maxEnergy - userEnergy.currentEnergy;
@@ -240,7 +262,7 @@ export class EnergyService {
     try {
       const energyBefore = userEnergy.currentEnergy;
       userEnergy.currentEnergy += actualEnergyToAdd;
-      
+
       await queryRunner.manager.save(userEnergy);
 
       // Record transaction
@@ -256,7 +278,9 @@ export class EnergyService {
       await queryRunner.manager.save(transaction);
       await queryRunner.commitTransaction();
 
-      this.logger.log(`Energy refilled: ${actualEnergyToAdd} for user ${userId} using ${actualTokensUsed} tokens`);
+      this.logger.log(
+        `Energy refilled: ${actualEnergyToAdd} for user ${userId} using ${actualTokensUsed} tokens`,
+      );
 
       return {
         success: true,
@@ -278,7 +302,7 @@ export class EnergyService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handleEnergyRegeneration() {
     this.logger.log('Running energy regeneration cron job');
-    
+
     const userEnergies = await this.userEnergyRepository
       .createQueryBuilder('ue')
       .where('ue.current_energy < ue.max_energy')
@@ -288,7 +312,10 @@ export class EnergyService {
       try {
         await this.regenerateEnergy(userEnergy);
       } catch (error) {
-        this.logger.error(`Failed to regenerate energy for user ${userEnergy.userId}:`, error);
+        this.logger.error(
+          `Failed to regenerate energy for user ${userEnergy.userId}:`,
+          error,
+        );
       }
     }
   }
@@ -297,7 +324,7 @@ export class EnergyService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async cleanupExpiredGifts() {
     this.logger.log('Cleaning up expired energy gifts');
-    
+
     await this.energyGiftRepository
       .createQueryBuilder()
       .update()
@@ -313,15 +340,17 @@ export class EnergyService {
     senderId: string,
     recipientId: string,
     energyAmount: number = 10,
-    message?: string
+    message?: string,
   ): Promise<EnergyGift> {
     if (senderId === recipientId) {
       throw new BadRequestException('Cannot send energy gift to yourself');
     }
 
     const senderEnergy = await this.getUserEnergy(senderId);
-    const recipient = await this.userRepository.findOne({ where: { id: recipientId } });
-    
+    const recipient = await this.userRepository.findOne({
+      where: { id: recipientId },
+    });
+
     if (!recipient) {
       throw new NotFoundException('Recipient not found');
     }
@@ -375,10 +404,12 @@ export class EnergyService {
         type: 'energy_gift',
         title: 'Energy Gift Received!',
         body: `You received ${energyAmount} energy from a friend!`,
-        meta: { type: 'energy_gift', giftId: gift.id }
+        meta: { type: 'energy_gift', giftId: gift.id },
       });
 
-      this.logger.log(`Energy gift sent: ${energyAmount} from ${senderId} to ${recipientId}`);
+      this.logger.log(
+        `Energy gift sent: ${energyAmount} from ${senderId} to ${recipientId}`,
+      );
       return gift;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -391,7 +422,11 @@ export class EnergyService {
 
   async acceptEnergyGift(userId: string, giftId: string): Promise<EnergyGift> {
     const gift = await this.energyGiftRepository.findOne({
-      where: { id: giftId, recipientId: userId, status: EnergyGiftStatus.PENDING },
+      where: {
+        id: giftId,
+        recipientId: userId,
+        status: EnergyGiftStatus.PENDING,
+      },
     });
 
     if (!gift) {
@@ -405,7 +440,7 @@ export class EnergyService {
     }
 
     const userEnergy = await this.getUserEnergy(userId);
-    
+
     // Reset daily gift counters if needed
     await this.resetDailyGiftCounters(userEnergy);
 
@@ -420,11 +455,14 @@ export class EnergyService {
 
     try {
       const energyBefore = userEnergy.currentEnergy;
-      const energyToAdd = Math.min(gift.energyAmount, userEnergy.maxEnergy - userEnergy.currentEnergy);
-      
+      const energyToAdd = Math.min(
+        gift.energyAmount,
+        userEnergy.maxEnergy - userEnergy.currentEnergy,
+      );
+
       userEnergy.currentEnergy += energyToAdd;
       userEnergy.energyGiftsReceivedToday += 1;
-      
+
       gift.status = EnergyGiftStatus.ACCEPTED;
       gift.acceptedAt = new Date();
 
@@ -439,7 +477,10 @@ export class EnergyService {
         energyAfter: userEnergy.currentEnergy,
         relatedEntityId: gift.id,
         relatedEntityType: 'gift',
-        metadata: { senderId: gift.senderId, originalAmount: gift.energyAmount },
+        metadata: {
+          senderId: gift.senderId,
+          originalAmount: gift.energyAmount,
+        },
       });
 
       await queryRunner.manager.save(transaction);
@@ -458,8 +499,8 @@ export class EnergyService {
 
   async getPendingGifts(userId: string): Promise<EnergyGift[]> {
     return await this.energyGiftRepository.find({
-      where: { 
-        recipientId: userId, 
+      where: {
+        recipientId: userId,
         status: EnergyGiftStatus.PENDING,
       },
       relations: ['sender'],
@@ -479,10 +520,7 @@ export class EnergyService {
     }
   }
 
-  async applyEnergyBoost(
-    userId: string,
-    boostId: string
-  ): Promise<UserEnergy> {
+  async applyEnergyBoost(userId: string, boostId: string): Promise<UserEnergy> {
     const boost = await this.energyBoostRepository.findOne({
       where: { id: boostId, isActive: true },
     });
@@ -504,7 +542,7 @@ export class EnergyService {
       switch (boost.boostType) {
         case 'regeneration_speed':
           userEnergy.boostMultiplier = boost.effectValue;
-          userEnergy.boostExpiresAt = boost.durationMinutes 
+          userEnergy.boostExpiresAt = boost.durationMinutes
             ? new Date(Date.now() + boost.durationMinutes * 60 * 1000)
             : null;
           break;
@@ -514,7 +552,10 @@ export class EnergyService {
           break;
 
         case 'instant_refill':
-          const refillAmount = Math.min(boost.effectValue, userEnergy.maxEnergy - userEnergy.currentEnergy);
+          const refillAmount = Math.min(
+            boost.effectValue,
+            userEnergy.maxEnergy - userEnergy.currentEnergy,
+          );
           userEnergy.currentEnergy += refillAmount;
           energyAfter = userEnergy.currentEnergy;
           break;
@@ -522,7 +563,7 @@ export class EnergyService {
         case 'consumption_reduction':
           // This would be handled in the consumption logic
           userEnergy.boostMultiplier = boost.effectValue;
-          userEnergy.boostExpiresAt = boost.durationMinutes 
+          userEnergy.boostExpiresAt = boost.durationMinutes
             ? new Date(Date.now() + boost.durationMinutes * 60 * 1000)
             : null;
           break;
@@ -539,7 +580,7 @@ export class EnergyService {
         energyAfter,
         relatedEntityId: boost.id,
         relatedEntityType: 'boost',
-        metadata: { 
+        metadata: {
           boostType: boost.boostType,
           effectValue: boost.effectValue,
           durationMinutes: boost.durationMinutes,
@@ -563,7 +604,7 @@ export class EnergyService {
   async getEnergyHistory(
     userId: string,
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<EnergyTransaction[]> {
     return await this.energyTransactionRepository.find({
       where: { userId },
@@ -595,7 +636,9 @@ export class EnergyService {
       giftsSentToday: userEnergy.energyGiftsSentToday,
       giftsReceivedToday: userEnergy.energyGiftsReceivedToday,
       pendingGifts: pendingGiftsCount,
-      boostActive: userEnergy.boostExpiresAt ? userEnergy.boostExpiresAt > new Date() : false,
+      boostActive: userEnergy.boostExpiresAt
+        ? userEnergy.boostExpiresAt > new Date()
+        : false,
       boostExpiresAt: userEnergy.boostExpiresAt,
     };
   }

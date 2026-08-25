@@ -32,7 +32,7 @@ export class AiAssistantController {
   async getHint(@Body() request: HintRequestDto, @Request() req: any) {
     // Use authenticated user ID
     const userId = request.userId || req.user?.id;
-    
+
     return this.aiAssistant.getProgressiveHint({
       ...request,
       userId,
@@ -42,10 +42,10 @@ export class AiAssistantController {
   @Post('thinking-process')
   async getThinkingProcess(
     @Body() request: ThinkingProcessRequestDto,
-    @Request() req: any
+    @Request() req: any,
   ) {
     const userId = request.userId || req.user?.id;
-    
+
     return this.aiAssistant.explainThinkingProcess({
       ...request,
       userId,
@@ -59,20 +59,21 @@ export class AiAssistantController {
 
   @Post('feedback')
   async submitFeedback(
-    @Body() feedback: {
+    @Body()
+    feedback: {
       userId: string;
       puzzleId: string;
       hintId: string;
       wasHelpful: boolean;
       ledToProgress: boolean;
-    }
+    },
   ) {
     await this.effectivenessTracker.recordHintFeedback(
       feedback.userId,
       feedback.puzzleId,
       feedback.hintId,
       feedback.wasHelpful,
-      feedback.ledToProgress
+      feedback.ledToProgress,
     );
 
     return { message: 'Feedback recorded successfully' };
@@ -90,7 +91,8 @@ export class AiAssistantController {
 
   @Post('puzzle/complete')
   async recordPuzzleCompletion(
-    @Body() completion: {
+    @Body()
+    completion: {
       userId: string;
       puzzleId: string;
       performance: {
@@ -99,12 +101,12 @@ export class AiAssistantController {
         timeSpent: number;
         strategiesUsed: string[];
       };
-    }
+    },
   ) {
     await this.learningPath.updatePlayerProfile(
       completion.userId,
       completion.puzzleId,
-      completion.performance
+      completion.performance,
     );
 
     return { message: 'Puzzle completion recorded' };
@@ -114,7 +116,7 @@ export class AiAssistantController {
   async analyzePuzzle(
     @Param('puzzleId') puzzleId: string,
     @Body() state: any,
-    @Request() req: any
+    @Request() req: any,
   ) {
     const userId = req.user?.id;
     return this.aiAssistant.analyzePuzzle(state, userId);

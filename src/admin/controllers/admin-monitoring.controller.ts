@@ -1,8 +1,4 @@
-import {
-    Controller,
-    Get,
-    UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -14,27 +10,27 @@ import { PerformanceMonitoringService } from '../../monitoring/performance.servi
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class AdminMonitoringController {
-    private databaseService = DatabaseService.getInstance();
-    private performanceService: PerformanceMonitoringService;
+  private databaseService = DatabaseService.getInstance();
+  private performanceService: PerformanceMonitoringService;
 
-    constructor() {
-        this.performanceService = new PerformanceMonitoringService(
-            this.databaseService.getDataSource(),
-        );
-    }
+  constructor() {
+    this.performanceService = new PerformanceMonitoringService(
+      this.databaseService.getDataSource(),
+    );
+  }
 
-    @Get('health')
-    async checkHealth() {
-        return await this.databaseService.checkHealth();
-    }
+  @Get('health')
+  async checkHealth() {
+    return await this.databaseService.checkHealth();
+  }
 
-    @Get('metrics')
-    async getMetrics() {
-        return await this.performanceService.getMetrics();
-    }
+  @Get('metrics')
+  async getMetrics() {
+    return await this.performanceService.getMetrics();
+  }
 
-    @Get('db-stats')
-    async getDbStats() {
-        return await this.databaseService.getConnectionStats();
-    }
+  @Get('db-stats')
+  async getDbStats() {
+    return await this.databaseService.getConnectionStats();
+  }
 }

@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
-import { ContentReport, ReportStatus, ReportPriority, ReportTargetType } from './entities/content-report.entity';
+import {
+  ContentReport,
+  ReportStatus,
+  ReportPriority,
+  ReportTargetType,
+} from './entities/content-report.entity';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportStatsDto } from './dto/report-stats.dto';
@@ -78,9 +83,15 @@ describe('ReportsController', () => {
 
       mockReportsService.createReport.mockResolvedValue(mockReport);
 
-      const result = await controller.createReport({ user: mockUser }, createReportDto);
+      const result = await controller.createReport(
+        { user: mockUser },
+        createReportDto,
+      );
 
-      expect(service.createReport).toHaveBeenCalledWith(mockUser.id, createReportDto);
+      expect(service.createReport).toHaveBeenCalledWith(
+        mockUser.id,
+        createReportDto,
+      );
       expect(result).toEqual({
         message: 'Report submitted successfully',
         report: mockReport,
@@ -134,9 +145,17 @@ describe('ReportsController', () => {
       const updatedReport = { ...mockReport, ...updateReportDto };
       mockReportsService.updateReport.mockResolvedValue(updatedReport);
 
-      const result = await controller.updateReport('report-123', updateReportDto, { user: mockModerator });
+      const result = await controller.updateReport(
+        'report-123',
+        updateReportDto,
+        { user: mockModerator },
+      );
 
-      expect(service.updateReport).toHaveBeenCalledWith('report-123', updateReportDto, mockModerator.id);
+      expect(service.updateReport).toHaveBeenCalledWith(
+        'report-123',
+        updateReportDto,
+        mockModerator.id,
+      );
       expect(result).toEqual({
         message: 'Report updated successfully',
         report: updatedReport,

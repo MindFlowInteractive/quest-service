@@ -78,7 +78,7 @@ describe('MultiplayerGateway Integration', () => {
 
     app = module.createNestApplication();
     app.useWebSocketAdapter(new IoAdapter(app));
-    
+
     gateway = module.get<MultiplayerGateway>(MultiplayerGateway);
     multiplayerService = module.get<MultiplayerService>(MultiplayerService);
 
@@ -127,7 +127,9 @@ describe('MultiplayerGateway Integration', () => {
         settings: { maxPlayers: 4, timeLimit: 600 },
       };
 
-      (multiplayerService.createMultiplayerSession as jest.Mock).mockResolvedValue(mockSession);
+      (
+        multiplayerService.createMultiplayerSession as jest.Mock
+      ).mockResolvedValue(mockSession);
 
       clientSocket.emit('createMultiplayerSession', {
         userId: mockPlayer1.id,
@@ -140,7 +142,9 @@ describe('MultiplayerGateway Integration', () => {
 
       clientSocket.on('multiplayerSessionCreated', (data: any) => {
         expect(data).toEqual(mockSession);
-        expect(multiplayerService.createMultiplayerSession).toHaveBeenCalledWith(
+        expect(
+          multiplayerService.createMultiplayerSession,
+        ).toHaveBeenCalledWith(
           RoomType.COLLABORATIVE,
           expect.objectContaining({
             id: mockPlayer1.id,
@@ -148,7 +152,7 @@ describe('MultiplayerGateway Integration', () => {
             skillLevel: mockPlayer1.skillLevel,
           }),
           { maxPlayers: 4 },
-          'puzzle1'
+          'puzzle1',
         );
         done();
       });
@@ -164,7 +168,9 @@ describe('MultiplayerGateway Integration', () => {
         settings: { maxPlayers: 2, timeLimit: 300 },
       };
 
-      (multiplayerService.createMultiplayerSession as jest.Mock).mockResolvedValue(mockSession);
+      (
+        multiplayerService.createMultiplayerSession as jest.Mock
+      ).mockResolvedValue(mockSession);
 
       clientSocket.emit('createMultiplayerSession', {
         userId: mockPlayer1.id,
@@ -191,7 +197,9 @@ describe('MultiplayerGateway Integration', () => {
         settings: { maxPlayers: 4 },
       };
 
-      (multiplayerService.joinSessionByCode as jest.Mock).mockResolvedValue(mockSession);
+      (multiplayerService.joinSessionByCode as jest.Mock).mockResolvedValue(
+        mockSession,
+      );
 
       clientSocket2.emit('joinSessionByCode', {
         inviteCode: 'ABC123',
@@ -207,14 +215,16 @@ describe('MultiplayerGateway Integration', () => {
           expect.objectContaining({
             id: mockPlayer2.id,
             username: mockPlayer2.username,
-          })
+          }),
         );
         done();
       });
     });
 
     it('should emit error for invalid invite code', (done) => {
-      (multiplayerService.joinSessionByCode as jest.Mock).mockResolvedValue(null);
+      (multiplayerService.joinSessionByCode as jest.Mock).mockResolvedValue(
+        null,
+      );
 
       clientSocket2.emit('joinSessionByCode', {
         inviteCode: 'INVALID',
@@ -224,7 +234,9 @@ describe('MultiplayerGateway Integration', () => {
       });
 
       clientSocket2.on('error', (data: any) => {
-        expect(data).toBe('Failed to join session - invalid code or session full');
+        expect(data).toBe(
+          'Failed to join session - invalid code or session full',
+        );
         done();
       });
     });
@@ -238,7 +250,9 @@ describe('MultiplayerGateway Integration', () => {
         players: [mockPlayer1],
       };
 
-      (multiplayerService.handlePlayerReconnection as jest.Mock).mockResolvedValue(mockSession);
+      (
+        multiplayerService.handlePlayerReconnection as jest.Mock
+      ).mockResolvedValue(mockSession);
 
       clientSocket.emit('reconnectToSession', {
         roomId: 'session1',
@@ -247,16 +261,17 @@ describe('MultiplayerGateway Integration', () => {
 
       clientSocket.on('reconnectedToSession', (data: any) => {
         expect(data).toEqual(mockSession);
-        expect(multiplayerService.handlePlayerReconnection).toHaveBeenCalledWith(
-          'session1',
-          mockPlayer1.id
-        );
+        expect(
+          multiplayerService.handlePlayerReconnection,
+        ).toHaveBeenCalledWith('session1', mockPlayer1.id);
         done();
       });
     });
 
     it('should emit error for expired grace period', (done) => {
-      (multiplayerService.handlePlayerReconnection as jest.Mock).mockResolvedValue(null);
+      (
+        multiplayerService.handlePlayerReconnection as jest.Mock
+      ).mockResolvedValue(null);
 
       clientSocket.emit('reconnectToSession', {
         roomId: 'session1',
@@ -275,20 +290,33 @@ describe('MultiplayerGateway Integration', () => {
       const mockRoom = {
         id: 'session1',
         type: RoomType.COLLABORATIVE,
-        puzzleState: { grid: [[1, 2], [3, 4]] },
+        puzzleState: {
+          grid: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
       };
 
       (multiplayerService.getRoom as jest.Mock).mockReturnValue(mockRoom);
 
       clientSocket.emit('updateCollaborativeState', {
         roomId: 'session1',
-        state: { grid: [[1, 2], [3, 4]] },
+        state: {
+          grid: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
         userId: mockPlayer1.id,
       });
 
       clientSocket.on('collaborativeStateUpdated', (data: any) => {
         expect(data.state).toEqual({
-          grid: [[1, 2], [3, 4]],
+          grid: [
+            [1, 2],
+            [3, 4],
+          ],
           lastUpdatedBy: mockPlayer1.id,
         });
         expect(data.updatedBy).toBe(mockPlayer1.id);
@@ -322,17 +350,24 @@ describe('MultiplayerGateway Integration', () => {
       };
 
       (multiplayerService.getRoom as jest.Mock).mockReturnValue(mockRoom);
-      (multiplayerService['cacheManager'] = { set: jest.fn() });
-      (multiplayerService as any).puzzlesService = { findOne: jest.fn().mockResolvedValue(mockPuzzle) };
-      (multiplayerService as any).validationService = { 
-        validateSolution: jest.fn().mockResolvedValue(mockValidationResult) 
+      multiplayerService['cacheManager'] = { set: jest.fn() };
+      (multiplayerService as any).puzzlesService = {
+        findOne: jest.fn().mockResolvedValue(mockPuzzle),
+      };
+      (multiplayerService as any).validationService = {
+        validateSolution: jest.fn().mockResolvedValue(mockValidationResult),
       };
 
       clientSocket.emit('submitSolution', {
         roomId: 'session1',
         userId: mockPlayer1.id,
         puzzleId: 'puzzle1',
-        solution: { grid: [[1, 2], [3, 4]] },
+        solution: {
+          grid: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
       });
 
       clientSocket.on('collaborativeSolutionVerified', (data: any) => {
@@ -362,18 +397,27 @@ describe('MultiplayerGateway Integration', () => {
       const mockValidationResult = { isValid: true, score: 50, errors: [] };
 
       (multiplayerService.getRoom as jest.Mock).mockReturnValue(mockRoom);
-      (multiplayerService['cacheManager'] = { set: jest.fn() });
-      (multiplayerService as any).puzzlesService = { findOne: jest.fn().mockResolvedValue(mockPuzzle) };
-      (multiplayerService as any).validationService = { 
-        validateSolution: jest.fn().mockResolvedValue(mockValidationResult) 
+      multiplayerService['cacheManager'] = { set: jest.fn() };
+      (multiplayerService as any).puzzlesService = {
+        findOne: jest.fn().mockResolvedValue(mockPuzzle),
       };
-      (multiplayerService as any).leaderboardService = { createEntry: jest.fn() };
+      (multiplayerService as any).validationService = {
+        validateSolution: jest.fn().mockResolvedValue(mockValidationResult),
+      };
+      (multiplayerService as any).leaderboardService = {
+        createEntry: jest.fn(),
+      };
 
       clientSocket.emit('submitSolution', {
         roomId: 'session1',
         userId: mockPlayer2.id,
         puzzleId: 'puzzle1',
-        solution: { grid: [[1, 2], [3, 4]] },
+        solution: {
+          grid: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
       });
 
       clientSocket.on('competitiveSolutionVerified', (data: any) => {
@@ -397,10 +441,9 @@ describe('MultiplayerGateway Integration', () => {
 
       // Verify service was called
       setTimeout(() => {
-        expect(multiplayerService.handlePlayerDisconnection).toHaveBeenCalledWith(
-          'session1',
-          mockPlayer1.id
-        );
+        expect(
+          multiplayerService.handlePlayerDisconnection,
+        ).toHaveBeenCalledWith('session1', mockPlayer1.id);
         done();
       }, 100);
     });
@@ -409,7 +452,9 @@ describe('MultiplayerGateway Integration', () => {
       clientSocket.data.userId = mockPlayer1.id;
       clientSocket.disconnect();
 
-      expect(multiplayerService.removeFromQueue).toHaveBeenCalledWith(mockPlayer1.id);
+      expect(multiplayerService.removeFromQueue).toHaveBeenCalledWith(
+        mockPlayer1.id,
+      );
     });
   });
 });

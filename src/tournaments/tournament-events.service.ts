@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, LessThan, Between } from 'typeorm';
 import { TournamentEvent } from './entities/tournament-event.entity';
@@ -21,7 +26,9 @@ export class TournamentEventsService {
     createTournamentEventDto: CreateTournamentEventDto,
     createdBy?: string,
   ): Promise<TournamentEvent> {
-    this.logger.log(`Creating tournament event: ${createTournamentEventDto.name}`);
+    this.logger.log(
+      `Creating tournament event: ${createTournamentEventDto.name}`,
+    );
 
     // Validate dates
     const startAt = new Date(createTournamentEventDto.startAt);
@@ -118,15 +125,24 @@ export class TournamentEventsService {
     userId: string,
     username: string,
   ): Promise<TournamentEventParticipant> {
-    this.logger.log(`Registering user ${userId} for tournament event ${tournamentEventId}`);
+    this.logger.log(
+      `Registering user ${userId} for tournament event ${tournamentEventId}`,
+    );
 
     const tournamentEvent = await this.findOne(tournamentEventId);
 
-    if (tournamentEvent.status !== 'upcoming' && tournamentEvent.status !== 'active') {
-      throw new BadRequestException('Tournament event is not open for registration');
+    if (
+      tournamentEvent.status !== 'upcoming' &&
+      tournamentEvent.status !== 'active'
+    ) {
+      throw new BadRequestException(
+        'Tournament event is not open for registration',
+      );
     }
 
-    if (tournamentEvent.currentParticipants >= tournamentEvent.maxParticipants) {
+    if (
+      tournamentEvent.currentParticipants >= tournamentEvent.maxParticipants
+    ) {
       throw new BadRequestException('Tournament event is full');
     }
 
@@ -136,7 +152,9 @@ export class TournamentEventsService {
     });
 
     if (existingParticipant) {
-      throw new BadRequestException('User is already registered for this tournament event');
+      throw new BadRequestException(
+        'User is already registered for this tournament event',
+      );
     }
 
     const participant = this.participantRepository.create({
@@ -225,7 +243,10 @@ export class TournamentEventsService {
     };
   }
 
-  async updateStatus(id: string, status: 'draft' | 'upcoming' | 'active' | 'completed'): Promise<TournamentEvent> {
+  async updateStatus(
+    id: string,
+    status: 'draft' | 'upcoming' | 'active' | 'completed',
+  ): Promise<TournamentEvent> {
     const tournamentEvent = await this.findOne(id);
 
     // Validate status transitions
@@ -237,7 +258,9 @@ export class TournamentEventsService {
     };
 
     if (!validTransitions[tournamentEvent.status].includes(status)) {
-      throw new BadRequestException(`Invalid status transition from ${tournamentEvent.status} to ${status}`);
+      throw new BadRequestException(
+        `Invalid status transition from ${tournamentEvent.status} to ${status}`,
+      );
     }
 
     if (status === 'completed') {
@@ -248,7 +271,9 @@ export class TournamentEventsService {
     return await this.findOne(id);
   }
 
-  private async computeFinalStandings(tournamentEventId: string): Promise<void> {
+  private async computeFinalStandings(
+    tournamentEventId: string,
+  ): Promise<void> {
     const participants = await this.participantRepository.find({
       where: { tournamentEventId },
       order: { totalScore: 'DESC', puzzlesSolved: 'DESC', registeredAt: 'ASC' },
@@ -264,7 +289,7 @@ export class TournamentEventsService {
 
     // Update final positions and prizes
     for (const participant of participants) {
-      const ranking = rankings.find(r => r.userId === participant.userId);
+      const ranking = rankings.find((r) => r.userId === participant.userId);
       if (ranking) {
         participant.finalPosition = ranking.position;
         // TODO: Assign prizes based on rewardPool distribution
@@ -334,14 +359,19 @@ export class TournamentEventsService {
     }
 
     // Check if score for this puzzle already exists
-    const existingResult = participant.puzzleResults.find(r => r.puzzleId === puzzleId);
+    const existingResult = participant.puzzleResults.find(
+      (r) => r.puzzleId === puzzleId,
+    );
     if (existingResult) {
       // Update existing score if better
       if (score > existingResult.score) {
         existingResult.score = score;
         existingResult.completedAt = new Date();
         if (timeTaken) existingResult.timeTaken = timeTaken;
-        participant.totalScore = participant.puzzleResults.reduce((sum, r) => sum + r.score, 0);
+        participant.totalScore = participant.puzzleResults.reduce(
+          (sum, r) => sum + r.score,
+          0,
+        );
       }
     } else {
       // Add new puzzle result

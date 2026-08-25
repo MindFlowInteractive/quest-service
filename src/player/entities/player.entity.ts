@@ -20,9 +20,9 @@ export class Player {
   password: string;
 
   //to be uncommented when Profile entity is created
-//   @OneToOne(() => Profile, profile => profile.player)
-//   profile: Profile;  
+  //   @OneToOne(() => Profile, profile => profile.player)
+  //   profile: Profile;
 
-//   @OneToMany(() => Progress, progress => progress.player)
-//   progress: Progress[];
+  //   @OneToMany(() => Progress, progress => progress.player)
+  //   progress: Progress[];
 }

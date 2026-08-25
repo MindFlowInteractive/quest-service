@@ -7,7 +7,10 @@ import { GameSession } from '../game-session/entities/game-session.entity';
 import { GameSessionModule } from '../game-session/game-session.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PlayerActionEvent, GameSession]), forwardRef(() => GameSessionModule)],
+  imports: [
+    TypeOrmModule.forFeature([PlayerActionEvent, GameSession]),
+    forwardRef(() => GameSessionModule),
+  ],
   controllers: [PlayerEventsController],
   providers: [PlayerEventsService],
   exports: [PlayerEventsService],

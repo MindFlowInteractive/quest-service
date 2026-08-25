@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { RouterService } from './router/router.service';
 
@@ -16,27 +13,15 @@ export interface GatewayRequest {
 
 @Injectable()
 export class GatewayService {
-  constructor(
-    private readonly routerService: RouterService,
-  ) {}
+  constructor(private readonly routerService: RouterService) {}
 
-  async forwardRequest(
-    request: GatewayRequest,
-  ): Promise<unknown> {
-    const destination =
-      this.routerService.resolveService(
-        request.service,
-      );
+  async forwardRequest(request: GatewayRequest): Promise<unknown> {
+    const destination = this.routerService.resolveService(request.service);
 
     if (!destination) {
-      throw new NotFoundException(
-        `Unknown service: ${request.service}`,
-      );
+      throw new NotFoundException(`Unknown service: ${request.service}`);
     }
 
-    return this.routerService.forward(
-      destination,
-      request,
-    );
+    return this.routerService.forward(destination, request);
   }
 }

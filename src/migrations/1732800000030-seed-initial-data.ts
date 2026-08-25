@@ -87,7 +87,7 @@ export class SeedInitialData1732800000030 implements MigrationInterface {
     await queryRunner.query('DELETE FROM puzzles;');
     await queryRunner.query('DELETE FROM achievements;');
     await queryRunner.query('DELETE FROM puzzle_categories;');
-    await queryRunner.query('DELETE FROM users WHERE role = \'admin\';');
+    await queryRunner.query("DELETE FROM users WHERE role = 'admin';");
   }
 
   private generateUUID(): string {

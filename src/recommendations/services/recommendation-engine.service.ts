@@ -49,23 +49,49 @@ export class RecommendationEngineService {
       let recommendations: RecommendationResult[] = [];
 
       // Determine which algorithm to use
-      const selectedAlgorithm = algorithm || await this.selectAlgorithm(userId, abTestGroup);
+      const selectedAlgorithm =
+        algorithm || (await this.selectAlgorithm(userId, abTestGroup));
 
       switch (selectedAlgorithm) {
         case 'collaborative':
-          recommendations = await this.getCollaborativeRecommendations(userId, limit, category, difficulty);
+          recommendations = await this.getCollaborativeRecommendations(
+            userId,
+            limit,
+            category,
+            difficulty,
+          );
           break;
         case 'content-based':
-          recommendations = await this.getContentBasedRecommendations(userId, limit, category, difficulty);
+          recommendations = await this.getContentBasedRecommendations(
+            userId,
+            limit,
+            category,
+            difficulty,
+          );
           break;
         case 'hybrid':
-          recommendations = await this.getHybridRecommendations(userId, limit, category, difficulty);
+          recommendations = await this.getHybridRecommendations(
+            userId,
+            limit,
+            category,
+            difficulty,
+          );
           break;
         case 'popular':
-          recommendations = await this.getPopularRecommendations(userId, limit, category, difficulty);
+          recommendations = await this.getPopularRecommendations(
+            userId,
+            limit,
+            category,
+            difficulty,
+          );
           break;
         default:
-          recommendations = await this.getHybridRecommendations(userId, limit, category, difficulty);
+          recommendations = await this.getHybridRecommendations(
+            userId,
+            limit,
+            category,
+            difficulty,
+          );
       }
 
       // Store recommendations for tracking
@@ -73,13 +99,24 @@ export class RecommendationEngineService {
 
       return recommendations;
     } catch (error) {
-      this.logger.error(`Error generating recommendations for user ${userId}:`, error);
+      this.logger.error(
+        `Error generating recommendations for user ${userId}:`,
+        error,
+      );
       // Fallback to popular puzzles
-      return this.getPopularRecommendations(userId, limit, category, difficulty);
+      return this.getPopularRecommendations(
+        userId,
+        limit,
+        category,
+        difficulty,
+      );
     }
   }
 
-  private async selectAlgorithm(userId: string, abTestGroup?: string): Promise<string> {
+  private async selectAlgorithm(
+    userId: string,
+    abTestGroup?: string,
+  ): Promise<string> {
     if (abTestGroup) {
       // A/B testing logic
       switch (abTestGroup) {
@@ -114,12 +151,13 @@ export class RecommendationEngineService {
     category?: string,
     difficulty?: string,
   ): Promise<RecommendationResult[]> {
-    const scores = await this.collaborativeFilteringService.generateRecommendations(
-      userId,
-      limit,
-      category,
-      difficulty,
-    );
+    const scores =
+      await this.collaborativeFilteringService.generateRecommendations(
+        userId,
+        limit,
+        category,
+        difficulty,
+      );
 
     return this.enrichRecommendations(scores, 'collaborative');
   }
@@ -130,12 +168,13 @@ export class RecommendationEngineService {
     category?: string,
     difficulty?: string,
   ): Promise<RecommendationResult[]> {
-    const scores = await this.contentBasedFilteringService.generateRecommendations(
-      userId,
-      limit,
-      category,
-      difficulty,
-    );
+    const scores =
+      await this.contentBasedFilteringService.generateRecommendations(
+        userId,
+        limit,
+        category,
+        difficulty,
+      );
 
     return this.enrichRecommendations(scores, 'content-based');
   }
@@ -147,19 +186,21 @@ export class RecommendationEngineService {
     difficulty?: string,
   ): Promise<RecommendationResult[]> {
     // Get recommendations from both algorithms
-    const collaborativePromise = this.collaborativeFilteringService.generateRecommendations(
-      userId,
-      Math.ceil(limit * 0.6),
-      category,
-      difficulty,
-    );
+    const collaborativePromise =
+      this.collaborativeFilteringService.generateRecommendations(
+        userId,
+        Math.ceil(limit * 0.6),
+        category,
+        difficulty,
+      );
 
-    const contentBasedPromise = this.contentBasedFilteringService.generateRecommendations(
-      userId,
-      Math.ceil(limit * 0.6),
-      category,
-      difficulty,
-    );
+    const contentBasedPromise =
+      this.contentBasedFilteringService.generateRecommendations(
+        userId,
+        Math.ceil(limit * 0.6),
+        category,
+        difficulty,
+      );
 
     const [collaborativeScores, contentBasedScores] = await Promise.all([
       collaborativePromise,
@@ -189,7 +230,7 @@ export class RecommendationEngineService {
       select: ['puzzleId'],
     });
 
-    const completedPuzzleIds = completedPuzzles.map(p => p.puzzleId);
+    const completedPuzzleIds = completedPuzzles.map((p) => p.puzzleId);
 
     let query = this.puzzleRepository
       .createQueryBuilder('puzzle')
@@ -197,8 +238,8 @@ export class RecommendationEngineService {
       .andWhere('puzzle.publishedAt IS NOT NULL');
 
     if (completedPuzzleIds.length > 0) {
-      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', { 
-        excludeIds: completedPuzzleIds 
+      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', {
+        excludeIds: completedPuzzleIds,
       });
     }
 
@@ -218,8 +259,10 @@ export class RecommendationEngineService {
 
     const scores: PuzzleScore[] = popularPuzzles.map((puzzle, index) => ({
       puzzleId: puzzle.id,
-      score: Math.max(0.9 - (index * 0.05), 0.3), // Decreasing score based on popularity rank
-      reason: `Popular puzzle with ${puzzle.completions} completions and ${puzzle.averageRating.toFixed(1)} rating`,
+      score: Math.max(0.9 - index * 0.05, 0.3), // Decreasing score based on popularity rank
+      reason: `Popular puzzle with ${
+        puzzle.completions
+      } completions and ${puzzle.averageRating.toFixed(1)} rating`,
     }));
 
     return this.enrichRecommendations(scores, 'popular');
@@ -258,22 +301,21 @@ export class RecommendationEngineService {
       }
     }
 
-    return Array.from(combinedMap.values())
-      .sort((a, b) => b.score - a.score);
+    return Array.from(combinedMap.values()).sort((a, b) => b.score - a.score);
   }
 
   private async enrichRecommendations(
     scores: PuzzleScore[],
     algorithm: string,
   ): Promise<RecommendationResult[]> {
-    const puzzleIds = scores.map(s => s.puzzleId);
-    
+    const puzzleIds = scores.map((s) => s.puzzleId);
+
     if (puzzleIds.length === 0) {
       return [];
     }
 
     const puzzles = await this.puzzleRepository.findByIds(puzzleIds);
-    const puzzleMap = new Map(puzzles.map(p => [p.id, p]));
+    const puzzleMap = new Map(puzzles.map((p) => [p.id, p]));
 
     const results: RecommendationResult[] = [];
 
@@ -304,7 +346,7 @@ export class RecommendationEngineService {
     recommendations: RecommendationResult[],
     abTestGroup?: string,
   ): Promise<void> {
-    const recommendationEntities = recommendations.map(rec => 
+    const recommendationEntities = recommendations.map((rec) =>
       this.recommendationRepository.create({
         userId,
         puzzleId: rec.puzzleId,
@@ -315,7 +357,7 @@ export class RecommendationEngineService {
           ...rec.metadata,
           abTestGroup,
         },
-      } as any)
+      } as any),
     );
 
     await this.recommendationRepository.save(recommendationEntities as any);
@@ -341,11 +383,26 @@ export class RecommendationEngineService {
 
     // Update recommendation tracking
     if (interactionType === 'view') {
-      await this.updateRecommendationTracking(userId, puzzleId, 'wasViewed', 'viewedAt');
+      await this.updateRecommendationTracking(
+        userId,
+        puzzleId,
+        'wasViewed',
+        'viewedAt',
+      );
     } else if (interactionType === 'click') {
-      await this.updateRecommendationTracking(userId, puzzleId, 'wasClicked', 'clickedAt');
+      await this.updateRecommendationTracking(
+        userId,
+        puzzleId,
+        'wasClicked',
+        'clickedAt',
+      );
     } else if (interactionType === 'complete') {
-      await this.updateRecommendationTracking(userId, puzzleId, 'wasCompleted', 'completedAt');
+      await this.updateRecommendationTracking(
+        userId,
+        puzzleId,
+        'wasCompleted',
+        'completedAt',
+      );
     }
   }
 
@@ -400,18 +457,17 @@ export class RecommendationEngineService {
       query = query.andWhere('rec.createdAt <= :endDate', { endDate });
     }
 
-    const results = await query
-      .groupBy('rec.algorithm')
-      .getRawMany();
+    const results = await query.groupBy('rec.algorithm').getRawMany();
 
-    return results.map(result => ({
+    return results.map((result) => ({
       algorithm: result.algorithm,
       totalRecommendations: parseInt(result.total_recommendations),
       views: parseInt(result.views),
       clicks: parseInt(result.clicks),
       completions: parseInt(result.completions),
-      clickThroughRate: result.views > 0 ? (result.clicks / result.views) : 0,
-      completionRate: result.clicks > 0 ? (result.completions / result.clicks) : 0,
+      clickThroughRate: result.views > 0 ? result.clicks / result.views : 0,
+      completionRate:
+        result.clicks > 0 ? result.completions / result.clicks : 0,
       averageScore: parseFloat(result.avg_score) || 0,
     }));
   }

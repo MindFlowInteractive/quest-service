@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import { PuzzleSessionService } from '../services/puzzle-session.service';
 import { CreatePuzzleSessionDto } from '../dto/create-puzzle-session.dto';
 import { PuzzleSessionQueryDto } from '../dto/puzzle-session-query.dto';
@@ -26,10 +18,7 @@ export class PuzzleSessionsController {
   }
 
   @Get(':id/history')
-  history(
-    @Param('id') id: string,
-    @Query() query: PuzzleSessionQueryDto,
-  ) {
+  history(@Param('id') id: string, @Query() query: PuzzleSessionQueryDto) {
     return this.service.history(id, query.limit, query.offset);
   }
 

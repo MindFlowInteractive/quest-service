@@ -74,10 +74,7 @@ export class RecommendationService {
 
         // Track social distance for secondary ranking
         const currentDistance = secondHopDistances.get(candidateId) || 0;
-        secondHopDistances.set(
-          candidateId,
-          currentDistance + 1,
-        );
+        secondHopDistances.set(candidateId, currentDistance + 1);
       }
     }
 
@@ -94,10 +91,8 @@ export class RecommendationService {
       if (!candidate) continue;
 
       // Calculate signals
-      const mutualFriendsCount = await this.friendshipRepo.getMutualFriendsCount(
-        userId,
-        candidateId,
-      );
+      const mutualFriendsCount =
+        await this.friendshipRepo.getMutualFriendsCount(userId, candidateId);
 
       const sharedInterestsCount = await this.calculateSharedInterests(
         userId,
@@ -146,7 +141,9 @@ export class RecommendationService {
     }
 
     // Sort by score descending
-    scoredCandidates.sort((a, b) => b.recommendationScore - a.recommendationScore);
+    scoredCandidates.sort(
+      (a, b) => b.recommendationScore - a.recommendationScore,
+    );
 
     return scoredCandidates.slice(0, limit);
   }

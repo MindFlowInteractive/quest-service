@@ -1,4 +1,9 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableForeignKey,
+} from 'typeorm';
 
 export class CreateProgressAndAchievementTables implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -115,9 +120,15 @@ export class CreateProgressAndAchievementTables implements MigrationInterface {
         ],
         indices: [
           { name: 'IDX_achievements_name', columnNames: ['name'] },
-          { name: 'IDX_achievements_category_isActive', columnNames: ['category', 'isActive'] },
+          {
+            name: 'IDX_achievements_category_isActive',
+            columnNames: ['category', 'isActive'],
+          },
           { name: 'IDX_achievements_rarity', columnNames: ['rarity'] },
-          { name: 'IDX_achievements_unlockedCount', columnNames: ['unlockedCount'] },
+          {
+            name: 'IDX_achievements_unlockedCount',
+            columnNames: ['unlockedCount'],
+          },
           { name: 'IDX_achievements_createdAt', columnNames: ['createdAt'] },
         ],
       }),
@@ -201,11 +212,27 @@ export class CreateProgressAndAchievementTables implements MigrationInterface {
           },
         ],
         indices: [
-          { name: 'IDX_user_achievements_userId_achievementId', columnNames: ['userId', 'achievementId'], isUnique: true },
-          { name: 'IDX_user_achievements_userId_unlockedAt', columnNames: ['userId', 'unlockedAt'] },
-          { name: 'IDX_user_achievements_achievementId_unlockedAt', columnNames: ['achievementId', 'unlockedAt'] },
-          { name: 'IDX_user_achievements_isUnlocked', columnNames: ['isUnlocked'] },
-          { name: 'IDX_user_achievements_createdAt', columnNames: ['createdAt'] },
+          {
+            name: 'IDX_user_achievements_userId_achievementId',
+            columnNames: ['userId', 'achievementId'],
+            isUnique: true,
+          },
+          {
+            name: 'IDX_user_achievements_userId_unlockedAt',
+            columnNames: ['userId', 'unlockedAt'],
+          },
+          {
+            name: 'IDX_user_achievements_achievementId_unlockedAt',
+            columnNames: ['achievementId', 'unlockedAt'],
+          },
+          {
+            name: 'IDX_user_achievements_isUnlocked',
+            columnNames: ['isUnlocked'],
+          },
+          {
+            name: 'IDX_user_achievements_createdAt',
+            columnNames: ['createdAt'],
+          },
         ],
       }),
       true,
@@ -316,11 +343,24 @@ export class CreateProgressAndAchievementTables implements MigrationInterface {
           },
         ],
         indices: [
-          { name: 'IDX_puzzle_progress_userId_puzzleId', columnNames: ['userId', 'puzzleId'], isUnique: true },
-          { name: 'IDX_puzzle_progress_userId_status', columnNames: ['userId', 'status'] },
-          { name: 'IDX_puzzle_progress_puzzleId_status', columnNames: ['puzzleId', 'status'] },
+          {
+            name: 'IDX_puzzle_progress_userId_puzzleId',
+            columnNames: ['userId', 'puzzleId'],
+            isUnique: true,
+          },
+          {
+            name: 'IDX_puzzle_progress_userId_status',
+            columnNames: ['userId', 'status'],
+          },
+          {
+            name: 'IDX_puzzle_progress_puzzleId_status',
+            columnNames: ['puzzleId', 'status'],
+          },
           { name: 'IDX_puzzle_progress_attempts', columnNames: ['attempts'] },
-          { name: 'IDX_puzzle_progress_completedAt', columnNames: ['completedAt'] },
+          {
+            name: 'IDX_puzzle_progress_completedAt',
+            columnNames: ['completedAt'],
+          },
           { name: 'IDX_puzzle_progress_createdAt', columnNames: ['createdAt'] },
           { name: 'IDX_puzzle_progress_updatedAt', columnNames: ['updatedAt'] },
         ],
@@ -410,7 +450,7 @@ export class CreateProgressAndAchievementTables implements MigrationInterface {
             name: 'totalHintsUsed',
             type: 'int',
             default: 0,
-  },
+          },
           {
             name: 'achievementsUnlocked',
             type: 'int',
@@ -481,13 +521,29 @@ export class CreateProgressAndAchievementTables implements MigrationInterface {
           },
         ],
         indices: [
-          { name: 'IDX_game_sessions_userId_startTime', columnNames: ['userId', 'startTime'] },
-          { name: 'IDX_game_sessions_sessionId', columnNames: ['sessionId'], isUnique: true },
-          { name: 'IDX_game_sessions_userId_isActive', columnNames: ['userId', 'isActive'] },
+          {
+            name: 'IDX_game_sessions_userId_startTime',
+            columnNames: ['userId', 'startTime'],
+          },
+          {
+            name: 'IDX_game_sessions_sessionId',
+            columnNames: ['sessionId'],
+            isUnique: true,
+          },
+          {
+            name: 'IDX_game_sessions_userId_isActive',
+            columnNames: ['userId', 'isActive'],
+          },
           { name: 'IDX_game_sessions_endTime', columnNames: ['endTime'] },
           { name: 'IDX_game_sessions_platform', columnNames: ['platform'] },
-          { name: 'IDX_game_sessions_puzzlesAttempted', columnNames: ['puzzlesAttempted'] },
-          { name: 'IDX_game_sessions_puzzlesCompleted', columnNames: ['puzzlesCompleted'] },
+          {
+            name: 'IDX_game_sessions_puzzlesAttempted',
+            columnNames: ['puzzlesAttempted'],
+          },
+          {
+            name: 'IDX_game_sessions_puzzlesCompleted',
+            columnNames: ['puzzlesCompleted'],
+          },
           { name: 'IDX_game_sessions_totalScore', columnNames: ['totalScore'] },
           { name: 'IDX_game_sessions_startTime', columnNames: ['startTime'] },
           { name: 'IDX_game_sessions_status', columnNames: ['status'] },

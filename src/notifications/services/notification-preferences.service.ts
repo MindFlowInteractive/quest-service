@@ -35,26 +35,21 @@ export class NotificationPreferencesService {
     return this.repository.save(preferences);
   }
 
-  async isEnabled(
-    userId: string,
-    type: NotificationType,
-  ): Promise<boolean> {
+  async isEnabled(userId: string, type: NotificationType): Promise<boolean> {
     const preferences = await this.getOrCreate(userId);
 
-    const propertyMap: Record<
-      NotificationType,
-      keyof NotificationPreference
-    > = {
-      [NotificationType.QUEST_ASSIGNED]: 'questAssigned',
-      [NotificationType.QUEST_COMPLETED]: 'questCompleted',
-      [NotificationType.QUEST_APPROVED]: 'questApproved',
-      [NotificationType.QUEST_REJECTED]: 'questRejected',
-      [NotificationType.REWARD_RECEIVED]: 'rewardReceived',
-      [NotificationType.ACHIEVEMENT_UNLOCKED]: 'achievementUnlocked',
-      [NotificationType.LEVEL_UP]: 'levelUp',
-      [NotificationType.BADGE_EARNED]: 'badgeEarned',
-      [NotificationType.SYSTEM]: 'system',
-    };
+    const propertyMap: Record<NotificationType, keyof NotificationPreference> =
+      {
+        [NotificationType.QUEST_ASSIGNED]: 'questAssigned',
+        [NotificationType.QUEST_COMPLETED]: 'questCompleted',
+        [NotificationType.QUEST_APPROVED]: 'questApproved',
+        [NotificationType.QUEST_REJECTED]: 'questRejected',
+        [NotificationType.REWARD_RECEIVED]: 'rewardReceived',
+        [NotificationType.ACHIEVEMENT_UNLOCKED]: 'achievementUnlocked',
+        [NotificationType.LEVEL_UP]: 'levelUp',
+        [NotificationType.BADGE_EARNED]: 'badgeEarned',
+        [NotificationType.SYSTEM]: 'system',
+      };
 
     return Boolean(preferences[propertyMap[type]]);
   }

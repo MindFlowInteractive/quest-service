@@ -1,5 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { PrivacySettings, PrivacyLevel, UserId } from '../../domain/entities/domain-entities';
+import {
+  PrivacySettings,
+  PrivacyLevel,
+  UserId,
+} from '../../domain/entities/domain-entities';
 import {
   IPrivacySettingsRepository,
   ICacheService,

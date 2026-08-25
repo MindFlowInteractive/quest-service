@@ -12,8 +12,16 @@ describe('RateLimitMiddleware', () => {
     serviceMock = { checkLimit: jest.fn() };
     middleware = new RateLimitMiddleware(serviceMock as RateLimitService);
 
-    req = { user: { id: 'user1', tier: 'free', role: 'user' }, path: '/endpoint', ip: '127.0.0.1' };
-    res = { setHeader: jest.fn(), status: jest.fn().mockReturnThis(), json: jest.fn() };
+    req = {
+      user: { id: 'user1', tier: 'free', role: 'user' },
+      path: '/endpoint',
+      ip: '127.0.0.1',
+    };
+    res = {
+      setHeader: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
     next = jest.fn();
   });
 

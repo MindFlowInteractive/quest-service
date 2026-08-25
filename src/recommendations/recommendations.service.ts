@@ -8,7 +8,11 @@ import { UserInteraction } from './entities/user-interaction.entity';
 import { RecommendationFeedback } from './entities/recommendation-feedback.entity';
 import { PuzzleDifficultyService } from '../difficulty-scaling/puzzle-difficulty.service';
 import { AnalyticsService } from '../analytics/analytics.service';
-import { PuzzleRecommendationDto, TrendingPuzzleDto, SubmitFeedbackDto } from './dto/recommendation.dto';
+import {
+  PuzzleRecommendationDto,
+  TrendingPuzzleDto,
+  SubmitFeedbackDto,
+} from './dto/recommendation.dto';
 
 @Injectable()
 export class RecommendationsService {
@@ -32,17 +36,24 @@ export class RecommendationsService {
   /**
    * Get personalized puzzle recommendations for a user
    */
-  async getPersonalizedRecommendations(userId: string, limit: number = 10): Promise<PuzzleRecommendationDto[]> {
+  async getPersonalizedRecommendations(
+    userId: string,
+    limit: number = 10,
+  ): Promise<PuzzleRecommendationDto[]> {
     const cacheKey = `recommendations:personalized:${userId}:${limit}`;
 
     // Check cache first
-    const cached = await this.cacheService.get<PuzzleRecommendationDto[]>(cacheKey);
+    const cached = await this.cacheService.get<PuzzleRecommendationDto[]>(
+      cacheKey,
+    );
     if (cached) {
       return cached;
     }
 
     // Get user progress and preferences
-    const userProgress = await this.userProgressRepo.findOne({ where: { userId } });
+    const userProgress = await this.userProgressRepo.findOne({
+      where: { userId },
+    });
     if (!userProgress) {
       // Fallback to trending for new users
       const trending = await this.getTrendingRecommendations(limit);
@@ -69,8 +80,12 @@ export class RecommendationsService {
       .leftJoin('puzzle.category', 'category')
       .where('puzzle.isActive = :isActive', { isActive: true })
       .andWhere('puzzle.publishedAt IS NOT NULL')
-      .andWhere('puzzle.id NOT IN (:...solvedIds)', { solvedIds: solvedPuzzleIds.length > 0 ? solvedPuzzleIds : ['dummy'] })
-      .andWhere('puzzle.createdAt > :thirtyDaysAgo', { thirtyDaysAgo: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) })
+      .andWhere('puzzle.id NOT IN (:...solvedIds)', {
+        solvedIds: solvedPuzzleIds.length > 0 ? solvedPuzzleIds : ['dummy'],
+      })
+      .andWhere('puzzle.createdAt > :thirtyDaysAgo', {
+        thirtyDaysAgo: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      })
       .select([
         'puzzle.id',
         'puzzle.title',
@@ -87,10 +102,13 @@ export class RecommendationsService {
 
     // Apply difficulty filter (±1 of user's average)
     if (userDifficulty > 0) {
-      query = query.andWhere('puzzle.difficultyRating BETWEEN :minDiff AND :maxDiff', {
-        minDiff: Math.max(1, userDifficulty - 1),
-        maxDiff: Math.min(10, userDifficulty + 1),
-      });
+      query = query.andWhere(
+        'puzzle.difficultyRating BETWEEN :minDiff AND :maxDiff',
+        {
+          minDiff: Math.max(1, userDifficulty - 1),
+          maxDiff: Math.min(10, userDifficulty + 1),
+        },
+      );
     }
 
     const candidatePuzzles = await query.getRawAndEntities();
@@ -98,20 +116,30 @@ export class RecommendationsService {
     // Score and rank puzzles
     const scoredPuzzles = await Promise.all(
       candidatePuzzles.entities.map(async (puzzle) => {
-        const score = await this.calculateRecommendationScore(puzzle, userProgress, preferredCategories, userDifficulty);
+        const score = await this.calculateRecommendationScore(
+          puzzle,
+          userProgress,
+          preferredCategories,
+          userDifficulty,
+        );
         return {
           ...puzzle,
           score,
-          reason: this.generateRecommendationReason(puzzle, score, preferredCategories, userDifficulty),
+          reason: this.generateRecommendationReason(
+            puzzle,
+            score,
+            preferredCategories,
+            userDifficulty,
+          ),
         };
-      })
+      }),
     );
 
     // Sort by score and take top results
     const recommendations = scoredPuzzles
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map(puzzle => ({
+      .map((puzzle) => ({
         id: puzzle.id,
         title: puzzle.title,
         description: puzzle.description,
@@ -127,7 +155,9 @@ export class RecommendationsService {
       }));
 
     // Cache the results
-    await this.cacheService.set(cacheKey, recommendations, { ttl: this.CACHE_TTL });
+    await this.cacheService.set(cacheKey, recommendations, {
+      ttl: this.CACHE_TTL,
+    });
 
     return recommendations;
   }
@@ -135,7 +165,9 @@ export class RecommendationsService {
   /**
    * Get trending puzzles based on recent completions
    */
-  async getTrendingRecommendations(limit: number = 10): Promise<TrendingPuzzleDto[]> {
+  async getTrendingRecommendations(
+    limit: number = 10,
+  ): Promise<TrendingPuzzleDto[]> {
     const cacheKey = `recommendations:trending:${limit}`;
 
     // Check cache first
@@ -152,13 +184,16 @@ export class RecommendationsService {
       .leftJoin('puzzle.ratings', 'ratings')
       .where('puzzle.isActive = :isActive', { isActive: true })
       .andWhere('puzzle.publishedAt IS NOT NULL')
-      .andWhere(qb => {
-        const subQuery = qb.subQuery()
+      .andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
           .select('COUNT(ui.id)', 'completionCount')
           .from(UserInteraction, 'ui')
           .where('ui.puzzleId = puzzle.id')
           .andWhere('ui.interactionType = :type', { type: 'complete' })
-          .andWhere('ui.createdAt > :sevenDaysAgo', { sevenDaysAgo: sevenDaysAgo })
+          .andWhere('ui.createdAt > :sevenDaysAgo', {
+            sevenDaysAgo: sevenDaysAgo,
+          })
           .getQuery();
         return '0 < (' + subQuery + ')';
       })
@@ -174,13 +209,15 @@ export class RecommendationsService {
         'puzzle.tags',
         'puzzle.createdAt',
       ])
-      .addSelect(subQuery => {
+      .addSelect((subQuery) => {
         return subQuery
           .select('COUNT(ui.id)', 'completionsLast7Days')
           .from(UserInteraction, 'ui')
           .where('ui.puzzleId = puzzle.id')
           .andWhere('ui.interactionType = :type', { type: 'complete' })
-          .andWhere('ui.createdAt > :sevenDaysAgo', { sevenDaysAgo: sevenDaysAgo });
+          .andWhere('ui.createdAt > :sevenDaysAgo', {
+            sevenDaysAgo: sevenDaysAgo,
+          });
       }, 'completionsLast7Days')
       .orderBy('completionsLast7Days', 'DESC')
       .setParameter('sevenDaysAgo', sevenDaysAgo)
@@ -211,7 +248,10 @@ export class RecommendationsService {
   /**
    * Submit feedback on a recommendation
    */
-  async submitFeedback(userId: string, feedback: SubmitFeedbackDto): Promise<void> {
+  async submitFeedback(
+    userId: string,
+    feedback: SubmitFeedbackDto,
+  ): Promise<void> {
     // Clear user's recommendation cache when feedback is submitted
     await this.invalidateUserCache(userId);
 
@@ -239,12 +279,21 @@ export class RecommendationsService {
     });
   }
 
-  upsertPlayer(profile: { id: string; skillLevel?: number; preferences?: string[] }) {
+  upsertPlayer(profile: {
+    id: string;
+    skillLevel?: number;
+    preferences?: string[];
+  }) {
     this.logger.debug(`Legacy upsertPlayer called for user ${profile.id}`);
     return { ok: true, userId: profile.id };
   }
 
-  trackEvent(event: { playerId: string; puzzleId: string; type: 'view' | 'click' | 'start' | 'complete'; timestamp: number }) {
+  trackEvent(event: {
+    playerId: string;
+    puzzleId: string;
+    type: 'view' | 'click' | 'start' | 'complete';
+    timestamp: number;
+  }) {
     return this.analyticsService.trackEvent({
       eventType: `recommendation_${event.type}`,
       playerId: event.playerId,
@@ -276,12 +325,15 @@ export class RecommendationsService {
     let score = 0;
 
     // Recency weight (0-0.3): newer puzzles get higher scores
-    const daysSinceCreated = (Date.now() - puzzle.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceCreated =
+      (Date.now() - puzzle.createdAt.getTime()) / (1000 * 60 * 60 * 24);
     const recencyWeight = Math.max(0, 0.3 - (daysSinceCreated / 30) * 0.3);
     score += recencyWeight;
 
     // Type match weight (0-0.4): preferred categories get higher scores
-    const typeMatchWeight = preferredCategories.includes(puzzle.category) ? 0.4 : 0.1;
+    const typeMatchWeight = preferredCategories.includes(puzzle.category)
+      ? 0.4
+      : 0.1;
     score += typeMatchWeight;
 
     // Difficulty fit weight (0-0.3): closer to user's average difficulty gets higher scores
@@ -314,7 +366,8 @@ export class RecommendationsService {
       reasons.push('is a good challenge for your skill level');
     }
 
-    const daysSinceCreated = (Date.now() - puzzle.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceCreated =
+      (Date.now() - puzzle.createdAt.getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceCreated <= 7) {
       reasons.push('is newly added');
     }
@@ -325,7 +378,9 @@ export class RecommendationsService {
   /**
    * Calculate user's average difficulty based on completed puzzles
    */
-  private async calculateUserAverageDifficulty(userId: string): Promise<number> {
+  private async calculateUserAverageDifficulty(
+    userId: string,
+  ): Promise<number> {
     const interactions = await this.interactionRepo.find({
       where: { userId, interactionType: 'complete' },
       relations: ['puzzle'],
@@ -356,7 +411,7 @@ export class RecommendationsService {
       .limit(3)
       .getRawMany();
 
-    return categoryCounts.map(row => row.category);
+    return categoryCounts.map((row) => row.category);
   }
 
   /**

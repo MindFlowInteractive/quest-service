@@ -28,7 +28,7 @@ export class TournamentsService {
     private readonly matchRepository: Repository<TournamentMatch>,
     @InjectRepository(TournamentSpectator)
     private readonly spectatorRepository: Repository<TournamentSpectator>,
-  ) { }
+  ) {}
 
   async create(
     createTournamentDto: CreateTournamentDto,
@@ -637,8 +637,8 @@ export class TournamentsService {
       endTime: new Date(),
       duration: match.startTime
         ? Math.floor(
-          (new Date().getTime() - new Date(match.startTime).getTime()) / 1000,
-        )
+            (new Date().getTime() - new Date(match.startTime).getTime()) / 1000,
+          )
         : 0,
       results: {
         puzzleResults,
@@ -669,7 +669,7 @@ export class TournamentsService {
       await this.advanceToNextMatch(
         match.nextMatchId,
         winnerId,
-        (winnerId === match.player1Id ? match.player1Name : match.player2Name) as string,
+        winnerId === match.player1Id ? match.player1Name : match.player2Name,
       );
     }
 
@@ -856,20 +856,20 @@ export class TournamentsService {
         roundMap.set(match.roundNumber, []);
       }
 
-      roundMap.get(match.roundNumber)!.push({
+      roundMap.get(match.roundNumber).push({
         matchId: match.id,
         roundNumber: match.roundNumber,
         matchNumber: match.matchNumber,
         player1: match.player1Id
-          ? { id: match.player1Id, name: match.player1Name! }
+          ? { id: match.player1Id, name: match.player1Name }
           : undefined,
         player2: match.player2Id
-          ? { id: match.player2Id, name: match.player2Name! }
+          ? { id: match.player2Id, name: match.player2Name }
           : undefined,
         winner: match.winnerId
-          ? { id: match.winnerId, name: match.winnerName! }
+          ? { id: match.winnerId, name: match.winnerName }
           : undefined,
-        status: match.status as any,
+        status: match.status,
         nextMatchId: match.nextMatchId,
         loserNextMatchId: match.loserNextMatchId,
       });

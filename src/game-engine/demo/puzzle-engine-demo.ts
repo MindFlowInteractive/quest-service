@@ -74,27 +74,43 @@ async function main() {
           console.log(`📋 ${type} (Difficulty ${difficulty}):`);
           console.log(`   ID: ${puzzle.id}`);
           console.log(
-            `   Time Limit: ${puzzle.timeLimit ? puzzle.timeLimit / 1000 + 's' : 'None'}`,
+            `   Time Limit: ${
+              puzzle.timeLimit ? puzzle.timeLimit / 1000 + 's' : 'None'
+            }`,
           );
           console.log(`   Max Moves: ${puzzle.maxMoves || 'Unlimited'}`);
 
           const currentState = puzzle.getState();
           if (type === PuzzleType.SEQUENCE) {
             console.log(
-              `   Sequence Length: ${Array.isArray(currentState.currentState?.sequence) ? currentState.currentState.sequence.length : 'N/A'}`,
+              `   Sequence Length: ${
+                Array.isArray(currentState.currentState?.sequence)
+                  ? currentState.currentState.sequence.length
+                  : 'N/A'
+              }`,
             );
           } else if (type === PuzzleType.SPATIAL) {
             console.log(
-              `   Grid Size: ${currentState.currentState?.width || 'N/A'}x${currentState.currentState?.height || 'N/A'}`,
+              `   Grid Size: ${currentState.currentState?.width || 'N/A'}x${
+                currentState.currentState?.height || 'N/A'
+              }`,
             );
             console.log(
-              `   Player Position: (${currentState.currentState?.playerPosition?.x || 0}, ${currentState.currentState?.playerPosition?.y || 0})`,
+              `   Player Position: (${
+                currentState.currentState?.playerPosition?.x || 0
+              }, ${currentState.currentState?.playerPosition?.y || 0})`,
             );
           } else if (type === PuzzleType.LOGIC_GRID) {
             console.log(
-              `   Grid Size: ${currentState.currentState?.width || 'N/A'}x${currentState.currentState?.height || 'N/A'}`,
+              `   Grid Size: ${currentState.currentState?.width || 'N/A'}x${
+                currentState.currentState?.height || 'N/A'
+              }`,
             );
-            console.log(`   Constraints: ${currentState.currentState?.constraints?.length || 0}`);
+            console.log(
+              `   Constraints: ${
+                currentState.currentState?.constraints?.length || 0
+              }`,
+            );
           }
 
           console.log();
@@ -321,8 +337,12 @@ async function main() {
         const instance = await puzzleRegistry.createPuzzleInstance(type);
         console.log(`- ${type}: ✅ Instance created successfully`);
         console.log(`  Type: ${instance.getType()}`);
-        console.log(`  Supports Undo: ${instance.canUndo ? instance.canUndo() : 'N/A'}`);
-        console.log(`  Supports Redo: ${instance.canRedo ? instance.canRedo() : 'N/A'}`);
+        console.log(
+          `  Supports Undo: ${instance.canUndo ? instance.canUndo() : 'N/A'}`,
+        );
+        console.log(
+          `  Supports Redo: ${instance.canRedo ? instance.canRedo() : 'N/A'}`,
+        );
       } catch (error) {
         console.log(
           `- ${type}: ❌ Failed to create instance: ${error.message}`,

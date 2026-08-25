@@ -12,7 +12,8 @@ export class PuzzleService {
     private sorobanService: SorobanService,
     private configService: ConfigService,
   ) {
-    this.puzzleContractId = this.configService.get<string>('PUZZLE_CONTRACT_ID');
+    this.puzzleContractId =
+      this.configService.get<string>('PUZZLE_CONTRACT_ID');
   }
 
   async createPuzzle(puzzleId: number, solution: string) {

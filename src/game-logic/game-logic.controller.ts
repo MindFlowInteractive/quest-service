@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { GameLogicService } from './game-logic.service';
 import { CreateGameLogicDto } from './dto/create-game-logic.dto';
 import { UpdateGameLogicDto } from './dto/update-game-logic.dto';
@@ -23,7 +31,10 @@ export class GameLogicController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGameLogicDto: UpdateGameLogicDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateGameLogicDto: UpdateGameLogicDto,
+  ) {
     return this.gameLogicService.update(+id, updateGameLogicDto);
   }
 

@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  OnWorkerEvent,
-  Processor,
-  WorkerHost,
-} from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Job } from 'bullmq';
 import { Repository } from 'typeorm';
@@ -29,18 +25,13 @@ export class NotificationsProcessor extends WorkerHost {
     super();
   }
 
-  async process(
-    job: Job<NotificationJobData>,
-  ): Promise<void> {
-    const notification =
-      await this.notificationRepository.findOne({
-        where: { id: job.data.notificationId },
-      });
+  async process(job: Job<NotificationJobData>): Promise<void> {
+    const notification = await this.notificationRepository.findOne({
+      where: { id: job.data.notificationId },
+    });
 
     if (!notification) {
-      throw new Error(
-        `Notification ${job.data.notificationId} not found`,
-      );
+      throw new Error(`Notification ${job.data.notificationId} not found`);
     }
 
     if (notification.status === NotificationStatus.READ) {
@@ -57,18 +48,14 @@ export class NotificationsProcessor extends WorkerHost {
 
     await this.deliveryService.recordAttempt(
       notification.id,
-      delivered
-        ? undefined
-        : new Error('User is offline'),
+      delivered ? undefined : new Error('User is offline'),
     );
 
     if (!delivered) {
       notification.status = NotificationStatus.PENDING;
       await this.notificationRepository.save(notification);
 
-      throw new Error(
-        `User ${notification.userId} is offline`,
-      );
+      throw new Error(`User ${notification.userId} is offline`);
     }
 
     // The notification is emitted now, but delivery is only finalized
@@ -90,10 +77,7 @@ export class NotificationsProcessor extends WorkerHost {
       job.opts.attempts ?? Number(process.env.NOTIFICATION_MAX_ATTEMPTS ?? 5);
 
     if (job.attemptsMade >= maxAttempts) {
-      await this.deliveryService.markFailed(
-        job.data.notificationId,
-        error,
-      );
+      await this.deliveryService.markFailed(job.data.notificationId, error);
     }
   }
 }

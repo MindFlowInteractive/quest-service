@@ -96,9 +96,7 @@ export class GenerationDebuggingQCService {
   /**
    * Performs quality control on batch of puzzles
    */
-  performQualityControl(
-    puzzles: GeneratedPuzzle[],
-  ): QCReport {
+  performQualityControl(puzzles: GeneratedPuzzle[]): QCReport {
     const report: QCReport = {
       timestamp: new Date(),
       totalChecked: puzzles.length,
@@ -121,12 +119,18 @@ export class GenerationDebuggingQCService {
 
     // Generate recommendations
     if (report.failedCount / report.totalChecked > 0.2) {
-      report.recommendations.push('High failure rate - review generation parameters');
+      report.recommendations.push(
+        'High failure rate - review generation parameters',
+      );
     }
 
-    const criticalCount = report.issues.filter((i) => i.severity === 'critical').length;
+    const criticalCount = report.issues.filter(
+      (i) => i.severity === 'critical',
+    ).length;
     if (criticalCount > 0) {
-      report.recommendations.push(`${criticalCount} critical issues found - immediate action required`);
+      report.recommendations.push(
+        `${criticalCount} critical issues found - immediate action required`,
+      );
     }
 
     this.qcReports.push(report);
@@ -245,7 +249,9 @@ export class GenerationDebuggingQCService {
         puzzleId: puzzle.id,
         severity: 'info',
         category: 'quality',
-        message: `Low engagement potential: ${metrics.engagementPotential.toFixed(2)}`,
+        message: `Low engagement potential: ${metrics.engagementPotential.toFixed(
+          2,
+        )}`,
         suggestedFix: 'Make puzzle more interesting or novel',
       });
     }
@@ -329,7 +335,12 @@ export class GenerationDebuggingQCService {
     if (debugInfo.issues.length > 0) {
       report += '\nISSUES:\n';
       for (const issue of debugInfo.issues) {
-        const icon = issue.severity === 'error' ? '✗' : issue.severity === 'warning' ? '⚠' : 'ℹ';
+        const icon =
+          issue.severity === 'error'
+            ? '✗'
+            : issue.severity === 'warning'
+            ? '⚠'
+            : 'ℹ';
         report += `  ${icon} [${issue.severity}] ${issue.message}\n`;
         if (issue.suggestion) {
           report += `    Suggestion: ${issue.suggestion}\n`;
@@ -358,8 +369,14 @@ export class GenerationDebuggingQCService {
     let report = '=== QUALITY CONTROL SUMMARY ===\n\n';
     report += `Last Check: ${latest.timestamp.toISOString()}\n`;
     report += `Total Checked: ${latest.totalChecked}\n`;
-    report += `Passed: ${latest.passedCount} (${((latest.passedCount / latest.totalChecked) * 100).toFixed(1)}%)\n`;
-    report += `Failed: ${latest.failedCount} (${((latest.failedCount / latest.totalChecked) * 100).toFixed(1)}%)\n\n`;
+    report += `Passed: ${latest.passedCount} (${(
+      (latest.passedCount / latest.totalChecked) *
+      100
+    ).toFixed(1)}%)\n`;
+    report += `Failed: ${latest.failedCount} (${(
+      (latest.failedCount / latest.totalChecked) *
+      100
+    ).toFixed(1)}%)\n\n`;
 
     if (latest.issues.length > 0) {
       report += 'ISSUES BY SEVERITY:\n';
@@ -391,32 +408,26 @@ export class GenerationDebuggingQCService {
    * Groups issues by severity
    */
   private groupBySeverity(issues: QCIssue[]): Record<string, QCIssue[]> {
-    return issues.reduce(
-      (acc, issue) => {
-        if (!acc[issue.severity]) {
-          acc[issue.severity] = [];
-        }
-        acc[issue.severity].push(issue);
-        return acc;
-      },
-      {} as Record<string, QCIssue[]>,
-    );
+    return issues.reduce((acc, issue) => {
+      if (!acc[issue.severity]) {
+        acc[issue.severity] = [];
+      }
+      acc[issue.severity].push(issue);
+      return acc;
+    }, {} as Record<string, QCIssue[]>);
   }
 
   /**
    * Groups issues by category
    */
   private groupByCategory(issues: QCIssue[]): Record<string, QCIssue[]> {
-    return issues.reduce(
-      (acc, issue) => {
-        if (!acc[issue.category]) {
-          acc[issue.category] = [];
-        }
-        acc[issue.category].push(issue);
-        return acc;
-      },
-      {} as Record<string, QCIssue[]>,
-    );
+    return issues.reduce((acc, issue) => {
+      if (!acc[issue.category]) {
+        acc[issue.category] = [];
+      }
+      acc[issue.category].push(issue);
+      return acc;
+    }, {} as Record<string, QCIssue[]>);
   }
 
   /**
@@ -441,17 +452,23 @@ export class GenerationDebuggingQCService {
       };
     }
 
-    const successCount = this.generationLogs.filter((l) => l.result === 'success').length;
-    const failureCount = this.generationLogs.filter((l) => l.result === 'failed').length;
+    const successCount = this.generationLogs.filter(
+      (l) => l.result === 'success',
+    ).length;
+    const failureCount = this.generationLogs.filter(
+      (l) => l.result === 'failed',
+    ).length;
 
     const durations = this.generationLogs.map((l) => l.duration);
     const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
 
     const qualityScores = this.generationLogs
       .filter((l) => l.qualityScore !== undefined)
-      .map((l) => l.qualityScore as number);
+      .map((l) => l.qualityScore);
     const avgQuality =
-      qualityScores.length > 0 ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length : 0;
+      qualityScores.length > 0
+        ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
+        : 0;
 
     return {
       totalLogged: this.generationLogs.length,

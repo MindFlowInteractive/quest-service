@@ -23,7 +23,9 @@ export class SkillRatingController {
    * Get player's current rating
    */
   @Get('player/:userId')
-  async getPlayerRating(@Param('userId') userId: string): Promise<PlayerRating> {
+  async getPlayerRating(
+    @Param('userId') userId: string,
+  ): Promise<PlayerRating> {
     return this.skillRatingService.getPlayerRating(userId);
   }
 
@@ -34,7 +36,9 @@ export class SkillRatingController {
   async updateRatingOnPuzzleCompletion(
     @Body() completionData: PuzzleCompletionData,
   ): Promise<PlayerRating> {
-    return this.skillRatingService.updateRatingOnPuzzleCompletion(completionData);
+    return this.skillRatingService.updateRatingOnPuzzleCompletion(
+      completionData,
+    );
   }
 
   /**
@@ -45,7 +49,10 @@ export class SkillRatingController {
     @Param('userId') userId: string,
     @Query('limit') limit: string = '50',
   ): Promise<RatingHistory[]> {
-    return this.skillRatingService.getRatingHistory(userId, parseInt(limit, 10));
+    return this.skillRatingService.getRatingHistory(
+      userId,
+      parseInt(limit, 10),
+    );
   }
 
   /**
@@ -66,7 +73,9 @@ export class SkillRatingController {
    * Get player's rank
    */
   @Get('rank/:userId')
-  async getPlayerRank(@Param('userId') userId: string): Promise<{ rank: number }> {
+  async getPlayerRank(
+    @Param('userId') userId: string,
+  ): Promise<{ rank: number }> {
     const rank = await this.skillRatingService.getPlayerRank(userId);
     return { rank };
   }
@@ -91,7 +100,9 @@ export class SkillRatingController {
    * End a season (admin only)
    */
   @Post('season/:seasonId/end')
-  async endSeason(@Param('seasonId') seasonId: string): Promise<{ message: string }> {
+  async endSeason(
+    @Param('seasonId') seasonId: string,
+  ): Promise<{ message: string }> {
     await this.skillRatingService.endSeason(seasonId);
     return { message: `Season ${seasonId} ended successfully` };
   }

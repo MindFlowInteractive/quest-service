@@ -19,18 +19,10 @@ import { AntiCheatGuard } from './guards/anti-cheat.guard';
     TypeOrmModule.forFeature([
       CheatViolation,
       PlayerBehaviorProfile,
-      PuzzleMoveAudit
-    ])
+      PuzzleMoveAudit,
+    ]),
   ],
-  providers: [
-    AntiCheatService,
-    DetectionService,
-    AntiCheatGuard
-  ],
-  exports: [
-    AntiCheatService,
-    DetectionService,
-    AntiCheatGuard
-  ]
+  providers: [AntiCheatService, DetectionService, AntiCheatGuard],
+  exports: [AntiCheatService, DetectionService, AntiCheatGuard],
 })
 export class AntiCheatModule {}

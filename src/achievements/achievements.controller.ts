@@ -1,5 +1,13 @@
-
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { AchievementsService } from './achievements.service';
 import { CreateAchievementDto } from './dto/create-achievement.dto';
 import { UpdateAchievementDto } from './dto/update-achievement.dto';
@@ -24,7 +32,10 @@ export class AchievementsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAchievementDto: UpdateAchievementDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateAchievementDto: UpdateAchievementDto,
+  ) {
     return this.achievementsService.update(id, updateAchievementDto);
   }
 
@@ -41,13 +52,31 @@ export class AchievementsController {
   }
 
   @Post('user/:userId/unlock/:achievementId')
-  tryUnlockAchievement(@Param('userId') userId: string, @Param('achievementId') achievementId: string, @Body() userContext: any) {
-    return this.achievementsService.tryUnlockAchievement(userId, achievementId, userContext);
+  tryUnlockAchievement(
+    @Param('userId') userId: string,
+    @Param('achievementId') achievementId: string,
+    @Body() userContext: any,
+  ) {
+    return this.achievementsService.tryUnlockAchievement(
+      userId,
+      achievementId,
+      userContext,
+    );
   }
 
   @Post('user/:userId/progress/:achievementId')
-  updateProgress(@Param('userId') userId: string, @Param('achievementId') achievementId: string, @Body('progressDelta') progressDelta: number, @Body('context') context: any) {
-    return this.achievementsService.updateProgress(userId, achievementId, progressDelta, context);
+  updateProgress(
+    @Param('userId') userId: string,
+    @Param('achievementId') achievementId: string,
+    @Body('progressDelta') progressDelta: number,
+    @Body('context') context: any,
+  ) {
+    return this.achievementsService.updateProgress(
+      userId,
+      achievementId,
+      progressDelta,
+      context,
+    );
   }
 
   // --- Analytics ---
@@ -60,7 +89,10 @@ export class AchievementsController {
   // --- Social Sharing ---
 
   @Get('user/:userId/share/:achievementId')
-  shareAchievement(@Param('userId') userId: string, @Param('achievementId') achievementId: string) {
+  shareAchievement(
+    @Param('userId') userId: string,
+    @Param('achievementId') achievementId: string,
+  ) {
     return this.achievementsService.shareAchievement(userId, achievementId);
   }
 

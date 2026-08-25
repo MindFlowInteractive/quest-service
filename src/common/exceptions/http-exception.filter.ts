@@ -10,7 +10,11 @@ import {
 import type { Request, Response } from 'express';
 import * as Sentry from '@sentry/node';
 import { BaseException } from './base.exception';
-import { ERROR_CODES, getErrorCodeFromStatus, ErrorSeverity } from './error-codes';
+import {
+  ERROR_CODES,
+  getErrorCodeFromStatus,
+  ErrorSeverity,
+} from './error-codes';
 import { ValidationException } from './domain.exceptions';
 
 @Injectable()
@@ -40,16 +44,36 @@ export class AllExceptionsFilter implements ExceptionFilter {
     };
 
     if (exception instanceof BaseException) {
-      errorResponse = this.handleBaseException(exception, request, traceId, correlationId);
+      errorResponse = this.handleBaseException(
+        exception,
+        request,
+        traceId,
+        correlationId,
+      );
       this.logBaseException(exception, request);
     } else if (exception instanceof HttpException) {
-      errorResponse = this.handleHttpException(exception, request, traceId, correlationId);
+      errorResponse = this.handleHttpException(
+        exception,
+        request,
+        traceId,
+        correlationId,
+      );
       this.logHttpException(exception, request);
     } else if (exception instanceof Error) {
-      errorResponse = this.handleGenericError(exception, request, traceId, correlationId);
+      errorResponse = this.handleGenericError(
+        exception,
+        request,
+        traceId,
+        correlationId,
+      );
       this.logGenericError(exception, request);
     } else {
-      errorResponse = this.handleUnknownError(exception, request, traceId, correlationId);
+      errorResponse = this.handleUnknownError(
+        exception,
+        request,
+        traceId,
+        correlationId,
+      );
       this.logUnknownError(exception, request);
     }
 
@@ -88,7 +112,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   ) {
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
-    
+
     let message: string;
     let errorCode: string;
     let details: Record<string, unknown> | undefined;
@@ -100,7 +124,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const responseObj = exceptionResponse as Record<string, any>;
       message = responseObj.message || exception.message || 'An error occurred';
       errorCode = responseObj.errorCode || getErrorCodeFromStatus(status);
-      details = responseObj.details || responseObj.errors ? { errors: responseObj.errors } : undefined;
+      details =
+        responseObj.details || responseObj.errors
+          ? { errors: responseObj.errors }
+          : undefined;
     }
 
     // Map common HTTP exceptions to user-friendly messages
@@ -165,7 +192,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       errorCode: ERROR_CODES.INTERNAL_SERVER_ERROR,
       details: this.shouldIncludeStackTrace()
         ? {
-            error_type: typeof exception === 'object' ? exception?.constructor?.name : typeof exception,
+            error_type:
+              typeof exception === 'object'
+                ? exception?.constructor?.name
+                : typeof exception,
           }
         : undefined,
       traceId,
@@ -188,7 +218,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       traceId: request.headers['x-request-id'],
     };
 
-    if (exception.severity === ErrorSeverity.CRITICAL || exception.severity === ErrorSeverity.HIGH) {
+    if (
+      exception.severity === ErrorSeverity.CRITICAL ||
+      exception.severity === ErrorSeverity.HIGH
+    ) {
       this.logger.error(
         `[${exception.errorCode}] ${exception.message}`,
         exception.stack,
@@ -223,10 +256,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         logContext,
       );
     } else if (status >= 400) {
-      this.logger.warn(
-        `HTTP ${status}: ${exception.message}`,
-        logContext,
-      );
+      this.logger.warn(`HTTP ${status}: ${exception.message}`, logContext);
     }
   }
 
@@ -244,24 +274,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private logUnknownError(exception: unknown, request: Request): void {
-    this.logger.error(
-      'Unknown error type encountered',
-      {
-        path: request.url,
-        method: request.method,
-        errorType: typeof exception,
-        traceId: request.headers['x-request-id'],
-      },
-    );
+    this.logger.error('Unknown error type encountered', {
+      path: request.url,
+      method: request.method,
+      errorType: typeof exception,
+      traceId: request.headers['x-request-id'],
+    });
   }
 
   private reportToSentry(exception: unknown, errorResponse: any): void {
     // Report to Sentry for 5xx errors and critical/high severity exceptions
-    const shouldReport = 
+    const shouldReport =
       errorResponse.code >= 500 ||
-      (exception instanceof BaseException && 
-       (exception.severity === ErrorSeverity.CRITICAL || 
-        exception.severity === ErrorSeverity.HIGH));
+      (exception instanceof BaseException &&
+        (exception.severity === ErrorSeverity.CRITICAL ||
+          exception.severity === ErrorSeverity.HIGH));
 
     if (shouldReport) {
       Sentry.captureException(exception, {
@@ -274,6 +301,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private shouldIncludeStackTrace(): boolean {
-    return process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+    return (
+      process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+    );
   }
 }

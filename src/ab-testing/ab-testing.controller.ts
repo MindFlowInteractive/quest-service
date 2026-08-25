@@ -33,10 +33,7 @@ export class AbTestingController {
   }
 
   @Post('experiments/:id/track')
-  trackConversion(
-    @Param('id') id: string,
-    @Body() dto: TrackConversionDto,
-  ) {
+  trackConversion(@Param('id') id: string, @Body() dto: TrackConversionDto) {
     return this.experimentsService.trackConversion(id, dto);
   }
 
@@ -65,10 +62,7 @@ export class AbTestingController {
 
   @Patch('flags/:key')
   @UseGuards(AdminGuard)
-  updateFlag(
-    @Param('key') key: string,
-    @Body() dto: UpdateFlagDto,
-  ) {
+  updateFlag(@Param('key') key: string, @Body() dto: UpdateFlagDto) {
     return this.experimentsService.updateFlag(key, dto);
   }
 

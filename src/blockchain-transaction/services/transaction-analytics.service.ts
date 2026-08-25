@@ -25,8 +25,11 @@ export class TransactionAnalyticsService {
   /**
    * Get comprehensive transaction analytics
    */
-  async getAnalytics(query: TransactionAnalyticsQueryDto): Promise<TransactionAnalytics> {
-    const { period, startDate, endDate, type, category, userId, groupBy } = query;
+  async getAnalytics(
+    query: TransactionAnalyticsQueryDto,
+  ): Promise<TransactionAnalytics> {
+    const { period, startDate, endDate, type, category, userId, groupBy } =
+      query;
 
     // Calculate date range
     const { start, end } = this.calculateDateRange(period, startDate, endDate);
@@ -45,27 +48,34 @@ export class TransactionAnalyticsService {
     // Calculate metrics
     const totalTransactions = transactions.length;
     const successfulTransactions = transactions.filter(
-      tx => tx.status === TransactionStatus.CONFIRMED
+      (tx) => tx.status === TransactionStatus.CONFIRMED,
     ).length;
     const failedTransactions = transactions.filter(
-      tx => tx.status === TransactionStatus.FAILED
+      (tx) => tx.status === TransactionStatus.FAILED,
     ).length;
     const pendingTransactions = transactions.filter(
-      tx => tx.status === TransactionStatus.PENDING || tx.status === TransactionStatus.PROCESSING
+      (tx) =>
+        tx.status === TransactionStatus.PENDING ||
+        tx.status === TransactionStatus.PROCESSING,
     ).length;
 
     // Calculate total volume (XLM only for simplicity)
     const totalVolume = transactions
-      .filter(tx => tx.status === TransactionStatus.CONFIRMED && tx.assetCode === 'XLM')
+      .filter(
+        (tx) =>
+          tx.status === TransactionStatus.CONFIRMED && tx.assetCode === 'XLM',
+      )
       .reduce((sum, tx) => sum + (parseFloat(tx.amount || '0') || 0), 0)
       .toFixed(7);
 
     // Calculate average fee
-    const averageFee = transactions.length > 0
-      ? Math.round(
-          transactions.reduce((sum, tx) => sum + (tx.feeCharged || 0), 0) / transactions.length
-        )
-      : 0;
+    const averageFee =
+      transactions.length > 0
+        ? Math.round(
+            transactions.reduce((sum, tx) => sum + (tx.feeCharged || 0), 0) /
+              transactions.length,
+          )
+        : 0;
 
     // Group by type
     const transactionsByType = this.groupByField(transactions, 'type');
@@ -105,7 +115,10 @@ export class TransactionAnalyticsService {
   /**
    * Get user-specific analytics
    */
-  async getUserAnalytics(userId: string, period?: AnalyticsPeriod): Promise<{
+  async getUserAnalytics(
+    userId: string,
+    period?: AnalyticsPeriod,
+  ): Promise<{
     totalTransactions: number;
     totalVolume: string;
     transactionsByType: Record<string, number>;
@@ -123,25 +136,31 @@ export class TransactionAnalyticsService {
 
     const totalTransactions = transactions.length;
     const successfulTransactions = transactions.filter(
-      tx => tx.status === TransactionStatus.CONFIRMED
+      (tx) => tx.status === TransactionStatus.CONFIRMED,
     ).length;
 
     const totalVolume = transactions
-      .filter(tx => tx.status === TransactionStatus.CONFIRMED && tx.assetCode === 'XLM')
+      .filter(
+        (tx) =>
+          tx.status === TransactionStatus.CONFIRMED && tx.assetCode === 'XLM',
+      )
       .reduce((sum, tx) => sum + (parseFloat(tx.amount || '0') || 0), 0)
       .toFixed(7);
 
     const transactionsByType = this.groupByField(transactions, 'type');
 
-    const successRate = totalTransactions > 0
-      ? Math.round((successfulTransactions / totalTransactions) * 10000) / 100
-      : 0;
+    const successRate =
+      totalTransactions > 0
+        ? Math.round((successfulTransactions / totalTransactions) * 10000) / 100
+        : 0;
 
-    const averageFee = transactions.length > 0
-      ? Math.round(
-          transactions.reduce((sum, tx) => sum + (tx.feeCharged || 0), 0) / transactions.length
-        )
-      : 0;
+    const averageFee =
+      transactions.length > 0
+        ? Math.round(
+            transactions.reduce((sum, tx) => sum + (tx.feeCharged || 0), 0) /
+              transactions.length,
+          )
+        : 0;
 
     return {
       totalTransactions,
@@ -173,35 +192,47 @@ export class TransactionAnalyticsService {
 
     const transactionsLast24h = transactions24h.length;
     const transactionsLastHour = transactions24h.filter(
-      tx => tx.createdAt >= lastHour
+      (tx) => tx.createdAt >= lastHour,
     ).length;
 
-    const pendingTransactions = (await this.transactionRepository.find({
-      where: [
-        { status: TransactionStatus.PENDING },
-        { status: TransactionStatus.PROCESSING },
-      ],
-    })).length;
+    const pendingTransactions = (
+      await this.transactionRepository.find({
+        where: [
+          { status: TransactionStatus.PENDING },
+          { status: TransactionStatus.PROCESSING },
+        ],
+      })
+    ).length;
 
     const failedTransactionsLast24h = transactions24h.filter(
-      tx => tx.status === TransactionStatus.FAILED
+      (tx) => tx.status === TransactionStatus.FAILED,
     ).length;
 
     const confirmedTxs = transactions24h.filter(
-      tx => tx.status === TransactionStatus.CONFIRMED && tx.confirmedAt && tx.createdAt
+      (tx) =>
+        tx.status === TransactionStatus.CONFIRMED &&
+        tx.confirmedAt &&
+        tx.createdAt,
     );
 
-    const averageConfirmationTime = confirmedTxs.length > 0
-      ? Math.round(
-          confirmedTxs.reduce((sum, tx) => {
-            const confirmationTime = tx.confirmedAt!.getTime() - tx.createdAt.getTime();
-            return sum + confirmationTime;
-          }, 0) / confirmedTxs.length / 1000 // Convert to seconds
-        )
-      : 0;
+    const averageConfirmationTime =
+      confirmedTxs.length > 0
+        ? Math.round(
+            confirmedTxs.reduce((sum, tx) => {
+              const confirmationTime =
+                tx.confirmedAt.getTime() - tx.createdAt.getTime();
+              return sum + confirmationTime;
+            }, 0) /
+              confirmedTxs.length /
+              1000, // Convert to seconds
+          )
+        : 0;
 
     const totalVolume24h = transactions24h
-      .filter(tx => tx.status === TransactionStatus.CONFIRMED && tx.assetCode === 'XLM')
+      .filter(
+        (tx) =>
+          tx.status === TransactionStatus.CONFIRMED && tx.assetCode === 'XLM',
+      )
       .reduce((sum, tx) => sum + (parseFloat(tx.amount || '0') || 0), 0)
       .toFixed(7);
 
@@ -218,13 +249,15 @@ export class TransactionAnalyticsService {
   /**
    * Get transaction type distribution
    */
-  async getTypeDistribution(days: number = 30): Promise<{
-    type: TransactionType;
-    count: number;
-    percentage: number;
-  }[]> {
+  async getTypeDistribution(days: number = 30): Promise<
+    {
+      type: TransactionType;
+      count: number;
+      percentage: number;
+    }[]
+  > {
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    
+
     const transactions = await this.transactionRepository.find({
       where: { createdAt: Between(startDate, new Date()) },
     });
@@ -247,7 +280,7 @@ export class TransactionAnalyticsService {
   private calculateDateRange(
     period?: AnalyticsPeriod,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
   ): { start: Date; end: Date } {
     if (startDate && endDate) {
       return {
@@ -286,7 +319,7 @@ export class TransactionAnalyticsService {
    */
   private groupByField(
     transactions: BlockchainTransaction[],
-    field: keyof BlockchainTransaction
+    field: keyof BlockchainTransaction,
   ): Record<string, number> {
     return transactions.reduce((acc, tx) => {
       const key = String(tx[field] || 'unknown');
@@ -299,19 +332,19 @@ export class TransactionAnalyticsService {
    * Build hourly breakdown
    */
   private buildHourlyBreakdown(
-    transactions: BlockchainTransaction[]
+    transactions: BlockchainTransaction[],
   ): { hour: string; count: number; volume: string }[] {
     const hourly: Record<string, { count: number; volume: number }> = {};
 
     for (const tx of transactions) {
       const hour = tx.createdAt.toISOString().slice(0, 13) + ':00:00.000Z';
-      
+
       if (!hourly[hour]) {
         hourly[hour] = { count: 0, volume: 0 };
       }
 
       hourly[hour].count++;
-      
+
       if (tx.status === TransactionStatus.CONFIRMED && tx.assetCode === 'XLM') {
         hourly[hour].volume += parseFloat(tx.amount || '0') || 0;
       }
@@ -330,19 +363,19 @@ export class TransactionAnalyticsService {
    * Build daily breakdown
    */
   private buildDailyBreakdown(
-    transactions: BlockchainTransaction[]
+    transactions: BlockchainTransaction[],
   ): { date: string; count: number; volume: string }[] {
     const daily: Record<string, { count: number; volume: number }> = {};
 
     for (const tx of transactions) {
       const date = tx.createdAt.toISOString().slice(0, 10);
-      
+
       if (!daily[date]) {
         daily[date] = { count: 0, volume: 0 };
       }
 
       daily[date].count++;
-      
+
       if (tx.status === TransactionStatus.CONFIRMED && tx.assetCode === 'XLM') {
         daily[date].volume += parseFloat(tx.amount || '0') || 0;
       }

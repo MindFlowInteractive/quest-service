@@ -36,10 +36,9 @@ export function decodeStellarPublicKey(publicKey: string): Buffer {
   const payload = decoded.subarray(0, decoded.length - 2);
   const checksum = decoded.subarray(decoded.length - 2);
   const expectedChecksum = crc16Xmodem(payload);
-  const expectedBytes = Buffer.from(new Uint8Array([
-    expectedChecksum & 0xff,
-    (expectedChecksum >> 8) & 0xff,
-  ]));
+  const expectedBytes = Buffer.from(
+    new Uint8Array([expectedChecksum & 0xff, (expectedChecksum >> 8) & 0xff]),
+  );
 
   if (checksum[0] !== expectedBytes[0] || checksum[1] !== expectedBytes[1]) {
     throw new Error('Invalid public key checksum');
@@ -59,7 +58,11 @@ export function verifyEd25519Signature(
 ): boolean {
   const rawKey = decodeStellarPublicKey(publicKey);
   const keyDer = (Buffer as any).concat([ED25519_SPKI_PREFIX, rawKey]);
-  const keyObject = createPublicKey({ key: keyDer, format: 'der', type: 'spki' });
+  const keyObject = createPublicKey({
+    key: keyDer,
+    format: 'der',
+    type: 'spki',
+  });
   const signatureBuffer = decodeSignature(signature);
 
   return verify(null, Buffer.from(message, 'utf8'), keyObject, signatureBuffer);
@@ -90,7 +93,10 @@ export function parseAmountToInt(amount: string, decimals = 7): bigint {
   return base + fractionValue;
 }
 
-export function normalizeAsset(assetCode: string, issuer?: string): StellarAsset {
+export function normalizeAsset(
+  assetCode: string,
+  issuer?: string,
+): StellarAsset {
   const code = assetCode.trim();
   if (!code) {
     throw new Error('Asset code is required');

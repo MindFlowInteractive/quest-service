@@ -14,9 +14,7 @@ import { GatewayService } from './gateway.service';
 
 @Controller()
 export class GatewayController {
-  constructor(
-    private readonly gatewayService: GatewayService,
-  ) {}
+  constructor(private readonly gatewayService: GatewayService) {}
 
   @All(':service/*path')
   @HttpCode(200)

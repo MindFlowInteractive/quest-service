@@ -6,9 +6,9 @@ export class SeasonService {
   createSeason(dto: Partial<Season>) {
     const season: Season = {
       id: crypto.randomUUID(),
-      name: dto.name!,
-      startDate: dto.startDate!,
-      endDate: dto.endDate!,
+      name: dto.name,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
       isActive: true,
       bonusXpMultiplier: dto.bonusXpMultiplier ?? 1,
     };

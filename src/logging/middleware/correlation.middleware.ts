@@ -1,6 +1,6 @@
-import { Injectable, NestMiddleware } from "@nestjs/common"
-import { Request, Response, NextFunction } from "express"
-import { CorrelationService } from "../services/correlation.service"
+import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
+import { CorrelationService } from '../services/correlation.service';
 
 @Injectable()
 export class CorrelationMiddleware implements NestMiddleware {
@@ -8,10 +8,10 @@ export class CorrelationMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction): void {
     const correlationId =
-      (req.headers["x-correlation-id"] as string) ||
-      this.correlationService.generateId()
+      (req.headers['x-correlation-id'] as string) ||
+      this.correlationService.generateId();
 
-    res.setHeader("x-correlation-id", correlationId)
+    res.setHeader('x-correlation-id', correlationId);
 
     this.correlationService.run(
       {
@@ -20,6 +20,6 @@ export class CorrelationMiddleware implements NestMiddleware {
         userId: (req as any).user?.id,
       },
       () => next(),
-    )
+    );
   }
 }

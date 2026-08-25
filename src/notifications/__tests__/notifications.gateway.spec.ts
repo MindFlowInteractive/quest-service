@@ -12,10 +12,7 @@ describe('NotificationsGateway', () => {
   let gateway: NotificationsGateway;
 
   beforeEach(() => {
-    gateway = new NotificationsGateway(
-      auth as any,
-      delivery as any,
-    );
+    gateway = new NotificationsGateway(auth, delivery as any);
 
     (gateway as any).server = {
       to: jest.fn().mockReturnThis(),

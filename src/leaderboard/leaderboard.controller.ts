@@ -28,7 +28,10 @@ export class LeaderboardController {
     @Query('category') category: string,
     @Query('period') period: string,
   ) {
-    return this.leaderboardService.getLeaderboardsByCategoryAndPeriod(category, period);
+    return this.leaderboardService.getLeaderboardsByCategoryAndPeriod(
+      category,
+      period,
+    );
   }
 
   @Get(':id')
@@ -39,7 +42,13 @@ export class LeaderboardController {
     @Query('period') period?: string,
     @Query('userId') userId?: number,
   ) {
-    return this.leaderboardService.getLeaderboardWithEntries(Number(id), ranking, order, period, userId ? Number(userId) : undefined);
+    return this.leaderboardService.getLeaderboardWithEntries(
+      Number(id),
+      ranking,
+      order,
+      period,
+      userId ? Number(userId) : undefined,
+    );
   }
 
   @Get(':id/analytics')
@@ -49,7 +58,10 @@ export class LeaderboardController {
 
   @Get(':id/user/:userId/share')
   getUserRankSummary(@Param('id') id: number, @Param('userId') userId: number) {
-    return this.leaderboardService.getUserRankSummary(Number(id), Number(userId));
+    return this.leaderboardService.getUserRankSummary(
+      Number(id),
+      Number(userId),
+    );
   }
 
   @Post(':id/challenge')
@@ -58,6 +70,10 @@ export class LeaderboardController {
     @Body('fromUserId') fromUserId: number,
     @Body('toUserId') toUserId: number,
   ) {
-    return this.leaderboardService.challengeUser(Number(id), fromUserId, toUserId);
+    return this.leaderboardService.challengeUser(
+      Number(id),
+      fromUserId,
+      toUserId,
+    );
   }
-} 
+}

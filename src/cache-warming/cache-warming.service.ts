@@ -746,7 +746,7 @@ export class CacheWarmingService
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(entry.fetchUrl as string, {
+      const response = await fetch(entry.fetchUrl, {
         signal: controller.signal,
       });
 

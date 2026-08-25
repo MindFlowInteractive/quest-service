@@ -39,7 +39,10 @@ export class UserProgressService {
     return this.progressRepo.save(progress);
   }
 
-  async recordPuzzleCompletion(userId: string, puzzleId: string): Promise<UserProgress> {
+  async recordPuzzleCompletion(
+    userId: string,
+    puzzleId: string,
+  ): Promise<UserProgress> {
     let progress = await this.progressRepo.findOne({
       where: { userId },
       relations: ['achievements'],
@@ -55,7 +58,9 @@ export class UserProgressService {
     progress.lastPuzzleCompletedAt = new Date();
 
     // Check achievements
-    const currentAchievements = await this.achievementRepo.find({ where: { userId } });
+    const currentAchievements = await this.achievementRepo.find({
+      where: { userId },
+    });
     const newAchievements = checkNewAchievements(progress, currentAchievements);
     if (newAchievements.length > 0) {
       await this.achievementRepo.save(newAchievements);

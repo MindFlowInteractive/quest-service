@@ -1,5 +1,8 @@
 import { IsEnum, IsOptional, IsArray, IsString } from 'class-validator';
-import { ExportFormat, ExportScope } from '../entities/data-export-request.entity';
+import {
+  ExportFormat,
+  ExportScope,
+} from '../entities/data-export-request.entity';
 
 export class DataExportRequestDto {
   @IsEnum(ExportFormat)

@@ -4,7 +4,12 @@ import request from 'supertest';
 import { AppModule } from '../../app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ContentReport, ReportStatus, ReportPriority, ReportTargetType } from '../entities/content-report.entity';
+import {
+  ContentReport,
+  ReportStatus,
+  ReportPriority,
+  ReportTargetType,
+} from '../entities/content-report.entity';
 import { User } from '../../auth/entities/user.entity';
 import { Role } from '../../auth/entities/role.entity';
 import { JwtService } from '@nestjs/jwt';
@@ -30,15 +35,30 @@ describe('Reports API (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    reportsRepository = moduleFixture.get<Repository<ContentReport>>(getRepositoryToken(ContentReport));
-    usersRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
+    reportsRepository = moduleFixture.get<Repository<ContentReport>>(
+      getRepositoryToken(ContentReport),
+    );
+    usersRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
     jwtService = moduleFixture.get<JwtService>(JwtService);
 
     // Create test roles
-    const roleRepository = moduleFixture.get<Repository<Role>>(getRepositoryToken(Role));
-    const userRole = await roleRepository.save({ name: 'user', description: 'Regular user' });
-    const moderatorRole = await roleRepository.save({ name: 'moderator', description: 'Moderator' });
-    const adminRole = await roleRepository.save({ name: 'admin', description: 'Administrator' });
+    const roleRepository = moduleFixture.get<Repository<Role>>(
+      getRepositoryToken(Role),
+    );
+    const userRole = await roleRepository.save({
+      name: 'user',
+      description: 'Regular user',
+    });
+    const moderatorRole = await roleRepository.save({
+      name: 'moderator',
+      description: 'Moderator',
+    });
+    const adminRole = await roleRepository.save({
+      name: 'admin',
+      description: 'Administrator',
+    });
 
     // Create test users
     testUser = await usersRepository.save({
@@ -64,7 +84,10 @@ describe('Reports API (e2e)', () => {
 
     // Generate tokens
     userToken = jwtService.sign({ sub: testUser.id, email: testUser.email });
-    moderatorToken = jwtService.sign({ sub: testModerator.id, email: testModerator.email });
+    moderatorToken = jwtService.sign({
+      sub: testModerator.id,
+      email: testModerator.email,
+    });
     adminToken = jwtService.sign({ sub: testAdmin.id, email: testAdmin.email });
   });
 
@@ -133,10 +156,15 @@ describe('Reports API (e2e)', () => {
         email: 'second@example.com',
         password: 'password',
         isVerified: true,
-        role: await usersRepository.findOne({ where: { id: testUser.id } }).then(u => u.role),
+        role: await usersRepository
+          .findOne({ where: { id: testUser.id } })
+          .then((u) => u.role),
       });
 
-      const secondToken = jwtService.sign({ sub: secondUser.id, email: secondUser.email });
+      const secondToken = jwtService.sign({
+        sub: secondUser.id,
+        email: secondUser.email,
+      });
 
       const response = await request(app.getHttpServer())
         .post('/reports')
@@ -323,11 +351,13 @@ describe('Reports API (e2e)', () => {
           email: `user${i}@example.com`,
           password: 'password',
           isVerified: true,
-          role: await usersRepository.findOne({ where: { id: testUser.id } }).then(u => u.role),
+          role: await usersRepository
+            .findOne({ where: { id: testUser.id } })
+            .then((u) => u.role),
         });
 
         const token = jwtService.sign({ sub: user.id, email: user.email });
-        
+
         promises.push(
           request(app.getHttpServer())
             .post('/reports')
@@ -336,7 +366,7 @@ describe('Reports API (e2e)', () => {
               targetType: ReportTargetType.PUZZLE,
               targetId: 'puzzle-escalation',
               reason: `Report ${i}`,
-            })
+            }),
         );
       }
 
@@ -351,7 +381,9 @@ describe('Reports API (e2e)', () => {
       });
 
       expect(escalatedReports.length).toBe(5);
-      expect(escalatedReports.every(r => r.priority === ReportPriority.CRITICAL)).toBe(true);
+      expect(
+        escalatedReports.every((r) => r.priority === ReportPriority.CRITICAL),
+      ).toBe(true);
     });
   });
 });

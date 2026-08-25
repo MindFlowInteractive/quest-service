@@ -347,7 +347,10 @@ export class SeasonalEventsController {
     @Query('limit') limit?: string,
   ) {
     const limitNum = limit ? parseInt(limit, 10) : 10;
-    return await this.leaderboardService.getStreakLeaderboard(eventId, limitNum);
+    return await this.leaderboardService.getStreakLeaderboard(
+      eventId,
+      limitNum,
+    );
   }
 
   /**
@@ -378,7 +381,8 @@ export class SeasonalEventsController {
   @Get(':eventId/rewards/type/:type')
   async getRewardsByType(
     @Param('eventId') eventId: string,
-    @Param('type') type: 'points' | 'badge' | 'item' | 'currency' | 'title' | 'avatar' | 'nft',
+    @Param('type')
+    type: 'points' | 'badge' | 'item' | 'currency' | 'title' | 'avatar' | 'nft',
   ) {
     return await this.rewardService.findRewardsByType(eventId, type);
   }

@@ -3,7 +3,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { SupportTicketService } from '../support-ticket.service';
-import { SupportTicket, TicketCategory, TicketStatus } from '../entities/support-ticket.entity';
+import {
+  SupportTicket,
+  TicketCategory,
+  TicketStatus,
+} from '../entities/support-ticket.entity';
 import { TicketMessage } from '../entities/ticket-message.entity';
 import { NotificationService } from '../../notifications/notification.service';
 
@@ -117,9 +121,13 @@ describe('SupportTicketService', () => {
       const ticket = makeTicket();
       ticketRepo.findOne.mockResolvedValue(ticket);
 
-      await service.addMessage('ticket-1', 'staff-99', true, { body: 'We are looking into it.' });
+      await service.addMessage('ticket-1', 'staff-99', true, {
+        body: 'We are looking into it.',
+      });
 
-      expect(mockNotificationService.createNotificationForUsers).toHaveBeenCalledWith(
+      expect(
+        mockNotificationService.createNotificationForUsers,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           userIds: ['player-1'],
           type: 'support_ticket_staff_replied',
@@ -128,7 +136,9 @@ describe('SupportTicketService', () => {
     });
 
     it('should throw ForbiddenException when player tries to message another player ticket', async () => {
-      ticketRepo.findOne.mockResolvedValue(makeTicket({ playerId: 'player-99' }));
+      ticketRepo.findOne.mockResolvedValue(
+        makeTicket({ playerId: 'player-99' }),
+      );
 
       await expect(
         service.addMessage('ticket-1', 'player-1', false, { body: 'Hello' }),
@@ -147,7 +157,9 @@ describe('SupportTicketService', () => {
       const ticket = makeTicket({ status: TicketStatus.RESOLVED });
       ticketRepo.findOne.mockResolvedValue(ticket);
 
-      await service.addMessage('ticket-1', 'player-1', false, { body: 'Still broken.' });
+      await service.addMessage('ticket-1', 'player-1', false, {
+        body: 'Still broken.',
+      });
 
       expect(ticketRepo.update).toHaveBeenCalledWith('ticket-1', {
         status: TicketStatus.OPEN,
@@ -161,7 +173,11 @@ describe('SupportTicketService', () => {
     it('should update ticket status and assignedTo', async () => {
       const ticket = makeTicket();
       ticketRepo.findOne.mockResolvedValue(ticket);
-      ticketRepo.save.mockResolvedValue({ ...ticket, status: TicketStatus.IN_PROGRESS, assignedTo: 'agent-1' });
+      ticketRepo.save.mockResolvedValue({
+        ...ticket,
+        status: TicketStatus.IN_PROGRESS,
+        assignedTo: 'agent-1',
+      });
 
       const result = await service.updateTicket('ticket-1', 'agent-1', {
         status: TicketStatus.IN_PROGRESS,
@@ -175,11 +191,18 @@ describe('SupportTicketService', () => {
     it('should send in-app notification to player on status change', async () => {
       const ticket = makeTicket({ status: TicketStatus.OPEN });
       ticketRepo.findOne.mockResolvedValue(ticket);
-      ticketRepo.save.mockResolvedValue({ ...ticket, status: TicketStatus.RESOLVED });
+      ticketRepo.save.mockResolvedValue({
+        ...ticket,
+        status: TicketStatus.RESOLVED,
+      });
 
-      await service.updateTicket('ticket-1', 'agent-1', { status: TicketStatus.RESOLVED });
+      await service.updateTicket('ticket-1', 'agent-1', {
+        status: TicketStatus.RESOLVED,
+      });
 
-      expect(mockNotificationService.createNotificationForUsers).toHaveBeenCalledWith(
+      expect(
+        mockNotificationService.createNotificationForUsers,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           userIds: ['player-1'],
           type: 'support_ticket_status_changed',
@@ -191,7 +214,9 @@ describe('SupportTicketService', () => {
       ticketRepo.findOne.mockResolvedValue(null);
 
       await expect(
-        service.updateTicket('bad-id', 'agent-1', { status: TicketStatus.CLOSED }),
+        service.updateTicket('bad-id', 'agent-1', {
+          status: TicketStatus.CLOSED,
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });

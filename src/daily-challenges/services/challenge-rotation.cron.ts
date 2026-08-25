@@ -35,7 +35,7 @@ export class ChallengeRotationCron {
   private getStartOfUTCWeek(date: Date = new Date()): Date {
     const d = new Date(date);
     const dayOfWeek = d.getUTCDay();
-    const daysToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     d.setUTCDate(d.getUTCDate() + daysToMonday);
     d.setUTCHours(0, 0, 0, 0);
     return d;
@@ -67,8 +67,7 @@ export class ChallengeRotationCron {
       targetDifficulty = 'easy'; // Mon, Tue
     else if (dayOfWeek === 3 || dayOfWeek === 4)
       targetDifficulty = 'medium'; // Wed, Thu
-    else if (dayOfWeek === 5)
-      targetDifficulty = 'hard'; // Fri
+    else if (dayOfWeek === 5) targetDifficulty = 'hard'; // Fri
     else targetDifficulty = 'expert'; // Sat, Sun
 
     // Fetch random puzzle using weighted selection
@@ -225,17 +224,16 @@ export class ChallengeRotationCron {
 
     await this.dailyChallengeRepo.save(dailyChallenge);
     this.logger.log(
-      `Created new daily challenge for ${date.toISOString()}: Puzzle ID ${puzzle.id}`,
+      `Created new daily challenge for ${date.toISOString()}: Puzzle ID ${
+        puzzle.id
+      }`,
     );
   }
 
   /**
    * Create a weekly challenge
    */
-  private async createWeeklyChallenge(
-    puzzles: Puzzle[],
-    weekStart: Date,
-  ) {
+  private async createWeeklyChallenge(puzzles: Puzzle[], weekStart: Date) {
     const totalBonusXP = puzzles.reduce(
       (sum, p) => sum + Math.floor((p.difficultyRating || 5) * 10),
       0,
@@ -252,7 +250,9 @@ export class ChallengeRotationCron {
 
     await this.weeklyChallengeRepo.save(weeklyChallenge);
     this.logger.log(
-      `Created new weekly challenge for week starting ${weekStart.toISOString()}: ${puzzles.length} puzzles`,
+      `Created new weekly challenge for week starting ${weekStart.toISOString()}: ${
+        puzzles.length
+      } puzzles`,
     );
   }
 }

@@ -6,7 +6,10 @@ import { SpectatorService } from '../../src/game-session/services/spectator.serv
 import { ValidationService } from '../../src/game-engine/services/validation.service';
 import { LeaderboardService } from '../../src/leaderboard/leaderboard.service';
 import { PuzzlesService } from '../../src/puzzles/puzzles.service';
-import { RoomType, RoomStatus } from '../../src/multiplayer/interfaces/multiplayer.interface';
+import {
+  RoomType,
+  RoomStatus,
+} from '../../src/multiplayer/interfaces/multiplayer.interface';
 
 describe('MultiplayerGateway Spectator Features', () => {
   let gateway: MultiplayerGateway;
@@ -65,7 +68,7 @@ describe('MultiplayerGateway Spectator Features', () => {
     gateway = module.get<MultiplayerGateway>(MultiplayerGateway);
     multiplayerService = module.get<MultiplayerService>(MultiplayerService);
     spectatorService = module.get<SpectatorService>(SpectatorService);
-    
+
     server = new Server();
     gateway['server'] = server;
 
@@ -109,7 +112,10 @@ describe('MultiplayerGateway Spectator Features', () => {
         expect(mockClient.data.isSpectator).toBe(true);
         expect(mockClient.data.roomId).toBe('room-1');
         expect(result.event).toBe('spectatingStarted');
-        expect(mockClient.emit).toHaveBeenCalledWith('spectatorJoined', { room, spectator });
+        expect(mockClient.emit).toHaveBeenCalledWith('spectatorJoined', {
+          room,
+          spectator,
+        });
       });
 
       it('should return error if spectating not allowed', async () => {
@@ -199,7 +205,10 @@ describe('MultiplayerGateway Spectator Features', () => {
           state: { some: 'data' },
         });
 
-        expect(mockClient.emit).toHaveBeenCalledWith('error', 'Spectators cannot update puzzle state');
+        expect(mockClient.emit).toHaveBeenCalledWith(
+          'error',
+          'Spectators cannot update puzzle state',
+        );
         expect(multiplayerService.updatePuzzleState).not.toHaveBeenCalled();
       });
 
@@ -214,7 +223,10 @@ describe('MultiplayerGateway Spectator Features', () => {
           state: { some: 'data' },
         });
 
-        expect(multiplayerService.updatePuzzleState).toHaveBeenCalledWith('room-1', { some: 'data' });
+        expect(multiplayerService.updatePuzzleState).toHaveBeenCalledWith(
+          'room-1',
+          { some: 'data' },
+        );
         expect(mockClient.to).toHaveBeenCalledWith('room-1');
       });
     });
@@ -230,7 +242,10 @@ describe('MultiplayerGateway Spectator Features', () => {
           solution: { answer: 'test' },
         });
 
-        expect(mockClient.emit).toHaveBeenCalledWith('error', 'Spectators cannot submit solutions');
+        expect(mockClient.emit).toHaveBeenCalledWith(
+          'error',
+          'Spectators cannot submit solutions',
+        );
         expect(multiplayerService.getRoom).not.toHaveBeenCalled();
       });
 
@@ -244,11 +259,15 @@ describe('MultiplayerGateway Spectator Features', () => {
         const puzzle = { id: 'puzzle-1', content: { type: 'test' } };
 
         multiplayerService.getRoom.mockReturnValue(room);
-        jest.spyOn(gateway['puzzlesService'], 'findOne').mockResolvedValue(puzzle);
-        jest.spyOn(gateway['validationService'], 'validateSolution').mockResolvedValue({
-          isValid: true,
-          score: 100,
-        });
+        jest
+          .spyOn(gateway['puzzlesService'], 'findOne')
+          .mockResolvedValue(puzzle);
+        jest
+          .spyOn(gateway['validationService'], 'validateSolution')
+          .mockResolvedValue({
+            isValid: true,
+            score: 100,
+          });
 
         await gateway.handleSubmitSolution(mockClient, {
           roomId: 'room-1',
@@ -271,7 +290,10 @@ describe('MultiplayerGateway Spectator Features', () => {
           ready: true,
         });
 
-        expect(mockClient.emit).toHaveBeenCalledWith('error', 'Spectators cannot change ready status');
+        expect(mockClient.emit).toHaveBeenCalledWith(
+          'error',
+          'Spectators cannot change ready status',
+        );
         expect(multiplayerService.setPlayerReady).not.toHaveBeenCalled();
       });
 
@@ -287,7 +309,11 @@ describe('MultiplayerGateway Spectator Features', () => {
           ready: true,
         });
 
-        expect(multiplayerService.setPlayerReady).toHaveBeenCalledWith('room-1', 'user-1', true);
+        expect(multiplayerService.setPlayerReady).toHaveBeenCalledWith(
+          'room-1',
+          'user-1',
+          true,
+        );
       });
     });
 
@@ -302,7 +328,10 @@ describe('MultiplayerGateway Spectator Features', () => {
           skillLevel: 5,
         });
 
-        expect(mockClient.emit).toHaveBeenCalledWith('error', 'Spectators cannot join as players');
+        expect(mockClient.emit).toHaveBeenCalledWith(
+          'error',
+          'Spectators cannot join as players',
+        );
         expect(multiplayerService.joinRoom).not.toHaveBeenCalled();
       });
 
@@ -350,11 +379,15 @@ describe('MultiplayerGateway Spectator Features', () => {
       const puzzle = { id: 'puzzle-1', content: { type: 'test' } };
 
       multiplayerService.getRoom.mockReturnValue(room);
-      jest.spyOn(gateway['puzzlesService'], 'findOne').mockResolvedValue(puzzle);
-      jest.spyOn(gateway['validationService'], 'validateSolution').mockResolvedValue({
-        isValid: true,
-        score: 100,
-      });
+      jest
+        .spyOn(gateway['puzzlesService'], 'findOne')
+        .mockResolvedValue(puzzle);
+      jest
+        .spyOn(gateway['validationService'], 'validateSolution')
+        .mockResolvedValue({
+          isValid: true,
+          score: 100,
+        });
       multiplayerService.getSpectatorCount.mockReturnValue(1);
 
       await gateway.handleSubmitSolution(mockClient, {

@@ -173,7 +173,10 @@ describe('SaveVersioningService', () => {
 
       expect(merged.playerState.health).toBe(75);
       expect((merged.playerState as any).customStat).toBe('max');
-      expect(merged.progressState.completedLevels).toEqual(['level1', 'level2']);
+      expect(merged.progressState.completedLevels).toEqual([
+        'level1',
+        'level2',
+      ]);
     });
   });
 

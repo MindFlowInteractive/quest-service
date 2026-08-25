@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CollaborativeFilteringAlgorithm, CollaborativeRecommendation } from '../algorithms/collaborative-filtering.algorithm';
+import {
+  CollaborativeFilteringAlgorithm,
+  CollaborativeRecommendation,
+} from '../algorithms/collaborative-filtering.algorithm';
 
 interface PuzzleScore {
   puzzleId: string;
@@ -19,14 +22,15 @@ export class CollaborativeFilteringService {
     category?: string,
     difficulty?: string,
   ): Promise<PuzzleScore[]> {
-    const recommendations = await this.collaborativeAlgorithm.generateRecommendations(
-      userId,
-      limit,
-      category,
-      difficulty,
-    );
+    const recommendations =
+      await this.collaborativeAlgorithm.generateRecommendations(
+        userId,
+        limit,
+        category,
+        difficulty,
+      );
 
-    return recommendations.map(rec => ({
+    return recommendations.map((rec) => ({
       puzzleId: rec.puzzleId,
       score: rec.score,
       reason: rec.reason,

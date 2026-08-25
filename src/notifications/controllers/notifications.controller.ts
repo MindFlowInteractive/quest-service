@@ -25,49 +25,30 @@ export class NotificationsController {
   ) {}
 
   @Get()
-  history(
-    @Req() req: any,
-    @Query() query: NotificationQueryDto,
-  ) {
+  history(@Req() req: any, @Query() query: NotificationQueryDto) {
     const userId = this.getUserId(req);
 
-    return this.notificationsService.history(
-      userId,
-      query.page,
-      query.limit,
-    );
+    return this.notificationsService.history(userId, query.page, query.limit);
   }
 
   @Get('unread-count')
   unreadCount(@Req() req: any) {
-    return this.notificationsService.unreadCount(
-      this.getUserId(req),
-    );
+    return this.notificationsService.unreadCount(this.getUserId(req));
   }
 
   @Patch(':id/read')
-  markRead(
-    @Req() req: any,
-    @Param('id') id: string,
-  ) {
-    return this.notificationsService.markRead(
-      this.getUserId(req),
-      id,
-    );
+  markRead(@Req() req: any, @Param('id') id: string) {
+    return this.notificationsService.markRead(this.getUserId(req), id);
   }
 
   @Patch('read-all')
   markAllRead(@Req() req: any) {
-    return this.notificationsService.markAllRead(
-      this.getUserId(req),
-    );
+    return this.notificationsService.markAllRead(this.getUserId(req));
   }
 
   @Get('preferences')
   preferences(@Req() req: any) {
-    return this.preferencesService.getOrCreate(
-      this.getUserId(req),
-    );
+    return this.preferencesService.getOrCreate(this.getUserId(req));
   }
 
   @Patch('preferences')
@@ -75,10 +56,7 @@ export class NotificationsController {
     @Req() req: any,
     @Body() body: UpdateNotificationPreferencesDto,
   ) {
-    return this.preferencesService.update(
-      this.getUserId(req),
-      body,
-    );
+    return this.preferencesService.update(this.getUserId(req), body);
   }
 
   private getUserId(req: any): string {

@@ -8,12 +8,12 @@ import { RetryStrategy, retryStrategyRegistry } from './retry-strategy';
  * Error recovery strategy types
  */
 export enum RecoveryStrategy {
-  NONE = 'NONE',           // No recovery - fail immediately
-  RETRY = 'RETRY',         // Retry the operation
-  FALLBACK = 'FALLBACK',   // Use fallback implementation
+  NONE = 'NONE', // No recovery - fail immediately
+  RETRY = 'RETRY', // Retry the operation
+  FALLBACK = 'FALLBACK', // Use fallback implementation
   CIRCUIT_BREAKER = 'CIRCUIT_BREAKER', // Use circuit breaker
   QUEUE_AND_RETRY = 'QUEUE_AND_RETRY', // Queue for later retry
-  DEGRADE = 'DEGRADE',     // Degrade functionality gracefully
+  DEGRADE = 'DEGRADE', // Degrade functionality gracefully
 }
 
 /**
@@ -91,7 +91,10 @@ export class ErrorRecoveryManager {
       ...config,
     });
 
-    this.logger.debug(`Registered recovery config for ${operationName}`, config);
+    this.logger.debug(
+      `Registered recovery config for ${operationName}`,
+      config,
+    );
   }
 
   /**
@@ -105,7 +108,7 @@ export class ErrorRecoveryManager {
   ): Promise<RecoveryResult<T>> {
     const startTime = Date.now();
     const config = this.getRecoveryConfig(operationName);
-    
+
     if (!config.enabled) {
       return {
         strategy: RecoveryStrategy.NONE,
@@ -117,8 +120,12 @@ export class ErrorRecoveryManager {
     }
 
     // Determine which strategy to use based on error type
-    const strategy = this.determineRecoveryStrategy(error, config, operationName);
-    
+    const strategy = this.determineRecoveryStrategy(
+      error,
+      config,
+      operationName,
+    );
+
     if (this.shouldLogRecovery(config, strategy)) {
       this.logRecoveryAttempt(operationName, strategy, error);
     }
@@ -134,7 +141,7 @@ export class ErrorRecoveryManager {
       );
 
       const totalTime = Date.now() - startTime;
-      
+
       if (result.success && this.shouldLogRecovery(config, strategy)) {
         this.logRecoverySuccess(operationName, strategy, totalTime);
       }
@@ -146,9 +153,14 @@ export class ErrorRecoveryManager {
       };
     } catch (recoveryError) {
       const totalTime = Date.now() - startTime;
-      
+
       if (this.shouldLogRecovery(config, strategy)) {
-        this.logRecoveryFailure(operationName, strategy, recoveryError as Error, totalTime);
+        this.logRecoveryFailure(
+          operationName,
+          strategy,
+          recoveryError as Error,
+          totalTime,
+        );
       }
 
       // Try fallback strategy if configured
@@ -216,20 +228,31 @@ export class ErrorRecoveryManager {
   ): Promise<Omit<RecoveryResult<T>, 'strategy' | 'totalTime'>> {
     switch (strategy) {
       case RecoveryStrategy.RETRY:
-        return this.executeRetryStrategy(originalOperation, operationName, config);
-      
+        return this.executeRetryStrategy(
+          originalOperation,
+          operationName,
+          config,
+        );
+
       case RecoveryStrategy.FALLBACK:
         return this.executeFallbackStrategy(fallback, operationName);
-      
+
       case RecoveryStrategy.CIRCUIT_BREAKER:
-        return this.executeCircuitBreakerStrategy(originalOperation, operationName);
-      
+        return this.executeCircuitBreakerStrategy(
+          originalOperation,
+          operationName,
+        );
+
       case RecoveryStrategy.QUEUE_AND_RETRY:
-        return this.executeQueueAndRetryStrategy(originalOperation, originalError, operationName);
-      
+        return this.executeQueueAndRetryStrategy(
+          originalOperation,
+          originalError,
+          operationName,
+        );
+
       case RecoveryStrategy.DEGRADE:
         return this.executeDegradeStrategy(originalOperation, operationName);
-      
+
       case RecoveryStrategy.NONE:
       default:
         throw originalError;
@@ -250,7 +273,7 @@ export class ErrorRecoveryManager {
     });
 
     const result = await retryStrategy.execute(operation, operationName);
-    
+
     if (result.success) {
       return {
         success: true,
@@ -322,10 +345,10 @@ export class ErrorRecoveryManager {
     // In a real implementation, this would queue the operation
     // For now, we'll just retry immediately
     this.logger.log(`Queueing operation ${operationName} for later retry`);
-    
+
     // Simulate queueing by waiting a bit
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     try {
       const result = await operation();
       return {
@@ -346,7 +369,7 @@ export class ErrorRecoveryManager {
     operationName: string,
   ): Promise<Omit<RecoveryResult<T>, 'strategy' | 'totalTime'>> {
     this.logger.warn(`Degrading functionality for ${operationName}`);
-    
+
     // In a real implementation, this would return a degraded result
     // For now, we'll throw an error indicating degraded functionality
     throw new Error(`Operation ${operationName} is degraded`);
@@ -364,37 +387,49 @@ export class ErrorRecoveryManager {
     previousTime: number,
   ): Promise<RecoveryResult<T>> {
     const startTime = Date.now();
-    
+
     try {
       const result = await this.executeRecoveryStrategy(
         operation,
         error,
-        config.fallbackStrategy!,
+        config.fallbackStrategy,
         operationName,
         fallback,
         config,
       );
 
       const totalTime = previousTime + (Date.now() - startTime);
-      
-      if (result.success && this.shouldLogRecovery(config, config.fallbackStrategy!)) {
-        this.logRecoverySuccess(operationName, config.fallbackStrategy!, totalTime);
+
+      if (
+        result.success &&
+        this.shouldLogRecovery(config, config.fallbackStrategy)
+      ) {
+        this.logRecoverySuccess(
+          operationName,
+          config.fallbackStrategy,
+          totalTime,
+        );
       }
 
       return {
         ...result,
-        strategy: config.fallbackStrategy!,
+        strategy: config.fallbackStrategy,
         totalTime,
       };
     } catch (fallbackError) {
       const totalTime = previousTime + (Date.now() - startTime);
-      
-      if (this.shouldLogRecovery(config, config.fallbackStrategy!)) {
-        this.logRecoveryFailure(operationName, config.fallbackStrategy!, fallbackError as Error, totalTime);
+
+      if (this.shouldLogRecovery(config, config.fallbackStrategy)) {
+        this.logRecoveryFailure(
+          operationName,
+          config.fallbackStrategy,
+          fallbackError as Error,
+          totalTime,
+        );
       }
 
       return {
-        strategy: config.fallbackStrategy!,
+        strategy: config.fallbackStrategy,
         success: false,
         error: fallbackError as Error,
         attempts: 1,
@@ -417,34 +452,42 @@ export class ErrorRecoveryManager {
         logRecovery: true,
       };
     }
-    
-    return this.recoveryConfigs.get(operationName)!;
+
+    return this.recoveryConfigs.get(operationName);
   }
 
   /**
    * Check if recovery should be logged
    */
-  private shouldLogRecovery(config: RecoveryConfig, strategy: RecoveryStrategy): boolean {
+  private shouldLogRecovery(
+    config: RecoveryConfig,
+    strategy: RecoveryStrategy,
+  ): boolean {
     return config.logRecovery && strategy !== RecoveryStrategy.NONE;
   }
 
   /**
    * Log recovery attempt
    */
-  private logRecoveryAttempt(operationName: string, strategy: RecoveryStrategy, error: Error): void {
-    this.logger.warn(
-      `Attempting ${strategy} recovery for ${operationName}`,
-      {
-        error: error.message,
-        errorType: error.constructor.name,
-      },
-    );
+  private logRecoveryAttempt(
+    operationName: string,
+    strategy: RecoveryStrategy,
+    error: Error,
+  ): void {
+    this.logger.warn(`Attempting ${strategy} recovery for ${operationName}`, {
+      error: error.message,
+      errorType: error.constructor.name,
+    });
   }
 
   /**
    * Log recovery success
    */
-  private logRecoverySuccess(operationName: string, strategy: RecoveryStrategy, totalTime: number): void {
+  private logRecoverySuccess(
+    operationName: string,
+    strategy: RecoveryStrategy,
+    totalTime: number,
+  ): void {
     this.logger.log(
       `${strategy} recovery succeeded for ${operationName} in ${totalTime}ms`,
       {
@@ -509,24 +552,29 @@ export function Recoverable(options?: {
     descriptor: PropertyDescriptor,
   ) {
     const originalMethod = descriptor.value;
-    const operationName = options?.operationName || `${target.constructor.name}.${propertyKey}`;
-    
+    const operationName =
+      options?.operationName || `${target.constructor.name}.${propertyKey}`;
+
     // Register recovery configuration
     if (options?.config) {
-      errorRecoveryManager.registerRecoveryConfig(operationName, options.config);
+      errorRecoveryManager.registerRecoveryConfig(
+        operationName,
+        options.config,
+      );
     }
-    
+
     descriptor.value = async function (...args: any[]) {
       const operation = () => originalMethod.apply(this, args);
-      
-      const fallbackOperation: FallbackOperation<any> | undefined = options?.fallback
-        ? {
-            operation: () => options.fallback!.apply(this, args),
-            description: `Fallback for ${operationName}`,
-            available: true,
-          }
-        : undefined;
-      
+
+      const fallbackOperation: FallbackOperation<any> | undefined =
+        options?.fallback
+          ? {
+              operation: () => options.fallback.apply(this, args),
+              description: `Fallback for ${operationName}`,
+              available: true,
+            }
+          : undefined;
+
       try {
         return await operation();
       } catch (error) {
@@ -536,15 +584,15 @@ export function Recoverable(options?: {
           operationName,
           fallbackOperation,
         );
-        
+
         if (!recoveryResult.success) {
           throw recoveryResult.error;
         }
-        
+
         return recoveryResult.result;
       }
     };
-    
+
     return descriptor;
   };
 }
@@ -564,7 +612,7 @@ export async function withRecovery<T>(
         available: true,
       }
     : undefined;
-  
+
   try {
     return await operation();
   } catch (error) {
@@ -574,11 +622,11 @@ export async function withRecovery<T>(
       operationName,
       fallbackOperation,
     );
-    
+
     if (!recoveryResult.success) {
       throw recoveryResult.error;
     }
-    
-    return recoveryResult.result!;
+
+    return recoveryResult.result;
   }
 }

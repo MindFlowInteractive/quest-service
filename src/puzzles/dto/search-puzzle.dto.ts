@@ -1,4 +1,13 @@
-import { IsOptional, IsString, IsEnum, IsNumber, IsArray, IsBoolean, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsNumber,
+  IsArray,
+  IsBoolean,
+  Min,
+  Max,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { PuzzleDifficulty } from './create-puzzle.dto';
 
@@ -9,12 +18,12 @@ export enum SortBy {
   RATING = 'rating',
   REVIEWS = 'reviews',
   PLAYS = 'totalPlays',
-  COMPLETION_RATE = 'completionRate'
+  COMPLETION_RATE = 'completionRate',
 }
 
 export enum SortOrder {
   ASC = 'ASC',
-  DESC = 'DESC'
+  DESC = 'DESC',
 }
 
 export class SearchPuzzleDto {
@@ -47,7 +56,9 @@ export class SearchPuzzleDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @Transform(({ value }: any) => typeof value === 'string' ? value.split(',') : value)
+  @Transform(({ value }: any) =>
+    typeof value === 'string' ? value.split(',') : value,
+  )
   tags?: string[];
 
   @IsOptional()

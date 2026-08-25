@@ -1,5 +1,10 @@
 import { HttpStatus } from '@nestjs/common';
-import { ErrorCode, ERROR_CODES, ErrorSeverity, ErrorCategory } from './error-codes';
+import {
+  ErrorCode,
+  ERROR_CODES,
+  ErrorSeverity,
+  ErrorCategory,
+} from './error-codes';
 
 /**
  * Base application exception with standardized error handling
@@ -90,7 +95,10 @@ export abstract class BaseException extends Error {
    * Check if this error should trigger alerting
    */
   shouldAlert(): boolean {
-    return this.severity === ErrorSeverity.HIGH || this.severity === ErrorSeverity.CRITICAL;
+    return (
+      this.severity === ErrorSeverity.HIGH ||
+      this.severity === ErrorSeverity.CRITICAL
+    );
   }
 
   /**

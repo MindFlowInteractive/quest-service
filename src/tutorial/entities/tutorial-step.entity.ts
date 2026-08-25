@@ -10,7 +10,13 @@ import {
 } from 'typeorm';
 import { Tutorial } from './tutorial.entity';
 
-export type StepType = 'instruction' | 'interactive' | 'practice' | 'quiz' | 'demonstration' | 'checkpoint';
+export type StepType =
+  | 'instruction'
+  | 'interactive'
+  | 'practice'
+  | 'quiz'
+  | 'demonstration'
+  | 'checkpoint';
 
 export interface StepContent {
   instructions: string;
@@ -139,7 +145,9 @@ export class TutorialStep {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => Tutorial, (tutorial) => tutorial.steps, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Tutorial, (tutorial) => tutorial.steps, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'tutorialId' })
   tutorial: Tutorial;
 }

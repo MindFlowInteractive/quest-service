@@ -34,7 +34,9 @@ describe('QuestChainValidationService', () => {
       ],
     }).compile();
 
-    service = module.get<QuestChainValidationService>(QuestChainValidationService);
+    service = module.get<QuestChainValidationService>(
+      QuestChainValidationService,
+    );
     questChainRepository = module.get<Repository<QuestChain>>(
       getRepositoryToken(QuestChain),
     );
@@ -55,7 +57,9 @@ describe('QuestChainValidationService', () => {
       const result = await service.validateChainStructure(chainId);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain(`Quest chain with ID ${chainId} not found`);
+      expect(result.errors).toContain(
+        `Quest chain with ID ${chainId} not found`,
+      );
     });
 
     it('should validate sequential order correctly', async () => {
@@ -131,7 +135,7 @@ describe('QuestChainValidationService', () => {
 
       // Private method call (in actual implementation, we'd use a different approach)
       // For now, let's test the scenario
-      
+
       const serviceWithReflection = service as any;
       // Call directly
       try {

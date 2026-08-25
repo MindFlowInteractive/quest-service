@@ -1,6 +1,6 @@
 export function calculateLevel(xp: number) {
-  const baseXP = 100; 
-  const growthFactor = 1.2; 
+  const baseXP = 100;
+  const growthFactor = 1.2;
 
   let level = 1;
   let xpForNextLevel = baseXP;

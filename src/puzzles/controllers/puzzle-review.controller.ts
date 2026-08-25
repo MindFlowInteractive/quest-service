@@ -1,4 +1,15 @@
-import { Controller, Post, Put, Delete, Body, Param, UseGuards, Request, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { PuzzleReviewService } from '../services/puzzle-review.service';
 import { CreateReviewDto } from '../dto/create-review.dto';
@@ -19,7 +30,11 @@ export class PuzzleReviewController {
     @Body() createReviewDto: CreateReviewDto,
     @Request() req,
   ): Promise<PuzzleReview> {
-    return this.reviewService.submitReview(req.user.id, puzzleId, createReviewDto);
+    return this.reviewService.submitReview(
+      req.user.id,
+      puzzleId,
+      createReviewDto,
+    );
   }
 
   @Put('reviews/:id')
@@ -29,12 +44,19 @@ export class PuzzleReviewController {
     @Body() updateReviewDto: UpdateReviewDto,
     @Request() req,
   ): Promise<PuzzleReview> {
-    return this.reviewService.updateReview(req.user.id, reviewId, updateReviewDto);
+    return this.reviewService.updateReview(
+      req.user.id,
+      reviewId,
+      updateReviewDto,
+    );
   }
 
   @Delete('reviews/:id')
   @UseGuards(JwtAuthGuard)
-  async deleteReview(@Param('id') reviewId: string, @Request() req): Promise<void> {
+  async deleteReview(
+    @Param('id') reviewId: string,
+    @Request() req,
+  ): Promise<void> {
     return this.reviewService.deleteReview(req.user.id, reviewId);
   }
 
@@ -64,7 +86,7 @@ export class PuzzleReviewController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
     @Query('sort') sort: 'recency' | 'helpful' = 'recency',
-  ): Promise<{ reviews: PuzzleReview[], total: number }> {
+  ): Promise<{ reviews: PuzzleReview[]; total: number }> {
     return this.reviewService.getPuzzleReviews(puzzleId, page, limit, sort);
   }
 }

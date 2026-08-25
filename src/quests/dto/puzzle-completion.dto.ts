@@ -1,4 +1,11 @@
-import { IsUUID, IsInt, IsBoolean, IsOptional, ValidateNested, IsString } from 'class-validator';
+import {
+  IsUUID,
+  IsInt,
+  IsBoolean,
+  IsOptional,
+  ValidateNested,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class CompletionMetadataDto {

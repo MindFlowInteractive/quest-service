@@ -35,7 +35,10 @@ export class WebhooksService {
     private readonly configService: ConfigService,
   ) {}
 
-  async create(ownerUserId: string, createWebhookDto: CreateWebhookDto): Promise<Webhook> {
+  async create(
+    ownerUserId: string,
+    createWebhookDto: CreateWebhookDto,
+  ): Promise<Webhook> {
     await this.webhookUrlValidator.validate(createWebhookDto.url);
 
     const webhook = this.webhookRepository.create({
@@ -62,7 +65,9 @@ export class WebhooksService {
   }
 
   async findOwnedWebhook(ownerUserId: string, id: string): Promise<Webhook> {
-    const webhook = await this.webhookRepository.findOne({ where: { id, userId: ownerUserId } });
+    const webhook = await this.webhookRepository.findOne({
+      where: { id, userId: ownerUserId },
+    });
 
     if (!webhook) {
       throw new NotFoundException('Webhook not found');
@@ -76,7 +81,11 @@ export class WebhooksService {
     await this.webhookRepository.remove(webhook);
   }
 
-  async getDeliveries(ownerUserId: string, webhookId: string, limit = 100): Promise<WebhookDelivery[]> {
+  async getDeliveries(
+    ownerUserId: string,
+    webhookId: string,
+    limit = 100,
+  ): Promise<WebhookDelivery[]> {
     await this.findOwnedWebhook(ownerUserId, webhookId);
 
     return this.deliveryRepository.find({
@@ -86,7 +95,10 @@ export class WebhooksService {
     });
   }
 
-  async enqueueEvent(event: WebhookEvent, payload: Record<string, unknown>): Promise<void> {
+  async enqueueEvent(
+    event: WebhookEvent,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
     const webhooks = await this.webhookRepository
       .createQueryBuilder('webhook')
       .addSelect('webhook.secret')
@@ -112,14 +124,21 @@ export class WebhooksService {
     };
   }
 
-  buildSignature(payload: Record<string, unknown> | string, secret: string): string {
-    const serializedPayload = typeof payload === 'string' ? payload : JSON.stringify(payload);
+  buildSignature(
+    payload: Record<string, unknown> | string,
+    secret: string,
+  ): string {
+    const serializedPayload =
+      typeof payload === 'string' ? payload : JSON.stringify(payload);
     return createWebhookSignature(serializedPayload, secret);
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async cleanupExpiredDeliveries(): Promise<void> {
-    const ttlDays = this.configService.get<number>('WEBHOOK_DELIVERY_TTL_DAYS', WEBHOOK_DELIVERY_TTL_DAYS);
+    const ttlDays = this.configService.get<number>(
+      'WEBHOOK_DELIVERY_TTL_DAYS',
+      WEBHOOK_DELIVERY_TTL_DAYS,
+    );
 
     if (ttlDays <= 0) {
       return;
@@ -134,7 +153,9 @@ export class WebhooksService {
       .execute();
 
     if (result.affected) {
-      this.logger.log(`Cleaned up ${result.affected} expired webhook deliveries`);
+      this.logger.log(
+        `Cleaned up ${result.affected} expired webhook deliveries`,
+      );
     }
   }
 
@@ -147,17 +168,20 @@ export class WebhooksService {
 
     const delivery = await this.deliveryRepository.save(
       this.deliveryRepository.create({
-      webhookId: webhook.id,
-      event,
-      payload,
-      signature,
-      status: 'pending',
+        webhookId: webhook.id,
+        event,
+        payload,
+        signature,
+        status: 'pending',
       }),
     );
 
     await this.pruneDeliveryHistory(webhook.id);
 
-    const ttlDays = this.configService.get<number>('WEBHOOK_DELIVERY_TTL_DAYS', WEBHOOK_DELIVERY_TTL_DAYS);
+    const ttlDays = this.configService.get<number>(
+      'WEBHOOK_DELIVERY_TTL_DAYS',
+      WEBHOOK_DELIVERY_TTL_DAYS,
+    );
     const ageSeconds = Math.max(ttlDays, 1) * 24 * 60 * 60;
 
     await this.deliveryQueue.add(
@@ -195,6 +219,8 @@ export class WebhooksService {
       return;
     }
 
-    await this.deliveryRepository.delete(staleDeliveries.map((delivery) => delivery.id));
+    await this.deliveryRepository.delete(
+      staleDeliveries.map((delivery) => delivery.id),
+    );
   }
 }

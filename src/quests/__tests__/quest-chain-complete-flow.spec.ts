@@ -18,7 +18,7 @@ describe('QuestChain Complete Integration Tests', () => {
   let progressionService: QuestChainProgressionService;
   let validationService: QuestChainValidationService;
   let leaderboardService: QuestChainLeaderboardService;
-  
+
   let questChainRepository: Repository<QuestChain>;
   let questChainPuzzleRepository: Repository<QuestChainPuzzle>;
   let userProgressRepository: Repository<UserQuestChainProgress>;
@@ -98,13 +98,25 @@ describe('QuestChain Complete Integration Tests', () => {
     }).compile();
 
     questChainService = module.get<QuestChainService>(QuestChainService);
-    progressionService = module.get<QuestChainProgressionService>(QuestChainProgressionService);
-    validationService = module.get<QuestChainValidationService>(QuestChainValidationService);
-    leaderboardService = module.get<QuestChainLeaderboardService>(QuestChainLeaderboardService);
-    
-    questChainRepository = module.get<Repository<QuestChain>>(getRepositoryToken(QuestChain));
-    questChainPuzzleRepository = module.get<Repository<QuestChainPuzzle>>(getRepositoryToken(QuestChainPuzzle));
-    userProgressRepository = module.get<Repository<UserQuestChainProgress>>(getRepositoryToken(UserQuestChainProgress));
+    progressionService = module.get<QuestChainProgressionService>(
+      QuestChainProgressionService,
+    );
+    validationService = module.get<QuestChainValidationService>(
+      QuestChainValidationService,
+    );
+    leaderboardService = module.get<QuestChainLeaderboardService>(
+      QuestChainLeaderboardService,
+    );
+
+    questChainRepository = module.get<Repository<QuestChain>>(
+      getRepositoryToken(QuestChain),
+    );
+    questChainPuzzleRepository = module.get<Repository<QuestChainPuzzle>>(
+      getRepositoryToken(QuestChainPuzzle),
+    );
+    userProgressRepository = module.get<Repository<UserQuestChainProgress>>(
+      getRepositoryToken(UserQuestChainProgress),
+    );
   });
 
   afterEach(() => {
@@ -117,7 +129,7 @@ describe('QuestChain Complete Integration Tests', () => {
       const chainId = uuidv4();
       const puzzle1Id = uuidv4();
       const puzzle2Id = uuidv4();
-      
+
       // Create a quest chain with rewards
       const createDto: CreateQuestChainDto = {
         name: 'Test Chain with Rewards',
@@ -131,7 +143,7 @@ describe('QuestChain Complete Integration Tests', () => {
               title: 'Chapter 1',
               description: 'First chapter',
               storyText: 'This is the first chapter',
-            }
+            },
           ],
         },
         rewards: {
@@ -148,7 +160,7 @@ describe('QuestChain Complete Integration Tests', () => {
                 coins: 50,
                 items: ['milestone-badge'],
               },
-            }
+            },
           ],
         },
       };
@@ -202,8 +214,10 @@ describe('QuestChain Complete Integration Tests', () => {
       mockQuestChainPuzzleRepository.findOne
         .mockResolvedValueOnce(chainPuzzle1)
         .mockResolvedValueOnce(chainPuzzle2);
-      mockQuestChainPuzzleRepository.find
-        .mockResolvedValue([chainPuzzle1, chainPuzzle2]);
+      mockQuestChainPuzzleRepository.find.mockResolvedValue([
+        chainPuzzle1,
+        chainPuzzle2,
+      ]);
 
       // Start the chain for a user
       const initialProgress = {
@@ -226,7 +240,10 @@ describe('QuestChain Complete Integration Tests', () => {
       mockUserProgressRepository.save.mockResolvedValue(initialProgress);
       mockUserProgressRepository.findOne.mockResolvedValue(initialProgress);
 
-      const startedProgress = await progressionService.startChain(userId, chainId);
+      const startedProgress = await progressionService.startChain(
+        userId,
+        chainId,
+      );
       expect(startedProgress.status).toBe('in_progress');
 
       // Complete first puzzle with checkpoint rewards
@@ -261,7 +278,7 @@ describe('QuestChain Complete Integration Tests', () => {
         userId,
         chainId,
         puzzle1Id,
-        completionData1
+        completionData1,
       );
 
       expect(progressAfterPuzzle1.completedPuzzleIds).toContain(puzzle1Id);
@@ -293,7 +310,7 @@ describe('QuestChain Complete Integration Tests', () => {
         userId,
         chainId,
         puzzle2Id,
-        completionData2
+        completionData2,
       );
 
       expect(finalProgress.status).toBe('completed');
@@ -317,13 +334,18 @@ describe('QuestChain Complete Integration Tests', () => {
           completedAt: new Date(),
           totalScore: 250,
           totalHintsUsed: 1,
-        }
+        },
       ];
 
-      mockUserProgressRepository.createQueryBuilder().getMany.mockResolvedValue(mockProgressRecords);
+      mockUserProgressRepository
+        .createQueryBuilder()
+        .getMany.mockResolvedValue(mockProgressRecords);
       mockUserRepository.findByIds.mockResolvedValue([]);
 
-      const leaderboard = await leaderboardService.getSpeedRunLeaderboard(chainId, 10);
+      const leaderboard = await leaderboardService.getSpeedRunLeaderboard(
+        chainId,
+        10,
+      );
       expect(leaderboard).toBeDefined();
       expect(Array.isArray(leaderboard)).toBeTruthy();
     });
@@ -332,7 +354,7 @@ describe('QuestChain Complete Integration Tests', () => {
       const userId = uuidv4();
       const chainId = uuidv4();
       const puzzleId = uuidv4();
-      
+
       // Create a puzzle with branch conditions
       const chainPuzzle = {
         id: uuidv4(),
@@ -387,7 +409,10 @@ describe('QuestChain Complete Integration Tests', () => {
         completedSuccessfully: true,
       };
 
-      const result = progressionService['evaluateBranchConditions'](chainPuzzle, highScoreCompletion);
+      const result = progressionService['evaluateBranchConditions'](
+        chainPuzzle,
+        highScoreCompletion,
+      );
       expect(result).toBe('high-score-path-puzzle');
 
       // Test low score branch
@@ -398,7 +423,10 @@ describe('QuestChain Complete Integration Tests', () => {
         completedSuccessfully: true,
       };
 
-      const result2 = progressionService['evaluateBranchConditions'](chainPuzzle, lowScoreCompletion);
+      const result2 = progressionService['evaluateBranchConditions'](
+        chainPuzzle,
+        lowScoreCompletion,
+      );
       expect(result2).toBe('low-score-path-puzzle');
     });
 
@@ -430,7 +458,9 @@ describe('QuestChain Complete Integration Tests', () => {
       mockQuestChainRepository.findOne.mockResolvedValue(mockChain);
       mockQuestChainPuzzleRepository.find.mockResolvedValue(mockChainPuzzles);
 
-      const validationResult = await validationService.validateChainStructure(chainId);
+      const validationResult = await validationService.validateChainStructure(
+        chainId,
+      );
 
       expect(validationResult.isValid).toBe(true);
       expect(Array.isArray(validationResult.warnings)).toBe(true);

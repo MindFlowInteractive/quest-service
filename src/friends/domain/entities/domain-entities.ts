@@ -125,9 +125,7 @@ export class FriendRequest {
    */
   accept(): void {
     if (!this.canAccept()) {
-      throw new Error(
-        `Cannot accept friend request in state: ${this.state}`,
-      );
+      throw new Error(`Cannot accept friend request in state: ${this.state}`);
     }
     this.state = FriendRequestState.ACCEPTED;
     this.respondedAt = new Date();
@@ -139,9 +137,7 @@ export class FriendRequest {
    */
   reject(): void {
     if (!this.canReject()) {
-      throw new Error(
-        `Cannot reject friend request in state: ${this.state}`,
-      );
+      throw new Error(`Cannot reject friend request in state: ${this.state}`);
     }
     this.state = FriendRequestState.REJECTED;
     this.respondedAt = new Date();
@@ -153,9 +149,7 @@ export class FriendRequest {
    */
   cancel(): void {
     if (this.state !== FriendRequestState.PENDING) {
-      throw new Error(
-        `Cannot cancel friend request in state: ${this.state}`,
-      );
+      throw new Error(`Cannot cancel friend request in state: ${this.state}`);
     }
     this.state = FriendRequestState.CANCELLED;
     this.respondedAt = new Date();

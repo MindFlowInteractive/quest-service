@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Theme } from './entities/theme.entity';
@@ -22,7 +26,9 @@ export class ThemesService {
 
     // Associate collections
     if (collectionIds && collectionIds.length > 0) {
-      const collections = await this.collectionsRepository.findBy({ id: In(collectionIds) });
+      const collections = await this.collectionsRepository.findBy({
+        id: In(collectionIds),
+      });
       if (collections.length !== collectionIds.length) {
         throw new BadRequestException('One or more collection IDs not found.');
       }
@@ -58,9 +64,13 @@ export class ThemesService {
     // Re-associate collections if provided
     if (collectionIds !== undefined) {
       if (collectionIds.length > 0) {
-        const collections = await this.collectionsRepository.findBy({ id: In(collectionIds) });
+        const collections = await this.collectionsRepository.findBy({
+          id: In(collectionIds),
+        });
         if (collections.length !== collectionIds.length) {
-          throw new BadRequestException('One or more collection IDs not found.');
+          throw new BadRequestException(
+            'One or more collection IDs not found.',
+          );
         }
         theme.collections = collections;
       } else {

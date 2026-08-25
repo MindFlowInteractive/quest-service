@@ -34,7 +34,7 @@ interface ABTestResult {
 @Injectable()
 export class ABTestingService {
   private readonly logger = new Logger(ABTestingService.name);
-  
+
   // In a production environment, this would be stored in a database
   private readonly activeTests: Map<string, ABTestConfig> = new Map();
 
@@ -105,7 +105,10 @@ export class ABTestingService {
     this.activeTests.set(newUserTest.name, newUserTest);
   }
 
-  assignUserToTest(userId: string, userInteractionCount: number = 0): string | null {
+  assignUserToTest(
+    userId: string,
+    userInteractionCount: number = 0,
+  ): string | null {
     // Determine which test the user should be in based on their profile
     let selectedTest: ABTestConfig | null = null;
 
@@ -124,17 +127,19 @@ export class ABTestingService {
     // Check if user should be included in the test based on traffic allocation
     const userHash = this.hashUserId(userId);
     const trafficThreshold = selectedTest.trafficAllocation * 100;
-    
+
     if (userHash % 100 >= trafficThreshold) {
       return null; // User not in test
     }
 
     // Assign user to a variant based on weights
     const variant = this.selectVariant(selectedTest.variants, userHash);
-    
+
     if (variant) {
       const testGroup = `${selectedTest.name}_${variant.name}`;
-      this.logger.log(`User ${userId} assigned to A/B test group: ${testGroup}`);
+      this.logger.log(
+        `User ${userId} assigned to A/B test group: ${testGroup}`,
+      );
       return testGroup;
     }
 
@@ -146,16 +151,22 @@ export class ABTestingService {
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
       const char = userId.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
   }
 
-  private selectVariant(variants: ABTestVariant[], userHash: number): ABTestVariant | null {
-    const totalWeight = variants.reduce((sum, variant) => sum + variant.weight, 0);
-    const threshold = (userHash % 100) / 100 * totalWeight;
-    
+  private selectVariant(
+    variants: ABTestVariant[],
+    userHash: number,
+  ): ABTestVariant | null {
+    const totalWeight = variants.reduce(
+      (sum, variant) => sum + variant.weight,
+      0,
+    );
+    const threshold = ((userHash % 100) / 100) * totalWeight;
+
     let cumulativeWeight = 0;
     for (const variant of variants) {
       cumulativeWeight += variant.weight;
@@ -169,17 +180,23 @@ export class ABTestingService {
 
   getAlgorithmForTestGroup(testGroup: string): string {
     const [testName, variantName] = testGroup.split('_', 2);
-    const test = this.activeTests.get(`${testName}_${variantName.split('_')[0]}_v1`);
-    
+    const test = this.activeTests.get(
+      `${testName}_${variantName.split('_')[0]}_v1`,
+    );
+
     if (!test) {
       return 'hybrid'; // Default fallback
     }
 
-    const variant = test.variants.find(v => v.name === variantName);
+    const variant = test.variants.find((v) => v.name === variantName);
     return variant?.algorithm || 'hybrid';
   }
 
-  async getTestResults(testName: string, startDate?: Date, endDate?: Date): Promise<ABTestResult[]> {
+  async getTestResults(
+    testName: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<ABTestResult[]> {
     const test = this.activeTests.get(testName);
     if (!test) {
       throw new Error(`Test ${testName} not found`);
@@ -189,7 +206,7 @@ export class ABTestingService {
 
     for (const variant of test.variants) {
       const testGroup = `${testName}_${variant.name}`;
-      
+
       let query = this.recommendationRepository
         .createQueryBuilder('rec')
         .select([
@@ -233,7 +250,7 @@ export class ABTestingService {
   }
 
   async getActiveTests(): Promise<string[]> {
-    return Array.from(this.activeTests.keys()).filter(testName => {
+    return Array.from(this.activeTests.keys()).filter((testName) => {
       const test = this.activeTests.get(testName);
       return test?.isActive && (!test.endDate || test.endDate > new Date());
     });
@@ -258,7 +275,7 @@ export class ABTestingService {
     metric: 'clickThroughRate' | 'completionRate' = 'clickThroughRate',
   ): Promise<any> {
     const results = await this.getTestResults(testName);
-    
+
     if (results.length < 2) {
       return { error: 'Need at least 2 variants for significance testing' };
     }
@@ -268,22 +285,30 @@ export class ABTestingService {
     const controlVariant = results[0];
     const testVariants = results.slice(1);
 
-    const significanceResults = testVariants.map(variant => {
+    const significanceResults = testVariants.map((variant) => {
       const controlRate = controlVariant[metric];
       const testRate = variant[metric];
-      
+
       // Calculate sample sizes
-      const controlSample = metric === 'clickThroughRate' ? controlVariant.views : controlVariant.clicks;
-      const testSample = metric === 'clickThroughRate' ? variant.views : variant.clicks;
-      
+      const controlSample =
+        metric === 'clickThroughRate'
+          ? controlVariant.views
+          : controlVariant.clicks;
+      const testSample =
+        metric === 'clickThroughRate' ? variant.views : variant.clicks;
+
       // Simple z-test approximation
-      const pooledRate = (controlRate * controlSample + testRate * testSample) / (controlSample + testSample);
-      const standardError = Math.sqrt(pooledRate * (1 - pooledRate) * (1/controlSample + 1/testSample));
+      const pooledRate =
+        (controlRate * controlSample + testRate * testSample) /
+        (controlSample + testSample);
+      const standardError = Math.sqrt(
+        pooledRate * (1 - pooledRate) * (1 / controlSample + 1 / testSample),
+      );
       const zScore = Math.abs(controlRate - testRate) / standardError;
-      
+
       // Approximate p-value (two-tailed test)
       const pValue = 2 * (1 - this.normalCDF(Math.abs(zScore)));
-      
+
       return {
         variant: variant.variant,
         controlRate,
@@ -311,18 +336,20 @@ export class ABTestingService {
 
   private erf(x: number): number {
     // Approximation of the error function
-    const a1 =  0.254829592;
+    const a1 = 0.254829592;
     const a2 = -0.284496736;
-    const a3 =  1.421413741;
+    const a3 = 1.421413741;
     const a4 = -1.453152027;
-    const a5 =  1.061405429;
-    const p  =  0.3275911;
+    const a5 = 1.061405429;
+    const p = 0.3275911;
 
     const sign = x >= 0 ? 1 : -1;
     x = Math.abs(x);
 
     const t = 1.0 / (1.0 + p * x);
-    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+    const y =
+      1.0 -
+      ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
 
     return sign * y;
   }

@@ -24,7 +24,11 @@ import { TournamentEventParticipant } from './entities/tournament-event-particip
     ]),
   ],
   controllers: [TournamentsController, TournamentEventsController],
-  providers: [TournamentsService, TournamentEventsService, TournamentSchedulerService],
+  providers: [
+    TournamentsService,
+    TournamentEventsService,
+    TournamentSchedulerService,
+  ],
   exports: [TournamentsService, TournamentEventsService],
 })
 export class TournamentsModule {}

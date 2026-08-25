@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PuzzleAnalysis, Strategy } from './interfaces/puzzle-analysis.interface';
+import {
+  PuzzleAnalysis,
+  Strategy,
+} from './interfaces/puzzle-analysis.interface';
 
 @Injectable()
 export class StrategyExplainerService {
@@ -12,13 +15,17 @@ export class StrategyExplainerService {
   async identifyApplicableStrategies(
     puzzleState: any,
     patterns: string[],
-    playerProfile: any
+    playerProfile: any,
   ): Promise<Strategy[]> {
     const applicableStrategies: Strategy[] = [];
 
     for (const [name, strategy] of this.strategyDatabase) {
-      const score = this.calculateApplicability(strategy, puzzleState, patterns);
-      
+      const score = this.calculateApplicability(
+        strategy,
+        puzzleState,
+        patterns,
+      );
+
       if (score > 0.3 && this.meetsPrerequisites(strategy, playerProfile)) {
         applicableStrategies.push({
           ...strategy,
@@ -32,8 +39,10 @@ export class StrategyExplainerService {
       if (a.applicability !== b.applicability) {
         return b.applicability - a.applicability;
       }
-      return this.getCognitiveLoadScore(a.cognitiveLoad) - 
-             this.getCognitiveLoadScore(b.cognitiveLoad);
+      return (
+        this.getCognitiveLoadScore(a.cognitiveLoad) -
+        this.getCognitiveLoadScore(b.cognitiveLoad)
+      );
     });
   }
 
@@ -47,7 +56,10 @@ export class StrategyExplainerService {
     };
 
     if (specificStep) {
-      explanation['detailedStep'] = this.explainSpecificStep(specificStep, analysis);
+      explanation['detailedStep'] = this.explainSpecificStep(
+        specificStep,
+        analysis,
+      );
     }
 
     return explanation;
@@ -99,7 +111,7 @@ export class StrategyExplainerService {
   private calculateApplicability(
     strategy: Strategy,
     puzzleState: any,
-    patterns: string[]
+    patterns: string[],
   ): number {
     let score = 0;
 
@@ -125,8 +137,8 @@ export class StrategyExplainerService {
       return strategy.prerequisites.length === 0;
     }
 
-    return strategy.prerequisites.every(prereq =>
-      playerProfile.masteredStrategies.includes(prereq)
+    return strategy.prerequisites.every((prereq) =>
+      playerProfile.masteredStrategies.includes(prereq),
     );
   }
 
@@ -136,9 +148,13 @@ export class StrategyExplainerService {
   }
 
   private generateOverview(analysis: PuzzleAnalysis): string {
-    return `This ${analysis.puzzleType} puzzle has a difficulty of ${analysis.difficulty}/10. ` +
-           `You've made ${analysis.currentProgress}% progress. ` +
-           `The key is to focus on ${analysis.identifiedPatterns.join(', ')} patterns.`;
+    return (
+      `This ${analysis.puzzleType} puzzle has a difficulty of ${analysis.difficulty}/10. ` +
+      `You've made ${analysis.currentProgress}% progress. ` +
+      `The key is to focus on ${analysis.identifiedPatterns.join(
+        ', ',
+      )} patterns.`
+    );
   }
 
   private generateThinkingSteps(analysis: PuzzleAnalysis): string[] {
@@ -150,7 +166,7 @@ export class StrategyExplainerService {
 
     if (analysis.suggestedStrategies.length > 0) {
       steps.push(
-        `Try applying the ${analysis.suggestedStrategies[0].name} strategy`
+        `Try applying the ${analysis.suggestedStrategies[0].name} strategy`,
       );
     }
 
@@ -179,12 +195,14 @@ export class StrategyExplainerService {
 
   private identifyCommonPitfalls(analysis: PuzzleAnalysis): string[] {
     const pitfalls = [
-      'Don\'t rush to guess without analyzing the puzzle',
+      "Don't rush to guess without analyzing the puzzle",
       'Avoid focusing too narrowly on one approach',
     ];
 
     if (analysis.playerMisconceptions) {
-      pitfalls.push(...analysis.playerMisconceptions.map(m => `Watch out: ${m}`));
+      pitfalls.push(
+        ...analysis.playerMisconceptions.map((m) => `Watch out: ${m}`),
+      );
     }
 
     return pitfalls;

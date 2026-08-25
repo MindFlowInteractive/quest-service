@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class EnhancePlayerProfileSchema1703000000000 implements MigrationInterface {
+export class EnhancePlayerProfileSchema1703000000000
+  implements MigrationInterface
+{
   name = 'EnhancePlayerProfileSchema1703000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -78,8 +80,12 @@ export class EnhancePlayerProfileSchema1703000000000 implements MigrationInterfa
     // Drop indexes
     await queryRunner.query(`DROP INDEX "IDX_player_profiles_custom_fields"`);
     await queryRunner.query(`DROP INDEX "IDX_player_profiles_privacy_public"`);
-    await queryRunner.query(`DROP INDEX "IDX_player_profiles_statistics_win_rate"`);
-    await queryRunner.query(`DROP INDEX "IDX_player_profiles_statistics_total_games"`);
+    await queryRunner.query(
+      `DROP INDEX "IDX_player_profiles_statistics_win_rate"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "IDX_player_profiles_statistics_total_games"`,
+    );
 
     // Remove new columns
     await queryRunner.query(`

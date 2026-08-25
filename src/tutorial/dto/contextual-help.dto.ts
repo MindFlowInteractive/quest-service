@@ -159,7 +159,9 @@ export class CreateContextualHelpDto {
   isActive?: boolean;
 }
 
-export class UpdateContextualHelpDto extends PartialType(CreateContextualHelpDto) {}
+export class UpdateContextualHelpDto extends PartialType(
+  CreateContextualHelpDto,
+) {}
 
 export class ContextualHelpFilterDto {
   @IsEnum([

@@ -18,7 +18,12 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PuzzleEditorService } from '../services/puzzle-editor.service';
 import { PuzzleValidationService } from '../services/puzzle-validation.service';
@@ -142,9 +147,15 @@ export class PuzzleEditorController {
     if (dto.autoFix) {
       // Auto-fix components
       const fixed = await Promise.all(
-        editor.components.map((c) => this.validationService.autoFixComponent(c)),
+        editor.components.map((c) =>
+          this.validationService.autoFixComponent(c),
+        ),
       );
-      await this.editorService.updateEditor(id, { components: fixed }, req.user.id);
+      await this.editorService.updateEditor(
+        id,
+        { components: fixed },
+        req.user.id,
+      );
     }
 
     return validationResult;
@@ -220,13 +231,16 @@ export class PuzzleEditorController {
   ) {
     const editor = await this.editorService.getEditor(id, req.user.id);
 
-    const importedState = await this.importExportService.importPuzzle(dto.data, {
-      format: dto.format as any,
-      mergeDuplicates: dto.mergeDuplicates || false,
-      updateExisting: dto.updateExisting || false,
-      validateOnImport: dto.validateOnImport || true,
-      autoCreateMissingDependencies: false,
-    });
+    const importedState = await this.importExportService.importPuzzle(
+      dto.data,
+      {
+        format: dto.format as any,
+        mergeDuplicates: dto.mergeDuplicates || false,
+        updateExisting: dto.updateExisting || false,
+        validateOnImport: dto.validateOnImport || true,
+        autoCreateMissingDependencies: false,
+      },
+    );
 
     await this.editorService.updateEditor(
       id,

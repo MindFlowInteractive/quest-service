@@ -1,5 +1,15 @@
-import { IsString, IsOptional, IsEnum, IsNumber, IsJSON, IsDate } from 'class-validator';
-import { TransactionType, TransactionCategory } from '../entities/blockchain-transaction.entity';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsJSON,
+  IsDate,
+} from 'class-validator';
+import {
+  TransactionType,
+  TransactionCategory,
+} from '../entities/blockchain-transaction.entity';
 
 export class CreateTransactionDto {
   @IsString()

@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
 
 @Entity('player_profiles')
 export class PlayerProfile {
@@ -45,7 +52,16 @@ export class PlayerProfile {
     github?: string;
   };
 
-  @Column({ type: 'jsonb', default: { isProfilePublic: true, showBadges: true, showBio: true, showStats: true, showSocialLinks: true } })
+  @Column({
+    type: 'jsonb',
+    default: {
+      isProfilePublic: true,
+      showBadges: true,
+      showBio: true,
+      showStats: true,
+      showSocialLinks: true,
+    },
+  })
   privacySettings: {
     isProfilePublic: boolean;
     showBadges: boolean;

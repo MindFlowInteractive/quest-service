@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  JoinTable,
+  OneToMany,
+} from 'typeorm';
 import { Puzzle } from './puzzle.entity';
 import { Category } from './category.entity';
 import { UserCollectionProgress } from '../../user-progress/entities/user-collection-progress.entity';
@@ -25,14 +32,17 @@ export class Collection {
   @ManyToMany('Theme', 'collections')
   themes: any[];
 
-  @OneToMany(() => UserCollectionProgress, (userCollectionProgress) => userCollectionProgress.collection)
+  @OneToMany(
+    () => UserCollectionProgress,
+    (userCollectionProgress) => userCollectionProgress.collection,
+  )
   userProgress: UserCollectionProgress[];
 
   // --- New field for rewards ---
   @Column({ type: 'jsonb', default: [] })
   rewards: Array<{
     type: string; // e.g., 'currency', 'item', 'experience'
-    value: any;   // e.g., { amount: 100 } for currency, { itemId: 'uuid', quantity: 1 } for item
+    value: any; // e.g., { amount: 100 } for currency, { itemId: 'uuid', quantity: 1 } for item
     quantity?: number; // Optional quantity for items
   }>;
 }

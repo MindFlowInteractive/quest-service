@@ -8,7 +8,11 @@ import { ReplayComparisonService } from '../services/replay-comparison.service';
 import { PuzzleReplay } from '../entities/puzzle-replay.entity';
 import { ReplayAction } from '../entities/replay-action.entity';
 import { ReplayAnalytic } from '../entities/replay-analytic.entity';
-import { CreateReplayDto, RecordActionDto, CompleteReplayDto } from '../dto/create-replay.dto';
+import {
+  CreateReplayDto,
+  RecordActionDto,
+  CompleteReplayDto,
+} from '../dto/create-replay.dto';
 
 describe('Replay Flow Integration Tests', () => {
   let controller: ReplayController;
@@ -60,10 +64,18 @@ describe('Replay Flow Integration Tests', () => {
 
     controller = module.get<ReplayController>(ReplayController);
     replayService = module.get<ReplayService>(ReplayService);
-    compressionService = module.get<ReplayCompressionService>(ReplayCompressionService);
-    comparisonService = module.get<ReplayComparisonService>(ReplayComparisonService);
-    replayRepo = module.get<Repository<PuzzleReplay>>(getRepositoryToken(PuzzleReplay));
-    actionRepo = module.get<Repository<ReplayAction>>(getRepositoryToken(ReplayAction));
+    compressionService = module.get<ReplayCompressionService>(
+      ReplayCompressionService,
+    );
+    comparisonService = module.get<ReplayComparisonService>(
+      ReplayComparisonService,
+    );
+    replayRepo = module.get<Repository<PuzzleReplay>>(
+      getRepositoryToken(PuzzleReplay),
+    );
+    actionRepo = module.get<Repository<ReplayAction>>(
+      getRepositoryToken(ReplayAction),
+    );
   });
 
   describe('Complete replay flow', () => {
@@ -77,13 +89,18 @@ describe('Replay Flow Integration Tests', () => {
       };
 
       const mockReplay = { id: 'replay-1', ...createDto };
-      const mockRequest = { user: { id: mockUserId, userId: mockUserId } } as any;
+      const mockRequest = {
+        user: { id: mockUserId, userId: mockUserId },
+      } as any;
 
       // Step 1: Create replay
       jest.spyOn(replayRepo, 'create').mockReturnValue(mockReplay as any);
       jest.spyOn(replayRepo, 'save').mockResolvedValue(mockReplay as any);
 
-      const createdReplay = await controller.createReplay(createDto, mockRequest);
+      const createdReplay = await controller.createReplay(
+        createDto,
+        mockRequest,
+      );
 
       expect(createdReplay).toEqual(mockReplay);
 
@@ -107,7 +124,11 @@ describe('Replay Flow Integration Tests', () => {
         ...action1,
       } as any);
 
-      const recordedAction = await controller.recordAction('replay-1', action1, mockRequest);
+      const recordedAction = await controller.recordAction(
+        'replay-1',
+        action1,
+        mockRequest,
+      );
 
       expect(recordedAction.sequenceNumber).toBe(0);
       expect(recordedAction.actionType).toBe('MOVE');
@@ -131,7 +152,11 @@ describe('Replay Flow Integration Tests', () => {
       jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
       jest.spyOn(replayRepo, 'save').mockResolvedValue(completedReplay as any);
 
-      const result = await controller.completeReplay('replay-1', completeDto, mockRequest);
+      const result = await controller.completeReplay(
+        'replay-1',
+        completeDto,
+        mockRequest,
+      );
 
       expect(result.isCompleted).toBe(true);
       expect(result.isSolved).toBe(true);
@@ -148,7 +173,9 @@ describe('Replay Flow Integration Tests', () => {
         shareCode: null,
       };
 
-      const mockRequest = { user: { id: mockUserId, userId: mockUserId } } as any;
+      const mockRequest = {
+        user: { id: mockUserId, userId: mockUserId },
+      } as any;
 
       // Step 1: Share replay
       const shareDto = { permission: 'shared_link' };
@@ -163,7 +190,11 @@ describe('Replay Flow Integration Tests', () => {
 
       jest.spyOn(replayRepo, 'save').mockResolvedValue(sharedReplay as any);
 
-      const result = await controller.shareReplay('replay-1', shareDto as any, mockRequest);
+      const result = await controller.shareReplay(
+        'replay-1',
+        shareDto as any,
+        mockRequest,
+      );
 
       expect(result.permission).toBe('shared_link');
       expect(result.shareCode).toBeDefined();
@@ -201,7 +232,9 @@ describe('Replay Flow Integration Tests', () => {
         efficiency: 95,
       };
 
-      const mockRequest = { user: { id: mockUserId, userId: mockUserId } } as any;
+      const mockRequest = {
+        user: { id: mockUserId, userId: mockUserId },
+      } as any;
 
       jest
         .spyOn(replayRepo, 'findOne')
@@ -247,7 +280,9 @@ describe('Replay Flow Integration Tests', () => {
         initialState: { board: 'init' },
       };
 
-      const mockRequest = { user: { id: mockUserId, userId: mockUserId } } as any;
+      const mockRequest = {
+        user: { id: mockUserId, userId: mockUserId },
+      } as any;
 
       jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
       jest.spyOn(actionRepo, 'find').mockResolvedValue([]);

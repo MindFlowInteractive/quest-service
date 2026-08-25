@@ -52,7 +52,12 @@ export class EnergyTransaction {
   @Column({ name: 'related_entity_id', type: 'uuid', nullable: true })
   relatedEntityId: string | null; // Puzzle ID, Gift ID, etc.
 
-  @Column({ name: 'related_entity_type', type: 'varchar', length: 50, nullable: true })
+  @Column({
+    name: 'related_entity_type',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
   relatedEntityType: string | null; // 'puzzle', 'gift', 'boost', etc.
 
   @Column({ name: 'metadata', type: 'jsonb', nullable: true })

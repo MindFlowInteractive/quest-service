@@ -36,7 +36,9 @@ export class FriendEventHandlers {
     try {
       // Check for idempotency using event ID
       const idempotencyKey = `event_handled_${event.eventId}`;
-      const alreadyHandled = await this.cacheService.get<boolean>(idempotencyKey);
+      const alreadyHandled = await this.cacheService.get<boolean>(
+        idempotencyKey,
+      );
 
       if (alreadyHandled) {
         return; // Already processed
@@ -61,10 +63,14 @@ export class FriendEventHandlers {
    * Handle FriendRequestAcceptedEvent
    * Create mutual friendships and send notifications
    */
-  async onFriendRequestAccepted(event: FriendRequestAcceptedEvent): Promise<void> {
+  async onFriendRequestAccepted(
+    event: FriendRequestAcceptedEvent,
+  ): Promise<void> {
     try {
       const idempotencyKey = `event_handled_${event.eventId}`;
-      const alreadyHandled = await this.cacheService.get<boolean>(idempotencyKey);
+      const alreadyHandled = await this.cacheService.get<boolean>(
+        idempotencyKey,
+      );
 
       if (alreadyHandled) {
         return;
@@ -104,10 +110,14 @@ export class FriendEventHandlers {
    * Handle ActivityEventCreatedEvent
    * Fan-out activity to friends' feeds
    */
-  async onActivityEventCreated(event: ActivityEventCreatedEvent): Promise<void> {
+  async onActivityEventCreated(
+    event: ActivityEventCreatedEvent,
+  ): Promise<void> {
     try {
       const idempotencyKey = `event_handled_${event.eventId}`;
-      const alreadyHandled = await this.cacheService.get<boolean>(idempotencyKey);
+      const alreadyHandled = await this.cacheService.get<boolean>(
+        idempotencyKey,
+      );
 
       if (alreadyHandled) {
         return;

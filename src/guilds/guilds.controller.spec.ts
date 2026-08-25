@@ -4,7 +4,11 @@ import { GuildsService } from './guilds.service';
 import { CreateGuildDto } from './dto/create-guild.dto';
 import { JoinGuildDto } from './dto/join-guild.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { GuildResponseDto, GuildLeaderboardResponseDto, GuildMemberResponseDto } from './dto/guild-response.dto';
+import {
+  GuildResponseDto,
+  GuildLeaderboardResponseDto,
+  GuildMemberResponseDto,
+} from './dto/guild-response.dto';
 
 describe('GuildsController', () => {
   let controller: GuildsController;
@@ -127,7 +131,11 @@ describe('GuildsController', () => {
 
       await controller.removeMember(req, 'guild-1', 'user-2');
 
-      expect(service.kickMember).toHaveBeenCalledWith('user-1', 'guild-1', 'user-2');
+      expect(service.kickMember).toHaveBeenCalledWith(
+        'user-1',
+        'guild-1',
+        'user-2',
+      );
     });
   });
 
@@ -136,9 +144,19 @@ describe('GuildsController', () => {
       const dto: UpdateRoleDto = { role: 'officer' };
       const req = { user: { sub: 'user-1' } } as any;
 
-      const result = await controller.updateMemberRole(req, 'guild-1', 'user-2', dto);
+      const result = await controller.updateMemberRole(
+        req,
+        'guild-1',
+        'user-2',
+        dto,
+      );
 
-      expect(service.updateMemberRole).toHaveBeenCalledWith('user-1', 'guild-1', 'user-2', dto);
+      expect(service.updateMemberRole).toHaveBeenCalledWith(
+        'user-1',
+        'guild-1',
+        'user-2',
+        dto,
+      );
       expect(result).toEqual(mockMemberResponse);
     });
   });

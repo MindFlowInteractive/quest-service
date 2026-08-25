@@ -103,8 +103,12 @@ describe('Puzzles E2E', () => {
 
     await app.init();
 
-    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
-    puzzleRepository = moduleFixture.get<Repository<Puzzle>>(getRepositoryToken(Puzzle));
+    userRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
+    puzzleRepository = moduleFixture.get<Repository<Puzzle>>(
+      getRepositoryToken(Puzzle),
+    );
     jwtService = moduleFixture.get(JwtService);
 
     // Create test users

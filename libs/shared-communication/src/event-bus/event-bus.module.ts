@@ -1,5 +1,10 @@
 import { DynamicModule, Module, OnModuleInit } from '@nestjs/common';
-import { DiscoveryModule, DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
+import {
+  DiscoveryModule,
+  DiscoveryService,
+  MetadataScanner,
+  Reflector,
+} from '@nestjs/core';
 import { EventPublisher } from './event-publisher';
 import { EventSubscriber } from './event-subscriber';
 import { EventBusConfig } from './event-bus.config';

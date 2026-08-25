@@ -84,9 +84,9 @@ export class QuestChain {
   deletedAt?: Date;
 
   // Relationships
-  @OneToMany(() => QuestChainPuzzle, chainPuzzle => chainPuzzle.questChain)
+  @OneToMany(() => QuestChainPuzzle, (chainPuzzle) => chainPuzzle.questChain)
   chainPuzzles: QuestChainPuzzle[];
 
-  @OneToMany(() => UserQuestChainProgress, progress => progress.questChain)
+  @OneToMany(() => UserQuestChainProgress, (progress) => progress.questChain)
   userProgress: UserQuestChainProgress[];
 }

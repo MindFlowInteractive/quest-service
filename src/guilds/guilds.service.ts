@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,7 +14,12 @@ import { UserPuzzleCompletion } from '../users/entities/user-puzzle-completion.e
 import { CreateGuildDto } from './dto/create-guild.dto';
 import { JoinGuildDto } from './dto/join-guild.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { GuildResponseDto, GuildMemberResponseDto, LeaderboardEntryDto, GuildLeaderboardResponseDto } from './dto/guild-response.dto';
+import {
+  GuildResponseDto,
+  GuildMemberResponseDto,
+  LeaderboardEntryDto,
+  GuildLeaderboardResponseDto,
+} from './dto/guild-response.dto';
 
 @Injectable()
 export class GuildsService {
@@ -30,7 +40,10 @@ export class GuildsService {
     member: 1,
   };
 
-  async createGuild(userId: string, dto: CreateGuildDto): Promise<GuildResponseDto> {
+  async createGuild(
+    userId: string,
+    dto: CreateGuildDto,
+  ): Promise<GuildResponseDto> {
     // Check if user is already in a guild
     const existingMembership = await this.guildMemberRepository.findOne({
       where: { playerId: userId },
@@ -69,7 +82,11 @@ export class GuildsService {
     return this.toGuildResponseDto(savedGuild, [ownerMember]);
   }
 
-  async joinGuild(userId: string, guildId: string, dto: JoinGuildDto): Promise<GuildResponseDto> {
+  async joinGuild(
+    userId: string,
+    guildId: string,
+    dto: JoinGuildDto,
+  ): Promise<GuildResponseDto> {
     // Check if user is already in a guild
     const existingMembership = await this.guildMemberRepository.findOne({
       where: { playerId: userId },
@@ -122,7 +139,9 @@ export class GuildsService {
 
     // Owner cannot leave, must disband instead
     if (membership.role === 'owner') {
-      throw new BadRequestException('Owner cannot leave guild. Use disband endpoint instead.');
+      throw new BadRequestException(
+        'Owner cannot leave guild. Use disband endpoint instead.',
+      );
     }
 
     await this.guildMemberRepository.delete(membership.id);
@@ -153,7 +172,9 @@ export class GuildsService {
     const targetLevel = this.roleHierarchy[targetMembership.role];
 
     if (requesterLevel <= targetLevel) {
-      throw new ForbiddenException('You do not have permission to kick this member');
+      throw new ForbiddenException(
+        'You do not have permission to kick this member',
+      );
     }
 
     await this.guildMemberRepository.delete(targetMembership.id);
@@ -191,7 +212,9 @@ export class GuildsService {
 
     // Only one owner allowed
     if (dto.role === 'owner') {
-      throw new BadRequestException('There can only be one owner. Transfer ownership instead.');
+      throw new BadRequestException(
+        'There can only be one owner. Transfer ownership instead.',
+      );
     }
 
     targetMembership.role = dto.role;
@@ -281,7 +304,10 @@ export class GuildsService {
     });
 
     if (members.length === 0) {
-      await this.guildRepository.update(guildId, { aggregateScore: 0, lastScoreUpdateAt: new Date() });
+      await this.guildRepository.update(guildId, {
+        aggregateScore: 0,
+        lastScoreUpdateAt: new Date(),
+      });
       return;
     }
 
@@ -305,7 +331,10 @@ export class GuildsService {
 
   async resetWeeklyLeaderboard(): Promise<void> {
     // Reset all guild scores to 0
-    await this.guildRepository.update({}, { aggregateScore: 0, lastScoreUpdateAt: new Date() });
+    await this.guildRepository.update(
+      {},
+      { aggregateScore: 0, lastScoreUpdateAt: new Date() },
+    );
   }
 
   @Cron(CronExpression.EVERY_WEEK)
@@ -313,7 +342,10 @@ export class GuildsService {
     await this.resetWeeklyLeaderboard();
   }
 
-  private toGuildResponseDto(guild: Guild, members: GuildMember[]): GuildResponseDto {
+  private toGuildResponseDto(
+    guild: Guild,
+    members: GuildMember[],
+  ): GuildResponseDto {
     const memberDtos: GuildMemberResponseDto[] = members.map((member) => ({
       id: member.id,
       playerId: member.playerId,

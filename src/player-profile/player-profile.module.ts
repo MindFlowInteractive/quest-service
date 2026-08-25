@@ -10,10 +10,7 @@ import { BannerThemeService } from './services/banner-theme.service';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([PlayerProfile, User]),
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([PlayerProfile, User]), AuthModule],
   controllers: [PlayerProfileController, CustomizationController],
   providers: [PlayerProfileService, BadgeService, BannerThemeService],
   exports: [PlayerProfileService, BadgeService, BannerThemeService],

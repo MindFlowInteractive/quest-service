@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { UserPuzzleSubmission, PuzzleSubmissionStatus } from '../entities/user-puzzle-submission.entity';
+import {
+  UserPuzzleSubmission,
+  PuzzleSubmissionStatus,
+} from '../entities/user-puzzle-submission.entity';
 
 export interface CreatorLevel {
   level: number;
@@ -13,7 +16,12 @@ export interface CreatorLevel {
 }
 
 export interface RewardEvent {
-  type: 'puzzle_play' | 'puzzle_rating' | 'puzzle_featured' | 'puzzle_shared' | 'milestone_reached';
+  type:
+    | 'puzzle_play'
+    | 'puzzle_rating'
+    | 'puzzle_featured'
+    | 'puzzle_shared'
+    | 'milestone_reached';
   userId: string;
   submissionId?: string;
   points: number;
@@ -91,20 +99,22 @@ export class CreatorRewardsService {
 
   async processRewardEvent(event: RewardEvent): Promise<void> {
     const creatorStats = await this.getCreatorStats(event.userId);
-    
+
     // Update points
     await this.addPointsToCreator(event.userId, event.points);
-    
+
     // Check for level up
     await this.checkLevelUp(event.userId, creatorStats);
-    
+
     // Check for achievements
     await this.checkAchievements(event.userId, event);
-    
+
     // Update monthly earnings
     await this.updateMonthlyEarnings(event.userId, event.points);
-    
-    this.logger.log(`Processed reward event for user ${event.userId}: +${event.points} points`);
+
+    this.logger.log(
+      `Processed reward event for user ${event.userId}: +${event.points} points`,
+    );
   }
 
   async onPuzzlePlayed(submissionId: string, userId: string): Promise<void> {
@@ -118,7 +128,7 @@ export class CreatorRewardsService {
     if (submission.userId === userId) return;
 
     const points = this.calculatePlayPoints(submission);
-    
+
     await this.processRewardEvent({
       type: 'puzzle_play',
       userId: submission.userId,
@@ -131,7 +141,11 @@ export class CreatorRewardsService {
     });
   }
 
-  async onPuzzleRated(submissionId: string, rating: number, userId: string): Promise<void> {
+  async onPuzzleRated(
+    submissionId: string,
+    rating: number,
+    userId: string,
+  ): Promise<void> {
     const submission = await this.submissionRepository.findOne({
       where: { id: submissionId },
     });
@@ -142,7 +156,7 @@ export class CreatorRewardsService {
     if (submission.userId === userId) return;
 
     const points = this.calculateRatingPoints(rating);
-    
+
     await this.processRewardEvent({
       type: 'puzzle_rating',
       userId: submission.userId,
@@ -155,7 +169,10 @@ export class CreatorRewardsService {
     });
   }
 
-  async onPuzzleFeatured(submissionId: string, featuredBy: string): Promise<void> {
+  async onPuzzleFeatured(
+    submissionId: string,
+    featuredBy: string,
+  ): Promise<void> {
     const submission = await this.submissionRepository.findOne({
       where: { id: submissionId },
     });
@@ -163,7 +180,7 @@ export class CreatorRewardsService {
     if (!submission || !submission.userId) return;
 
     const points = this.calculateFeaturedPoints(submission);
-    
+
     await this.processRewardEvent({
       type: 'puzzle_featured',
       userId: submission.userId,
@@ -184,7 +201,11 @@ export class CreatorRewardsService {
     await this.submissionRepository.save(submission);
   }
 
-  async onPuzzleShared(submissionId: string, platform: string, userId: string): Promise<void> {
+  async onPuzzleShared(
+    submissionId: string,
+    platform: string,
+    userId: string,
+  ): Promise<void> {
     const submission = await this.submissionRepository.findOne({
       where: { id: submissionId },
     });
@@ -192,7 +213,7 @@ export class CreatorRewardsService {
     if (!submission || !submission.userId) return;
 
     const points = this.calculateSharePoints(platform);
-    
+
     await this.processRewardEvent({
       type: 'puzzle_shared',
       userId: submission.userId,
@@ -210,18 +231,29 @@ export class CreatorRewardsService {
       where: { userId },
     });
 
-    const publishedPuzzles = submissions.filter(s => s.status === PuzzleSubmissionStatus.PUBLISHED);
-    const featuredPuzzles = submissions.filter(s => s.status === PuzzleSubmissionStatus.FEATURED);
-    
-    const totalPlays = publishedPuzzles.reduce((sum, s) => sum + s.playCount, 0);
-    const averageRating = publishedPuzzles.length > 0
-      ? publishedPuzzles.reduce((sum, s) => sum + s.averageRating, 0) / publishedPuzzles.length
-      : 0;
+    const publishedPuzzles = submissions.filter(
+      (s) => s.status === PuzzleSubmissionStatus.PUBLISHED,
+    );
+    const featuredPuzzles = submissions.filter(
+      (s) => s.status === PuzzleSubmissionStatus.FEATURED,
+    );
+
+    const totalPlays = publishedPuzzles.reduce(
+      (sum, s) => sum + s.playCount,
+      0,
+    );
+    const averageRating =
+      publishedPuzzles.length > 0
+        ? publishedPuzzles.reduce((sum, s) => sum + s.averageRating, 0) /
+          publishedPuzzles.length
+        : 0;
 
     // Get total points from reward data
     const totalPoints = await this.getTotalPoints(userId);
     const currentLevel = this.getCreatorLevel(totalPoints);
-    const nextLevel = this.creatorLevels[currentLevel.level + 1] || this.creatorLevels[currentLevel.level];
+    const nextLevel =
+      this.creatorLevels[currentLevel.level + 1] ||
+      this.creatorLevels[currentLevel.level];
 
     return {
       userId,
@@ -239,17 +271,22 @@ export class CreatorRewardsService {
     };
   }
 
-  async getLeaderboard(limit: number = 50, timeframe: 'all' | 'month' | 'week' = 'all'): Promise<Array<{
-    userId: string;
-    username: string;
-    points: number;
-    level: number;
-    title: string;
-    badge: string;
-    rank: number;
-  }>> {
+  async getLeaderboard(
+    limit: number = 50,
+    timeframe: 'all' | 'month' | 'week' = 'all',
+  ): Promise<
+    Array<{
+      userId: string;
+      username: string;
+      points: number;
+      level: number;
+      title: string;
+      badge: string;
+      rank: number;
+    }>
+  > {
     let dateFilter: any = {};
-    
+
     if (timeframe === 'week') {
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -270,7 +307,9 @@ export class CreatorRewardsService {
         'SUM(submission.playCount) as totalPlays',
         'AVG(submission.averageRating) as avgRating',
       ])
-      .where('submission.status = :status', { status: PuzzleSubmissionStatus.PUBLISHED })
+      .where('submission.status = :status', {
+        status: PuzzleSubmissionStatus.PUBLISHED,
+      })
       .groupBy('submission.userId')
       .orderBy('totalPlays', 'DESC')
       .limit(limit);
@@ -280,7 +319,7 @@ export class CreatorRewardsService {
     return results.map((result: any, index: number) => {
       const points = this.calculatePointsFromStats(result);
       const level = this.getCreatorLevel(points);
-      
+
       return {
         userId: result.submission_userId,
         username: `creator_${result.submission_userId}`, // Would join with users table
@@ -293,16 +332,18 @@ export class CreatorRewardsService {
     });
   }
 
-  async getTopCreators(limit: number = 10): Promise<Array<{
-    userId: string;
-    username: string;
-    totalPuzzles: number;
-    featuredPuzzles: number;
-    totalPlays: number;
-    averageRating: number;
-    level: number;
-    badge: string;
-  }>> {
+  async getTopCreators(limit: number = 10): Promise<
+    Array<{
+      userId: string;
+      username: string;
+      totalPuzzles: number;
+      featuredPuzzles: number;
+      totalPlays: number;
+      averageRating: number;
+      level: number;
+      badge: string;
+    }>
+  > {
     const query = this.submissionRepository
       .createQueryBuilder('submission')
       .select([
@@ -314,8 +355,11 @@ export class CreatorRewardsService {
       ])
       .setParameter('published', PuzzleSubmissionStatus.PUBLISHED)
       .setParameter('featured', PuzzleSubmissionStatus.FEATURED)
-      .where('submission.status IN (:...statuses)', { 
-        statuses: [PuzzleSubmissionStatus.PUBLISHED, PuzzleSubmissionStatus.FEATURED] 
+      .where('submission.status IN (:...statuses)', {
+        statuses: [
+          PuzzleSubmissionStatus.PUBLISHED,
+          PuzzleSubmissionStatus.FEATURED,
+        ],
       })
       .groupBy('submission.userId')
       .having('publishedCount > 0')
@@ -327,7 +371,7 @@ export class CreatorRewardsService {
     return results.map((result: any) => {
       const points = this.calculatePointsFromStats(result);
       const level = this.getCreatorLevel(points);
-      
+
       return {
         userId: result.submission_userId,
         username: `creator_${result.submission_userId}`,
@@ -345,16 +389,16 @@ export class CreatorRewardsService {
   @Cron('0 0 1 * *') // 1st of every month at midnight
   async processMonthlyRewards(): Promise<void> {
     this.logger.log('Processing monthly creator rewards');
-    
+
     try {
       // Get top creators for the month
       const topCreators = await this.getLeaderboard(100, 'month');
-      
+
       // Award monthly bonuses
       for (let i = 0; i < topCreators.length; i++) {
         const creator = topCreators[i];
         const bonusPoints = this.calculateMonthlyBonus(i + 1, creator.points);
-        
+
         await this.processRewardEvent({
           type: 'milestone_reached',
           userId: creator.userId,
@@ -366,8 +410,10 @@ export class CreatorRewardsService {
           },
         });
       }
-      
-      this.logger.log(`Processed monthly rewards for ${topCreators.length} creators`);
+
+      this.logger.log(
+        `Processed monthly rewards for ${topCreators.length} creators`,
+      );
     } catch (error) {
       this.logger.error('Error processing monthly rewards:', error);
     }
@@ -375,18 +421,18 @@ export class CreatorRewardsService {
 
   private calculatePlayPoints(submission: UserPuzzleSubmission): number {
     let points = 1; // Base point for each play
-    
+
     // Bonus points for highly-rated puzzles
     if (submission.averageRating >= 4.5) points += 2;
     else if (submission.averageRating >= 4.0) points += 1;
-    
+
     // Bonus points for featured puzzles
     if (submission.status === PuzzleSubmissionStatus.FEATURED) points += 3;
-    
+
     // Bonus points for difficult puzzles (encourages quality content)
     if (submission.difficulty === 'expert') points += 2;
     else if (submission.difficulty === 'hard') points += 1;
-    
+
     return Math.min(points, 10); // Cap at 10 points per play
   }
 
@@ -401,16 +447,16 @@ export class CreatorRewardsService {
   private calculateFeaturedPoints(submission: UserPuzzleSubmission): number {
     // Featured puzzles give significant points based on quality
     let points = 50; // Base points for being featured
-    
+
     // Bonus for high ratings
     if (submission.averageRating >= 4.5) points += 25;
     else if (submission.averageRating >= 4.0) points += 15;
-    
+
     // Bonus for high play count
     if (submission.playCount >= 1000) points += 25;
     else if (submission.playCount >= 500) points += 15;
     else if (submission.playCount >= 100) points += 5;
-    
+
     return points;
   }
 
@@ -425,7 +471,7 @@ export class CreatorRewardsService {
       link: 1,
       embed: 2,
     };
-    
+
     return platformPoints[platform] || 1;
   }
 
@@ -444,19 +490,19 @@ export class CreatorRewardsService {
   private calculatePointsFromStats(stats: any): number {
     // Approximate points calculation from puzzle statistics
     let points = 0;
-    
+
     // Points from plays (1 point per 10 plays)
     points += Math.floor((stats.totalPlays || 0) / 10);
-    
+
     // Points from ratings (5 points per 5-star rating)
     points += (stats.avgRating || 0) * (stats.puzzleCount || 0) * 5;
-    
+
     // Points from featured puzzles (50 points each)
     points += (stats.featuredCount || 0) * 50;
-    
+
     // Base points for having published puzzles
     points += (stats.publishedCount || 0) * 10;
-    
+
     return points;
   }
 
@@ -469,7 +515,10 @@ export class CreatorRewardsService {
     return this.creatorLevels[0];
   }
 
-  private async addPointsToCreator(userId: string, points: number): Promise<void> {
+  private async addPointsToCreator(
+    userId: string,
+    points: number,
+  ): Promise<void> {
     // In a real implementation, this would update a points/rewards table
     this.logger.log(`Added ${points} points to creator ${userId}`);
   }
@@ -480,52 +529,68 @@ export class CreatorRewardsService {
     const submissions = await this.submissionRepository.find({
       where: { userId },
     });
-    
+
     return this.calculatePointsFromStats({
       totalPlays: submissions.reduce((sum, s) => sum + s.playCount, 0),
-      avgRating: submissions.reduce((sum, s) => sum + s.averageRating, 0) / submissions.length || 0,
-      puzzleCount: submissions.filter(s => s.status === PuzzleSubmissionStatus.PUBLISHED).length,
-      featuredCount: submissions.filter(s => s.status === PuzzleSubmissionStatus.FEATURED).length,
+      avgRating:
+        submissions.reduce((sum, s) => sum + s.averageRating, 0) /
+          submissions.length || 0,
+      puzzleCount: submissions.filter(
+        (s) => s.status === PuzzleSubmissionStatus.PUBLISHED,
+      ).length,
+      featuredCount: submissions.filter(
+        (s) => s.status === PuzzleSubmissionStatus.FEATURED,
+      ).length,
     });
   }
 
-  private async checkLevelUp(userId: string, currentStats: CreatorStats): Promise<void> {
+  private async checkLevelUp(
+    userId: string,
+    currentStats: CreatorStats,
+  ): Promise<void> {
     const currentLevel = this.getCreatorLevel(currentStats.totalPoints);
-    
+
     if (currentStats.currentLevel < currentLevel.level) {
       // User leveled up!
       await this.processRewardEvent({
         type: 'milestone_reached',
         userId,
-        points: currentLevel.minPoints - this.creatorLevels[currentStats.currentLevel - 1]?.minPoints || 0,
+        points:
+          currentLevel.minPoints -
+            this.creatorLevels[currentStats.currentLevel - 1]?.minPoints || 0,
         metadata: {
           milestone: 'level_up',
           newLevel: currentLevel.level,
           newTitle: currentLevel.title,
         },
       });
-      
-      this.logger.log(`Creator ${userId} leveled up to ${currentLevel.title} (Level ${currentLevel.level})`);
+
+      this.logger.log(
+        `Creator ${userId} leveled up to ${currentLevel.title} (Level ${currentLevel.level})`,
+      );
     }
   }
 
-  private async checkAchievements(userId: string, event: RewardEvent): Promise<void> {
+  private async checkAchievements(
+    userId: string,
+    event: RewardEvent,
+  ): Promise<void> {
     const achievements: string[] = [];
-    
+
     // Check for various achievements based on events
     if (event.type === 'puzzle_play') {
       const totalPlays = await this.getTotalPlays(userId);
       if (totalPlays >= 1000) achievements.push('Puzzle Master - 1000 Plays');
       if (totalPlays >= 5000) achievements.push('Puzzle Legend - 5000 Plays');
     }
-    
+
     if (event.type === 'puzzle_featured') {
       const featuredCount = await this.getFeaturedCount(userId);
       if (featuredCount >= 1) achievements.push('Featured Creator');
       if (featuredCount >= 5) achievements.push('Star Creator');
       if (featuredCount >= 10) achievements.push('Superstar Creator');
     }
-    
+
     // Award achievement points
     for (const achievement of achievements) {
       await this.processRewardEvent({
@@ -540,13 +605,20 @@ export class CreatorRewardsService {
     }
   }
 
-  private async updateMonthlyEarnings(userId: string, points: number): Promise<void> {
+  private async updateMonthlyEarnings(
+    userId: string,
+    points: number,
+  ): Promise<void> {
     // In a real implementation, this would update monthly earnings in a rewards table
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-    this.logger.log(`Updated monthly earnings for ${userId}: +${points} points for ${currentMonth}`);
+    this.logger.log(
+      `Updated monthly earnings for ${userId}: +${points} points for ${currentMonth}`,
+    );
   }
 
-  private async getMonthlyEarnings(userId: string): Promise<Record<string, number>> {
+  private async getMonthlyEarnings(
+    userId: string,
+  ): Promise<Record<string, number>> {
     // In a real implementation, this would query the earnings table
     return {};
   }
@@ -560,7 +632,7 @@ export class CreatorRewardsService {
     const submissions = await this.submissionRepository.find({
       where: { userId, status: PuzzleSubmissionStatus.PUBLISHED },
     });
-    
+
     return submissions.reduce((sum, s) => sum + s.playCount, 0);
   }
 
@@ -568,7 +640,7 @@ export class CreatorRewardsService {
     const submissions = await this.submissionRepository.find({
       where: { userId, status: PuzzleSubmissionStatus.FEATURED },
     });
-    
+
     return submissions.length;
   }
 }

@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 import { DataDeletionService } from './data-deletion.service';
@@ -53,7 +57,10 @@ describe('DataDeletionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DataDeletionService,
-        { provide: getRepositoryToken(DataDeletionRequest), useValue: deletionRepo },
+        {
+          provide: getRepositoryToken(DataDeletionRequest),
+          useValue: deletionRepo,
+        },
         { provide: getRepositoryToken(PrivacySettings), useValue: privacyRepo },
         { provide: getRepositoryToken(DataAccessAudit), useValue: auditRepo },
         { provide: EventEmitter2, useValue: emitter },
@@ -95,7 +102,7 @@ describe('DataDeletionService', () => {
       expect(result.status).toBe(DeletionStatus.PENDING);
       // Grace period should be ~30 days out
       const diffDays =
-        (result.scheduledFor!.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+        (result.scheduledFor.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
       expect(diffDays).toBeGreaterThan(29);
       expect(diffDays).toBeLessThan(31);
     });
@@ -151,7 +158,12 @@ describe('DataDeletionService', () => {
 
     it('should revoke sessions (emit privacy.revoke_sessions) on deletion request', async () => {
       deletionRepo.findOne.mockResolvedValue(null);
-      const saved = { id: 'del-3', status: DeletionStatus.PENDING, scheduledFor: new Date(), confirmationToken: 'tok3' };
+      const saved = {
+        id: 'del-3',
+        status: DeletionStatus.PENDING,
+        scheduledFor: new Date(),
+        confirmationToken: 'tok3',
+      };
       deletionRepo.create.mockReturnValue(saved);
       deletionRepo.save.mockResolvedValue(saved);
       privacyRepo.update.mockResolvedValue({});
@@ -168,7 +180,12 @@ describe('DataDeletionService', () => {
 
     it('should create an audit log entry', async () => {
       deletionRepo.findOne.mockResolvedValue(null);
-      const saved = { id: 'del-audit', status: DeletionStatus.PENDING, scheduledFor: new Date(), confirmationToken: 'tok-a' };
+      const saved = {
+        id: 'del-audit',
+        status: DeletionStatus.PENDING,
+        scheduledFor: new Date(),
+        confirmationToken: 'tok-a',
+      };
       deletionRepo.create.mockReturnValue(saved);
       deletionRepo.save.mockResolvedValue(saved);
       privacyRepo.update.mockResolvedValue({});
@@ -212,7 +229,9 @@ describe('DataDeletionService', () => {
     it('should throw NotFoundException if no active request found', async () => {
       deletionRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.restoreAccount('user-3')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.restoreAccount('user-3')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('should reject restore if deletion is already PROCESSING', async () => {
@@ -221,7 +240,9 @@ describe('DataDeletionService', () => {
         status: DeletionStatus.PROCESSING,
       });
 
-      await expect(service.restoreAccount('user-4')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.restoreAccount('user-4')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('should reject restore if deletion is already COMPLETED', async () => {
@@ -230,11 +251,17 @@ describe('DataDeletionService', () => {
         status: DeletionStatus.COMPLETED,
       });
 
-      await expect(service.restoreAccount('user-5')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.restoreAccount('user-5')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('should emit privacy.deletion_cancelled on successful restore', async () => {
-      const active = { id: 'del-r', userId: 'u-emit', status: DeletionStatus.PENDING };
+      const active = {
+        id: 'del-r',
+        userId: 'u-emit',
+        status: DeletionStatus.PENDING,
+      };
       deletionRepo.findOne.mockResolvedValue(active);
       deletionRepo.save.mockResolvedValue({
         ...active,
@@ -270,11 +297,13 @@ describe('DataDeletionService', () => {
       deletionRepo.find.mockResolvedValue(due);
       deletionRepo.update.mockResolvedValue({});
       privacyRepo.update.mockResolvedValue({});
-      emitter.emitAsync.mockResolvedValue([{
-        entitiesProcessed: ['user', 'profile', 'sessions'],
-        recordsDeleted: 5,
-        recordsAnonymized: 3,
-      }]);
+      emitter.emitAsync.mockResolvedValue([
+        {
+          entitiesProcessed: ['user', 'profile', 'sessions'],
+          recordsDeleted: 5,
+          recordsAnonymized: 3,
+        },
+      ]);
 
       await service.processScheduledDeletions();
 
@@ -286,16 +315,23 @@ describe('DataDeletionService', () => {
 
     it('should update status to COMPLETED after successful cascade', async () => {
       const due = [
-        { id: 'del-complete', userId: 'u-comp', status: DeletionStatus.PENDING, entitiesToDelete: null },
+        {
+          id: 'del-complete',
+          userId: 'u-comp',
+          status: DeletionStatus.PENDING,
+          entitiesToDelete: null,
+        },
       ];
       deletionRepo.find.mockResolvedValue(due);
       deletionRepo.update.mockResolvedValue({});
       privacyRepo.update.mockResolvedValue({});
-      emitter.emitAsync.mockResolvedValue([{
-        entitiesProcessed: ['user'],
-        recordsDeleted: 1,
-        recordsAnonymized: 0,
-      }]);
+      emitter.emitAsync.mockResolvedValue([
+        {
+          entitiesProcessed: ['user'],
+          recordsDeleted: 1,
+          recordsAnonymized: 0,
+        },
+      ]);
 
       await service.processScheduledDeletions();
 
@@ -308,7 +344,12 @@ describe('DataDeletionService', () => {
 
     it('should mark FAILED on cascade error', async () => {
       const due = [
-        { id: 'del-fail', userId: 'u-fail', status: DeletionStatus.PENDING, entitiesToDelete: null },
+        {
+          id: 'del-fail',
+          userId: 'u-fail',
+          status: DeletionStatus.PENDING,
+          entitiesToDelete: null,
+        },
       ];
       deletionRepo.find.mockResolvedValue(due);
       deletionRepo.update.mockResolvedValue({});
@@ -333,11 +374,13 @@ describe('DataDeletionService', () => {
       ];
       deletionRepo.findAndCount.mockResolvedValue([requests, 2]);
 
-      const result = await service.listPendingDeletionRequests({ limit: 10, offset: 0 });
+      const result = await service.listPendingDeletionRequests({
+        limit: 10,
+        offset: 0,
+      });
 
       expect(result.requests).toHaveLength(2);
       expect(result.total).toBe(2);
     });
   });
 });
-

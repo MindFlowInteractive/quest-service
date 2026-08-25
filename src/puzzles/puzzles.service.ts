@@ -1,6 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, In, Between, IsNull, Not, Brackets } from 'typeorm';
+import {
+  Repository,
+  SelectQueryBuilder,
+  In,
+  Between,
+  IsNull,
+  Not,
+  Brackets,
+} from 'typeorm';
 import { Puzzle } from './entities/puzzle.entity';
 import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
@@ -14,7 +27,7 @@ import {
   BulkAction,
   SortBy,
   SortOrder,
-  PuzzleDifficulty
+  PuzzleDifficulty,
 } from './dto';
 
 export interface PuzzleWithStats {
@@ -89,9 +102,12 @@ export class PuzzlesService {
     private ratingRepository: Repository<PuzzleRating>,
     private readonly localizationService: LocalizationService,
     private readonly puzzleVersionService: PuzzleVersionService,
-  ) { }
+  ) {}
 
-  async create(createPuzzleDto: CreatePuzzleDto, createdBy: string): Promise<Puzzle> {
+  async create(
+    createPuzzleDto: CreatePuzzleDto,
+    createdBy: string,
+  ): Promise<Puzzle> {
     try {
       const puzzleData = {
         title: createPuzzleDto.title,
@@ -119,23 +135,28 @@ export class PuzzlesService {
             max: 0,
             median: 0,
             q1: 0,
-            q3: 0
-          }
+            q3: 0,
+          },
         },
         metadata: {
           version: '1.0',
           lastModifiedBy: createdBy,
-          reviewStatus: 'pending' as const
-        }
+          reviewStatus: 'pending' as const,
+        },
       };
 
       const puzzle = this.puzzleRepository.create(puzzleData);
       const savedPuzzle = await this.puzzleRepository.save(puzzle);
-      this.logger.log(`Created puzzle: ${savedPuzzle.id} by user: ${createdBy}`);
+      this.logger.log(
+        `Created puzzle: ${savedPuzzle.id} by user: ${createdBy}`,
+      );
 
       return savedPuzzle;
     } catch (error) {
-      this.logger.error(`Failed to create puzzle: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to create puzzle: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -155,7 +176,7 @@ export class PuzzlesService {
         page = 1,
         limit = 20,
         sortBy = SortBy.CREATED_AT,
-        sortOrder = SortOrder.DESC
+        sortOrder = SortOrder.DESC,
       } = searchDto;
 
       const queryBuilder = this.puzzleRepository
@@ -167,7 +188,7 @@ export class PuzzlesService {
       if (search) {
         queryBuilder.andWhere(
           '(puzzle.title ILIKE :search OR puzzle.description ILIKE :search)',
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -176,19 +197,27 @@ export class PuzzlesService {
       }
 
       if (difficulty) {
-        queryBuilder.andWhere('puzzle.difficulty = :difficulty', { difficulty });
+        queryBuilder.andWhere('puzzle.difficulty = :difficulty', {
+          difficulty,
+        });
       }
 
       if (minRating !== undefined) {
-        queryBuilder.andWhere('puzzle.difficultyRating >= :minRating', { minRating });
+        queryBuilder.andWhere('puzzle.difficultyRating >= :minRating', {
+          minRating,
+        });
       }
 
       if (maxRating !== undefined) {
-        queryBuilder.andWhere('puzzle.difficultyRating <= :maxRating', { maxRating });
+        queryBuilder.andWhere('puzzle.difficultyRating <= :maxRating', {
+          maxRating,
+        });
       }
 
       if (isFeatured !== undefined) {
-        queryBuilder.andWhere('puzzle.isFeatured = :isFeatured', { isFeatured });
+        queryBuilder.andWhere('puzzle.isFeatured = :isFeatured', {
+          isFeatured,
+        });
       }
 
       if (isPublished !== undefined) {
@@ -234,10 +263,13 @@ export class PuzzlesService {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      this.logger.error(`Failed to search puzzles: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to search puzzles: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -262,30 +294,47 @@ export class PuzzlesService {
       const [enhancedPuzzle] = await this.enhanceWithStats([puzzle]);
 
       // Translate title and description
-      enhancedPuzzle.title = await this.localizationService.translate(`puzzle-${puzzle.id}-title`, {
-        defaultValue: puzzle.title,
-      });
-      enhancedPuzzle.description = await this.localizationService.translate(`puzzle-${puzzle.id}-description`, {
-        defaultValue: puzzle.description,
-      });
+      enhancedPuzzle.title = await this.localizationService.translate(
+        `puzzle-${puzzle.id}-title`,
+        {
+          defaultValue: puzzle.title,
+        },
+      );
+      enhancedPuzzle.description = await this.localizationService.translate(
+        `puzzle-${puzzle.id}-description`,
+        {
+          defaultValue: puzzle.description,
+        },
+      );
 
       return enhancedPuzzle;
     } catch (error) {
-      this.logger.error(`Failed to find puzzle ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to find puzzle ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  async update(id: string, updatePuzzleDto: UpdatePuzzleDto, userId: string): Promise<PuzzleWithStats> {
+  async update(
+    id: string,
+    updatePuzzleDto: UpdatePuzzleDto,
+    userId: string,
+  ): Promise<PuzzleWithStats> {
     try {
       const puzzle = await this.findOne(id, userId);
 
       if (puzzle.createdBy !== userId) {
-        throw new BadRequestException('You can only update puzzles you created');
+        throw new BadRequestException(
+          'You can only update puzzles you created',
+        );
       }
 
       // ── Snapshot current state BEFORE applying changes ──────────────────
-      const puzzleEntity = await this.puzzleRepository.findOne({ where: { id } });
+      const puzzleEntity = await this.puzzleRepository.findOne({
+        where: { id },
+      });
       if (puzzleEntity) {
         await this.puzzleVersionService.snapshotBefore(
           puzzleEntity,
@@ -310,7 +359,10 @@ export class PuzzlesService {
 
       return updatedPuzzle;
     } catch (error) {
-      this.logger.error(`Failed to update puzzle ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update puzzle ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -320,18 +372,27 @@ export class PuzzlesService {
       const puzzle = await this.findOne(id, userId);
 
       if (puzzle.createdBy !== userId) {
-        throw new BadRequestException('You can only delete puzzles you created');
+        throw new BadRequestException(
+          'You can only delete puzzles you created',
+        );
       }
 
       await this.puzzleRepository.softDelete(id);
       this.logger.log(`Deleted puzzle: ${id}`);
     } catch (error) {
-      this.logger.error(`Failed to remove puzzle ${id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to remove puzzle ${id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  async bulkUpdate(puzzleIds: string[], bulkUpdateDto: BulkUpdateDto, userId: string): Promise<{ updated: number; errors: string[] }> {
+  async bulkUpdate(
+    puzzleIds: string[],
+    bulkUpdateDto: BulkUpdateDto,
+    userId: string,
+  ): Promise<{ updated: number; errors: string[] }> {
     const errors: string[] = [];
     let updated = 0;
 
@@ -345,7 +406,9 @@ export class PuzzlesService {
         }
       }
 
-      this.logger.log(`Bulk update completed: ${updated} updated, ${errors.length} errors`);
+      this.logger.log(
+        `Bulk update completed: ${updated} updated, ${errors.length} errors`,
+      );
       return { updated, errors };
     } catch (error) {
       this.logger.error(`Bulk update failed: ${error.message}`, error.stack);
@@ -355,21 +418,18 @@ export class PuzzlesService {
 
   async getAnalytics(period: string = 'all'): Promise<PuzzleAnalytics> {
     try {
-      const baseQuery = this.puzzleRepository.createQueryBuilder('puzzle')
+      const baseQuery = this.puzzleRepository
+        .createQueryBuilder('puzzle')
         .where('puzzle.deletedAt IS NULL');
 
-      const [
-        totalPuzzles,
-        publishedPuzzles,
-        topPuzzles
-      ] = await Promise.all([
+      const [totalPuzzles, publishedPuzzles, topPuzzles] = await Promise.all([
         baseQuery.getCount(),
         baseQuery.clone().andWhere('puzzle.publishedAt IS NOT NULL').getCount(),
         this.puzzleRepository.find({
           where: { deletedAt: IsNull(), publishedAt: Not(IsNull()) },
           order: { completions: 'DESC' },
-          take: 10
-        })
+          take: 10,
+        }),
       ]);
 
       return {
@@ -382,33 +442,39 @@ export class PuzzlesService {
         recentActivity: {
           created: 0,
           published: 0,
-          played: 0
-        }
+          played: 0,
+        },
       };
     } catch (error) {
-      this.logger.error(`Failed to get analytics: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to get analytics: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  async getRecommendations(userId: string, limit: number = 5): Promise<PuzzleWithStats[]> {
+  async getRecommendations(
+    userId: string,
+    limit: number = 5,
+  ): Promise<PuzzleWithStats[]> {
     try {
       // 1. Get user's top rated puzzles
       const topRatings = await this.ratingRepository.find({
         where: { userId, rating: Between(4, 5) },
         relations: ['puzzle'],
         take: 10,
-        order: { createdAt: 'DESC' }
+        order: { createdAt: 'DESC' },
       });
 
       if (topRatings.length === 0) {
         // Fallback to trending/popular puzzles
-        const trending = await this.findAll({ 
-            limit, 
-            sortBy: SortBy.PLAYS, 
-            sortOrder: SortOrder.DESC,
-            isPublished: true 
-        } as SearchPuzzleDto);
+        const trending = await this.findAll({
+          limit,
+          sortBy: SortBy.PLAYS,
+          sortOrder: SortOrder.DESC,
+          isPublished: true,
+        });
         return trending.puzzles;
       }
 
@@ -417,37 +483,54 @@ export class PuzzlesService {
       const tags = new Set<string>();
       const playedPuzzleIds = new Set<string>();
 
-      topRatings.forEach(r => {
+      topRatings.forEach((r) => {
         if (r.puzzle) {
-            categories.add(r.puzzle.category);
-            r.puzzle.tags.forEach(t => tags.add(t));
-            playedPuzzleIds.add(r.puzzle.id);
+          categories.add(r.puzzle.category);
+          r.puzzle.tags.forEach((t) => tags.add(t));
+          playedPuzzleIds.add(r.puzzle.id);
         }
       });
 
       // 3. Find similar puzzles
-      const queryBuilder = this.puzzleRepository.createQueryBuilder('puzzle')
+      const queryBuilder = this.puzzleRepository
+        .createQueryBuilder('puzzle')
         .where('puzzle.deletedAt IS NULL')
         .andWhere('puzzle.publishedAt IS NOT NULL')
-        .andWhere('puzzle.id NOT IN (:...playedIds)', { playedIds: Array.from(playedPuzzleIds).length > 0 ? Array.from(playedPuzzleIds) : ['00000000-0000-0000-0000-000000000000'] })
-        .andWhere(new Brackets(qb => {
+        .andWhere('puzzle.id NOT IN (:...playedIds)', {
+          playedIds:
+            Array.from(playedPuzzleIds).length > 0
+              ? Array.from(playedPuzzleIds)
+              : ['00000000-0000-0000-0000-000000000000'],
+        })
+        .andWhere(
+          new Brackets((qb) => {
             if (categories.size > 0) {
-                qb.where('puzzle.category IN (:...categories)', { categories: Array.from(categories) });
+              qb.where('puzzle.category IN (:...categories)', {
+                categories: Array.from(categories),
+              });
             }
-        }))
+          }),
+        )
         .orderBy('puzzle.averageRating', 'DESC')
         .take(limit);
 
       const puzzles = await queryBuilder.getMany();
       return this.enhanceWithStats(puzzles);
     } catch (error) {
-      this.logger.error(`Failed to get recommendations: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to get recommendations: ${error.message}`,
+        error.stack,
+      );
       return [];
     }
   }
 
   // Private helper methods
-  private applySorting(queryBuilder: SelectQueryBuilder<Puzzle>, sortBy: SortBy, sortOrder: SortOrder): void {
+  private applySorting(
+    queryBuilder: SelectQueryBuilder<Puzzle>,
+    sortBy: SortBy,
+    sortOrder: SortOrder,
+  ): void {
     switch (sortBy) {
       case SortBy.TITLE:
         queryBuilder.orderBy('puzzle.title', sortOrder);
@@ -472,32 +555,53 @@ export class PuzzlesService {
     }
   }
 
-  private async enhanceWithStats(puzzles: Puzzle[]): Promise<PuzzleWithStats[]> {
-    return Promise.all(puzzles.map(async puzzle => ({
-      ...puzzle,
-      title: await this.localizationService.translate(`puzzle-${puzzle.id}-title`, {
-        defaultValue: puzzle.title,
-      }),
-      description: await this.localizationService.translate(`puzzle-${puzzle.id}-description`, {
-        defaultValue: puzzle.description,
-      }),
-      totalPlays: puzzle.attempts,
-      uniquePlayers: 0,
-      completionRate: puzzle.attempts > 0 ? (puzzle.completions / puzzle.attempts) * 100 : 0,
-      averageRating: puzzle.averageRating,
-      averageCompletionTime: puzzle.averageCompletionTime
-    })));
+  private async enhanceWithStats(
+    puzzles: Puzzle[],
+  ): Promise<PuzzleWithStats[]> {
+    return Promise.all(
+      puzzles.map(async (puzzle) => ({
+        ...puzzle,
+        title: await this.localizationService.translate(
+          `puzzle-${puzzle.id}-title`,
+          {
+            defaultValue: puzzle.title,
+          },
+        ),
+        description: await this.localizationService.translate(
+          `puzzle-${puzzle.id}-description`,
+          {
+            defaultValue: puzzle.description,
+          },
+        ),
+        totalPlays: puzzle.attempts,
+        uniquePlayers: 0,
+        completionRate:
+          puzzle.attempts > 0
+            ? (puzzle.completions / puzzle.attempts) * 100
+            : 0,
+        averageRating: puzzle.averageRating,
+        averageCompletionTime: puzzle.averageCompletionTime,
+      })),
+    );
   }
 
-  private async executeBulkAction(puzzleId: string, bulkUpdateDto: BulkUpdateDto, userId: string): Promise<void> {
+  private async executeBulkAction(
+    puzzleId: string,
+    bulkUpdateDto: BulkUpdateDto,
+    userId: string,
+  ): Promise<void> {
     const { action, value } = bulkUpdateDto;
 
     switch (action) {
       case BulkAction.PUBLISH:
-        await this.puzzleRepository.update(puzzleId, { publishedAt: new Date() });
+        await this.puzzleRepository.update(puzzleId, {
+          publishedAt: new Date(),
+        });
         break;
       case BulkAction.UNPUBLISH:
-        await this.puzzleRepository.update(puzzleId, { publishedAt: undefined });
+        await this.puzzleRepository.update(puzzleId, {
+          publishedAt: undefined,
+        });
         break;
       case BulkAction.ARCHIVE:
         await this.puzzleRepository.softDelete(puzzleId);

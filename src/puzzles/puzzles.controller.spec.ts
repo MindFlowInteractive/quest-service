@@ -9,7 +9,10 @@ describe('PuzzlesController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PuzzlesController],
       providers: [
-        { provide: PuzzlesService, useValue: { findAll: jest.fn(), findOne: jest.fn() } }
+        {
+          provide: PuzzlesService,
+          useValue: { findAll: jest.fn(), findOne: jest.fn() },
+        },
       ],
     }).compile();
 

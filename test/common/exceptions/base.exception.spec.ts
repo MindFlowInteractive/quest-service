@@ -1,6 +1,14 @@
 import { HttpStatus } from '@nestjs/common';
-import { BaseException, DomainException, InfrastructureException } from '../../../src/common/exceptions/base.exception';
-import { ERROR_CODES, ErrorSeverity, ErrorCategory } from '../../../src/common/exceptions/error-codes';
+import {
+  BaseException,
+  DomainException,
+  InfrastructureException,
+} from '../../../src/common/exceptions/base.exception';
+import {
+  ERROR_CODES,
+  ErrorSeverity,
+  ErrorCategory,
+} from '../../../src/common/exceptions/error-codes';
 
 describe('BaseException', () => {
   describe('BaseException class', () => {
@@ -29,7 +37,7 @@ describe('BaseException', () => {
     it('should create a BaseException with custom options', () => {
       const details = { field: 'email', reason: 'invalid format' };
       const cause = new Error('Original error');
-      
+
       const error = new BaseException(
         ERROR_CODES.VALIDATION_ERROR,
         'Custom error',
@@ -67,7 +75,7 @@ describe('BaseException', () => {
       );
 
       const json = error.toJSON();
-      
+
       expect(json).toMatchObject({
         name: 'BaseException',
         errorCode: ERROR_CODES.VALIDATION_ERROR,
@@ -97,7 +105,7 @@ describe('BaseException', () => {
       );
 
       const httpResponse = error.toHttpResponse('/api/test');
-      
+
       expect(httpResponse).toEqual({
         code: HttpStatus.BAD_REQUEST,
         message: 'Test error',
@@ -117,21 +125,21 @@ describe('BaseException', () => {
         HttpStatus.BAD_REQUEST,
         { severity: ErrorSeverity.LOW },
       );
-      
+
       const mediumSeverityError = new BaseException(
         ERROR_CODES.VALIDATION_ERROR,
         'Medium',
         HttpStatus.BAD_REQUEST,
         { severity: ErrorSeverity.MEDIUM },
       );
-      
+
       const highSeverityError = new BaseException(
         ERROR_CODES.VALIDATION_ERROR,
         'High',
         HttpStatus.BAD_REQUEST,
         { severity: ErrorSeverity.HIGH },
       );
-      
+
       const criticalSeverityError = new BaseException(
         ERROR_CODES.VALIDATION_ERROR,
         'Critical',

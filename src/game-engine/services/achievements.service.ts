@@ -543,7 +543,7 @@ export class AchievementsService {
 
       case 'custom':
         return this.evaluateCustomCondition(
-          condition!,
+          condition,
           puzzle,
           performance,
           playerStats,

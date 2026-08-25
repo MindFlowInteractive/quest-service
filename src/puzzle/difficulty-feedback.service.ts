@@ -7,7 +7,11 @@ import { DifficultyFeedback } from './difficulty-feedback.entity';
 export class DifficultyFeedbackService {
   constructor(private readonly repo: Repository<DifficultyFeedback>) {}
 
-  async submitFeedback(puzzleId: string, playerId: string, rating: 'too_easy' | 'just_right' | 'too_hard') {
+  async submitFeedback(
+    puzzleId: string,
+    playerId: string,
+    rating: 'too_easy' | 'just_right' | 'too_hard',
+  ) {
     const existing = await this.repo.findOne({ where: { puzzleId, playerId } });
     if (existing) throw new Error('Duplicate feedback not allowed');
 
@@ -18,10 +22,10 @@ export class DifficultyFeedbackService {
   async getSummary(puzzleId: string) {
     const feedbacks = await this.repo.find({ where: { puzzleId } });
     const counts = { too_easy: 0, just_right: 0, too_hard: 0 };
-    feedbacks.forEach(f => counts[f.rating]++);
+    feedbacks.forEach((f) => counts[f.rating]++);
 
     const total = feedbacks.length;
-    const sentimentScore = total > 0 ? (counts.just_right / total) : 0;
+    const sentimentScore = total > 0 ? counts.just_right / total : 0;
 
     return { counts, sentimentScore };
   }

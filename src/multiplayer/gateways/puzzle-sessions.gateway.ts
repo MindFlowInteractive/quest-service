@@ -109,11 +109,13 @@ export class PuzzleSessionsGateway
   ) {
     const userId = this.requireUser(client);
     try {
-      const state = await this.sessionService.updatePartialSolution(dto, userId);
-      this.server.to(this.room(dto.sessionId)).emit(
-        'puzzle:solution-updated',
-        { userId, state },
+      const state = await this.sessionService.updatePartialSolution(
+        dto,
+        userId,
       );
+      this.server
+        .to(this.room(dto.sessionId))
+        .emit('puzzle:solution-updated', { userId, state });
       return { event: 'puzzle:solution-updated', data: state };
     } catch (error) {
       throw this.toWsException(error);
@@ -129,10 +131,7 @@ export class PuzzleSessionsGateway
     try {
       const result = await this.sessionService.submitSolution(dto, userId);
 
-      this.server.to(this.room(dto.sessionId)).emit(
-        'puzzle:state',
-        result,
-      );
+      this.server.to(this.room(dto.sessionId)).emit('puzzle:state', result);
 
       return { event: 'puzzle:state', data: result };
     } catch (error) {
@@ -176,6 +175,8 @@ export class PuzzleSessionsGateway
 
   private toWsException(error: any) {
     if (error instanceof WsException) return error;
-    return new WsException(error?.response ?? error?.message ?? 'Request failed');
+    return new WsException(
+      error?.response ?? error?.message ?? 'Request failed',
+    );
   }
 }

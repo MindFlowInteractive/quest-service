@@ -1,6 +1,6 @@
 /**
  * Performance Testing Script for Recommendation System
- * 
+ *
  * Tests the performance of recommendation generation under various loads
  */
 
@@ -26,17 +26,25 @@ async function runPerformanceTests() {
 
   // Test 1: Single user recommendation performance
   console.log('📊 Test 1: Single User Recommendation Performance');
-  const singleUserMetrics = await testSingleUserPerformance(recommendationEngine);
+  const singleUserMetrics = await testSingleUserPerformance(
+    recommendationEngine,
+  );
   console.log('Results:', singleUserMetrics);
 
   // Test 2: Concurrent user recommendations
   console.log('\n📊 Test 2: Concurrent User Recommendations (10 users)');
-  const concurrentMetrics = await testConcurrentRecommendations(recommendationEngine, 10);
+  const concurrentMetrics = await testConcurrentRecommendations(
+    recommendationEngine,
+    10,
+  );
   console.log('Results:', concurrentMetrics);
 
   // Test 3: High load test
   console.log('\n📊 Test 3: High Load Test (50 concurrent users)');
-  const highLoadMetrics = await testConcurrentRecommendations(recommendationEngine, 50);
+  const highLoadMetrics = await testConcurrentRecommendations(
+    recommendationEngine,
+    50,
+  );
   console.log('Results:', highLoadMetrics);
 
   // Test 4: Algorithm comparison performance
@@ -49,7 +57,7 @@ async function runPerformanceTests() {
 
 async function testSingleUserPerformance(
   service: RecommendationEngineService,
-  iterations: number = 100
+  iterations: number = 100,
 ): Promise<PerformanceMetrics> {
   const responseTimes: number[] = [];
   let successCount = 0;
@@ -59,7 +67,7 @@ async function testSingleUserPerformance(
 
   for (let i = 0; i < iterations; i++) {
     const requestStart = Date.now();
-    
+
     try {
       await service.generateRecommendations(`test-user-${i}`, 10);
       const responseTime = Date.now() - requestStart;
@@ -72,7 +80,8 @@ async function testSingleUserPerformance(
   }
 
   const totalTime = Date.now() - startTime;
-  const averageResponseTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+  const averageResponseTime =
+    responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
 
   return {
     totalRequests: iterations,
@@ -87,7 +96,7 @@ async function testSingleUserPerformance(
 
 async function testConcurrentRecommendations(
   service: RecommendationEngineService,
-  concurrentUsers: number
+  concurrentUsers: number,
 ): Promise<PerformanceMetrics> {
   const promises: Promise<number>[] = [];
   const startTime = Date.now();
@@ -103,10 +112,12 @@ async function testConcurrentRecommendations(
   const totalTime = Date.now() - startTime;
 
   const successfulResults = results
-    .filter(result => result.status === 'fulfilled')
-    .map(result => (result as PromiseFulfilledResult<number>).value);
+    .filter((result) => result.status === 'fulfilled')
+    .map((result) => result.value);
 
-  const failedCount = results.filter(result => result.status === 'rejected').length;
+  const failedCount = results.filter(
+    (result) => result.status === 'rejected',
+  ).length;
 
   if (successfulResults.length === 0) {
     return {
@@ -120,7 +131,8 @@ async function testConcurrentRecommendations(
     };
   }
 
-  const averageResponseTime = successfulResults.reduce((a, b) => a + b, 0) / successfulResults.length;
+  const averageResponseTime =
+    successfulResults.reduce((a, b) => a + b, 0) / successfulResults.length;
 
   return {
     totalRequests: concurrentUsers,
@@ -129,13 +141,15 @@ async function testConcurrentRecommendations(
     averageResponseTime: Math.round(averageResponseTime),
     minResponseTime: Math.min(...successfulResults),
     maxResponseTime: Math.max(...successfulResults),
-    requestsPerSecond: Math.round((successfulResults.length / totalTime) * 1000),
+    requestsPerSecond: Math.round(
+      (successfulResults.length / totalTime) * 1000,
+    ),
   };
 }
 
 async function measureRecommendationTime(
   service: RecommendationEngineService,
-  userId: string
+  userId: string,
 ): Promise<number> {
   const startTime = Date.now();
   await service.generateRecommendations(userId, 10);
@@ -143,29 +157,44 @@ async function measureRecommendationTime(
 }
 
 async function testAlgorithmPerformance(service: RecommendationEngineService) {
-  const algorithms = ['collaborative', 'content-based', 'hybrid', 'popular'] as const;
+  const algorithms = [
+    'collaborative',
+    'content-based',
+    'hybrid',
+    'popular',
+  ] as const;
   const userId = 'performance-test-user';
 
   console.log('Algorithm Performance Comparison:');
-  
+
   for (const algorithm of algorithms) {
     const times: number[] = [];
-    
+
     // Test each algorithm 10 times
     for (let i = 0; i < 10; i++) {
       const startTime = Date.now();
-      
+
       try {
-        await service.generateRecommendations(userId, 10, undefined, undefined, algorithm);
+        await service.generateRecommendations(
+          userId,
+          10,
+          undefined,
+          undefined,
+          algorithm,
+        );
         times.push(Date.now() - startTime);
       } catch (error) {
         console.log(`${algorithm} algorithm failed:`, error.message);
       }
     }
-    
+
     if (times.length > 0) {
       const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
-      console.log(`  ${algorithm}: ${Math.round(avgTime)}ms average (${times.length}/10 successful)`);
+      console.log(
+        `  ${algorithm}: ${Math.round(avgTime)}ms average (${
+          times.length
+        }/10 successful)`,
+      );
     } else {
       console.log(`  ${algorithm}: All requests failed`);
     }
@@ -191,4 +220,8 @@ if ((require as any).main === module) {
     .catch(console.error);
 }
 
-export { runPerformanceTests, testSingleUserPerformance, testConcurrentRecommendations };
+export {
+  runPerformanceTests,
+  testSingleUserPerformance,
+  testConcurrentRecommendations,
+};

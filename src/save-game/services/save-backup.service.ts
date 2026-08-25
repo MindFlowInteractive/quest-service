@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { SaveGame } from '../entities/save-game.entity';
-import { SaveGameBackup, BackupReason } from '../entities/save-game-backup.entity';
+import {
+  SaveGameBackup,
+  BackupReason,
+} from '../entities/save-game-backup.entity';
 import { SaveCompressionService } from './save-compression.service';
 import { SaveEncryptionService } from './save-encryption.service';
 import { SaveType } from '../interfaces/save-game.interfaces';
@@ -43,7 +46,9 @@ export class SaveBackupService {
     expiresAt.setDate(expiresAt.getDate() + retentionDays);
 
     // Calculate checksum of compressed data
-    const checksum = this.encryptionService.generateChecksum(saveGame.compressedData);
+    const checksum = this.encryptionService.generateChecksum(
+      saveGame.compressedData,
+    );
 
     const backup = this.backupRepo.create({
       saveGameId: saveGame.id,
@@ -100,7 +105,9 @@ export class SaveBackupService {
     }
 
     // Verify checksum
-    const currentChecksum = this.encryptionService.generateChecksum(backup.compressedData);
+    const currentChecksum = this.encryptionService.generateChecksum(
+      backup.compressedData,
+    );
     if (currentChecksum !== backup.checksum) {
       throw new Error('Backup data corrupted - checksum mismatch');
     }
@@ -147,7 +154,10 @@ export class SaveBackupService {
     }
   }
 
-  private async cleanupOldBackups(userId: string, slotId: number): Promise<void> {
+  private async cleanupOldBackups(
+    userId: string,
+    slotId: number,
+  ): Promise<void> {
     // Get backups for this slot, ordered by creation date
     const backups = await this.backupRepo.find({
       where: { userId, slotId },

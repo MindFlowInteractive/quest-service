@@ -29,7 +29,10 @@ export class UserCollectionProgressService {
     });
   }
 
-  async findOneForUser(userId: string, collectionId: string): Promise<UserCollectionProgress> {
+  async findOneForUser(
+    userId: string,
+    collectionId: string,
+  ): Promise<UserCollectionProgress> {
     // Ensure user and collection exist
     await this.userRepository.findOneByOrFail({ id: userId });
     await this.collectionsRepository.findOneByOrFail({ id: collectionId });
@@ -45,7 +48,9 @@ export class UserCollectionProgressService {
       // For now, let's return null if not found, and let the controllers handle display.
       // Or, we can create it implicitly here if needed:
       // return this.createInitialProgress(userId, collectionId);
-      throw new NotFoundException(`User progress for collection "${collectionId}" not found for user "${userId}"`);
+      throw new NotFoundException(
+        `User progress for collection "${collectionId}" not found for user "${userId}"`,
+      );
     }
     return progress;
   }
@@ -56,14 +61,21 @@ export class UserCollectionProgressService {
    * Initializes a new progress record for a user and collection when they start it.
    * This might be called implicitly when a user interacts with a collection for the first time.
    */
-  async createInitialProgress(userId: string, collectionId: string): Promise<UserCollectionProgress> {
-    const existingProgress = await this.userProgressRepository.findOne({ where: { userId, collectionId } });
+  async createInitialProgress(
+    userId: string,
+    collectionId: string,
+  ): Promise<UserCollectionProgress> {
+    const existingProgress = await this.userProgressRepository.findOne({
+      where: { userId, collectionId },
+    });
     if (existingProgress) {
       return existingProgress; // Return existing if already started
     }
 
     const user = await this.userRepository.findOneByOrFail({ id: userId });
-    const collection = await this.collectionsRepository.findOneByOrFail({ id: collectionId });
+    const collection = await this.collectionsRepository.findOneByOrFail({
+      id: collectionId,
+    });
 
     // Load puzzles associated with the collection
     const collectionWithPuzzles = await this.collectionsRepository.findOne({
@@ -88,7 +100,10 @@ export class UserCollectionProgressService {
    * Updates the user's progress for a specific collection when a puzzle is completed.
    * This is the crucial method that should be called by a puzzle completion handler.
    */
-  async updateProgressOnPuzzleCompletion(userId: string, puzzleId: string): Promise<UserCollectionProgress | null> {
+  async updateProgressOnPuzzleCompletion(
+    userId: string,
+    puzzleId: string,
+  ): Promise<UserCollectionProgress | null> {
     // Find all collections this puzzle belongs to
     const collections = await this.collectionsRepository.find({
       where: { puzzles: { id: puzzleId } }, // Find collections where this puzzle is associated
@@ -120,16 +135,22 @@ export class UserCollectionProgressService {
       }
 
       // Check if this puzzle is already marked as completed for this progress record
-      const isAlreadyCompleted = progress.completedPuzzles.some(p => p.id === puzzleId);
+      const isAlreadyCompleted = progress.completedPuzzles.some(
+        (p) => p.id === puzzleId,
+      );
 
       if (!isAlreadyCompleted) {
         // Add the puzzle to the completed list
-        progress.completedPuzzles.push(await this.puzzlesRepository.findOneByOrFail({ id: puzzleId }));
+        progress.completedPuzzles.push(
+          await this.puzzlesRepository.findOneByOrFail({ id: puzzleId }),
+        );
 
         // Recalculate completion percentage
         const totalPuzzlesInCollection = collection.puzzles.length;
         const completedCount = progress.completedPuzzles.length;
-        progress.percentageComplete = Math.round((completedCount / totalPuzzlesInCollection) * 100);
+        progress.percentageComplete = Math.round(
+          (completedCount / totalPuzzlesInCollection) * 100,
+        );
         progress.isCompleted = progress.percentageComplete === 100;
 
         // Save the updated progress

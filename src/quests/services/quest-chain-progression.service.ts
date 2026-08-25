@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -20,7 +25,10 @@ export class QuestChainProgressionService {
     private readonly questChainRepository: Repository<QuestChain>,
   ) {}
 
-  async startChain(userId: string, chainId: string): Promise<UserQuestChainProgress> {
+  async startChain(
+    userId: string,
+    chainId: string,
+  ): Promise<UserQuestChainProgress> {
     // Check if user already has progress for this chain
     const existingProgress = await this.userProgressRepository.findOne({
       where: { userId, questChainId: chainId },
@@ -48,25 +56,35 @@ export class QuestChainProgressionService {
 
       return await this.userProgressRepository.save(progress);
     } catch (error) {
-      throw new BadRequestException(`Failed to start quest chain: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to start quest chain: ${error.message}`,
+      );
     }
   }
 
-  async getProgress(userId: string, chainId: string): Promise<UserQuestChainProgress> {
+  async getProgress(
+    userId: string,
+    chainId: string,
+  ): Promise<UserQuestChainProgress> {
     const progress = await this.userProgressRepository.findOne({
       where: { userId, questChainId: chainId },
     });
 
     if (!progress) {
-      throw new NotFoundException('User progress not found for this quest chain');
+      throw new NotFoundException(
+        'User progress not found for this quest chain',
+      );
     }
 
     return progress;
   }
 
-  async getNextPuzzle(userId: string, chainId: string): Promise<{ puzzle: any; chainPuzzle: QuestChainPuzzle } | null> {
+  async getNextPuzzle(
+    userId: string,
+    chainId: string,
+  ): Promise<{ puzzle: any; chainPuzzle: QuestChainPuzzle } | null> {
     const progress = await this.getProgress(userId, chainId);
-    
+
     if (progress.status === 'completed') {
       return null;
     }
@@ -79,8 +97,10 @@ export class QuestChainProgressionService {
 
     // Find the next puzzle that hasn't been completed and meets unlock conditions
     for (const chainPuzzle of chainPuzzles) {
-      const isCompleted = progress.completedPuzzleIds.includes(chainPuzzle.puzzleId);
-      
+      const isCompleted = progress.completedPuzzleIds.includes(
+        chainPuzzle.puzzleId,
+      );
+
       if (!isCompleted && this.checkUnlockConditions(chainPuzzle, progress)) {
         return {
           puzzle: chainPuzzle.puzzle,
@@ -93,10 +113,10 @@ export class QuestChainProgressionService {
   }
 
   async completePuzzle(
-    userId: string, 
-    chainId: string, 
-    puzzleId: string, 
-    completionData: PuzzleCompletionDto
+    userId: string,
+    chainId: string,
+    puzzleId: string,
+    completionData: PuzzleCompletionDto,
   ): Promise<UserQuestChainProgress> {
     const progress = await this.getProgress(userId, chainId);
     const chainPuzzle = await this.questChainPuzzleRepository.findOne({
@@ -115,13 +135,18 @@ export class QuestChainProgressionService {
 
     // Check unlock conditions
     if (!this.checkUnlockConditions(chainPuzzle, progress)) {
-      throw new BadRequestException('Unlock conditions not met for this puzzle');
+      throw new BadRequestException(
+        'Unlock conditions not met for this puzzle',
+      );
     }
 
     try {
       // Update progress
       progress.completedPuzzleIds = [...progress.completedPuzzleIds, puzzleId];
-      progress.currentPuzzleIndex = Math.max(progress.currentPuzzleIndex, chainPuzzle.sequenceOrder);
+      progress.currentPuzzleIndex = Math.max(
+        progress.currentPuzzleIndex,
+        chainPuzzle.sequenceOrder,
+      );
       progress.totalScore += completionData.score;
       progress.totalTime += completionData.timeTaken;
       progress.totalHintsUsed += completionData.hintsUsed;
@@ -135,13 +160,16 @@ export class QuestChainProgressionService {
           timeTaken: completionData.timeTaken,
           hintsUsed: completionData.hintsUsed,
         };
-        
+
         // Award checkpoint rewards
         await this.awardCheckpointRewards(userId, chainPuzzle);
       }
 
       // Evaluate branching conditions and update path
-      const nextPuzzleId = this.evaluateBranchConditions(chainPuzzle, completionData);
+      const nextPuzzleId = this.evaluateBranchConditions(
+        chainPuzzle,
+        completionData,
+      );
       if (nextPuzzleId) {
         progress.branchPath[chainPuzzle.id] = nextPuzzleId;
       }
@@ -151,40 +179,52 @@ export class QuestChainProgressionService {
         where: { questChainId: chainId },
       });
 
-      const allPuzzlesCompleted = chainPuzzles.every(cp => 
-        progress.completedPuzzleIds.includes(cp.puzzleId)
+      const allPuzzlesCompleted = chainPuzzles.every((cp) =>
+        progress.completedPuzzleIds.includes(cp.puzzleId),
       );
 
       if (allPuzzlesCompleted) {
         progress.status = 'completed';
         progress.completedAt = new Date();
-        
+
         // Award completion rewards
         await this.awardCompletionRewards(userId, chainId);
-        
+
         // Update chain completion count
         await this.incrementChainCompletionCount(chainId);
       }
 
       return await this.userProgressRepository.save(progress);
     } catch (error) {
-      throw new BadRequestException(`Failed to complete puzzle: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to complete puzzle: ${error.message}`,
+      );
     }
   }
 
-  private async awardCheckpointRewards(userId: string, chainPuzzle: QuestChainPuzzle): Promise<void> {
+  private async awardCheckpointRewards(
+    userId: string,
+    chainPuzzle: QuestChainPuzzle,
+  ): Promise<void> {
     const rewards = chainPuzzle.checkpointRewards;
     if (!rewards) return;
 
     // This would typically integrate with the economy/reward system
     // For now, we'll log the reward distribution
-    this.logger.log(`Awarding checkpoint rewards to user ${userId}: XP=${rewards.xp}, Coins=${rewards.coins}, Items=${rewards.items.join(',')}`);
-    
+    this.logger.log(
+      `Awarding checkpoint rewards to user ${userId}: XP=${rewards.xp}, Coins=${
+        rewards.coins
+      }, Items=${rewards.items.join(',')}`,
+    );
+
     // In a real implementation, you would call the reward service here
     // await this.rewardService.awardRewards(userId, rewards);
   }
 
-  private async awardCompletionRewards(userId: string, chainId: string): Promise<void> {
+  private async awardCompletionRewards(
+    userId: string,
+    chainId: string,
+  ): Promise<void> {
     const chain = await this.questChainRepository.findOne({
       where: { id: chainId },
       relations: ['chainPuzzles'],
@@ -193,17 +233,23 @@ export class QuestChainProgressionService {
     if (!chain || !chain.rewards) return;
 
     const completionRewards = chain.rewards.completion;
-    
+
     // Award milestone rewards
     if (chain.rewards.milestones) {
       const chainPuzzles = await this.questChainPuzzleRepository.find({
         where: { questChainId: chainId },
       });
-      
+
       for (const milestone of chain.rewards.milestones) {
         if (chainPuzzles.length >= milestone.puzzleIndex) {
-          this.logger.log(`Awarding milestone rewards to user ${userId} for reaching puzzle ${milestone.puzzleIndex}: XP=${milestone.rewards.xp}, Coins=${milestone.rewards.coins}, Items=${milestone.rewards.items.join(',')}`);
-          
+          this.logger.log(
+            `Awarding milestone rewards to user ${userId} for reaching puzzle ${
+              milestone.puzzleIndex
+            }: XP=${milestone.rewards.xp}, Coins=${
+              milestone.rewards.coins
+            }, Items=${milestone.rewards.items.join(',')}`,
+          );
+
           // In a real implementation, you would call the reward service here
           // await this.rewardService.awardRewards(userId, milestone.rewards);
         }
@@ -212,8 +258,14 @@ export class QuestChainProgressionService {
 
     // Award completion rewards
     if (completionRewards) {
-      this.logger.log(`Awarding completion rewards to user ${userId} for chain ${chainId}: XP=${completionRewards.xp}, Coins=${completionRewards.coins}, Items=${completionRewards.items.join(',')}`);
-      
+      this.logger.log(
+        `Awarding completion rewards to user ${userId} for chain ${chainId}: XP=${
+          completionRewards.xp
+        }, Coins=${
+          completionRewards.coins
+        }, Items=${completionRewards.items.join(',')}`,
+      );
+
       // In a real implementation, you would call the reward service here
       // await this.rewardService.awardRewards(userId, completionRewards);
     }
@@ -230,26 +282,35 @@ export class QuestChainProgressionService {
       .execute();
   }
 
-  checkUnlockConditions(chainPuzzle: QuestChainPuzzle, userProgress: UserQuestChainProgress): boolean {
+  checkUnlockConditions(
+    chainPuzzle: QuestChainPuzzle,
+    userProgress: UserQuestChainProgress,
+  ): boolean {
     const { unlockConditions } = chainPuzzle;
-    
+
     if (!unlockConditions) return true;
 
     // Check previous puzzles completed
     if (unlockConditions.previousPuzzles) {
-      const allPreviousCompleted = unlockConditions.previousPuzzles.every(puzzleId =>
-        userProgress.completedPuzzleIds.includes(puzzleId)
+      const allPreviousCompleted = unlockConditions.previousPuzzles.every(
+        (puzzleId) => userProgress.completedPuzzleIds.includes(puzzleId),
       );
       if (!allPreviousCompleted) return false;
     }
 
     // Check minimum score
-    if (unlockConditions.minimumScore && userProgress.totalScore < unlockConditions.minimumScore) {
+    if (
+      unlockConditions.minimumScore &&
+      userProgress.totalScore < unlockConditions.minimumScore
+    ) {
       return false;
     }
 
     // Check time limit (cumulative)
-    if (unlockConditions.timeLimit && userProgress.totalTime > unlockConditions.timeLimit) {
+    if (
+      unlockConditions.timeLimit &&
+      userProgress.totalTime > unlockConditions.timeLimit
+    ) {
       return false;
     }
 
@@ -261,16 +322,19 @@ export class QuestChainProgressionService {
     return true;
   }
 
-  evaluateBranchConditions(chainPuzzle: QuestChainPuzzle, completionData: PuzzleCompletionDto): string | null {
+  evaluateBranchConditions(
+    chainPuzzle: QuestChainPuzzle,
+    completionData: PuzzleCompletionDto,
+  ): string | null {
     const { branchConditions } = chainPuzzle;
-    
+
     if (!branchConditions || branchConditions.length === 0) {
       return null;
     }
 
     for (const condition of branchConditions) {
       let valueToCheck: number;
-      
+
       switch (condition.conditionType) {
         case 'score':
           valueToCheck = completionData.score;
@@ -281,7 +345,8 @@ export class QuestChainProgressionService {
         case 'accuracy':
           // Calculate accuracy based on hints used vs max hints
           const maxHints = (chainPuzzle.puzzle as any).maxHints || 3;
-          valueToCheck = ((maxHints - completionData.hintsUsed) / maxHints) * 100;
+          valueToCheck =
+            ((maxHints - completionData.hintsUsed) / maxHints) * 100;
           break;
         case 'custom':
           // Custom logic would be implemented here
@@ -290,7 +355,11 @@ export class QuestChainProgressionService {
           continue;
       }
 
-      const meetsCondition = this.evaluateCondition(valueToCheck, condition.operator, condition.value);
+      const meetsCondition = this.evaluateCondition(
+        valueToCheck,
+        condition.operator,
+        condition.value,
+      );
       if (meetsCondition) {
         return condition.nextPuzzleId;
       }
@@ -299,7 +368,11 @@ export class QuestChainProgressionService {
     return null;
   }
 
-  private evaluateCondition(value: number, operator: string, conditionValue: number | [number, number]): boolean {
+  private evaluateCondition(
+    value: number,
+    operator: string,
+    conditionValue: number | [number, number],
+  ): boolean {
     switch (operator) {
       case 'gte':
         return value >= (conditionValue as number);
@@ -315,7 +388,10 @@ export class QuestChainProgressionService {
     }
   }
 
-  async resetProgress(userId: string, chainId: string): Promise<UserQuestChainProgress> {
+  async resetProgress(
+    userId: string,
+    chainId: string,
+  ): Promise<UserQuestChainProgress> {
     const progress = await this.getProgress(userId, chainId);
 
     try {
@@ -334,7 +410,9 @@ export class QuestChainProgressionService {
 
       return await this.userProgressRepository.save(progress);
     } catch (error) {
-      throw new BadRequestException(`Failed to reset progress: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to reset progress: ${error.message}`,
+      );
     }
   }
 

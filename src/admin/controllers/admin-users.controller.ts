@@ -1,12 +1,12 @@
 import {
-    Controller,
-    Get,
-    Body,
-    Patch,
-    Param,
-    Query,
-    UseGuards,
-    ParseUUIDPipe,
+  Controller,
+  Get,
+  Body,
+  Patch,
+  Param,
+  Query,
+  UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -24,72 +24,72 @@ import { DeletionStatus } from '../../privacy/entities/data-deletion-request.ent
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class AdminUsersController {
-    constructor(
-        private readonly adminUsersService: AdminUsersService,
-        private readonly auditLogService: AdminAuditLogService,
-        private readonly deletionService: DataDeletionService,
-    ) { }
+  constructor(
+    private readonly adminUsersService: AdminUsersService,
+    private readonly auditLogService: AdminAuditLogService,
+    private readonly deletionService: DataDeletionService,
+  ) {}
 
-    @Get()
-    @ApiOperation({ summary: 'List all users' })
-    async findAll() {
-        return await this.adminUsersService.findAll();
-    }
+  @Get()
+  @ApiOperation({ summary: 'List all users' })
+  async findAll() {
+    return await this.adminUsersService.findAll();
+  }
 
-    @Patch(':id/role')
-    async updateRole(
-        @Param('id', ParseUUIDPipe) id: string,
-        @Body('role') role: UserRole,
-        @ActiveUser() admin: any,
-    ) {
-        const user = await this.adminUsersService.updateRole(id, role);
-        await this.auditLogService.log({
-            adminId: admin.id,
-            action: 'UPDATE_USER_ROLE',
-            targetType: 'USER',
-            targetId: id,
-            details: { role },
-        });
-        return user;
-    }
+  @Patch(':id/role')
+  async updateRole(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('role') role: UserRole,
+    @ActiveUser() admin: any,
+  ) {
+    const user = await this.adminUsersService.updateRole(id, role);
+    await this.auditLogService.log({
+      adminId: admin.id,
+      action: 'UPDATE_USER_ROLE',
+      targetType: 'USER',
+      targetId: id,
+      details: { role },
+    });
+    return user;
+  }
 
-    @Patch(':id/status')
-    async updateStatus(
-        @Param('id', ParseUUIDPipe) id: string,
-        @Body('isVerified') isVerified: boolean,
-        @ActiveUser() admin: any,
-    ) {
-        const user = await this.adminUsersService.updateStatus(id, isVerified);
-        await this.auditLogService.log({
-            adminId: admin.id,
-            action: 'UPDATE_USER_STATUS',
-            targetType: 'USER',
-            targetId: id,
-            details: { isVerified },
-        });
-        return user;
-    }
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('isVerified') isVerified: boolean,
+    @ActiveUser() admin: any,
+  ) {
+    const user = await this.adminUsersService.updateStatus(id, isVerified);
+    await this.auditLogService.log({
+      adminId: admin.id,
+      action: 'UPDATE_USER_STATUS',
+      targetType: 'USER',
+      targetId: id,
+      details: { isVerified },
+    });
+    return user;
+  }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // GET /admin/deletion-requests
-    // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /admin/deletion-requests
+  // ─────────────────────────────────────────────────────────────────────────
 
-    @Get('/deletion-requests')
-    @ApiOperation({
-        summary: 'List pending account-deletion requests (GDPR compliance)',
-    })
-    @ApiQuery({ name: 'status', enum: DeletionStatus, required: false })
-    @ApiQuery({ name: 'limit', required: false, type: Number })
-    @ApiQuery({ name: 'offset', required: false, type: Number })
-    async listDeletionRequests(
-        @Query('status') status?: DeletionStatus,
-        @Query('limit') limit?: number,
-        @Query('offset') offset?: number,
-    ) {
-        return this.deletionService.listPendingDeletionRequests({
-            limit: limit ? Number(limit) : 50,
-            offset: offset ? Number(offset) : 0,
-            status,
-        });
-    }
+  @Get('/deletion-requests')
+  @ApiOperation({
+    summary: 'List pending account-deletion requests (GDPR compliance)',
+  })
+  @ApiQuery({ name: 'status', enum: DeletionStatus, required: false })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  async listDeletionRequests(
+    @Query('status') status?: DeletionStatus,
+    @Query('limit') limit?: number,
+    @Query('offset') offset?: number,
+  ) {
+    return this.deletionService.listPendingDeletionRequests({
+      limit: limit ? Number(limit) : 50,
+      offset: offset ? Number(offset) : 0,
+      status,
+    });
+  }
 }

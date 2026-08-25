@@ -3,11 +3,20 @@
  * Handles bulk operations on puzzles
  */
 
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PuzzleEditor } from '../entities/puzzle-editor.entity';
-import { BatchOperation, BatchOperationType, BatchOperationStatus } from '../interfaces/editor.interfaces';
+import {
+  BatchOperation,
+  BatchOperationType,
+  BatchOperationStatus,
+} from '../interfaces/editor.interfaces';
 
 @Injectable()
 export class BatchOperationsService {
@@ -27,7 +36,9 @@ export class BatchOperationsService {
       throw new BadRequestException('At least one puzzle must be selected');
     }
 
-    const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const batchId = `batch_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
     const operation: BatchOperation = {
       id: batchId,
@@ -78,7 +89,10 @@ export class BatchOperationsService {
     if (operation.status === BatchOperationStatus.PROCESSING) {
       operation.status = BatchOperationStatus.CANCELLED;
       this.logger.log(`Cancelled batch operation ${batchId}`);
-    } else if (operation.status !== BatchOperationStatus.COMPLETED && operation.status !== BatchOperationStatus.FAILED) {
+    } else if (
+      operation.status !== BatchOperationStatus.COMPLETED &&
+      operation.status !== BatchOperationStatus.FAILED
+    ) {
       operation.status = BatchOperationStatus.CANCELLED;
     }
   }
@@ -86,7 +100,10 @@ export class BatchOperationsService {
   /**
    * Process batch operation
    */
-  private async processBatch(operation: BatchOperation, userId: string): Promise<void> {
+  private async processBatch(
+    operation: BatchOperation,
+    userId: string,
+  ): Promise<void> {
     operation.status = BatchOperationStatus.PROCESSING;
     operation.startTime = new Date();
 
@@ -129,7 +146,9 @@ export class BatchOperationsService {
             break;
 
           default:
-            throw new Error(`Unknown operation type: ${operation.operationType}`);
+            throw new Error(
+              `Unknown operation type: ${operation.operationType}`,
+            );
         }
 
         operation.results.push({
@@ -157,23 +176,32 @@ export class BatchOperationsService {
 
       // Update progress
       operation.progress = ((i + 1) / totalItems) * 100;
-      operation.estimatedCompletionTime = this.estimateCompletionTime(operation);
+      operation.estimatedCompletionTime =
+        this.estimateCompletionTime(operation);
 
       // Check if operation was cancelled (may be set by another process)
-      if ((operation.status as BatchOperationStatus) === BatchOperationStatus.CANCELLED) {
+      if (
+        (operation.status as BatchOperationStatus) ===
+        BatchOperationStatus.CANCELLED
+      ) {
         return;
       }
     }
 
     operation.completionTime = new Date();
     operation.status =
-      operation.errors.length === 0 ? BatchOperationStatus.COMPLETED : BatchOperationStatus.COMPLETED;
+      operation.errors.length === 0
+        ? BatchOperationStatus.COMPLETED
+        : BatchOperationStatus.COMPLETED;
   }
 
   /**
    * Bulk update operation
    */
-  private async bulkUpdate(puzzleId: string, configuration: Record<string, any>): Promise<any> {
+  private async bulkUpdate(
+    puzzleId: string,
+    configuration: Record<string, any>,
+  ): Promise<any> {
     // Update puzzle with provided configuration
     // This would typically update database records
     return {
@@ -251,7 +279,10 @@ export class BatchOperationsService {
   /**
    * Bulk export operation
    */
-  private async bulkExport(puzzleId: string, configuration: Record<string, any>): Promise<any> {
+  private async bulkExport(
+    puzzleId: string,
+    configuration: Record<string, any>,
+  ): Promise<any> {
     // Export puzzle
     return {
       puzzleId,
@@ -302,13 +333,16 @@ export class BatchOperationsService {
   }> {
     const batches = Array.from(this.activeBatches.values());
 
-    const completed = batches.filter((b) => b.status === BatchOperationStatus.COMPLETED).length;
+    const completed = batches.filter(
+      (b) => b.status === BatchOperationStatus.COMPLETED,
+    ).length;
     const totalItems = batches.reduce((sum, b) => sum + b.results.length, 0);
     const successfulItems = batches.reduce(
       (sum, b) => sum + b.results.filter((r) => r.status === 'success').length,
       0,
     );
-    const successRate = totalItems > 0 ? (successfulItems / totalItems) * 100 : 0;
+    const successRate =
+      totalItems > 0 ? (successfulItems / totalItems) * 100 : 0;
 
     return {
       activeBatches: batches.length,

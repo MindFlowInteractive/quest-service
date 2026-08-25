@@ -81,11 +81,11 @@ export class CommunityPuzzlesController {
   }
 
   @Get('submissions/:id')
-  async getSubmission(
-    @Request() req,
-    @Param('id') id: string,
-  ) {
-    const submission = await this.submissionService.getSubmissionById(id, req.user.id);
+  async getSubmission(@Request() req, @Param('id') id: string) {
+    const submission = await this.submissionService.getSubmissionById(
+      id,
+      req.user.id,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Submission retrieved successfully',
@@ -137,7 +137,10 @@ export class CommunityPuzzlesController {
 
   @Post('submissions/:id/publish')
   async publishPuzzle(@Request() req, @Param('id') id: string) {
-    const submission = await this.submissionService.publishPuzzle(id, req.user.id);
+    const submission = await this.submissionService.publishPuzzle(
+      id,
+      req.user.id,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Puzzle published successfully',
@@ -148,7 +151,9 @@ export class CommunityPuzzlesController {
   // Community Discovery Endpoints
   @Get('discover')
   async searchPuzzles(@Query() searchDto: SearchPuzzlesDto) {
-    const result = await this.submissionService.searchCommunityPuzzles(searchDto);
+    const result = await this.submissionService.searchCommunityPuzzles(
+      searchDto,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Puzzles retrieved successfully',
@@ -177,10 +182,7 @@ export class CommunityPuzzlesController {
   }
 
   @Get('recommended')
-  async getRecommendedPuzzles(
-    @Request() req,
-    @Query('limit') limit?: number,
-  ) {
+  async getRecommendedPuzzles(@Request() req, @Query('limit') limit?: number) {
     const puzzles = await this.submissionService.getRecommendedPuzzles(
       req.user.id,
       limit,
@@ -193,7 +195,9 @@ export class CommunityPuzzlesController {
   }
 
   @Get('shared/:shareableLink')
-  async getPuzzleByShareableLink(@Param('shareableLink') shareableLink: string) {
+  async getPuzzleByShareableLink(
+    @Param('shareableLink') shareableLink: string,
+  ) {
     const puzzle = await this.submissionService.getSubmissionByShareableLink(
       shareableLink,
     );
@@ -211,7 +215,11 @@ export class CommunityPuzzlesController {
     @Param('id') id: string,
     @Body() ratingDto: CreatePuzzleRatingDto,
   ) {
-    const rating = await this.communityService.ratePuzzle(id, req.user.id, ratingDto);
+    const rating = await this.communityService.ratePuzzle(
+      id,
+      req.user.id,
+      ratingDto,
+    );
     return {
       statusCode: HttpStatus.CREATED,
       message: 'Puzzle rated successfully',
@@ -225,7 +233,11 @@ export class CommunityPuzzlesController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    const result = await this.communityService.getPuzzleRatings(id, page, limit);
+    const result = await this.communityService.getPuzzleRatings(
+      id,
+      page,
+      limit,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Puzzle ratings retrieved successfully',
@@ -268,7 +280,11 @@ export class CommunityPuzzlesController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    const result = await this.communityService.getPuzzleComments(id, page, limit);
+    const result = await this.communityService.getPuzzleComments(
+      id,
+      page,
+      limit,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Puzzle comments retrieved successfully',
@@ -306,7 +322,11 @@ export class CommunityPuzzlesController {
     @Param('id') id: string,
     @Body() voteDto: PuzzleCommentVoteDto,
   ) {
-    const comment = await this.communityService.voteOnComment(id, req.user.id, voteDto);
+    const comment = await this.communityService.voteOnComment(
+      id,
+      req.user.id,
+      voteDto,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Vote recorded successfully',
@@ -321,7 +341,11 @@ export class CommunityPuzzlesController {
     @Param('id') id: string,
     @Body() shareDto: SharePuzzleDto,
   ) {
-    const result = await this.communityService.sharePuzzle(id, req.user.id, shareDto);
+    const result = await this.communityService.sharePuzzle(
+      id,
+      req.user.id,
+      shareDto,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Puzzle shared successfully',
@@ -364,7 +388,11 @@ export class CommunityPuzzlesController {
     @Param('id') id: string,
     @Body() reportData: any,
   ) {
-    await this.communityService.reportComment(id, req.user.id, reportData.reason);
+    await this.communityService.reportComment(
+      id,
+      req.user.id,
+      reportData.reason,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Comment reported successfully',
@@ -468,7 +496,10 @@ export class CommunityPuzzlesController {
 
   @Post('admin/:id/feature')
   async featurePuzzle(@Request() req, @Param('id') id: string) {
-    const puzzle = await this.featuredService.manuallyFeaturePuzzle(id, req.user.id);
+    const puzzle = await this.featuredService.manuallyFeaturePuzzle(
+      id,
+      req.user.id,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Puzzle featured successfully',
@@ -498,7 +529,9 @@ export class CommunityPuzzlesController {
 
   @Get('admin/moderation-stats')
   async getModerationStats(@Query('timeframe') timeframe?: string) {
-    const stats = await this.moderationService.getModerationStats(timeframe as any);
+    const stats = await this.moderationService.getModerationStats(
+      timeframe as any,
+    );
     return {
       statusCode: HttpStatus.OK,
       message: 'Moderation statistics retrieved successfully',

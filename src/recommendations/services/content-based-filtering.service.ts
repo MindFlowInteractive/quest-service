@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ContentBasedFilteringAlgorithm, ContentBasedRecommendation } from '../algorithms/content-based-filtering.algorithm';
+import {
+  ContentBasedFilteringAlgorithm,
+  ContentBasedRecommendation,
+} from '../algorithms/content-based-filtering.algorithm';
 import { UserPreference } from '../entities/user-preference.entity';
 import { UserInteraction } from '../entities/user-interaction.entity';
 import { Puzzle } from '../../puzzles/entities/puzzle.entity';
@@ -41,7 +44,7 @@ export class ContentBasedFilteringService {
   ): Promise<PuzzleScore[]> {
     // Get or create user preferences
     const userPreferences = await this.getUserPreferences(userId);
-    
+
     // Get user's completed puzzles to avoid recommending them again
     const completedPuzzles = await this.getUserCompletedPuzzles(userId);
 
@@ -60,9 +63,7 @@ export class ContentBasedFilteringService {
       userId,
     );
 
-    return scoredPuzzles
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return scoredPuzzles.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
   private async getUserPreferences(userId: string): Promise<UserPreference[]> {
@@ -78,11 +79,13 @@ export class ContentBasedFilteringService {
     return preferences;
   }
 
-  private async createUserPreferencesFromHistory(userId: string): Promise<UserPreference[]> {
+  private async createUserPreferencesFromHistory(
+    userId: string,
+  ): Promise<UserPreference[]> {
     const interactions = await this.userInteractionRepository.find({
-      where: { 
+      where: {
         userId,
-        interactionType: 'complete'
+        interactionType: 'complete',
       },
       relations: ['puzzle'],
       take: 50, // Analyze recent completions
@@ -93,8 +96,14 @@ export class ContentBasedFilteringService {
     }
 
     // Analyze user's puzzle completion patterns
-    const categoryStats = new Map<string, { count: number; totalRating: number; totalTime: number }>();
-    const difficultyStats = new Map<string, { count: number; totalRating: number; totalTime: number }>();
+    const categoryStats = new Map<
+      string,
+      { count: number; totalRating: number; totalTime: number }
+    >();
+    const difficultyStats = new Map<
+      string,
+      { count: number; totalRating: number; totalTime: number }
+    >();
     const tagStats = new Map<string, { count: number; totalRating: number }>();
 
     for (const interaction of interactions) {
@@ -105,9 +114,13 @@ export class ContentBasedFilteringService {
       // Category preferences
       const categoryKey = puzzle.category;
       if (!categoryStats.has(categoryKey)) {
-        categoryStats.set(categoryKey, { count: 0, totalRating: 0, totalTime: 0 });
+        categoryStats.set(categoryKey, {
+          count: 0,
+          totalRating: 0,
+          totalTime: 0,
+        });
       }
-      const categoryStat = categoryStats.get(categoryKey)!;
+      const categoryStat = categoryStats.get(categoryKey);
       categoryStat.count++;
       categoryStat.totalRating += rating;
       categoryStat.totalTime += completionTime;
@@ -115,9 +128,13 @@ export class ContentBasedFilteringService {
       // Difficulty preferences
       const difficultyKey = puzzle.difficulty;
       if (!difficultyStats.has(difficultyKey)) {
-        difficultyStats.set(difficultyKey, { count: 0, totalRating: 0, totalTime: 0 });
+        difficultyStats.set(difficultyKey, {
+          count: 0,
+          totalRating: 0,
+          totalTime: 0,
+        });
       }
-      const difficultyStat = difficultyStats.get(difficultyKey)!;
+      const difficultyStat = difficultyStats.get(difficultyKey);
       difficultyStat.count++;
       difficultyStat.totalRating += rating;
       difficultyStat.totalTime += completionTime;
@@ -127,7 +144,7 @@ export class ContentBasedFilteringService {
         if (!tagStats.has(tag)) {
           tagStats.set(tag, { count: 0, totalRating: 0 });
         }
-        const tagStat = tagStats.get(tag)!;
+        const tagStat = tagStats.get(tag);
         tagStat.count++;
         tagStat.totalRating += rating;
       }
@@ -139,7 +156,10 @@ export class ContentBasedFilteringService {
     for (const [category, stats] of categoryStats) {
       const avgRating = stats.totalRating / stats.count;
       const avgTime = stats.totalTime / stats.count;
-      const preferenceScore = Math.min((avgRating / 5.0) * (stats.count / interactions.length), 1.0);
+      const preferenceScore = Math.min(
+        (avgRating / 5.0) * (stats.count / interactions.length),
+        1.0,
+      );
 
       const preference = this.userPreferenceRepository.create({
         userId,
@@ -159,7 +179,9 @@ export class ContentBasedFilteringService {
     return preferences;
   }
 
-  private async createDefaultPreferences(userId: string): Promise<UserPreference[]> {
+  private async createDefaultPreferences(
+    userId: string,
+  ): Promise<UserPreference[]> {
     // Create default preferences for new users
     const defaultCategories = ['logic', 'math', 'pattern', 'word'];
     const preferences: UserPreference[] = [];
@@ -185,14 +207,14 @@ export class ContentBasedFilteringService {
 
   private async getUserCompletedPuzzles(userId: string): Promise<string[]> {
     const interactions = await this.userInteractionRepository.find({
-      where: { 
+      where: {
         userId,
-        interactionType: 'complete'
+        interactionType: 'complete',
       },
       select: ['puzzleId'],
     });
 
-    return interactions.map(i => i.puzzleId);
+    return interactions.map((i) => i.puzzleId);
   }
 
   private async getCandidatePuzzles(
@@ -207,8 +229,8 @@ export class ContentBasedFilteringService {
       .andWhere('puzzle.publishedAt IS NOT NULL');
 
     if (excludePuzzleIds.length > 0) {
-      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', { 
-        excludeIds: excludePuzzleIds 
+      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', {
+        excludeIds: excludePuzzleIds,
       });
     }
 
@@ -237,7 +259,11 @@ export class ContentBasedFilteringService {
     for (const puzzle of puzzles) {
       const features = this.extractPuzzleFeatures(puzzle);
       const score = this.calculateContentSimilarity(features, userPreferences);
-      const reason = this.generateRecommendationReason(features, userPreferences, score);
+      const reason = this.generateRecommendationReason(
+        features,
+        userPreferences,
+        score,
+      );
 
       scoredPuzzles.push({
         puzzleId: puzzle.id,
@@ -250,7 +276,8 @@ export class ContentBasedFilteringService {
   }
 
   private extractPuzzleFeatures(puzzle: Puzzle): PuzzleFeatures {
-    const completionRate = puzzle.attempts > 0 ? puzzle.completions / puzzle.attempts : 0;
+    const completionRate =
+      puzzle.attempts > 0 ? puzzle.completions / puzzle.attempts : 0;
 
     return {
       category: puzzle.category,
@@ -270,7 +297,9 @@ export class ContentBasedFilteringService {
     let weightSum = 0;
 
     // Find matching category preference
-    const categoryPreference = userPreferences.find(p => p.category === puzzleFeatures.category);
+    const categoryPreference = userPreferences.find(
+      (p) => p.category === puzzleFeatures.category,
+    );
     if (categoryPreference) {
       const categoryWeight = 0.4;
       totalScore += categoryPreference.preferenceScore * categoryWeight;
@@ -297,14 +326,19 @@ export class ContentBasedFilteringService {
 
     // Quality score (rating and completion rate)
     const qualityWeight = 0.1;
-    const qualityScore = (puzzleFeatures.averageRating / 5.0) * 0.7 + puzzleFeatures.completionRate * 0.3;
+    const qualityScore =
+      (puzzleFeatures.averageRating / 5.0) * 0.7 +
+      puzzleFeatures.completionRate * 0.3;
     totalScore += qualityScore * qualityWeight;
     weightSum += qualityWeight;
 
     return weightSum > 0 ? totalScore / weightSum : 0;
   }
 
-  private calculateDifficultyMatch(puzzleDifficulty: string, preferredDifficulty: string): number {
+  private calculateDifficultyMatch(
+    puzzleDifficulty: string,
+    preferredDifficulty: string,
+  ): number {
     const difficultyOrder = ['easy', 'medium', 'hard', 'expert'];
     const puzzleIndex = difficultyOrder.indexOf(puzzleDifficulty);
     const preferredIndex = difficultyOrder.indexOf(preferredDifficulty);
@@ -315,8 +349,14 @@ export class ContentBasedFilteringService {
     return Math.max(0, 1 - distance * 0.3); // Penalty for each difficulty level difference
   }
 
-  private calculateTagSimilarity(puzzleTags: string[], userTagPreferences: Record<string, number>): number {
-    if (puzzleTags.length === 0 || Object.keys(userTagPreferences).length === 0) {
+  private calculateTagSimilarity(
+    puzzleTags: string[],
+    userTagPreferences: Record<string, number>,
+  ): number {
+    if (
+      puzzleTags.length === 0 ||
+      Object.keys(userTagPreferences).length === 0
+    ) {
       return 0.5; // Neutral score when no tags to compare
     }
 
@@ -338,8 +378,10 @@ export class ContentBasedFilteringService {
     userPreferences: UserPreference[],
     score: number,
   ): string {
-    const categoryPreference = userPreferences.find(p => p.category === features.category);
-    
+    const categoryPreference = userPreferences.find(
+      (p) => p.category === features.category,
+    );
+
     if (!categoryPreference) {
       return `New ${features.category} puzzle to explore`;
     }
@@ -358,15 +400,17 @@ export class ContentBasedFilteringService {
       reasons.push('has a good completion rate');
     }
 
-    const matchingTags = features.tags.filter(tag => 
-      categoryPreference.tagPreferences[tag] > 0.6
+    const matchingTags = features.tags.filter(
+      (tag) => categoryPreference.tagPreferences[tag] > 0.6,
     );
 
     if (matchingTags.length > 0) {
-      reasons.push(`matches your interest in ${matchingTags.slice(0, 2).join(', ')}`);
+      reasons.push(
+        `matches your interest in ${matchingTags.slice(0, 2).join(', ')}`,
+      );
     }
 
-    return reasons.length > 0 
+    return reasons.length > 0
       ? `Recommended because ${reasons.join(' and ')}`
       : `Similar to puzzles you've enjoyed`;
   }

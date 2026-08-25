@@ -68,7 +68,9 @@ export class QuestChainPuzzle {
   updatedAt: Date;
 
   // Relationships
-  @ManyToOne(() => QuestChain, chain => chain.chainPuzzles, { onDelete: 'CASCADE' })
+  @ManyToOne(() => QuestChain, (chain) => chain.chainPuzzles, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'questChainId' })
   questChain: QuestChain;
 

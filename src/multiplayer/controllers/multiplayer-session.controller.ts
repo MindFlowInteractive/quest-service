@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { MultiplayerService } from '../services/multiplayer.service';
 import { CreateMultiplayerSessionDto } from '../dto/create-multiplayer-session.dto';
 import { JoinSessionDto } from '../dto/join-session.dto';
@@ -22,7 +30,7 @@ export class MultiplayerSessionController {
       dto.type,
       player,
       dto.settings,
-      dto.puzzleId
+      dto.puzzleId,
     );
 
     return {
@@ -40,7 +48,10 @@ export class MultiplayerSessionController {
   }
 
   @Post('join/:code')
-  async joinSessionByCode(@Param('code') code: string, @Body() dto: JoinSessionDto) {
+  async joinSessionByCode(
+    @Param('code') code: string,
+    @Body() dto: JoinSessionDto,
+  ) {
     const player = {
       id: dto.userId,
       username: dto.username,
@@ -50,8 +61,11 @@ export class MultiplayerSessionController {
       solvedPuzzles: [],
     };
 
-    const session = await this.multiplayerService.joinSessionByCode(code, player);
-    
+    const session = await this.multiplayerService.joinSessionByCode(
+      code,
+      player,
+    );
+
     if (!session) {
       return {
         message: 'Failed to join session',
@@ -76,7 +90,7 @@ export class MultiplayerSessionController {
   @Get(':code')
   async getSessionByCode(@Param('code') code: string) {
     const session = await this.multiplayerService.getSessionByCode(code);
-    
+
     if (!session) {
       return {
         message: 'Session not found',

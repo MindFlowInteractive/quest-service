@@ -1,9 +1,27 @@
-import { Controller, Get, Put, Post, Param, Body, Req, UseGuards, UseInterceptors, UploadedFile, Query, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Post,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  Query,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 import { PlayerProfileService } from './services/player-profile.service';
-import { UpdateProfileDto, ProfileResponseDto, UpdateBadgesDto, ProfileStatisticsDto } from './dto';
+import {
+  UpdateProfileDto,
+  ProfileResponseDto,
+  UpdateBadgesDto,
+  ProfileStatisticsDto,
+} from './dto';
 import { PlayerProfile } from './entities/player-profile.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 

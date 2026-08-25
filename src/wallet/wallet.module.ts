@@ -17,11 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     TypeOrmModule.forFeature([WalletBalanceHistory]),
   ],
   controllers: [WalletController],
-  providers: [
-    WalletService,
-    WalletSessionGuard,
-    WalletSyncService,
-  ],
+  providers: [WalletService, WalletSessionGuard, WalletSyncService],
   exports: [WalletService],
 })
 export class WalletModule {}

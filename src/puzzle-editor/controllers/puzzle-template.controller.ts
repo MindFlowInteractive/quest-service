@@ -17,7 +17,12 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PuzzleTemplateService } from '../services/puzzle-template.service';
 import { PuzzleEditorService } from '../services/puzzle-editor.service';
@@ -94,7 +99,10 @@ export class PuzzleTemplateController {
   @Get('/by-type/:puzzleType')
   @ApiOperation({ summary: 'Get templates by puzzle type' })
   @ApiResponse({ status: 200, description: 'Templates by type' })
-  async getByType(@Param('puzzleType') puzzleType: string, @Query('limit') limit: number = 10) {
+  async getByType(
+    @Param('puzzleType') puzzleType: string,
+    @Query('limit') limit: number = 10,
+  ) {
     return this.templateService.getTemplatesByType(puzzleType, limit);
   }
 
@@ -165,7 +173,7 @@ export class PuzzleTemplateController {
     @Body() updates: Partial<CreateTemplateDto>,
     @Request() req: any,
   ) {
-    return this.templateService.updateTemplate(id, updates as any, req.user.id);
+    return this.templateService.updateTemplate(id, updates, req.user.id);
   }
 
   /**

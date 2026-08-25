@@ -64,11 +64,15 @@ export class PostgresPrivacySettingsRepository
   }
 
   async findByUserId(userId: string): Promise<PrivacySettings | null> {
-    const entity = await this.ormRepository.findOne({ where: { user_id: userId } });
+    const entity = await this.ormRepository.findOne({
+      where: { user_id: userId },
+    });
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findByUserIds(userIds: string[]): Promise<Map<string, PrivacySettings>> {
+  async findByUserIds(
+    userIds: string[],
+  ): Promise<Map<string, PrivacySettings>> {
     const entities = await this.ormRepository.find({
       where: { user_id: In(userIds) },
     });

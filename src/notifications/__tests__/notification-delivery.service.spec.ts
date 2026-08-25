@@ -2,10 +2,7 @@ import { NotificationDeliveryService } from '../services/notification-delivery.s
 
 describe('NotificationDeliveryService', () => {
   it('can be instantiated', () => {
-    const service = new NotificationDeliveryService(
-      {} as any,
-      {} as any,
-    );
+    const service = new NotificationDeliveryService({} as any, {} as any);
 
     expect(service).toBeDefined();
   });

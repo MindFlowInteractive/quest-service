@@ -15,17 +15,14 @@ export class ValidationException extends DomainException {
       cause?: Error;
     },
   ) {
-    super(
-      ERROR_CODES.VALIDATION_ERROR,
-      message,
-      HttpStatus.BAD_REQUEST,
-      {
-        severity: ErrorSeverity.LOW,
-        category: ErrorCategory.VALIDATION,
-        details: validationErrors ? { errors: validationErrors } : options?.details,
-        ...options,
-      },
-    );
+    super(ERROR_CODES.VALIDATION_ERROR, message, HttpStatus.BAD_REQUEST, {
+      severity: ErrorSeverity.LOW,
+      category: ErrorCategory.VALIDATION,
+      details: validationErrors
+        ? { errors: validationErrors }
+        : options?.details,
+      ...options,
+    });
   }
 }
 
@@ -45,18 +42,13 @@ export class AppNotFoundException extends DomainException {
     const message = id
       ? `${resource} with ID ${id} not found`
       : `${resource} not found`;
-    
-    super(
-      ERROR_CODES.NOT_FOUND,
-      message,
-      HttpStatus.NOT_FOUND,
-      {
-        severity: ErrorSeverity.LOW,
-        category: ErrorCategory.BUSINESS_LOGIC,
-        details: { resource, id, ...options?.details },
-        ...options,
-      },
-    );
+
+    super(ERROR_CODES.NOT_FOUND, message, HttpStatus.NOT_FOUND, {
+      severity: ErrorSeverity.LOW,
+      category: ErrorCategory.BUSINESS_LOGIC,
+      details: { resource, id, ...options?.details },
+      ...options,
+    });
   }
 }
 
@@ -70,17 +62,12 @@ export class ConflictException extends DomainException {
       cause?: Error;
     },
   ) {
-    super(
-      ERROR_CODES.CONFLICT,
-      message,
-      HttpStatus.CONFLICT,
-      {
-        severity: ErrorSeverity.MEDIUM,
-        category: ErrorCategory.BUSINESS_LOGIC,
-        details: { resource, conflictingField, ...options?.details },
-        ...options,
-      },
-    );
+    super(ERROR_CODES.CONFLICT, message, HttpStatus.CONFLICT, {
+      severity: ErrorSeverity.MEDIUM,
+      category: ErrorCategory.BUSINESS_LOGIC,
+      details: { resource, conflictingField, ...options?.details },
+      ...options,
+    });
   }
 }
 
@@ -96,16 +83,11 @@ export class AuthenticationException extends DomainException {
       cause?: Error;
     },
   ) {
-    super(
-      ERROR_CODES.UNAUTHORIZED,
-      message,
-      HttpStatus.UNAUTHORIZED,
-      {
-        severity: ErrorSeverity.MEDIUM,
-        category: ErrorCategory.AUTHENTICATION,
-        ...options,
-      },
-    );
+    super(ERROR_CODES.UNAUTHORIZED, message, HttpStatus.UNAUTHORIZED, {
+      severity: ErrorSeverity.MEDIUM,
+      category: ErrorCategory.AUTHENTICATION,
+      ...options,
+    });
   }
 }
 
@@ -118,17 +100,12 @@ export class AuthorizationException extends DomainException {
       cause?: Error;
     },
   ) {
-    super(
-      ERROR_CODES.FORBIDDEN,
-      message,
-      HttpStatus.FORBIDDEN,
-      {
-        severity: ErrorSeverity.MEDIUM,
-        category: ErrorCategory.AUTHORIZATION,
-        details: { requiredPermission, ...options?.details },
-        ...options,
-      },
-    );
+    super(ERROR_CODES.FORBIDDEN, message, HttpStatus.FORBIDDEN, {
+      severity: ErrorSeverity.MEDIUM,
+      category: ErrorCategory.AUTHORIZATION,
+      details: { requiredPermission, ...options?.details },
+      ...options,
+    });
   }
 }
 
@@ -191,7 +168,9 @@ export class QuestAlreadyCompletedException extends DomainException {
   ) {
     super(
       ERROR_CODES.QUEST_ALREADY_COMPLETED,
-      `Quest ${questId} has already been completed${playerId ? ` by player ${playerId}` : ''}`,
+      `Quest ${questId} has already been completed${
+        playerId ? ` by player ${playerId}` : ''
+      }`,
       HttpStatus.CONFLICT,
       {
         severity: ErrorSeverity.MEDIUM,
@@ -214,7 +193,9 @@ export class QuestExpiredException extends DomainException {
   ) {
     super(
       ERROR_CODES.QUEST_EXPIRED,
-      `Quest ${questId} has expired${expiryDate ? ` on ${expiryDate.toISOString()}` : ''}`,
+      `Quest ${questId} has expired${
+        expiryDate ? ` on ${expiryDate.toISOString()}` : ''
+      }`,
       HttpStatus.GONE,
       {
         severity: ErrorSeverity.MEDIUM,
@@ -238,12 +219,19 @@ export class QuestPrerequisiteNotMetException extends DomainException {
   ) {
     super(
       ERROR_CODES.QUEST_PREREQUISITE_NOT_MET,
-      `Player ${playerId || 'unknown'} does not meet prerequisites for quest ${questId}`,
+      `Player ${
+        playerId || 'unknown'
+      } does not meet prerequisites for quest ${questId}`,
       HttpStatus.PRECONDITION_FAILED,
       {
         severity: ErrorSeverity.MEDIUM,
         category: ErrorCategory.BUSINESS_LOGIC,
-        details: { questId, playerId, missingPrerequisites, ...options?.details },
+        details: {
+          questId,
+          playerId,
+          missingPrerequisites,
+          ...options?.details,
+        },
         ...options,
       },
     );
@@ -311,7 +299,13 @@ export class PlayerInsufficientResourcesException extends DomainException {
       {
         severity: ErrorSeverity.MEDIUM,
         category: ErrorCategory.BUSINESS_LOGIC,
-        details: { playerId, resourceType, requiredAmount, currentAmount, ...options?.details },
+        details: {
+          playerId,
+          resourceType,
+          requiredAmount,
+          currentAmount,
+          ...options?.details,
+        },
         ...options,
       },
     );
@@ -358,18 +352,13 @@ export class InvalidStateException extends DomainException {
     const message = expectedState
       ? `${entity} is in state "${currentState}" but expected "${expectedState}"`
       : `${entity} is in invalid state "${currentState}"`;
-    
-    super(
-      ERROR_CODES.INVALID_STATE,
-      message,
-      HttpStatus.CONFLICT,
-      {
-        severity: ErrorSeverity.MEDIUM,
-        category: ErrorCategory.BUSINESS_LOGIC,
-        details: { entity, currentState, expectedState, ...options?.details },
-        ...options,
-      },
-    );
+
+    super(ERROR_CODES.INVALID_STATE, message, HttpStatus.CONFLICT, {
+      severity: ErrorSeverity.MEDIUM,
+      category: ErrorCategory.BUSINESS_LOGIC,
+      details: { entity, currentState, expectedState, ...options?.details },
+      ...options,
+    });
   }
 }
 
@@ -386,12 +375,20 @@ export class InsufficientFundsException extends DomainException {
   ) {
     super(
       ERROR_CODES.INSUFFICIENT_FUNDS,
-      `${entity} requires ${requiredAmount} ${currency || 'units'} (current: ${currentAmount})`,
+      `${entity} requires ${requiredAmount} ${
+        currency || 'units'
+      } (current: ${currentAmount})`,
       HttpStatus.PAYMENT_REQUIRED,
       {
         severity: ErrorSeverity.MEDIUM,
         category: ErrorCategory.BUSINESS_LOGIC,
-        details: { entity, requiredAmount, currentAmount, currency, ...options?.details },
+        details: {
+          entity,
+          requiredAmount,
+          currentAmount,
+          currency,
+          ...options?.details,
+        },
         ...options,
       },
     );

@@ -33,7 +33,9 @@ describe('HintsService', () => {
   });
 
   it('emits hint.used event when requesting a hint', async () => {
-    const playerEventsMock = { emitPlayerEvent: jest.fn().mockResolvedValue(undefined) };
+    const playerEventsMock = {
+      emitPlayerEvent: jest.fn().mockResolvedValue(undefined),
+    };
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -78,5 +80,3 @@ describe('HintsService', () => {
     );
   });
 });
-
-

@@ -31,7 +31,7 @@ describe('AntiCheatService', () => {
     logging: {
       logAllMoves: true,
       logSuspiciousMoves: true,
-    }
+    },
   };
 
   const mockViolationRepo = {
@@ -94,9 +94,15 @@ describe('AntiCheatService', () => {
     }).compile();
 
     service = module.get<AntiCheatService>(AntiCheatService);
-    violationRepo = module.get<Repository<CheatViolation>>(getRepositoryToken(CheatViolation));
-    profileRepo = module.get<Repository<PlayerBehaviorProfile>>(getRepositoryToken(PlayerBehaviorProfile));
-    auditRepo = module.get<Repository<PuzzleMoveAudit>>(getRepositoryToken(PuzzleMoveAudit));
+    violationRepo = module.get<Repository<CheatViolation>>(
+      getRepositoryToken(CheatViolation),
+    );
+    profileRepo = module.get<Repository<PlayerBehaviorProfile>>(
+      getRepositoryToken(PlayerBehaviorProfile),
+    );
+    auditRepo = module.get<Repository<PuzzleMoveAudit>>(
+      getRepositoryToken(PuzzleMoveAudit),
+    );
     detectionService = module.get<DetectionService>(DetectionService);
 
     // Reset mocks
@@ -116,15 +122,29 @@ describe('AntiCheatService', () => {
         puzzleId: 'puzzle-1',
         moveType: 'test',
         moveData: {},
-        isValid: true
+        isValid: true,
       };
 
-      const validationResult = { isValid: true, isComplete: false, score: 10, errors: [], completionPercentage: 50 };
+      const validationResult = {
+        isValid: true,
+        isComplete: false,
+        score: 10,
+        errors: [],
+        completionPercentage: 50,
+      };
 
       mockAuditRepo.create.mockReturnValue({ id: 'audit-1' });
       mockAuditRepo.save.mockResolvedValue({ id: 'audit-1' });
 
-      await service.auditMove('player-1', 'puzzle-1', 'session-1', move, 1, 500, validationResult);
+      await service.auditMove(
+        'player-1',
+        'puzzle-1',
+        'session-1',
+        move,
+        1,
+        500,
+        validationResult,
+      );
 
       expect(mockAuditRepo.create).toHaveBeenCalledWith({
         playerId: 'player-1',
@@ -136,7 +156,7 @@ describe('AntiCheatService', () => {
         wasValid: true,
         validationResult,
         flaggedAsSuspicious: false,
-        suspicionReasons: null
+        suspicionReasons: null,
       });
       expect(mockAuditRepo.save).toHaveBeenCalled();
     });
@@ -149,13 +169,19 @@ describe('AntiCheatService', () => {
         puzzleId: 'puzzle-1',
         moveType: 'test',
         moveData: {},
-        isValid: true
+        isValid: true,
       };
 
       mockAuditRepo.save.mockRejectedValue(new Error('Database error'));
 
       await expect(
-        service.auditMove('player-1', 'puzzle-1', 'session-1', move, 1, 500, { isValid: true, isComplete: false, score: 0, errors: [], completionPercentage: 0 })
+        service.auditMove('player-1', 'puzzle-1', 'session-1', move, 1, 500, {
+          isValid: true,
+          isComplete: false,
+          score: 0,
+          errors: [],
+          completionPercentage: 0,
+        }),
       ).resolves.not.toThrow();
     });
   });
@@ -163,33 +189,53 @@ describe('AntiCheatService', () => {
   describe('analyzeMoveSequence', () => {
     it('should detect and record violations', async () => {
       const moves: PuzzleMove[] = [
-        { id: 'move-1', timestamp: new Date(), playerId: 'player-1', puzzleId: 'puzzle-1', moveType: 'test', moveData: {}, isValid: true }
+        {
+          id: 'move-1',
+          timestamp: new Date(),
+          playerId: 'player-1',
+          puzzleId: 'puzzle-1',
+          moveType: 'test',
+          moveData: {},
+          isValid: true,
+        },
       ];
 
       mockDetectionService.analyzeMoveSequence.mockReturnValue({
         isAnomaly: true,
-        violations: [{
-          type: ViolationType.IMPOSSIBLY_FAST_COMPLETION,
-          severity: Severity.HIGH,
-          confidenceScore: 85,
-          evidence: {
-            detectionMethod: 'speed_analysis',
-            metrics: {},
-            anomalies: []
-          }
-        }],
-        metrics: {}
+        violations: [
+          {
+            type: ViolationType.IMPOSSIBLY_FAST_COMPLETION,
+            severity: Severity.HIGH,
+            confidenceScore: 85,
+            evidence: {
+              detectionMethod: 'speed_analysis',
+              metrics: {},
+              anomalies: [],
+            },
+          },
+        ],
+        metrics: {},
       });
 
       mockViolationRepo.create.mockReturnValue({ id: 'violation-1' });
       mockViolationRepo.save.mockResolvedValue({ id: 'violation-1' });
-      mockProfileRepo.findOne.mockResolvedValue({ id: 'profile-1', trustScore: 100, totalViolations: 0 });
+      mockProfileRepo.findOne.mockResolvedValue({
+        id: 'profile-1',
+        trustScore: 100,
+        totalViolations: 0,
+      });
       mockProfileRepo.save.mockResolvedValue({});
 
-      await service.analyzeMoveSequence('player-1', 'puzzle-1', 'session-1', moves, {
-        isFirstAttempt: true,
-        allMovesValid: true
-      });
+      await service.analyzeMoveSequence(
+        'player-1',
+        'puzzle-1',
+        'session-1',
+        moves,
+        {
+          isFirstAttempt: true,
+          allMovesValid: true,
+        },
+      );
 
       expect(mockDetectionService.analyzeMoveSequence).toHaveBeenCalled();
       expect(mockViolationRepo.create).toHaveBeenCalled();
@@ -198,19 +244,33 @@ describe('AntiCheatService', () => {
 
     it('should not create violations when no anomalies detected', async () => {
       const moves: PuzzleMove[] = [
-        { id: 'move-1', timestamp: new Date(), playerId: 'player-1', puzzleId: 'puzzle-1', moveType: 'test', moveData: {}, isValid: true }
+        {
+          id: 'move-1',
+          timestamp: new Date(),
+          playerId: 'player-1',
+          puzzleId: 'puzzle-1',
+          moveType: 'test',
+          moveData: {},
+          isValid: true,
+        },
       ];
 
       mockDetectionService.analyzeMoveSequence.mockReturnValue({
         isAnomaly: false,
         violations: [],
-        metrics: {}
+        metrics: {},
       });
 
-      await service.analyzeMoveSequence('player-1', 'puzzle-1', 'session-1', moves, {
-        isFirstAttempt: true,
-        allMovesValid: true
-      });
+      await service.analyzeMoveSequence(
+        'player-1',
+        'puzzle-1',
+        'session-1',
+        moves,
+        {
+          isFirstAttempt: true,
+          allMovesValid: true,
+        },
+      );
 
       expect(mockViolationRepo.create).not.toHaveBeenCalled();
       expect(mockViolationRepo.save).not.toHaveBeenCalled();
@@ -226,14 +286,22 @@ describe('AntiCheatService', () => {
         evidence: {
           detectionMethod: 'timing_analysis',
           metrics: {},
-          anomalies: []
-        }
+          anomalies: [],
+        },
       };
 
       mockViolationRepo.create.mockReturnValue({ id: 'violation-1' });
-      mockViolationRepo.save.mockResolvedValue({ id: 'violation-1', ...violation });
+      mockViolationRepo.save.mockResolvedValue({
+        id: 'violation-1',
+        ...violation,
+      });
 
-      const result = await service.recordViolation('player-1', 'puzzle-1', 'session-1', violation);
+      const result = await service.recordViolation(
+        'player-1',
+        'puzzle-1',
+        'session-1',
+        violation,
+      );
 
       expect(result).toBeDefined();
       expect(mockViolationRepo.create).toHaveBeenCalledWith({
@@ -246,7 +314,7 @@ describe('AntiCheatService', () => {
         evidence: violation.evidence,
         status: ViolationStatus.PENDING,
         autoDetected: true,
-        actionTaken: false
+        actionTaken: false,
       });
     });
   });
@@ -280,7 +348,7 @@ describe('AntiCheatService', () => {
         puzzleId: 'puzzle-1',
         moveType: 'test',
         moveData: {},
-        isValid: true
+        isValid: true,
       };
 
       const result = service.validateMoveTimestamp(move);
@@ -297,7 +365,7 @@ describe('AntiCheatService', () => {
         puzzleId: 'puzzle-1',
         moveType: 'test',
         moveData: {},
-        isValid: true
+        isValid: true,
       };
 
       const result = service.validateMoveTimestamp(move);
@@ -315,7 +383,7 @@ describe('AntiCheatService', () => {
         puzzleId: 'puzzle-1',
         moveType: 'test',
         moveData: {},
-        isValid: true
+        isValid: true,
       };
 
       const result = service.validateMoveTimestamp(move);
@@ -327,7 +395,11 @@ describe('AntiCheatService', () => {
 
   describe('getOrCreateProfile', () => {
     it('should return existing profile', async () => {
-      const existingProfile = { id: 'profile-1', playerId: 'player-1', trustScore: 95 };
+      const existingProfile = {
+        id: 'profile-1',
+        playerId: 'player-1',
+        trustScore: 95,
+      };
       mockProfileRepo.findOne.mockResolvedValue(existingProfile);
 
       const result = await service.getOrCreateProfile('player-1');
@@ -338,7 +410,11 @@ describe('AntiCheatService', () => {
 
     it('should create new profile when none exists', async () => {
       mockProfileRepo.findOne.mockResolvedValue(null);
-      const newProfile = { id: 'profile-1', playerId: 'player-1', trustScore: 100 };
+      const newProfile = {
+        id: 'profile-1',
+        playerId: 'player-1',
+        trustScore: 100,
+      };
       mockProfileRepo.create.mockReturnValue(newProfile);
       mockProfileRepo.save.mockResolvedValue(newProfile);
 
@@ -357,22 +433,26 @@ describe('AntiCheatService', () => {
         playerId: 'player-1',
         trustScore: 100,
         totalViolations: 0,
-        riskFactors: { flaggedBehaviors: [] }
+        riskFactors: { flaggedBehaviors: [] },
       };
 
       mockProfileRepo.findOne.mockResolvedValue(profile);
-      mockProfileRepo.save.mockResolvedValue({ ...profile, trustScore: 95, totalViolations: 1 });
+      mockProfileRepo.save.mockResolvedValue({
+        ...profile,
+        trustScore: 95,
+        totalViolations: 1,
+      });
 
       await service.updateBehaviorProfile('player-1', {
         violationDetected: true,
-        violationTypes: [ViolationType.IMPOSSIBLY_FAST_COMPLETION]
+        violationTypes: [ViolationType.IMPOSSIBLY_FAST_COMPLETION],
       });
 
       expect(mockProfileRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           totalViolations: 1,
-          trustScore: 95
-        })
+          trustScore: 95,
+        }),
       );
     });
   });

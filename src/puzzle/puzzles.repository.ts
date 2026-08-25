@@ -82,12 +82,9 @@ export class PuzzlesRepository {
      * USER PROGRESS JOIN (only when needed)
      */
     if (params.status) {
-      qb.leftJoin(
-        'puzzle.progress',
-        'progress',
-        'progress.userId = :userId',
-        { userId },
-      );
+      qb.leftJoin('puzzle.progress', 'progress', 'progress.userId = :userId', {
+        userId,
+      });
 
       if (params.status === 'completed') {
         qb.andWhere('progress.completed = true');
@@ -105,18 +102,13 @@ export class PuzzlesRepository {
     /**
      * SORTING (whitelist recommended to prevent SQL injection)
      */
-    const allowedSortFields = new Set([
-      'createdAt',
-      'difficulty',
-      'title',
-    ]);
+    const allowedSortFields = new Set(['createdAt', 'difficulty', 'title']);
 
     const sortBy = allowedSortFields.has(params.sortBy ?? '')
-      ? params.sortBy!
+      ? params.sortBy
       : 'createdAt';
 
-    const order =
-      params.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const order = params.order?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     qb.orderBy(`puzzle.${sortBy}`, order);
 

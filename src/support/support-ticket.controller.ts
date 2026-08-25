@@ -65,8 +65,7 @@ export class SupportTicketController {
   @ApiResponse({ status: 200, description: 'Tickets returned successfully' })
   async getTickets(@Request() req, @Query() query: TicketQueryDto) {
     const isStaff =
-      req.user.role === UserRole.ADMIN ||
-      req.user.role === UserRole.MODERATOR;
+      req.user.role === UserRole.ADMIN || req.user.role === UserRole.MODERATOR;
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -95,13 +94,9 @@ export class SupportTicketController {
   @ApiResponse({ status: 200, description: 'Ticket returned' })
   @ApiResponse({ status: 404, description: 'Ticket not found' })
   @ApiResponse({ status: 403, description: 'Access denied' })
-  async getTicket(
-    @Request() req,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  async getTicket(@Request() req, @Param('id', ParseUUIDPipe) id: string) {
     const isStaff =
-      req.user.role === UserRole.ADMIN ||
-      req.user.role === UserRole.MODERATOR;
+      req.user.role === UserRole.ADMIN || req.user.role === UserRole.MODERATOR;
 
     return this.supportService.getTicketById(id, req.user.id, isStaff);
   }
@@ -109,7 +104,9 @@ export class SupportTicketController {
   // ─── POST /support/tickets/:id/messages ───────────────────────────────────
 
   @Post(':id/messages')
-  @ApiOperation({ summary: 'Player or staff adds a message to a ticket thread' })
+  @ApiOperation({
+    summary: 'Player or staff adds a message to a ticket thread',
+  })
   @ApiParam({ name: 'id', description: 'Ticket UUID' })
   @ApiResponse({ status: 201, description: 'Message added' })
   @ApiResponse({ status: 404, description: 'Ticket not found' })
@@ -120,8 +117,7 @@ export class SupportTicketController {
     @Body() dto: CreateMessageDto,
   ) {
     const isStaff =
-      req.user.role === UserRole.ADMIN ||
-      req.user.role === UserRole.MODERATOR;
+      req.user.role === UserRole.ADMIN || req.user.role === UserRole.MODERATOR;
 
     const message = await this.supportService.addMessage(
       id,

@@ -27,7 +27,11 @@ import { PuzzleEditorActivity } from '../entities/puzzle-editor-activity.entity'
 import { Puzzle } from '../../puzzles/entities/puzzle.entity';
 import { User } from '../../users/entities/user.entity';
 import { PuzzleValidationService } from './puzzle-validation.service';
-import { EditorState, EditorComponent, ComponentConnection } from '../interfaces/editor.interfaces';
+import {
+  EditorState,
+  EditorComponent,
+  ComponentConnection,
+} from '../interfaces/editor.interfaces';
 
 @Injectable()
 export class PuzzleEditorService {
@@ -52,7 +56,10 @@ export class PuzzleEditorService {
   /**
    * Create new puzzle editor
    */
-  async createEditor(dto: CreatePuzzleEditorDto, userId: string): Promise<PuzzleEditor> {
+  async createEditor(
+    dto: CreatePuzzleEditorDto,
+    userId: string,
+  ): Promise<PuzzleEditor> {
     try {
       // Check if template exists
       let template: PuzzleTemplate | null = null;
@@ -99,13 +106,22 @@ export class PuzzleEditorService {
 
       // If using template, increment usage count
       if (template) {
-        await this.templateRepository.increment({ id: dto.templateId }, 'usageCount', 1);
+        await this.templateRepository.increment(
+          { id: dto.templateId },
+          'usageCount',
+          1,
+        );
       }
 
-      this.logger.log(`Created puzzle editor: ${savedEditor.id} by user: ${userId}`);
+      this.logger.log(
+        `Created puzzle editor: ${savedEditor.id} by user: ${userId}`,
+      );
       return savedEditor;
     } catch (error) {
-      this.logger.error(`Failed to create puzzle editor: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to create puzzle editor: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -127,7 +143,9 @@ export class PuzzleEditorService {
     if (userId && editor.createdBy !== userId) {
       const isCollaborator = editor.collaborators?.some((c) => c.id === userId);
       if (!isCollaborator && !editor.metadata.isPublic) {
-        throw new ForbiddenException('You do not have access to this puzzle editor');
+        throw new ForbiddenException(
+          'You do not have access to this puzzle editor',
+        );
       }
     }
 
@@ -137,7 +155,11 @@ export class PuzzleEditorService {
   /**
    * Update puzzle editor
    */
-  async updateEditor(editorId: string, dto: UpdatePuzzleEditorDto, userId: string): Promise<PuzzleEditor> {
+  async updateEditor(
+    editorId: string,
+    dto: UpdatePuzzleEditorDto,
+    userId: string,
+  ): Promise<PuzzleEditor> {
     const editor = await this.getEditor(editorId, userId);
 
     // Check permissions
@@ -162,7 +184,9 @@ export class PuzzleEditorService {
 
     // Log activity
     await this.logActivity(userId, editorId, 'COMPONENT_MODIFIED', {
-      changes: Object.keys(dto).filter((k) => k !== 'components' && k !== 'connections'),
+      changes: Object.keys(dto).filter(
+        (k) => k !== 'components' && k !== 'connections',
+      ),
     });
 
     this.logger.log(`Updated puzzle editor: ${editorId}`);
@@ -177,7 +201,9 @@ export class PuzzleEditorService {
 
     // Check permissions
     if (editor.createdBy !== userId) {
-      throw new ForbiddenException('You can only delete your own puzzle editors');
+      throw new ForbiddenException(
+        'You can only delete your own puzzle editors',
+      );
     }
 
     // Soft delete
@@ -195,7 +221,11 @@ export class PuzzleEditorService {
   /**
    * Save editor state
    */
-  async saveEditorState(editorId: string, dto: SaveEditorStateDto, userId: string): Promise<PuzzleEditor> {
+  async saveEditorState(
+    editorId: string,
+    dto: SaveEditorStateDto,
+    userId: string,
+  ): Promise<PuzzleEditor> {
     const editor = await this.getEditor(editorId, userId);
 
     // Check permissions
@@ -222,10 +252,14 @@ export class PuzzleEditorService {
 
     // Create version snapshot if description provided
     if (dto.description || dto.versionTag) {
-      await this.createVersion(editorId, {
-        description: dto.description || 'Auto-save',
-        versionTag: dto.versionTag,
-      }, userId);
+      await this.createVersion(
+        editorId,
+        {
+          description: dto.description || 'Auto-save',
+          versionTag: dto.versionTag,
+        },
+        userId,
+      );
     }
 
     // Log activity
@@ -241,7 +275,10 @@ export class PuzzleEditorService {
   /**
    * Search puzzle editors
    */
-  async searchEditors(dto: SearchPuzzleEditorsDto, userId?: string): Promise<{
+  async searchEditors(
+    dto: SearchPuzzleEditorsDto,
+    userId?: string,
+  ): Promise<{
     editors: PuzzleEditor[];
     total: number;
     page: number;
@@ -260,7 +297,9 @@ export class PuzzleEditorService {
         { userId },
       );
     } else {
-      query = query.where('editor.metadata->>\'isPublic\' = :isPublic', { isPublic: 'true' });
+      query = query.where("editor.metadata->>'isPublic' = :isPublic", {
+        isPublic: 'true',
+      });
     }
 
     // Apply filters
@@ -276,7 +315,9 @@ export class PuzzleEditorService {
     }
 
     if (dto.tags && dto.tags.length > 0) {
-      query = query.andWhere('editor.metadata->\'tags\' ?| :tags', { tags: dto.tags });
+      query = query.andWhere("editor.metadata->'tags' ?| :tags", {
+        tags: dto.tags,
+      });
     }
 
     // Sort
@@ -350,7 +391,10 @@ export class PuzzleEditorService {
   /**
    * Get version history
    */
-  async getVersionHistory(editorId: string, userId: string): Promise<PuzzleEditorVersion[]> {
+  async getVersionHistory(
+    editorId: string,
+    userId: string,
+  ): Promise<PuzzleEditorVersion[]> {
     await this.getEditor(editorId, userId);
 
     return this.versionRepository.find({
@@ -371,7 +415,9 @@ export class PuzzleEditorService {
 
     // Check permissions
     if (editor.createdBy !== userId) {
-      throw new ForbiddenException('You can only restore versions for your own puzzle editors');
+      throw new ForbiddenException(
+        'You can only restore versions for your own puzzle editors',
+      );
     }
 
     const version = await this.versionRepository.findOne({
@@ -392,10 +438,14 @@ export class PuzzleEditorService {
     const restored = await this.editorRepository.save(editor);
 
     // Create new version for this restoration
-    await this.createVersion(editorId, {
-      description: `Restored from version ${version.versionNumber}`,
-      metadata: { restoredFromVersion: version.id },
-    }, userId);
+    await this.createVersion(
+      editorId,
+      {
+        description: `Restored from version ${version.versionNumber}`,
+        metadata: { restoredFromVersion: version.id },
+      },
+      userId,
+    );
 
     // Log activity
     await this.logActivity(userId, editorId, 'VERSION_CREATED', {
@@ -417,7 +467,9 @@ export class PuzzleEditorService {
 
     // Check permissions
     if (editor.createdBy !== userId) {
-      throw new ForbiddenException('You can only publish your own puzzle editors');
+      throw new ForbiddenException(
+        'You can only publish your own puzzle editors',
+      );
     }
 
     // Validate puzzle
@@ -428,7 +480,9 @@ export class PuzzleEditorService {
 
     if (!validationResult.isValid) {
       throw new BadRequestException(
-        `Cannot publish puzzle with validation errors: ${validationResult.errors.map((e) => e.message).join(', ')}`,
+        `Cannot publish puzzle with validation errors: ${validationResult.errors
+          .map((e) => e.message)
+          .join(', ')}`,
       );
     }
 
@@ -460,7 +514,11 @@ export class PuzzleEditorService {
       puzzle.title = dto.title;
       puzzle.description = dto.description;
       puzzle.category = dto.category;
-      puzzle.difficulty = dto.difficulty as 'easy' | 'medium' | 'hard' | 'expert';
+      puzzle.difficulty = dto.difficulty as
+        | 'easy'
+        | 'medium'
+        | 'hard'
+        | 'expert';
       puzzle.tags = dto.tags;
       puzzle.content = {
         components: editor.components,
@@ -476,10 +534,14 @@ export class PuzzleEditorService {
     await this.editorRepository.save(editor);
 
     // Create version for publication
-    await this.createVersion(editorId, {
-      description: 'Published puzzle',
-      metadata: { publishedAs: published.id, isPublished: true },
-    }, userId);
+    await this.createVersion(
+      editorId,
+      {
+        description: 'Published puzzle',
+        metadata: { publishedAs: published.id, isPublished: true },
+      },
+      userId,
+    );
 
     // Log activity
     await this.logActivity(userId, editorId, 'PUZZLE_PUBLISHED', {
@@ -553,7 +615,9 @@ export class PuzzleEditorService {
     }
 
     if (editor.collaborators) {
-      editor.collaborators = editor.collaborators.filter((c) => c.id !== collaboratorId);
+      editor.collaborators = editor.collaborators.filter(
+        (c) => c.id !== collaboratorId,
+      );
       editor.metadata.collaborators = editor.collaborators.map((c) => c.id);
     }
 

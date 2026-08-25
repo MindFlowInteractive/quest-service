@@ -39,7 +39,11 @@ const makePuzzle = (overrides: Partial<Puzzle> = {}): Puzzle =>
     tags: ['tag1'],
     prerequisites: [],
     scoring: {},
-    metadata: { version: '1.0', lastModifiedBy: 'author', reviewStatus: 'approved' } as any,
+    metadata: {
+      version: '1.0',
+      lastModifiedBy: 'author',
+      reviewStatus: 'approved',
+    } as any,
     isActive: true,
     isFeatured: false,
     publishedAt: null,
@@ -47,36 +51,37 @@ const makePuzzle = (overrides: Partial<Puzzle> = {}): Puzzle =>
   } as unknown as Puzzle);
 
 /** Build a minimal PuzzleVersion-like object */
-const makeVersion = (overrides: Partial<PuzzleVersion> = {}): PuzzleVersion =>
-  ({
-    id: 'version-uuid-1',
-    puzzleId: 'puzzle-uuid-1',
-    version: 1,
-    changedBy: 'user-1',
-    changeNote: 'initial',
-    diff: [],
-    content: {
-      title: 'Test Puzzle',
-      description: 'Description',
-      category: 'logic',
-      difficulty: 'medium' as any,
-      difficultyRating: 3,
-      basePoints: 100,
-      timeLimit: 120,
-      maxHints: 3,
-      content: { correctAnswer: 42 },
-      hints: [],
-      tags: ['tag1'],
-      prerequisites: [],
-      scoring: {},
-      metadata: {} as any,
-      isActive: true,
-      isFeatured: false,
-      publishedAt: null,
-    },
-    createdAt: new Date('2026-01-01'),
-    ...overrides,
-  } as PuzzleVersion);
+const makeVersion = (
+  overrides: Partial<PuzzleVersion> = {},
+): PuzzleVersion => ({
+  id: 'version-uuid-1',
+  puzzleId: 'puzzle-uuid-1',
+  version: 1,
+  changedBy: 'user-1',
+  changeNote: 'initial',
+  diff: [],
+  content: {
+    title: 'Test Puzzle',
+    description: 'Description',
+    category: 'logic',
+    difficulty: 'medium',
+    difficultyRating: 3,
+    basePoints: 100,
+    timeLimit: 120,
+    maxHints: 3,
+    content: { correctAnswer: 42 },
+    hints: [],
+    tags: ['tag1'],
+    prerequisites: [],
+    scoring: {},
+    metadata: {} as any,
+    isActive: true,
+    isFeatured: false,
+    publishedAt: null,
+  },
+  createdAt: new Date('2026-01-01'),
+  ...overrides,
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -117,7 +122,11 @@ describe('PuzzleVersionService', () => {
       versionRepo.create.mockReturnValue(built);
       versionRepo.save.mockResolvedValue(built);
 
-      const result = await service.snapshotBefore(puzzle, 'user-1', 'first edit');
+      const result = await service.snapshotBefore(
+        puzzle,
+        'user-1',
+        'first edit',
+      );
 
       expect(versionRepo.findOne).toHaveBeenCalledWith(
         expect.objectContaining({ where: { puzzleId: puzzle.id } }),
@@ -152,10 +161,17 @@ describe('PuzzleVersionService', () => {
     });
 
     it('records diff of changed fields', async () => {
-      const puzzle = makePuzzle({ title: 'New Title', difficulty: 'hard' as any });
+      const puzzle = makePuzzle({
+        title: 'New Title',
+        difficulty: 'hard',
+      });
       const prev = makeVersion({
         version: 1,
-        content: { ...makeVersion().content, title: 'Old Title', difficulty: 'easy' as any },
+        content: {
+          ...makeVersion().content,
+          title: 'Old Title',
+          difficulty: 'easy',
+        },
       });
       versionRepo.findOne.mockResolvedValue(prev);
 
@@ -166,7 +182,11 @@ describe('PuzzleVersionService', () => {
       versionRepo.create.mockReturnValue(built);
       versionRepo.save.mockResolvedValue(built);
 
-      const result = await service.snapshotBefore(puzzle, 'user-1', 'update title + difficulty');
+      const result = await service.snapshotBefore(
+        puzzle,
+        'user-1',
+        'update title + difficulty',
+      );
 
       // diff should contain the changed fields
       const createCall = versionRepo.create.mock.calls[0][0];
@@ -218,9 +238,21 @@ describe('PuzzleVersionService', () => {
   describe('listVersions', () => {
     it('returns versions newest-first with pagination metadata', async () => {
       puzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-uuid-1' });
-      const v3 = makeVersion({ id: 'v3', version: 3, createdAt: new Date('2026-03-03') });
-      const v2 = makeVersion({ id: 'v2', version: 2, createdAt: new Date('2026-02-02') });
-      const v1 = makeVersion({ id: 'v1', version: 1, createdAt: new Date('2026-01-01') });
+      const v3 = makeVersion({
+        id: 'v3',
+        version: 3,
+        createdAt: new Date('2026-03-03'),
+      });
+      const v2 = makeVersion({
+        id: 'v2',
+        version: 2,
+        createdAt: new Date('2026-02-02'),
+      });
+      const v1 = makeVersion({
+        id: 'v1',
+        version: 1,
+        createdAt: new Date('2026-01-01'),
+      });
       versionRepo.findAndCount.mockResolvedValue([[v3, v2], 3]);
 
       const result = await service.listVersions('puzzle-uuid-1', 1, 2);
@@ -236,7 +268,11 @@ describe('PuzzleVersionService', () => {
 
     it('returns paginated results on page 2', async () => {
       puzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-uuid-1' });
-      const v1 = makeVersion({ id: 'v1', version: 1, createdAt: new Date('2026-01-01') });
+      const v1 = makeVersion({
+        id: 'v1',
+        version: 1,
+        createdAt: new Date('2026-01-01'),
+      });
       versionRepo.findAndCount.mockResolvedValue([[v1], 3]);
 
       const result = await service.listVersions('puzzle-uuid-1', 2, 2);
@@ -301,28 +337,35 @@ describe('PuzzleVersionService', () => {
       // getVersion (calls assertPuzzleExists + findOne)
       puzzleRepo.findOne
         .mockResolvedValueOnce({ id: 'puzzle-uuid-1' }) // assertPuzzleExists inside getVersion
-        .mockResolvedValueOnce(puzzle);                  // manager.findOne inside transaction
+        .mockResolvedValueOnce(puzzle); // manager.findOne inside transaction
 
       versionRepo.findOne
-        .mockResolvedValueOnce(targetVersion)  // getVersion lookup
+        .mockResolvedValueOnce(targetVersion) // getVersion lookup
         .mockResolvedValueOnce(makeVersion({ version: 3 })); // nextVersionNumber
 
       const savedPuzzle = { ...puzzle, title: 'Older Title', basePoints: 50 };
 
       // Simulate DataSource.transaction calling the callback
-      dataSource.transaction.mockImplementation(async (cb: (em: Partial<EntityManager>) => Promise<Puzzle>) => {
-        const mockManager: Partial<EntityManager> = {
-          findOne: jest.fn()
-            .mockResolvedValueOnce(puzzle),     // load puzzle
-          save: jest.fn()
-            .mockResolvedValueOnce(makeVersion()) // pre-rollback snapshot save
-            .mockResolvedValueOnce(savedPuzzle),  // puzzle save
-          create: jest.fn().mockReturnValue(makeVersion()),
-        };
-        return cb(mockManager as EntityManager);
-      });
+      dataSource.transaction.mockImplementation(
+        async (cb: (em: Partial<EntityManager>) => Promise<Puzzle>) => {
+          const mockManager: Partial<EntityManager> = {
+            findOne: jest.fn().mockResolvedValueOnce(puzzle), // load puzzle
+            save: jest
+              .fn()
+              .mockResolvedValueOnce(makeVersion()) // pre-rollback snapshot save
+              .mockResolvedValueOnce(savedPuzzle), // puzzle save
+            create: jest.fn().mockReturnValue(makeVersion()),
+          };
+          return cb(mockManager);
+        },
+      );
 
-      const result = await service.rollbackTo('puzzle-uuid-1', 2, 'admin-1', 'revert spam');
+      const result = await service.rollbackTo(
+        'puzzle-uuid-1',
+        2,
+        'admin-1',
+        'revert spam',
+      );
 
       expect(dataSource.transaction).toHaveBeenCalled();
       expect(result.title).toBe('Older Title');
@@ -353,7 +396,7 @@ describe('PuzzleVersionService', () => {
         content: {
           ...makeVersion().content,
           title: 'Original Title',
-          difficulty: 'easy' as any,
+          difficulty: 'easy',
           basePoints: 100,
         },
       });
@@ -363,14 +406,12 @@ describe('PuzzleVersionService', () => {
         content: {
           ...makeVersion().content,
           title: 'Updated Title',
-          difficulty: 'hard' as any,
+          difficulty: 'hard',
           basePoints: 100,
         },
       });
 
-      versionRepo.findOne
-        .mockResolvedValueOnce(v1)
-        .mockResolvedValueOnce(v2);
+      versionRepo.findOne.mockResolvedValueOnce(v1).mockResolvedValueOnce(v2);
 
       const result = await service.diffVersions('puzzle-uuid-1', 1, 2);
 
@@ -389,9 +430,7 @@ describe('PuzzleVersionService', () => {
       const v1 = makeVersion({ version: 1 });
       const v2 = makeVersion({ version: 2, content: v1.content });
 
-      versionRepo.findOne
-        .mockResolvedValueOnce(v1)
-        .mockResolvedValueOnce(v2);
+      versionRepo.findOne.mockResolvedValueOnce(v1).mockResolvedValueOnce(v2);
 
       const result = await service.diffVersions('puzzle-uuid-1', 1, 2);
 
@@ -448,8 +487,17 @@ describe('PuzzleVersionService', () => {
     });
 
     it('detects changed title and content fields', async () => {
-      const puzzle = makePuzzle({ title: 'Updated Title', content: { type: 'multiple-choice', correctAnswer: 99 } });
-      const prev = makeVersion({ content: { ...makeVersion().content, title: 'Old Title', content: { type: 'multiple-choice', correctAnswer: 1 } } });
+      const puzzle = makePuzzle({
+        title: 'Updated Title',
+        content: { type: 'multiple-choice', correctAnswer: 99 },
+      });
+      const prev = makeVersion({
+        content: {
+          ...makeVersion().content,
+          title: 'Old Title',
+          content: { type: 'multiple-choice', correctAnswer: 1 },
+        },
+      });
       versionRepo.findOne.mockResolvedValue(prev);
 
       versionRepo.create.mockImplementation((data) => data);
@@ -461,8 +509,10 @@ describe('PuzzleVersionService', () => {
     });
 
     it('detects changed difficulty', async () => {
-      const puzzle = makePuzzle({ difficulty: 'hard' as any });
-      const prev = makeVersion({ content: { ...makeVersion().content, difficulty: 'easy' as any } });
+      const puzzle = makePuzzle({ difficulty: 'hard' });
+      const prev = makeVersion({
+        content: { ...makeVersion().content, difficulty: 'easy' },
+      });
       versionRepo.findOne.mockResolvedValue(prev);
 
       versionRepo.create.mockImplementation((data) => data);
@@ -500,7 +550,7 @@ describe('PuzzleVersionService', () => {
       // getCurrentVersionId (after snapshot) calls:
       //   2. findOne({ order: { version: DESC } })  → returns new snapshot
       versionRepo.findOne
-        .mockResolvedValueOnce(oldSnapshot)  // inside snapshotBefore: determine next version
+        .mockResolvedValueOnce(oldSnapshot) // inside snapshotBefore: determine next version
         .mockResolvedValueOnce(newSnapshot); // getCurrentVersionId after snapshot
 
       versionRepo.create.mockReturnValue(newSnapshot);

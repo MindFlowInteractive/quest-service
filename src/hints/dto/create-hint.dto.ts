@@ -1,11 +1,21 @@
-import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, IsUUID, Min, Max, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+  IsUUID,
+  Min,
+  Max,
+  IsObject,
+} from 'class-validator';
 
 export enum HintType {
   GENERAL = 'general',
   CONTEXTUAL = 'contextual',
   STRATEGIC = 'strategic',
   SPECIFIC = 'specific',
-  TUTORIAL = 'tutorial'
+  TUTORIAL = 'tutorial',
 }
 
 export class CreateHintDto {

@@ -20,7 +20,9 @@ export class ReferralGrowthService {
     if (converted) {
       this.totalConverted += 1;
     }
-    this.logger.log(`Referral recorded for ${referrerId} — converted: ${converted}`);
+    this.logger.log(
+      `Referral recorded for ${referrerId} — converted: ${converted}`,
+    );
   }
 
   getStats(): GrowthStats {
@@ -31,9 +33,8 @@ export class ReferralGrowthService {
 
     return {
       totalReferrals: this.totalAttempted,
-      conversionRate: this.totalAttempted > 0
-        ? this.totalConverted / this.totalAttempted
-        : 0,
+      conversionRate:
+        this.totalAttempted > 0 ? this.totalConverted / this.totalAttempted : 0,
       topReferrers,
     };
   }

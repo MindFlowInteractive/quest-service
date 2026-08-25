@@ -10,7 +10,9 @@ import { ReplayAnalyticsService } from './services/replay-analytics.service';
 import { ReplayController } from './controllers/replay.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PuzzleReplay, ReplayAction, ReplayAnalytic])],
+  imports: [
+    TypeOrmModule.forFeature([PuzzleReplay, ReplayAction, ReplayAnalytic]),
+  ],
   providers: [
     ReplayService,
     ReplayCompressionService,

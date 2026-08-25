@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MultiplayerService } from '../services/multiplayer.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { RoomType, RoomStatus, Player } from '../interfaces/multiplayer.interface';
+import {
+  RoomType,
+  RoomStatus,
+  Player,
+} from '../interfaces/multiplayer.interface';
 
 describe('MultiplayerService', () => {
   let service: MultiplayerService;
@@ -45,12 +49,12 @@ describe('MultiplayerService', () => {
   describe('createMultiplayerSession', () => {
     it('should create a collaborative session with invite code', async () => {
       const settings = { maxPlayers: 4, timeLimit: 600 };
-      
+
       const session = await service.createMultiplayerSession(
         RoomType.COLLABORATIVE,
         mockPlayer,
         settings,
-        'puzzle1'
+        'puzzle1',
       );
 
       expect(session.id).toBeDefined();
@@ -65,19 +69,19 @@ describe('MultiplayerService', () => {
       expect(cacheManager.set).toHaveBeenCalledWith(
         `session:${session.inviteCode}`,
         session,
-        3600
+        3600,
       );
       expect(cacheManager.set).toHaveBeenCalledWith(
         `session:id:${session.id}`,
         session,
-        3600
+        3600,
       );
     });
 
     it('should create a competitive session with default settings', async () => {
       const session = await service.createMultiplayerSession(
         RoomType.COMPETITIVE,
-        mockPlayer
+        mockPlayer,
       );
 
       expect(session.type).toBe(RoomType.COMPETITIVE);
@@ -95,7 +99,7 @@ describe('MultiplayerService', () => {
     beforeEach(async () => {
       existingSession = await service.createMultiplayerSession(
         RoomType.COLLABORATIVE,
-        mockPlayer
+        mockPlayer,
       );
     });
 
@@ -110,16 +114,16 @@ describe('MultiplayerService', () => {
 
       const joinedSession = await service.joinSessionByCode(
         existingSession.inviteCode,
-        newPlayer
+        newPlayer,
       );
 
       expect(joinedSession).toBeTruthy();
       expect(joinedSession?.players).toHaveLength(2);
-      expect(joinedSession?.players.some(p => p.id === 'user2')).toBe(true);
+      expect(joinedSession?.players.some((p) => p.id === 'user2')).toBe(true);
       expect(cacheManager.set).toHaveBeenCalledWith(
         `session:${existingSession.inviteCode}`,
         expect.any(Object),
-        3600
+        3600,
       );
     });
 
@@ -142,7 +146,7 @@ describe('MultiplayerService', () => {
 
       const result = await service.joinSessionByCode(
         existingSession.inviteCode,
-        mockPlayer
+        mockPlayer,
       );
 
       expect(result).toBeNull();
@@ -158,7 +162,7 @@ describe('MultiplayerService', () => {
 
       const result = await service.joinSessionByCode(
         existingSession.inviteCode,
-        mockPlayer
+        mockPlayer,
       );
 
       expect(result).toBeNull();
@@ -169,7 +173,7 @@ describe('MultiplayerService', () => {
     it('should retrieve session from Redis', async () => {
       const session = await service.createMultiplayerSession(
         RoomType.COLLABORATIVE,
-        mockPlayer
+        mockPlayer,
       );
 
       cacheManager.get.mockResolvedValue(session);
@@ -177,7 +181,9 @@ describe('MultiplayerService', () => {
       const result = await service.getSessionByCode(session.inviteCode);
 
       expect(result).toEqual(session);
-      expect(cacheManager.get).toHaveBeenCalledWith(`session:${session.inviteCode}`);
+      expect(cacheManager.get).toHaveBeenCalledWith(
+        `session:${session.inviteCode}`,
+      );
     });
 
     it('should return null for non-existent session', async () => {
@@ -195,7 +201,7 @@ describe('MultiplayerService', () => {
     beforeEach(async () => {
       session = await service.createMultiplayerSession(
         RoomType.COLLABORATIVE,
-        mockPlayer
+        mockPlayer,
       );
     });
 
@@ -203,7 +209,10 @@ describe('MultiplayerService', () => {
       // Simulate player disconnection
       await service.handlePlayerDisconnection(session.id, mockPlayer.id);
 
-      const result = await service.handlePlayerReconnection(session.id, mockPlayer.id);
+      const result = await service.handlePlayerReconnection(
+        session.id,
+        mockPlayer.id,
+      );
 
       expect(result).toBeTruthy();
       expect(result?.disconnectedPlayers?.has(mockPlayer.id)).toBe(false);
@@ -211,15 +220,24 @@ describe('MultiplayerService', () => {
 
     it('should reject reconnection after grace period', async () => {
       // Simulate disconnection with old timestamp
-      session.disconnectedPlayers?.set(mockPlayer.id, new Date(Date.now() - 120000)); // 2 minutes ago
+      session.disconnectedPlayers?.set(
+        mockPlayer.id,
+        new Date(Date.now() - 120000),
+      ); // 2 minutes ago
 
-      const result = await service.handlePlayerReconnection(session.id, mockPlayer.id);
+      const result = await service.handlePlayerReconnection(
+        session.id,
+        mockPlayer.id,
+      );
 
       expect(result).toBeNull();
     });
 
     it('should reject reconnection for non-existent session', async () => {
-      const result = await service.handlePlayerReconnection('nonexistent', mockPlayer.id);
+      const result = await service.handlePlayerReconnection(
+        'nonexistent',
+        mockPlayer.id,
+      );
 
       expect(result).toBeNull();
     });
@@ -231,7 +249,7 @@ describe('MultiplayerService', () => {
     beforeEach(async () => {
       session = await service.createMultiplayerSession(
         RoomType.COLLABORATIVE,
-        mockPlayer
+        mockPlayer,
       );
     });
 
@@ -239,18 +257,20 @@ describe('MultiplayerService', () => {
       await service.handlePlayerDisconnection(session.id, mockPlayer.id);
 
       expect(session.disconnectedPlayers?.has(mockPlayer.id)).toBe(true);
-      expect(session.disconnectedPlayers?.get(mockPlayer.id)).toBeInstanceOf(Date);
+      expect(session.disconnectedPlayers?.get(mockPlayer.id)).toBeInstanceOf(
+        Date,
+      );
       expect(cacheManager.set).toHaveBeenCalledWith(
         `session:${session.inviteCode}`,
         session,
-        3600
+        3600,
       );
     });
 
     it('should handle disconnection for non-existent session', async () => {
       // Should not throw error
       await expect(
-        service.handlePlayerDisconnection('nonexistent', mockPlayer.id)
+        service.handlePlayerDisconnection('nonexistent', mockPlayer.id),
       ).resolves.toBeUndefined();
     });
   });
@@ -262,7 +282,7 @@ describe('MultiplayerService', () => {
       for (let i = 0; i < 100; i++) {
         const session = await service.createMultiplayerSession(
           RoomType.COLLABORATIVE,
-          { ...mockPlayer, id: `user${i}` }
+          { ...mockPlayer, id: `user${i}` },
         );
         codes.add(session.inviteCode);
       }
@@ -273,7 +293,7 @@ describe('MultiplayerService', () => {
     it('should generate 6-character alphanumeric codes', async () => {
       const session = await service.createMultiplayerSession(
         RoomType.COLLABORATIVE,
-        mockPlayer
+        mockPlayer,
       );
 
       expect(session.inviteCode).toMatch(/^[A-Z0-9]{6}$/);

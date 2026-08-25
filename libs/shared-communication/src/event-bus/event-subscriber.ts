@@ -1,8 +1,17 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import * as amqp from 'amqp-connection-manager';
 import { ChannelWrapper } from 'amqp-connection-manager';
 import { ConsumeMessage, ConfirmChannel } from 'amqplib';
-import { BaseEvent, DLQMessage, EventHandlerConfig } from '../types/event.types';
+import {
+  BaseEvent,
+  DLQMessage,
+  EventHandlerConfig,
+} from '../types/event.types';
 import { EventBusConfig, calculateRetryDelay } from './event-bus.config';
 
 export type EventHandler<T = any> = (event: BaseEvent<T>) => Promise<void>;
@@ -31,8 +40,10 @@ export class EventSubscriber implements OnModuleInit, OnModuleDestroy {
    */
   private async initializeConnection(): Promise<void> {
     const { url, username, password, vhost, heartbeat } = this.config.rabbitmq;
-    
-    const connectionUrl = `amqp://${username}:${password}@${url}${vhost ? `/${vhost}` : ''}`;
+
+    const connectionUrl = `amqp://${username}:${password}@${url}${
+      vhost ? `/${vhost}` : ''
+    }`;
 
     this.connection = amqp.connect([connectionUrl], {
       heartbeatIntervalInSeconds: heartbeat || 60,
@@ -95,15 +106,11 @@ export class EventSubscriber implements OnModuleInit, OnModuleDestroy {
       await channel.prefetch(prefetchCount || 1);
 
       // Start consuming
-      await channel.consume(
-        queue,
-        (msg) => this.handleMessage(msg, config),
-        { noAck: false },
-      );
+      await channel.consume(queue, (msg) => this.handleMessage(msg, config), {
+        noAck: false,
+      });
 
-      this.logger.log(
-        `Subscribed to event: ${eventType} on queue: ${queue}`,
-      );
+      this.logger.log(`Subscribed to event: ${eventType} on queue: ${queue}`);
     });
   }
 
@@ -149,7 +156,14 @@ export class EventSubscriber implements OnModuleInit, OnModuleDestroy {
         error.stack,
       );
 
-      await this.handleFailure(msg, event, error, attempts, maxAttempts, config);
+      await this.handleFailure(
+        msg,
+        event,
+        error,
+        attempts,
+        maxAttempts,
+        config,
+      );
     }
   }
 
@@ -167,14 +181,16 @@ export class EventSubscriber implements OnModuleInit, OnModuleDestroy {
     if (attempts < maxAttempts) {
       // Retry with exponential backoff
       const delay = calculateRetryDelay(attempts, this.config.retry);
-      
+
       this.logger.warn(
-        `Retrying event ${event.metadata.eventType} in ${delay}ms (Attempt ${attempts + 1}/${maxAttempts})`,
+        `Retrying event ${event.metadata.eventType} in ${delay}ms (Attempt ${
+          attempts + 1
+        }/${maxAttempts})`,
       );
 
       // Nack and requeue with delay
       await this.channelWrapper.nack(msg, false, false);
-      
+
       // Republish with delay
       setTimeout(async () => {
         await this.republishWithRetry(event, attempts + 1, config.queue);

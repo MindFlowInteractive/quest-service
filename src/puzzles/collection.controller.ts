@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
 import { CollectionsService } from './collection.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
@@ -25,15 +35,15 @@ export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
   @Post()
-  create(@Body() createCollectionDto: CreateCollectionDto): Promise<Collection> {
+  create(
+    @Body() createCollectionDto: CreateCollectionDto,
+  ): Promise<Collection> {
     return this.collectionsService.create(createCollectionDto);
   }
 
   @Get()
   // Use the CollectionQueryDto for structured query parameters
-  findAll(
-    @Query() query: CollectionQueryDto
-  ): Promise<Collection[]> {
+  findAll(@Query() query: CollectionQueryDto): Promise<Collection[]> {
     // Pass query parameters to the service
     return this.collectionsService.findAll();
   }

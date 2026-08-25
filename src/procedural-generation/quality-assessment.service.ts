@@ -4,7 +4,13 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { GeneratedPuzzle, QualityMetrics, ValidationStep, DebugIssue, PerformanceMetrics } from './types';
+import {
+  GeneratedPuzzle,
+  QualityMetrics,
+  ValidationStep,
+  DebugIssue,
+  PerformanceMetrics,
+} from './types';
 
 interface QualityThresholds {
   minSolvability: number;
@@ -43,29 +49,49 @@ export class GenerationQualityAssessmentService {
     const recommendations: string[] = [];
 
     // Check each metric against thresholds
-    if (puzzle.metadata.solvabilityScore < this.qualityThresholds.minSolvability) {
-      issues.push(`Solvability ${puzzle.metadata.solvabilityScore.toFixed(2)} below threshold`);
-      recommendations.push('Simplify puzzle constraints or add more hint options');
+    if (
+      puzzle.metadata.solvabilityScore < this.qualityThresholds.minSolvability
+    ) {
+      issues.push(
+        `Solvability ${puzzle.metadata.solvabilityScore.toFixed(
+          2,
+        )} below threshold`,
+      );
+      recommendations.push(
+        'Simplify puzzle constraints or add more hint options',
+      );
     }
 
     if (metrics.clarity < this.qualityThresholds.minClarity) {
       issues.push(`Clarity ${metrics.clarity.toFixed(2)} below threshold`);
-      recommendations.push('Improve puzzle description and make instructions clearer');
+      recommendations.push(
+        'Improve puzzle description and make instructions clearer',
+      );
     }
 
     if (metrics.engagementPotential < this.qualityThresholds.minEngagement) {
-      issues.push(`Engagement ${metrics.engagementPotential.toFixed(2)} below threshold`);
+      issues.push(
+        `Engagement ${metrics.engagementPotential.toFixed(2)} below threshold`,
+      );
       recommendations.push('Add more interesting puzzle variations or twists');
     }
 
     if (metrics.complexity < this.qualityThresholds.minComplexity) {
-      issues.push(`Complexity ${metrics.complexity.toFixed(2)} below threshold`);
-      recommendations.push('Increase puzzle difficulty or add more constraints');
+      issues.push(
+        `Complexity ${metrics.complexity.toFixed(2)} below threshold`,
+      );
+      recommendations.push(
+        'Increase puzzle difficulty or add more constraints',
+      );
     }
 
     if (metrics.complexity > this.qualityThresholds.maxComplexity) {
-      issues.push(`Complexity ${metrics.complexity.toFixed(2)} exceeds maximum`);
-      recommendations.push('Reduce puzzle constraints or simplify the problem space');
+      issues.push(
+        `Complexity ${metrics.complexity.toFixed(2)} exceeds maximum`,
+      );
+      recommendations.push(
+        'Reduce puzzle constraints or simplify the problem space',
+      );
     }
 
     // Calculate overall score
@@ -128,7 +154,8 @@ export class GenerationQualityAssessmentService {
     // Feedback quality (based on hints)
     const feedback = puzzle.hints?.length > 0 ? 0.8 : 0.5;
 
-    const engagementScore = (clarity * 0.4 + novelty * 0.25 + challenge * 0.25 + feedback * 0.1);
+    const engagementScore =
+      clarity * 0.4 + novelty * 0.25 + challenge * 0.25 + feedback * 0.1;
 
     return {
       engagementScore: Math.min(1, engagementScore),
@@ -147,8 +174,16 @@ export class GenerationQualityAssessmentService {
     issues: string[];
   } {
     const skillsMap = {
-      logic: ['Logical reasoning', 'Critical thinking', 'Problem decomposition'],
-      pattern: ['Pattern recognition', 'Analytical thinking', 'Inductive reasoning'],
+      logic: [
+        'Logical reasoning',
+        'Critical thinking',
+        'Problem decomposition',
+      ],
+      pattern: [
+        'Pattern recognition',
+        'Analytical thinking',
+        'Inductive reasoning',
+      ],
       math: ['Mathematical thinking', 'Calculation', 'Numerical reasoning'],
       word: ['Linguistic skills', 'Vocabulary', 'Language comprehension'],
       visual: ['Spatial reasoning', 'Visual analysis', 'Pattern matching'],
@@ -182,9 +217,7 @@ export class GenerationQualityAssessmentService {
   /**
    * Performs comprehensive validation
    */
-  performComprehensiveValidation(
-    puzzle: GeneratedPuzzle,
-  ): {
+  performComprehensiveValidation(puzzle: GeneratedPuzzle): {
     steps: ValidationStep[];
     passed: boolean;
     totalScore: number;
@@ -234,7 +267,9 @@ export class GenerationQualityAssessmentService {
     steps.push({
       name: 'Engagement Validation',
       passed: engagementCheck.engagementScore >= 0.6,
-      message: `Engagement score: ${engagementCheck.engagementScore.toFixed(2)}`,
+      message: `Engagement score: ${engagementCheck.engagementScore.toFixed(
+        2,
+      )}`,
       duration: Date.now() - startTime,
     });
 
@@ -247,10 +282,16 @@ export class GenerationQualityAssessmentService {
       duration: Date.now() - startTime,
     });
 
-    const totalScore = steps.reduce((sum, step) => sum + (step.passed ? 1 : 0), 0) / steps.length;
+    const totalScore =
+      steps.reduce((sum, step) => sum + (step.passed ? 1 : 0), 0) /
+      steps.length;
     const passed = steps.every((step) => step.passed);
 
-    const detailedReport = this.generateValidationReport(steps, qualityCheck, engagementCheck);
+    const detailedReport = this.generateValidationReport(
+      steps,
+      qualityCheck,
+      engagementCheck,
+    );
 
     return { steps, passed, totalScore, detailedReport };
   }
@@ -267,12 +308,14 @@ export class GenerationQualityAssessmentService {
     if (!puzzle.id) errors.push('Missing puzzle ID');
     if (!puzzle.type) errors.push('Missing puzzle type');
     if (!puzzle.difficulty) errors.push('Missing difficulty level');
-    if (!puzzle.title || puzzle.title.length < 5) errors.push('Title too short or missing');
+    if (!puzzle.title || puzzle.title.length < 5)
+      errors.push('Title too short or missing');
     if (!puzzle.description) errors.push('Missing description');
     if (!puzzle.content) errors.push('Missing puzzle content');
     if (!puzzle.solution) errors.push('Missing solution');
     if (!puzzle.solution?.answer) errors.push('Solution answer missing');
-    if (!puzzle.hints || puzzle.hints.length === 0) errors.push('No hints provided');
+    if (!puzzle.hints || puzzle.hints.length === 0)
+      errors.push('No hints provided');
     if (puzzle.timeLimit <= 0) errors.push('Invalid time limit');
     if (puzzle.basePoints <= 0) errors.push('Invalid point value');
 
@@ -296,13 +339,18 @@ export class GenerationQualityAssessmentService {
     }
 
     if (puzzle.hints?.length > 0) {
-      const invalidHints = puzzle.hints.filter((h) => typeof h !== 'string' || h.length < 5);
+      const invalidHints = puzzle.hints.filter(
+        (h) => typeof h !== 'string' || h.length < 5,
+      );
       if (invalidHints.length > 0) {
         errors.push(`${invalidHints.length} invalid hints detected`);
       }
     }
 
-    if (!puzzle.solution?.explanation || puzzle.solution.explanation.length < 10) {
+    if (
+      !puzzle.solution?.explanation ||
+      puzzle.solution.explanation.length < 10
+    ) {
       errors.push('Solution explanation insufficient');
     }
 
@@ -338,7 +386,9 @@ export class GenerationQualityAssessmentService {
 
     report += 'VALIDATION STEPS:\n';
     steps.forEach((step) => {
-      report += `  ✓ ${step.name}: ${step.passed ? 'PASSED' : 'FAILED'} (${step.duration}ms)\n`;
+      report += `  ✓ ${step.name}: ${step.passed ? 'PASSED' : 'FAILED'} (${
+        step.duration
+      }ms)\n`;
       if (step.message) {
         report += `    → ${step.message}\n`;
       }
@@ -346,7 +396,9 @@ export class GenerationQualityAssessmentService {
 
     report += '\nQUALITY METRICS:\n';
     report += `  Overall Score: ${qualityCheck.overallScore.toFixed(2)}\n`;
-    report += `  Passes Standards: ${qualityCheck.passesStandards ? 'YES' : 'NO'}\n`;
+    report += `  Passes Standards: ${
+      qualityCheck.passesStandards ? 'YES' : 'NO'
+    }\n`;
 
     if (qualityCheck.issues.length > 0) {
       report += '\nISSUES FOUND:\n';
@@ -363,7 +415,9 @@ export class GenerationQualityAssessmentService {
     }
 
     report += '\nENGAGEMENT ANALYSIS:\n';
-    report += `  Engagement Score: ${engagementCheck.engagementScore.toFixed(2)}\n`;
+    report += `  Engagement Score: ${engagementCheck.engagementScore.toFixed(
+      2,
+    )}\n`;
     report += `  Clarity: ${engagementCheck.factors.clarity.toFixed(2)}\n`;
     report += `  Novelty: ${engagementCheck.factors.novelty.toFixed(2)}\n`;
     report += `  Challenge: ${engagementCheck.factors.challenge.toFixed(2)}\n`;
@@ -387,7 +441,10 @@ export class GenerationQualityAssessmentService {
       }
     }
 
-    const uniqueness = Math.max(0, 1 - similarCount / Math.max(1, recentPuzzles.length) * 0.5);
+    const uniqueness = Math.max(
+      0,
+      1 - (similarCount / Math.max(1, recentPuzzles.length)) * 0.5,
+    );
 
     return { uniqueness, similarCount };
   }
@@ -395,7 +452,10 @@ export class GenerationQualityAssessmentService {
   /**
    * Calculates similarity between two puzzles
    */
-  private calculateSimilarity(puzzle1: GeneratedPuzzle, puzzle2: GeneratedPuzzle): number {
+  private calculateSimilarity(
+    puzzle1: GeneratedPuzzle,
+    puzzle2: GeneratedPuzzle,
+  ): number {
     let score = 0;
     let factors = 0;
 
@@ -441,7 +501,9 @@ export class GenerationQualityAssessmentService {
 
     report += 'VALIDATION STEPS:\n';
     validationSteps.forEach((step) => {
-      report += `  ${step.passed ? '✓' : '✗'} ${step.name} (${step.duration}ms)\n`;
+      report += `  ${step.passed ? '✓' : '✗'} ${step.name} (${
+        step.duration
+      }ms)\n`;
       if (!step.passed) {
         report += `    Message: ${step.message}\n`;
       }
@@ -450,8 +512,15 @@ export class GenerationQualityAssessmentService {
     if (issues.length > 0) {
       report += '\nDETECTED ISSUES:\n';
       issues.forEach((issue) => {
-        const icon = issue.severity === 'error' ? '✗' : issue.severity === 'warning' ? '⚠' : 'ℹ';
-        report += `  ${icon} [${issue.severity.toUpperCase()}] ${issue.message}\n`;
+        const icon =
+          issue.severity === 'error'
+            ? '✗'
+            : issue.severity === 'warning'
+            ? '⚠'
+            : 'ℹ';
+        report += `  ${icon} [${issue.severity.toUpperCase()}] ${
+          issue.message
+        }\n`;
         if (issue.suggestion) {
           report += `    → Suggestion: ${issue.suggestion}\n`;
         }

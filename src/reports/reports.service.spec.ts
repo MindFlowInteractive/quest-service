@@ -3,7 +3,12 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ReportsService } from './reports.service';
-import { ContentReport, ReportStatus, ReportPriority, ReportTargetType } from './entities/content-report.entity';
+import {
+  ContentReport,
+  ReportStatus,
+  ReportPriority,
+  ReportTargetType,
+} from './entities/content-report.entity';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -55,7 +60,9 @@ describe('ReportsService', () => {
     }).compile();
 
     service = module.get<ReportsService>(ReportsService);
-    repository = module.get<Repository<ContentReport>>(getRepositoryToken(ContentReport));
+    repository = module.get<Repository<ContentReport>>(
+      getRepositoryToken(ContentReport),
+    );
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
@@ -98,9 +105,9 @@ describe('ReportsService', () => {
 
       mockRepository.findOne.mockResolvedValue(mockReport);
 
-      await expect(service.createReport('user-123', createReportDto)).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(
+        service.createReport('user-123', createReportDto),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should set priority to MEDIUM when 1 report exists', async () => {
@@ -112,8 +119,14 @@ describe('ReportsService', () => {
 
       mockRepository.findOne.mockResolvedValue(null);
       mockRepository.count.mockResolvedValue(1);
-      mockRepository.create.mockReturnValue({ ...mockReport, priority: ReportPriority.MEDIUM });
-      mockRepository.save.mockResolvedValue({ ...mockReport, priority: ReportPriority.MEDIUM });
+      mockRepository.create.mockReturnValue({
+        ...mockReport,
+        priority: ReportPriority.MEDIUM,
+      });
+      mockRepository.save.mockResolvedValue({
+        ...mockReport,
+        priority: ReportPriority.MEDIUM,
+      });
 
       const result = await service.createReport('user-123', createReportDto);
 
@@ -129,8 +142,14 @@ describe('ReportsService', () => {
 
       mockRepository.findOne.mockResolvedValue(null);
       mockRepository.count.mockResolvedValue(3);
-      mockRepository.create.mockReturnValue({ ...mockReport, priority: ReportPriority.HIGH });
-      mockRepository.save.mockResolvedValue({ ...mockReport, priority: ReportPriority.HIGH });
+      mockRepository.create.mockReturnValue({
+        ...mockReport,
+        priority: ReportPriority.HIGH,
+      });
+      mockRepository.save.mockResolvedValue({
+        ...mockReport,
+        priority: ReportPriority.HIGH,
+      });
 
       const result = await service.createReport('user-123', createReportDto);
 
@@ -148,8 +167,14 @@ describe('ReportsService', () => {
       mockRepository.count
         .mockResolvedValueOnce(4) // existing reports count
         .mockResolvedValueOnce(5); // recent reports count (24h)
-      mockRepository.create.mockReturnValue({ ...mockReport, priority: ReportPriority.CRITICAL });
-      mockRepository.save.mockResolvedValue({ ...mockReport, priority: ReportPriority.CRITICAL });
+      mockRepository.create.mockReturnValue({
+        ...mockReport,
+        priority: ReportPriority.CRITICAL,
+      });
+      mockRepository.save.mockResolvedValue({
+        ...mockReport,
+        priority: ReportPriority.CRITICAL,
+      });
 
       const result = await service.createReport('user-123', createReportDto);
 
@@ -197,7 +222,11 @@ describe('ReportsService', () => {
         resolvedBy: 'moderator-123',
       });
 
-      const result = await service.updateReport('report-123', updateReportDto, 'moderator-123');
+      const result = await service.updateReport(
+        'report-123',
+        updateReportDto,
+        'moderator-123',
+      );
 
       expect(repository.update).toHaveBeenCalledWith('report-123', {
         status: ReportStatus.RESOLVED,
@@ -219,9 +248,9 @@ describe('ReportsService', () => {
 
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.updateReport('non-existent', updateReportDto, 'moderator-123')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(
+        service.updateReport('non-existent', updateReportDto, 'moderator-123'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

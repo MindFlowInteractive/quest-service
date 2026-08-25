@@ -1,4 +1,9 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import xss from 'xss';
@@ -31,6 +36,6 @@ export class SanitizeInterceptor implements NestInterceptor {
     if (request.params) {
       request.params = sanitizeObject(request.params);
     }
-    return next.handle().pipe(map(data => sanitizeObject(data)));
+    return next.handle().pipe(map((data) => sanitizeObject(data)));
   }
 }

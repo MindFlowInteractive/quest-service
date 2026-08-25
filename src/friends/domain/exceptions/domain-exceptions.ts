@@ -3,10 +3,7 @@
  */
 
 export class DomainException extends Error {
-  constructor(
-    message: string,
-    readonly code: string = 'DOMAIN_ERROR',
-  ) {
+  constructor(message: string, readonly code: string = 'DOMAIN_ERROR') {
     super(message);
     this.name = this.constructor.name;
   }
@@ -29,10 +26,7 @@ export class FriendRequestExpiredException extends DomainException {
 
 export class FriendRequestNotFoundException extends DomainException {
   constructor(requestId: string) {
-    super(
-      `Friend request ${requestId} not found`,
-      'FRIEND_REQUEST_NOT_FOUND',
-    );
+    super(`Friend request ${requestId} not found`, 'FRIEND_REQUEST_NOT_FOUND');
   }
 }
 
@@ -62,10 +56,7 @@ export class UserNotFoundExit extends DomainException {
 
 export class UserBlockedException extends DomainException {
   constructor(userId: string, blockedUserId: string) {
-    super(
-      `User ${blockedUserId} has blocked ${userId}`,
-      'USER_BLOCKED',
-    );
+    super(`User ${blockedUserId} has blocked ${userId}`, 'USER_BLOCKED');
   }
 }
 

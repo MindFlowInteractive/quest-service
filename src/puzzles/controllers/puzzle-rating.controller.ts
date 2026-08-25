@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Param, UseGuards, Request, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Get,
+} from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { PuzzleRatingService } from '../services/puzzle-rating.service';
 import { CreateRatingDto } from '../dto/create-rating.dto';
@@ -17,11 +25,17 @@ export class PuzzleRatingController {
     @Body() createRatingDto: CreateRatingDto,
     @Request() req,
   ): Promise<PuzzleRating> {
-    return this.ratingService.submitRating(req.user.id, puzzleId, createRatingDto);
+    return this.ratingService.submitRating(
+      req.user.id,
+      puzzleId,
+      createRatingDto,
+    );
   }
 
   @Get(':id/ratings/aggregate')
-  async getAggregate(@Param('id') puzzleId: string): Promise<PuzzleRatingAggregate> {
+  async getAggregate(
+    @Param('id') puzzleId: string,
+  ): Promise<PuzzleRatingAggregate> {
     return this.ratingService.getPuzzleAggregate(puzzleId);
   }
 }

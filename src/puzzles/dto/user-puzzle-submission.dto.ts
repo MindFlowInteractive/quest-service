@@ -1,20 +1,23 @@
-import { 
-  IsString, 
-  IsNotEmpty, 
-  IsOptional, 
-  IsEnum, 
-  IsInt, 
-  IsBoolean, 
-  IsArray, 
-  IsObject, 
-  Min, 
-  Max, 
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsBoolean,
+  IsArray,
+  IsObject,
+  Min,
+  Max,
   Length,
   ValidateNested,
-  IsJSON
+  IsJSON,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PuzzleSubmissionStatus, ModerationAction } from '../entities/user-puzzle-submission.entity';
+import {
+  PuzzleSubmissionStatus,
+  ModerationAction,
+} from '../entities/user-puzzle-submission.entity';
 
 export class CreatePuzzleSubmissionDto {
   @IsString()
@@ -95,8 +98,21 @@ export class CreatePuzzleSubmissionDto {
 }
 
 export class PuzzleContentDto {
-  @IsEnum(['multiple-choice', 'fill-blank', 'drag-drop', 'code', 'visual', 'logic-grid'])
-  type: 'multiple-choice' | 'fill-blank' | 'drag-drop' | 'code' | 'visual' | 'logic-grid';
+  @IsEnum([
+    'multiple-choice',
+    'fill-blank',
+    'drag-drop',
+    'code',
+    'visual',
+    'logic-grid',
+  ])
+  type:
+    | 'multiple-choice'
+    | 'fill-blank'
+    | 'drag-drop'
+    | 'code'
+    | 'visual'
+    | 'logic-grid';
 
   @IsOptional()
   @IsString()

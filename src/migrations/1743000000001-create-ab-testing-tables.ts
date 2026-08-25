@@ -84,10 +84,18 @@ export class CreateAbTestingTables1743000000001 implements MigrationInterface {
     // Drop indexes
     await queryRunner.query(`DROP INDEX IF EXISTS idx_feature_flags_enabled`);
     await queryRunner.query(`DROP INDEX IF EXISTS idx_feature_flags_key`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_experiment_assignments_user_id`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_experiment_assignments_experiment_id`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_experiment_conversions_user_id`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_experiment_conversions_experiment_id`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_experiment_assignments_user_id`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_experiment_assignments_experiment_id`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_experiment_conversions_user_id`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_experiment_conversions_experiment_id`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS idx_experiments_status`);
 
     // Drop tables in reverse order (respecting foreign key constraints)

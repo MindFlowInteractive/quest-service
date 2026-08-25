@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BaseException } from '../exceptions/base.exception';
-import { ERROR_CODES, ErrorSeverity, ErrorCategory } from '../exceptions/error-codes';
+import {
+  ERROR_CODES,
+  ErrorSeverity,
+  ErrorCategory,
+} from '../exceptions/error-codes';
 import { CircuitBreaker, circuitBreakerRegistry } from './circuit-breaker';
 import { RetryStrategy, retryStrategyRegistry } from './retry-strategy';
 import { ErrorRecoveryManager, errorRecoveryManager } from './error-recovery';
@@ -41,7 +45,7 @@ export interface ErrorHandlingOptions {
 @Injectable()
 export class ErrorHandlerService {
   private readonly logger = new Logger(ErrorHandlerService.name);
-  
+
   private readonly circuitBreakerRegistry = circuitBreakerRegistry;
   private readonly retryStrategyRegistry = retryStrategyRegistry;
   private readonly errorRecoveryManager = errorRecoveryManager;
@@ -97,7 +101,11 @@ export class ErrorHandlerService {
 
     try {
       // Execute the operation with error handling
-      return await this.executeWithErrorHandling(operation, context, fullOptions);
+      return await this.executeWithErrorHandling(
+        operation,
+        context,
+        fullOptions,
+      );
     } catch (error) {
       // Final error handling after all recovery attempts
       await this.handleFinalError(error as Error, context, fullOptions);
@@ -121,7 +129,8 @@ export class ErrorHandlerService {
       const duration = Date.now() - startTime;
 
       // Log successful operation if it took a long time
-      if (duration > 5000) { // 5 seconds
+      if (duration > 5000) {
+        // 5 seconds
         this.logger.warn(`Operation ${context.operation} took ${duration}ms`, {
           ...context,
           duration,
@@ -159,12 +168,15 @@ export class ErrorHandlerService {
             totalTime: recoveryResult.totalTime,
           });
 
-          return recoveryResult.result!;
+          return recoveryResult.result;
         }
       }
 
       // Notify stakeholders if configured
-      if (options.notifyStakeholders && this.shouldNotifyStakeholders(errorObj)) {
+      if (
+        options.notifyStakeholders &&
+        this.shouldNotifyStakeholders(errorObj)
+      ) {
         this.notifyStakeholders(errorObj, context);
       }
 
@@ -182,7 +194,7 @@ export class ErrorHandlerService {
     options: ErrorHandlingOptions,
   ) {
     const fallbackOperation = this.getFallbackOperation(operation, context);
-    
+
     return this.errorRecoveryManager.attemptRecovery(
       operation,
       error,
@@ -201,7 +213,9 @@ export class ErrorHandlerService {
     // Default fallback: rethrow the error
     return {
       operation: async () => {
-        throw new Error(`Fallback operation for ${context.operation} not implemented`);
+        throw new Error(
+          `Fallback operation for ${context.operation} not implemented`,
+        );
       },
       description: `Default fallback for ${context.operation}`,
       available: false,
@@ -211,7 +225,11 @@ export class ErrorHandlerService {
   /**
    * Log error with context
    */
-  private logError(error: Error, context: ErrorContext, duration: number): void {
+  private logError(
+    error: Error,
+    context: ErrorContext,
+    duration: number,
+  ): void {
     const logContext = {
       ...context,
       duration,
@@ -224,7 +242,11 @@ export class ErrorHandlerService {
       switch (error.severity) {
         case ErrorSeverity.CRITICAL:
         case ErrorSeverity.HIGH:
-          this.logger.error(`[${error.errorCode}] ${error.message}`, error.stack, logContext);
+          this.logger.error(
+            `[${error.errorCode}] ${error.message}`,
+            error.stack,
+            logContext,
+          );
           break;
         case ErrorSeverity.MEDIUM:
           this.logger.warn(`[${error.errorCode}] ${error.message}`, logContext);
@@ -235,7 +257,11 @@ export class ErrorHandlerService {
       }
     } else {
       // Generic error logging
-      this.logger.error(`Unhandled error: ${error.message}`, error.stack, logContext);
+      this.logger.error(
+        `Unhandled error: ${error.message}`,
+        error.stack,
+        logContext,
+      );
     }
   }
 
@@ -248,7 +274,7 @@ export class ErrorHandlerService {
     // - DataDog
     // - New Relic
     // - Custom monitoring solutions
-    
+
     const monitoringData = {
       timestamp: new Date().toISOString(),
       ...context,
@@ -282,14 +308,11 @@ export class ErrorHandlerService {
     this.updateRetryStrategyStats(error, context.operation);
 
     // Log final error state
-    this.logger.error(
-      `All error handling exhausted for ${context.operation}`,
-      {
-        ...context,
-        error: error.message,
-        errorType: error.constructor.name,
-      },
-    );
+    this.logger.error(`All error handling exhausted for ${context.operation}`, {
+      ...context,
+      error: error.message,
+      errorType: error.constructor.name,
+    });
   }
 
   /**
@@ -327,14 +350,14 @@ export class ErrorHandlerService {
         error.severity === ErrorSeverity.HIGH
       );
     }
-    
+
     // Notify for certain error types
     const criticalErrors = [
       'DatabaseException',
       'ExternalServiceException',
       'SecurityException',
     ];
-    
+
     return criticalErrors.includes(error.constructor.name);
   }
 
@@ -347,7 +370,7 @@ export class ErrorHandlerService {
     // - Send Slack/Teams notifications
     // - Create incident tickets
     // - Page on-call engineers
-    
+
     const notificationData = {
       timestamp: new Date().toISOString(),
       severity: error instanceof BaseException ? error.severity : 'HIGH',
@@ -371,7 +394,7 @@ export class ErrorHandlerService {
       'ExternalServiceTimeoutException',
       'TimeoutException',
     ];
-    
+
     return circuitBreakerErrors.includes(error.constructor.name);
   }
 
@@ -382,7 +405,9 @@ export class ErrorHandlerService {
     return {
       circuitBreakers: this.circuitBreakerRegistry.getAllStats(),
       retryStrategies: this.retryStrategyRegistry.getAllStats(),
-      recoveryConfigs: Object.fromEntries(this.errorRecoveryManager.getAllConfigs()),
+      recoveryConfigs: Object.fromEntries(
+        this.errorRecoveryManager.getAllConfigs(),
+      ),
     };
   }
 
@@ -393,7 +418,7 @@ export class ErrorHandlerService {
     this.circuitBreakerRegistry.resetAll();
     this.retryStrategyRegistry.resetAll();
     this.errorRecoveryManager.resetAllConfigs();
-    
+
     this.logger.log('Reset all error handling statistics');
   }
 
@@ -401,16 +426,18 @@ export class ErrorHandlerService {
    * Health check for error handling system
    */
   healthCheck() {
-    const circuitBreakers = Array.from(this.circuitBreakerRegistry.getAll().values());
-    const unhealthyBreakers = circuitBreakers.filter(cb => !cb.isHealthy());
-    
+    const circuitBreakers = Array.from(
+      this.circuitBreakerRegistry.getAll().values(),
+    );
+    const unhealthyBreakers = circuitBreakers.filter((cb) => !cb.isHealthy());
+
     return {
       status: unhealthyBreakers.length === 0 ? 'HEALTHY' : 'DEGRADED',
       circuitBreakers: {
         total: circuitBreakers.length,
         healthy: circuitBreakers.length - unhealthyBreakers.length,
         unhealthy: unhealthyBreakers.length,
-        unhealthyServices: unhealthyBreakers.map(cb => cb.getStats()),
+        unhealthyServices: unhealthyBreakers.map((cb) => cb.getStats()),
       },
       timestamp: new Date().toISOString(),
     };

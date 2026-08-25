@@ -1,6 +1,11 @@
 // Types for achievement conditions and user context
 
-export type ConditionOperator = 'equals' | 'greater_than' | 'less_than' | 'in_range' | 'contains';
+export type ConditionOperator =
+  | 'equals'
+  | 'greater_than'
+  | 'less_than'
+  | 'in_range'
+  | 'contains';
 export type ConditionType =
   | 'puzzle_completion'
   | 'score_threshold'

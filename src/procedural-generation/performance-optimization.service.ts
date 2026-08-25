@@ -82,7 +82,11 @@ export class PerformanceOptimizationService {
   /**
    * Stores puzzle in cache
    */
-  storeInCache(key: string, puzzle: GeneratedPuzzle, ttl: number = this.defaultTTL): void {
+  storeInCache(
+    key: string,
+    puzzle: GeneratedPuzzle,
+    ttl: number = this.defaultTTL,
+  ): void {
     // Implement LRU eviction if cache is full
     if (this.cache.size >= this.maxCacheSize) {
       this.evictLRU();
@@ -113,9 +117,7 @@ export class PerformanceOptimizationService {
   /**
    * Performs batch generation
    */
-  async performBatchGeneration(
-    config: BatchGenerationConfig,
-  ): Promise<{
+  async performBatchGeneration(config: BatchGenerationConfig): Promise<{
     puzzles: GeneratedPuzzle[];
     stats: {
       totalTime: number;
@@ -233,7 +235,8 @@ export class PerformanceOptimizationService {
 
     // Update average
     this.stats.avgGenerationTime =
-      this.generationTimes.reduce((a, b) => a + b, 0) / this.generationTimes.length;
+      this.generationTimes.reduce((a, b) => a + b, 0) /
+      this.generationTimes.length;
     this.stats.totalGenerated++;
   }
 
@@ -248,7 +251,8 @@ export class PerformanceOptimizationService {
 
     // Update average
     this.stats.avgValidationTime =
-      this.validationTimes.reduce((a, b) => a + b, 0) / this.validationTimes.length;
+      this.validationTimes.reduce((a, b) => a + b, 0) /
+      this.validationTimes.length;
   }
 
   /**
@@ -273,8 +277,12 @@ export class PerformanceOptimizationService {
 
     report += 'GENERATION PERFORMANCE:\n';
     report += `  Total Generated: ${this.stats.totalGenerated}\n`;
-    report += `  Avg Generation Time: ${this.stats.avgGenerationTime.toFixed(2)}ms\n`;
-    report += `  Avg Validation Time: ${this.stats.avgValidationTime.toFixed(2)}ms\n`;
+    report += `  Avg Generation Time: ${this.stats.avgGenerationTime.toFixed(
+      2,
+    )}ms\n`;
+    report += `  Avg Validation Time: ${this.stats.avgValidationTime.toFixed(
+      2,
+    )}ms\n`;
     if (this.stats.batchProcessingTime !== undefined) {
       report += `  Latest Batch Processing: ${this.stats.batchProcessingTime}ms\n`;
     }
@@ -282,8 +290,12 @@ export class PerformanceOptimizationService {
     report += '\nGENERATION TIME TREND:\n';
     const recent = this.generationTimes.slice(-10);
     if (recent.length > 0) {
-      report += `  Last 10 Times: ${recent.map((t) => t.toFixed(0)).join(', ')}ms\n`;
-      report += `  Trend: ${recent[recent.length - 1] < recent[0] ? '⬇ Improving' : '⬆ Degrading'}\n`;
+      report += `  Last 10 Times: ${recent
+        .map((t) => t.toFixed(0))
+        .join(', ')}ms\n`;
+      report += `  Trend: ${
+        recent[recent.length - 1] < recent[0] ? '⬇ Improving' : '⬆ Degrading'
+      }\n`;
     }
 
     return report;
@@ -373,7 +385,10 @@ export class PerformanceOptimizationService {
     let lruTime = Date.now();
 
     for (const [key, entry] of this.cache.entries()) {
-      if (entry.hits < lruHits || (entry.hits === lruHits && entry.timestamp.getTime() < lruTime)) {
+      if (
+        entry.hits < lruHits ||
+        (entry.hits === lruHits && entry.timestamp.getTime() < lruTime)
+      ) {
         lruKey = key;
         lruHits = entry.hits;
         lruTime = entry.timestamp.getTime();
@@ -411,7 +426,10 @@ export class PerformanceOptimizationService {
     const oldestEntry = new Date(Math.min(...timestamps));
     const newestEntry = new Date(Math.max(...timestamps));
 
-    const avgEntryAge = (Date.now() - timestamps.reduce((a, b) => a + b, 0) / timestamps.length) / 1000 / 60; // in minutes
+    const avgEntryAge =
+      (Date.now() - timestamps.reduce((a, b) => a + b, 0) / timestamps.length) /
+      1000 /
+      60; // in minutes
 
     return {
       totalSize: entries.length,
@@ -450,7 +468,8 @@ export class PerformanceOptimizationService {
     if (this.stats.avgGenerationTime > 1000) {
       bottlenecks.push({
         bottleneck: 'Slow puzzle generation',
-        recommendation: 'Optimize generation algorithm or use simpler parameters',
+        recommendation:
+          'Optimize generation algorithm or use simpler parameters',
         severity: 'high',
       });
     }
@@ -474,7 +493,8 @@ export class PerformanceOptimizationService {
     }
 
     // Check total generation time
-    const totalAvgTime = this.stats.avgGenerationTime + this.stats.avgValidationTime;
+    const totalAvgTime =
+      this.stats.avgGenerationTime + this.stats.avgValidationTime;
     if (totalAvgTime > 1500) {
       bottlenecks.push({
         bottleneck: 'Total generation pipeline slow',

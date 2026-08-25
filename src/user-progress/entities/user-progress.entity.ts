@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { UserAchievement } from './user-achievement.entity';
 
@@ -6,7 +15,6 @@ import { UserAchievement } from './user-achievement.entity';
 export class UserProgress {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
 
   @OneToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn()
@@ -20,7 +28,6 @@ export class UserProgress {
 
   @Column({ default: 1 })
   level: number;
-
 
   @Column({ default: 0 })
   puzzlesCompleted: number;
@@ -59,6 +66,5 @@ export class UserProgress {
   updatedAt: Date;
 
   @OneToMany(() => UserAchievement, (ach) => ach.progress)
-achievements: UserAchievement[];
-
+  achievements: UserAchievement[];
 }

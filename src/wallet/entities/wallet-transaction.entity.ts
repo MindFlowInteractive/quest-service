@@ -6,7 +6,12 @@ import {
   Index,
 } from 'typeorm';
 
-export type WalletTransactionType = 'reward' | 'purchase' | 'stake' | 'unstake' | 'swap';
+export type WalletTransactionType =
+  | 'reward'
+  | 'purchase'
+  | 'stake'
+  | 'unstake'
+  | 'swap';
 
 @Entity('wallet_transactions')
 @Index(['walletAddress', 'txHash'], { unique: true })

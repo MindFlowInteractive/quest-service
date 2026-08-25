@@ -95,7 +95,10 @@ export class FriendshipService {
   /**
    * Get mutual friends between two users.
    */
-  async getMutualFriendsCount(userId: string, otherId: string): Promise<number> {
+  async getMutualFriendsCount(
+    userId: string,
+    otherId: string,
+  ): Promise<number> {
     return this.friendshipRepo.getMutualFriendsCount(userId, otherId);
   }
 

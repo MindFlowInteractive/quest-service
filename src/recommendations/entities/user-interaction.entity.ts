@@ -27,7 +27,14 @@ export class UserInteraction {
 
   @Column({ type: 'varchar', length: 50 })
   @Index()
-  interactionType: 'view' | 'click' | 'start' | 'complete' | 'abandon' | 'rate' | 'share';
+  interactionType:
+    | 'view'
+    | 'click'
+    | 'start'
+    | 'complete'
+    | 'abandon'
+    | 'rate'
+    | 'share';
 
   @Column({ type: 'decimal', precision: 5, scale: 4, nullable: true })
   value: number; // rating value, completion time, etc.

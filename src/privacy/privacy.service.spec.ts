@@ -3,7 +3,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PrivacyService } from './privacy.service';
 import { PrivacySettings } from './entities/privacy-settings.entity';
-import { ConsentLog, ConsentAction, ConsentType } from './entities/consent-log.entity';
+import {
+  ConsentLog,
+  ConsentAction,
+  ConsentType,
+} from './entities/consent-log.entity';
 import { DataAccessAudit } from './entities/data-access-audit.entity';
 import { DataExportRequest } from './entities/data-export-request.entity';
 import { DataDeletionRequest } from './entities/data-deletion-request.entity';
@@ -194,7 +198,9 @@ describe('PrivacyService', () => {
       };
 
       mockPrivacySettingsRepository.findOne.mockResolvedValue(settings);
-      mockConsentLogRepository.findOne.mockResolvedValue({ createdAt: new Date() });
+      mockConsentLogRepository.findOne.mockResolvedValue({
+        createdAt: new Date(),
+      });
 
       const result = await service.getComplianceStatus(userId);
 
@@ -221,7 +227,9 @@ describe('PrivacyService', () => {
       };
 
       mockPrivacySettingsRepository.findOne.mockResolvedValue(settings);
-      mockConsentLogRepository.findOne.mockResolvedValue({ createdAt: new Date() });
+      mockConsentLogRepository.findOne.mockResolvedValue({
+        createdAt: new Date(),
+      });
 
       const result = await service.getComplianceStatus(userId);
 
@@ -232,9 +240,21 @@ describe('PrivacyService', () => {
   describe('getPrivacyStatistics', () => {
     it('should return aggregated privacy statistics', async () => {
       const settings = [
-        { marketingConsent: true, analyticsConsent: true, deletionRequestedAt: null },
-        { marketingConsent: false, analyticsConsent: true, deletionRequestedAt: new Date() },
-        { marketingConsent: false, analyticsConsent: false, deletionCompletedAt: new Date() },
+        {
+          marketingConsent: true,
+          analyticsConsent: true,
+          deletionRequestedAt: null,
+        },
+        {
+          marketingConsent: false,
+          analyticsConsent: true,
+          deletionRequestedAt: new Date(),
+        },
+        {
+          marketingConsent: false,
+          analyticsConsent: false,
+          deletionCompletedAt: new Date(),
+        },
       ];
 
       mockPrivacySettingsRepository.find.mockResolvedValue(settings);

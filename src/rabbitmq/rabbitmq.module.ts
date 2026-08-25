@@ -11,7 +11,10 @@ import { ConfigService } from '@nestjs/config';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [configService.get<string>('RABBITMQ_URL') || 'amqp://admin:rabbitmq123@rabbitmq:5672'],
+            urls: [
+              configService.get<string>('RABBITMQ_URL') ||
+                'amqp://admin:rabbitmq123@rabbitmq:5672',
+            ],
             queue: 'replay_queue',
             queueOptions: {
               durable: true,
@@ -25,7 +28,10 @@ import { ConfigService } from '@nestjs/config';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [configService.get<string>('RABBITMQ_URL') || 'amqp://admin:rabbitmq123@rabbitmq:5672'],
+            urls: [
+              configService.get<string>('RABBITMQ_URL') ||
+                'amqp://admin:rabbitmq123@rabbitmq:5672',
+            ],
             queue: 'notification_events_queue',
             queueOptions: {
               durable: true,

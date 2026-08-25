@@ -73,7 +73,11 @@ describe('WalletService', () => {
   it('creates a challenge and verifies a session', () => {
     const { stellarPublicKey, privateKey } = createWalletKeypair();
     const challenge = service.createChallenge(stellarPublicKey, 'testnet');
-    const signature = sign(null, Buffer.from(challenge.message, 'utf8'), privateKey).toString('base64');
+    const signature = sign(
+      null,
+      Buffer.from(challenge.message, 'utf8'),
+      privateKey,
+    ).toString('base64');
 
     const result = service.verifyChallenge(
       stellarPublicKey,
@@ -91,27 +95,45 @@ describe('WalletService', () => {
     const challenge = service.createChallenge(stellarPublicKey, 'testnet');
 
     expect(() =>
-      service.verifyChallenge(stellarPublicKey, 'testnet', challenge.nonce, 'deadbeef'),
+      service.verifyChallenge(
+        stellarPublicKey,
+        'testnet',
+        challenge.nonce,
+        'deadbeef',
+      ),
     ).toThrow(UnauthorizedException);
   });
 
   it('rejects expired challenges', () => {
     const { stellarPublicKey, privateKey } = createWalletKeypair();
     const challenge = service.createChallenge(stellarPublicKey, 'testnet');
-    const signature = sign(null, Buffer.from(challenge.message, 'utf8'), privateKey).toString('base64');
+    const signature = sign(
+      null,
+      Buffer.from(challenge.message, 'utf8'),
+      privateKey,
+    ).toString('base64');
 
     const stored = (service as any).challenges.get(challenge.nonce);
     stored.expiresAt = new Date(Date.now() - 1000);
 
     expect(() =>
-      service.verifyChallenge(stellarPublicKey, 'testnet', challenge.nonce, signature),
+      service.verifyChallenge(
+        stellarPublicKey,
+        'testnet',
+        challenge.nonce,
+        signature,
+      ),
     ).toThrow(UnauthorizedException);
   });
 
   it('records purchase transactions and prevents duplicates', async () => {
     const { stellarPublicKey, privateKey } = createWalletKeypair();
     const challenge = service.createChallenge(stellarPublicKey, 'testnet');
-    const signature = sign(null, Buffer.from(challenge.message, 'utf8'), privateKey).toString('base64');
+    const signature = sign(
+      null,
+      Buffer.from(challenge.message, 'utf8'),
+      privateKey,
+    ).toString('base64');
     const auth = service.verifyChallenge(
       stellarPublicKey,
       'testnet',
@@ -121,9 +143,7 @@ describe('WalletService', () => {
 
     const session = service.getSession(auth.sessionToken);
 
-    jest
-      .spyOn(service as any, 'verifyPaymentOnChain')
-      .mockResolvedValue(true);
+    jest.spyOn(service as any, 'verifyPaymentOnChain').mockResolvedValue(true);
 
     const payload = {
       assetCode: 'XLM',
@@ -140,7 +160,11 @@ describe('WalletService', () => {
   it('rejects invalid amounts', async () => {
     const { stellarPublicKey, privateKey } = createWalletKeypair();
     const challenge = service.createChallenge(stellarPublicKey, 'testnet');
-    const signature = sign(null, Buffer.from(challenge.message, 'utf8'), privateKey).toString('base64');
+    const signature = sign(
+      null,
+      Buffer.from(challenge.message, 'utf8'),
+      privateKey,
+    ).toString('base64');
     const auth = service.verifyChallenge(
       stellarPublicKey,
       'testnet',

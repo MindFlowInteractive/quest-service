@@ -1,12 +1,12 @@
-import { Module, Global } from "@nestjs/common"
-import { ConfigModule } from "@nestjs/config"
-import { RedisModule } from "@nestjs-modules/ioredis"
-import { CacheService } from "./services/cache.service"
-import { CacheWarmingService } from "./services/cache-warming.service"
-import { CacheMonitoringService } from "./services/cache-monitoring.service"
-import { CacheBackupService } from "./services/cache-backup.service"
-import { InvalidationService } from "./strategies/invalidation.service"
-import { cacheConfig } from "./config/cache.config"
+import { Module, Global } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import { CacheService } from './services/cache.service';
+import { CacheWarmingService } from './services/cache-warming.service';
+import { CacheMonitoringService } from './services/cache-monitoring.service';
+import { CacheBackupService } from './services/cache-backup.service';
+import { InvalidationService } from './strategies/invalidation.service';
+import { cacheConfig } from './config/cache.config';
 
 @Global()
 @Module({
@@ -14,8 +14,8 @@ import { cacheConfig } from "./config/cache.config"
     ConfigModule.forFeature(cacheConfig),
     RedisModule.forRootAsync({
       useFactory: () => ({
-        type: "single",
-        url: process.env.REDIS_URL || "redis://localhost:6379",
+        type: 'single',
+        url: process.env.REDIS_URL || 'redis://localhost:6379',
         options: {
           retryDelayOnFailover: 100,
           enableReadyCheck: true,
@@ -28,7 +28,19 @@ import { cacheConfig } from "./config/cache.config"
       }),
     }),
   ],
-  providers: [CacheService, CacheWarmingService, CacheMonitoringService, CacheBackupService, InvalidationService],
-  exports: [CacheService, CacheWarmingService, CacheMonitoringService, CacheBackupService, InvalidationService],
+  providers: [
+    CacheService,
+    CacheWarmingService,
+    CacheMonitoringService,
+    CacheBackupService,
+    InvalidationService,
+  ],
+  exports: [
+    CacheService,
+    CacheWarmingService,
+    CacheMonitoringService,
+    CacheBackupService,
+    InvalidationService,
+  ],
 })
 export class CacheModule {}

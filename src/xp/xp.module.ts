@@ -11,7 +11,13 @@ import { XpService } from './xp.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PlayerLevel, XpAward, User, UserStreak, PrivacySettings]),
+    TypeOrmModule.forFeature([
+      PlayerLevel,
+      XpAward,
+      User,
+      UserStreak,
+      PrivacySettings,
+    ]),
     AuthModule,
   ],
   controllers: [XpController],

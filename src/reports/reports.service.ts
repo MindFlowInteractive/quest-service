@@ -1,7 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, MoreThan, Between } from 'typeorm';
-import { ContentReport, ReportTargetType, ReportStatus, ReportPriority } from './entities/content-report.entity';
+import {
+  ContentReport,
+  ReportTargetType,
+  ReportStatus,
+  ReportPriority,
+} from './entities/content-report.entity';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportStatsDto } from './dto/report-stats.dto';
@@ -15,7 +24,10 @@ export class ReportsService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async createReport(reporterId: string, createReportDto: CreateReportDto): Promise<ContentReport> {
+  async createReport(
+    reporterId: string,
+    createReportDto: CreateReportDto,
+  ): Promise<ContentReport> {
     const { targetType, targetId, reason } = createReportDto;
 
     // Check for duplicate report from same user on same target
@@ -67,7 +79,7 @@ export class ReportsService {
           targetId,
           status: ReportStatus.OPEN,
         },
-        { priority: ReportPriority.CRITICAL }
+        { priority: ReportPriority.CRITICAL },
       );
     }
 
@@ -90,7 +102,10 @@ export class ReportsService {
     return savedReport;
   }
 
-  async getReports(page: number = 1, limit: number = 20): Promise<{ reports: ContentReport[], total: number }> {
+  async getReports(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ reports: ContentReport[]; total: number }> {
     const skip = (page - 1) * limit;
 
     const [reports, total] = await this.reportsRepository.findAndCount({
@@ -106,7 +121,11 @@ export class ReportsService {
     return { reports, total };
   }
 
-  async updateReport(id: string, updateReportDto: UpdateReportDto, moderatorId: string): Promise<ContentReport> {
+  async updateReport(
+    id: string,
+    updateReportDto: UpdateReportDto,
+    moderatorId: string,
+  ): Promise<ContentReport> {
     const report = await this.reportsRepository.findOne({
       where: { id },
       relations: ['reporter'],
@@ -145,7 +164,11 @@ export class ReportsService {
 
   async getReportStats(): Promise<ReportStatsDto> {
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     // Open reports count
@@ -185,14 +208,17 @@ export class ReportsService {
     // Average resolution time
     const avgResolutionTimeResult = await this.reportsRepository
       .createQueryBuilder('report')
-      .select('AVG(EXTRACT(EPOCH FROM (report.resolvedAt - report.createdAt)))', 'avgTime')
+      .select(
+        'AVG(EXTRACT(EPOCH FROM (report.resolvedAt - report.createdAt)))',
+        'avgTime',
+      )
       .where('report.status = :status', { status: ReportStatus.RESOLVED })
       .andWhere('report.resolvedAt IS NOT NULL')
       .andWhere('report.createdAt > :date', { date: twentyFourHoursAgo })
       .getRawOne();
 
-    const averageResolutionTime = avgResolutionTimeResult.avgTime 
-      ? parseFloat(avgResolutionTimeResult.avgTime) 
+    const averageResolutionTime = avgResolutionTimeResult.avgTime
+      ? parseFloat(avgResolutionTimeResult.avgTime)
       : 0;
 
     return {
@@ -206,7 +232,9 @@ export class ReportsService {
   }
 
   async checkAutoEscalation(reportId: string): Promise<void> {
-    const report = await this.reportsRepository.findOne({ where: { id: reportId } });
+    const report = await this.reportsRepository.findOne({
+      where: { id: reportId },
+    });
     if (!report) return;
 
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -225,7 +253,7 @@ export class ReportsService {
           targetId: report.targetId,
           status: ReportStatus.OPEN,
         },
-        { priority: ReportPriority.CRITICAL }
+        { priority: ReportPriority.CRITICAL },
       );
 
       this.eventEmitter.emit('report.escalated', {

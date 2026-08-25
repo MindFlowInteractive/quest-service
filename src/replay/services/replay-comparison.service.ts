@@ -31,7 +31,9 @@ export class ReplayComparisonService {
     ]);
 
     if (!originalReplay) {
-      throw new NotFoundException(`Original replay ${originalReplayId} not found`);
+      throw new NotFoundException(
+        `Original replay ${originalReplayId} not found`,
+      );
     }
 
     if (!newReplay) {
@@ -168,9 +170,15 @@ export class ReplayComparisonService {
       newIdx++;
     }
 
-    const insertedCount = differenceDetails.filter((d) => d.changeType === 'inserted').length;
-    const removedCount = differenceDetails.filter((d) => d.changeType === 'removed').length;
-    const modifiedCount = differenceDetails.filter((d) => d.changeType === 'modified').length;
+    const insertedCount = differenceDetails.filter(
+      (d) => d.changeType === 'inserted',
+    ).length;
+    const removedCount = differenceDetails.filter(
+      (d) => d.changeType === 'removed',
+    ).length;
+    const modifiedCount = differenceDetails.filter(
+      (d) => d.changeType === 'modified',
+    ).length;
 
     return {
       totalDifferenceCount: differenceDetails.length,
@@ -225,7 +233,8 @@ export class ReplayComparisonService {
       originalScore,
       newScore,
       scoreImprovement,
-      scoreImprovementPercentage: Math.round(scoreImprovementPercentage * 100) / 100,
+      scoreImprovementPercentage:
+        Math.round(scoreImprovementPercentage * 100) / 100,
       hintsReduction,
       efficiencyGain: Math.round(efficiencyGain * 100) / 100,
     };
@@ -246,7 +255,8 @@ export class ReplayComparisonService {
             originalReplay.scoreEarned) *
           100
         : 0;
-    const efficiencyImprovement = (newReplay.efficiency || 0) - (originalReplay.efficiency || 0);
+    const efficiencyImprovement =
+      (newReplay.efficiency || 0) - (originalReplay.efficiency || 0);
     const optimizationLevel = Math.min(
       100,
       Math.max(0, (scoreImprovement + efficiencyImprovement) / 2),
@@ -282,7 +292,10 @@ export class ReplayComparisonService {
   /**
    * Check if two actions are functionally equal
    */
-  private areActionsEqual(action1: ReplayAction, action2: ReplayAction): boolean {
+  private areActionsEqual(
+    action1: ReplayAction,
+    action2: ReplayAction,
+  ): boolean {
     return (
       action1.actionType === action2.actionType &&
       JSON.stringify(action1.actionData) === JSON.stringify(action2.actionData)

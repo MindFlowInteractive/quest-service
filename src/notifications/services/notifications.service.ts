@@ -62,10 +62,7 @@ export class NotificationsService {
     }
 
     if (input.aggregateKey) {
-      await this.aggregationService.increment(
-        input.userId,
-        input.aggregateKey,
-      );
+      await this.aggregationService.increment(input.userId, input.aggregateKey);
     }
 
     let notification: Notification;
@@ -84,10 +81,7 @@ export class NotificationsService {
 
       notification = await this.notificationRepository.save(notification);
     } catch (error) {
-      if (
-        input.deduplicationKey &&
-        this.isUniqueViolation(error)
-      ) {
+      if (input.deduplicationKey && this.isUniqueViolation(error)) {
         const existing = await this.notificationRepository.findOne({
           where: { deduplicationKey: input.deduplicationKey },
         });
@@ -124,18 +118,13 @@ export class NotificationsService {
     return notification;
   }
 
-  async history(
-    userId: string,
-    page = 1,
-    limit = 20,
-  ) {
-    const [data, total] =
-      await this.notificationRepository.findAndCount({
-        where: { userId },
-        order: { createdAt: 'DESC' },
-        skip: (page - 1) * limit,
-        take: limit,
-      });
+  async history(userId: string, page = 1, limit = 20) {
+    const [data, total] = await this.notificationRepository.findAndCount({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return {
       data,
@@ -161,13 +150,12 @@ export class NotificationsService {
     userId: string,
     notificationId: string,
   ): Promise<Notification> {
-    const notification =
-      await this.notificationRepository.findOne({
-        where: {
-          id: notificationId,
-          userId,
-        },
-      });
+    const notification = await this.notificationRepository.findOne({
+      where: {
+        id: notificationId,
+        userId,
+      },
+    });
 
     if (!notification) {
       throw new NotFoundException('Notification not found');

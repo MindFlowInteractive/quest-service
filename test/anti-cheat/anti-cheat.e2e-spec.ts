@@ -52,13 +52,13 @@ describe('Anti-Cheat System (E2E)', () => {
     await app.init();
 
     violationRepo = moduleFixture.get<Repository<CheatViolation>>(
-      getRepositoryToken(CheatViolation)
+      getRepositoryToken(CheatViolation),
     );
     profileRepo = moduleFixture.get<Repository<PlayerBehaviorProfile>>(
-      getRepositoryToken(PlayerBehaviorProfile)
+      getRepositoryToken(PlayerBehaviorProfile),
     );
     auditRepo = moduleFixture.get<Repository<PuzzleMoveAudit>>(
-      getRepositoryToken(PuzzleMoveAudit)
+      getRepositoryToken(PuzzleMoveAudit),
     );
   });
 
@@ -81,7 +81,7 @@ describe('Anti-Cheat System (E2E)', () => {
           puzzleId,
           moveType: 'test',
           moveData: { action: 'test' },
-          isValid: true
+          isValid: true,
         });
       }
 
@@ -89,7 +89,9 @@ describe('Anti-Cheat System (E2E)', () => {
       // For now, we verify the detection logic works
 
       expect(moves.length).toBe(10);
-      expect(moves[9].timestamp.getTime() - moves[0].timestamp.getTime()).toBeLessThan(1000);
+      expect(
+        moves[9].timestamp.getTime() - moves[0].timestamp.getTime(),
+      ).toBeLessThan(1000);
     });
   });
 
@@ -122,14 +124,16 @@ describe('Anti-Cheat System (E2E)', () => {
           metrics: {
             totalMoves: 10,
             fastMoves: 9,
-            fastMoveRatio: 0.9
+            fastMoveRatio: 0.9,
           },
-          anomalies: []
-        }
+          anomalies: [],
+        },
       };
 
       jest.spyOn(violationRepo, 'create').mockReturnValue(violationData as any);
-      jest.spyOn(violationRepo, 'save').mockResolvedValue({ id: 'violation-1', ...violationData } as any);
+      jest
+        .spyOn(violationRepo, 'save')
+        .mockResolvedValue({ id: 'violation-1', ...violationData } as any);
 
       const created = violationRepo.create(violationData);
       const saved = await violationRepo.save(created);
@@ -155,11 +159,13 @@ describe('Anti-Cheat System (E2E)', () => {
         accuracyProfile: {},
         skillProfile: {},
         sessionPatterns: {},
-        riskFactors: {}
+        riskFactors: {},
       };
 
       jest.spyOn(profileRepo, 'create').mockReturnValue(newProfile as any);
-      jest.spyOn(profileRepo, 'save').mockResolvedValue({ id: 'profile-1', ...newProfile } as any);
+      jest
+        .spyOn(profileRepo, 'save')
+        .mockResolvedValue({ id: 'profile-1', ...newProfile } as any);
 
       const found = await profileRepo.findOne({ where: { playerId } });
       expect(found).toBeNull();
@@ -181,14 +187,14 @@ describe('Anti-Cheat System (E2E)', () => {
         playerId,
         trustScore: 100,
         totalViolations: 0,
-        riskFactors: { flaggedBehaviors: [] }
+        riskFactors: { flaggedBehaviors: [] },
       };
 
       jest.spyOn(profileRepo, 'findOne').mockResolvedValue(profile as any);
       jest.spyOn(profileRepo, 'save').mockResolvedValue({
         ...profile,
         trustScore: 95,
-        totalViolations: 1
+        totalViolations: 1,
       } as any);
 
       const found = await profileRepo.findOne({ where: { playerId } });
@@ -198,7 +204,7 @@ describe('Anti-Cheat System (E2E)', () => {
       const updated = await profileRepo.save({
         ...found,
         trustScore: 95,
-        totalViolations: 1
+        totalViolations: 1,
       });
 
       expect(updated.trustScore).toBe(95);

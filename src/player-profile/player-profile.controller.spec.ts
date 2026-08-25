@@ -11,7 +11,7 @@ describe('PlayerProfileController', () => {
   const mockUser = {
     id: 'user-1',
     username: 'testuser',
-    email: 'test@example.com'
+    email: 'test@example.com',
   };
 
   const mockProfile = {
@@ -24,12 +24,12 @@ describe('PlayerProfileController', () => {
     isOwner: true,
     statistics: {
       totalGamesPlayed: 100,
-      totalWins: 75
-    }
+      totalWins: 75,
+    },
   };
 
   const mockRequest = {
-    user: mockUser
+    user: mockUser,
   } as any;
 
   beforeEach(async () => {
@@ -85,8 +85,10 @@ describe('PlayerProfileController', () => {
     it('should update user profile', async () => {
       const updateDto = { bio: 'Updated bio' };
       const updatedProfile = { ...mockProfile, bio: 'Updated bio' };
-      
-      jest.spyOn(service, 'updateProfile').mockResolvedValue(updatedProfile as any);
+
+      jest
+        .spyOn(service, 'updateProfile')
+        .mockResolvedValue(updatedProfile as any);
 
       const result = await controller.updateProfile(updateDto, mockRequest);
 
@@ -101,10 +103,12 @@ describe('PlayerProfileController', () => {
         mimetype: 'image/jpeg',
         size: 1024,
         originalname: 'avatar.jpg',
-        buffer: Buffer.from('fake-data')
+        buffer: Buffer.from('fake-data'),
       } as any;
 
-      jest.spyOn(service, 'uploadAvatar').mockResolvedValue('/uploads/avatar.jpg');
+      jest
+        .spyOn(service, 'uploadAvatar')
+        .mockResolvedValue('/uploads/avatar.jpg');
 
       const result = await controller.uploadAvatar(mockFile, mockRequest);
 
@@ -119,10 +123,12 @@ describe('PlayerProfileController', () => {
         mimetype: 'image/jpeg',
         size: 2048,
         originalname: 'banner.jpg',
-        buffer: Buffer.from('fake-data')
+        buffer: Buffer.from('fake-data'),
       } as any;
 
-      jest.spyOn(service, 'uploadBanner').mockResolvedValue('/uploads/banner.jpg');
+      jest
+        .spyOn(service, 'uploadBanner')
+        .mockResolvedValue('/uploads/banner.jpg');
 
       const result = await controller.uploadBanner(mockFile, mockRequest);
 
@@ -134,26 +140,36 @@ describe('PlayerProfileController', () => {
   describe('updateBadges', () => {
     it('should update displayed badges', async () => {
       const updateDto = { displayedBadges: ['first-win', 'puzzle-master'] };
-      const updatedProfile = { ...mockProfile, badges: ['first-win', 'puzzle-master'] };
-      
-      jest.spyOn(service, 'updateBadges').mockResolvedValue(updatedProfile as any);
+      const updatedProfile = {
+        ...mockProfile,
+        badges: ['first-win', 'puzzle-master'],
+      };
+
+      jest
+        .spyOn(service, 'updateBadges')
+        .mockResolvedValue(updatedProfile as any);
 
       const result = await controller.updateBadges(updateDto, mockRequest);
 
       expect(result.badges).toEqual(['first-win', 'puzzle-master']);
-      expect(service.updateBadges).toHaveBeenCalledWith('user-1', ['first-win', 'puzzle-master']);
+      expect(service.updateBadges).toHaveBeenCalledWith('user-1', [
+        'first-win',
+        'puzzle-master',
+      ]);
     });
   });
 
   describe('updateStatistics', () => {
     it('should update profile statistics', async () => {
       const statsDto = { totalGamesPlayed: 150 };
-      const updatedProfile = { 
-        ...mockProfile, 
-        statistics: { ...mockProfile.statistics, totalGamesPlayed: 150 } 
+      const updatedProfile = {
+        ...mockProfile,
+        statistics: { ...mockProfile.statistics, totalGamesPlayed: 150 },
       };
-      
-      jest.spyOn(service, 'updateStatistics').mockResolvedValue(updatedProfile as any);
+
+      jest
+        .spyOn(service, 'updateStatistics')
+        .mockResolvedValue(updatedProfile as any);
 
       const result = await controller.updateStatistics(statsDto, mockRequest);
 
@@ -165,8 +181,10 @@ describe('PlayerProfileController', () => {
   describe('getStatistics', () => {
     it('should return statistics for profile owner', async () => {
       const stats = { totalGamesPlayed: 100, totalWins: 75 };
-      
-      jest.spyOn(service, 'getProfile').mockResolvedValue({ ...mockProfile, isOwner: true });
+
+      jest
+        .spyOn(service, 'getProfile')
+        .mockResolvedValue({ ...mockProfile, isOwner: true });
       jest.spyOn(service, 'getProfileStatistics').mockResolvedValue(stats);
 
       const result = await controller.getStatistics('user-1', mockRequest);
@@ -176,8 +194,12 @@ describe('PlayerProfileController', () => {
 
     it('should return statistics for public profile', async () => {
       const stats = { totalGamesPlayed: 100, totalWins: 75 };
-      const publicProfile = { ...mockProfile, isOwner: false, statistics: stats };
-      
+      const publicProfile = {
+        ...mockProfile,
+        isOwner: false,
+        statistics: stats,
+      };
+
       jest.spyOn(service, 'getProfile').mockResolvedValue(publicProfile);
       jest.spyOn(service, 'getProfileStatistics').mockResolvedValue(stats);
 
@@ -187,19 +209,24 @@ describe('PlayerProfileController', () => {
     });
 
     it('should throw ForbiddenException for private statistics', async () => {
-      const privateProfile = { ...mockProfile, isOwner: false, statistics: undefined };
-      
+      const privateProfile = {
+        ...mockProfile,
+        isOwner: false,
+        statistics: undefined,
+      };
+
       jest.spyOn(service, 'getProfile').mockResolvedValue(privateProfile);
 
-      await expect(controller.getStatistics('user-1', mockRequest))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        controller.getStatistics('user-1', mockRequest),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('searchProfiles', () => {
     it('should search profiles by query', async () => {
       const searchResults = [mockProfile];
-      
+
       jest.spyOn(service, 'searchProfiles').mockResolvedValue(searchResults);
 
       const result = await controller.searchProfiles('test', 10);
@@ -220,8 +247,10 @@ describe('PlayerProfileController', () => {
   describe('getPublicProfiles', () => {
     it('should return public profiles', async () => {
       const publicProfiles = [mockProfile];
-      
-      jest.spyOn(service, 'getPublicProfiles').mockResolvedValue(publicProfiles);
+
+      jest
+        .spyOn(service, 'getPublicProfiles')
+        .mockResolvedValue(publicProfiles);
 
       const result = await controller.getPublicProfiles(25, 10);
 

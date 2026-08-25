@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, QueryBuilder } from 'typeorm';
-import { PuzzleReplay, ReplaySharePermission } from '../entities/puzzle-replay.entity';
+import {
+  PuzzleReplay,
+  ReplaySharePermission,
+} from '../entities/puzzle-replay.entity';
 import { ReplayAction } from '../entities/replay-action.entity';
 import { ReplayAnalytic } from '../entities/replay-analytic.entity';
 import {
@@ -15,7 +18,11 @@ import {
   CompleteReplayDto,
   ShareReplayDto,
 } from '../dto/create-replay.dto';
-import { ReplayPlaybackDto, PlaybackMetadataDto, PlaybackActionDto } from '../dto/replay-playback.dto';
+import {
+  ReplayPlaybackDto,
+  PlaybackMetadataDto,
+  PlaybackActionDto,
+} from '../dto/replay-playback.dto';
 import * as crypto from 'crypto';
 import * as zlib from 'zlib';
 import { promisify } from 'util';
@@ -77,7 +84,9 @@ export class ReplayService {
     }
 
     if (replay.isCompleted) {
-      throw new BadRequestException('Cannot record actions on a completed replay');
+      throw new BadRequestException(
+        'Cannot record actions on a completed replay',
+      );
     }
 
     // Get the next sequence number
@@ -108,7 +117,10 @@ export class ReplayService {
   /**
    * Update replay metrics based on recorded action
    */
-  private async updateReplayMetrics(replayId: string, actionDto: RecordActionDto) {
+  private async updateReplayMetrics(
+    replayId: string,
+    actionDto: RecordActionDto,
+  ) {
     const replay = await this.replayRepo.findOne({ where: { id: replayId } });
     if (!replay) return;
 
@@ -448,9 +460,11 @@ export class ReplayService {
     replayId: string,
     metricType?: string,
   ): Promise<ReplayAnalytic[]> {
-    const query = this.analyticRepo.createQueryBuilder().where('replayId = :replayId', {
-      replayId,
-    });
+    const query = this.analyticRepo
+      .createQueryBuilder()
+      .where('replayId = :replayId', {
+        replayId,
+      });
 
     if (metricType) {
       query.andWhere('metricType = :metricType', { metricType });

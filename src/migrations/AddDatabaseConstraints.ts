@@ -214,43 +214,105 @@ export class AddDatabaseConstraints implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop all constraints
-    await queryRunner.query('ALTER TABLE "user_stats" DROP CONSTRAINT IF EXISTS "CHK_user_stats_streak_logic";');
-    await queryRunner.query('ALTER TABLE "user_stats" DROP CONSTRAINT IF EXISTS "CHK_user_stats_accuracy_range";');
-    await queryRunner.query('ALTER TABLE "user_stats" DROP CONSTRAINT IF EXISTS "CHK_user_stats_puzzle_logic";');
-    await queryRunner.query('ALTER TABLE "user_stats" DROP CONSTRAINT IF EXISTS "CHK_user_stats_positive_values";');
-    
-    await queryRunner.query('ALTER TABLE "puzzle_ratings" DROP CONSTRAINT IF EXISTS "CHK_puzzle_ratings_difficulty_vote_valid";');
-    await queryRunner.query('ALTER TABLE "puzzle_ratings" DROP CONSTRAINT IF EXISTS "CHK_puzzle_ratings_rating_range";');
-    
-    await queryRunner.query('ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_accuracy_range";');
-    await queryRunner.query('ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_time_logic";');
-    await queryRunner.query('ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_puzzle_logic";');
-    await queryRunner.query('ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_positive_values";');
-    await queryRunner.query('ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_status_valid";');
-    await queryRunner.query('ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_platform_valid";');
-    
-    await queryRunner.query('ALTER TABLE "puzzle_progress" DROP CONSTRAINT IF EXISTS "CHK_puzzle_progress_completion_logic";');
-    await queryRunner.query('ALTER TABLE "puzzle_progress" DROP CONSTRAINT IF EXISTS "CHK_puzzle_progress_best_score_logic";');
-    await queryRunner.query('ALTER TABLE "puzzle_progress" DROP CONSTRAINT IF EXISTS "CHK_puzzle_progress_positive_values";');
-    await queryRunner.query('ALTER TABLE "puzzle_progress" DROP CONSTRAINT IF EXISTS "CHK_puzzle_progress_status_valid";');
-    
-    await queryRunner.query('ALTER TABLE "user_achievements" DROP CONSTRAINT IF EXISTS "CHK_user_achievements_unlock_logic";');
-    await queryRunner.query('ALTER TABLE "user_achievements" DROP CONSTRAINT IF EXISTS "CHK_user_achievements_progress_valid";');
-    
-    await queryRunner.query('ALTER TABLE "achievements" DROP CONSTRAINT IF EXISTS "CHK_achievements_name_length";');
-    await queryRunner.query('ALTER TABLE "achievements" DROP CONSTRAINT IF EXISTS "CHK_achievements_positive_values";');
-    await queryRunner.query('ALTER TABLE "achievements" DROP CONSTRAINT IF EXISTS "CHK_achievements_rarity_valid";');
-    
-    await queryRunner.query('ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_title_length";');
-    await queryRunner.query('ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_rating_range";');
-    await queryRunner.query('ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_positive_values";');
-    await queryRunner.query('ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_difficulty_rating_range";');
-    await queryRunner.query('ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_difficulty_valid";');
-    
-    await queryRunner.query('ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_username_length";');
-    await queryRunner.query('ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_positive_scores";');
-    await queryRunner.query('ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_role_valid";');
-    await queryRunner.query('ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_status_valid";');
-    await queryRunner.query('ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_email_format";');
+    await queryRunner.query(
+      'ALTER TABLE "user_stats" DROP CONSTRAINT IF EXISTS "CHK_user_stats_streak_logic";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "user_stats" DROP CONSTRAINT IF EXISTS "CHK_user_stats_accuracy_range";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "user_stats" DROP CONSTRAINT IF EXISTS "CHK_user_stats_puzzle_logic";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "user_stats" DROP CONSTRAINT IF EXISTS "CHK_user_stats_positive_values";',
+    );
+
+    await queryRunner.query(
+      'ALTER TABLE "puzzle_ratings" DROP CONSTRAINT IF EXISTS "CHK_puzzle_ratings_difficulty_vote_valid";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "puzzle_ratings" DROP CONSTRAINT IF EXISTS "CHK_puzzle_ratings_rating_range";',
+    );
+
+    await queryRunner.query(
+      'ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_accuracy_range";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_time_logic";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_puzzle_logic";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_positive_values";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_status_valid";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "game_sessions" DROP CONSTRAINT IF EXISTS "CHK_game_sessions_platform_valid";',
+    );
+
+    await queryRunner.query(
+      'ALTER TABLE "puzzle_progress" DROP CONSTRAINT IF EXISTS "CHK_puzzle_progress_completion_logic";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "puzzle_progress" DROP CONSTRAINT IF EXISTS "CHK_puzzle_progress_best_score_logic";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "puzzle_progress" DROP CONSTRAINT IF EXISTS "CHK_puzzle_progress_positive_values";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "puzzle_progress" DROP CONSTRAINT IF EXISTS "CHK_puzzle_progress_status_valid";',
+    );
+
+    await queryRunner.query(
+      'ALTER TABLE "user_achievements" DROP CONSTRAINT IF EXISTS "CHK_user_achievements_unlock_logic";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "user_achievements" DROP CONSTRAINT IF EXISTS "CHK_user_achievements_progress_valid";',
+    );
+
+    await queryRunner.query(
+      'ALTER TABLE "achievements" DROP CONSTRAINT IF EXISTS "CHK_achievements_name_length";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "achievements" DROP CONSTRAINT IF EXISTS "CHK_achievements_positive_values";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "achievements" DROP CONSTRAINT IF EXISTS "CHK_achievements_rarity_valid";',
+    );
+
+    await queryRunner.query(
+      'ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_title_length";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_rating_range";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_positive_values";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_difficulty_rating_range";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "puzzles" DROP CONSTRAINT IF EXISTS "CHK_puzzles_difficulty_valid";',
+    );
+
+    await queryRunner.query(
+      'ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_username_length";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_positive_scores";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_role_valid";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_status_valid";',
+    );
+    await queryRunner.query(
+      'ALTER TABLE "users" DROP CONSTRAINT IF EXISTS "CHK_users_email_format";',
+    );
   }
 }

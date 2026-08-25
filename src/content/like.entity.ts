@@ -4,12 +4,12 @@ import { User } from '../users/entities/user.entity';
 
 @Entity('likes')
 export class Like {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @ManyToOne(() => Content, (content) => content.likes)
-    content: Content;
+  @ManyToOne(() => Content, (content) => content.likes)
+  content: Content;
 
-    @ManyToOne(() => User)
-    user: User;
+  @ManyToOne(() => User)
+  user: User;
 }

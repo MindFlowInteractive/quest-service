@@ -9,7 +9,12 @@ import {
 } from 'typeorm';
 import { ContextualHelp } from './contextual-help.entity';
 
-export type InteractionAction = 'shown' | 'dismissed' | 'clicked' | 'completed' | 'auto_hidden';
+export type InteractionAction =
+  | 'shown'
+  | 'dismissed'
+  | 'clicked'
+  | 'completed'
+  | 'auto_hidden';
 
 export interface InteractionContext {
   puzzleId?: string;
@@ -58,7 +63,9 @@ export class ContextualHelpInteraction {
   @Index()
   createdAt: Date;
 
-  @ManyToOne(() => ContextualHelp, (help) => help.interactions, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ContextualHelp, (help) => help.interactions, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'helpId' })
   help: ContextualHelp;
 }

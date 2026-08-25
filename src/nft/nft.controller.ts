@@ -6,7 +6,9 @@ export class NFTController {
   constructor(private readonly nftService: NFTService) {}
 
   @Post('mint')
-  async mint(@Body() body: { userAddress: string; tokenId: number; uri: string }) {
+  async mint(
+    @Body() body: { userAddress: string; tokenId: number; uri: string },
+  ) {
     return this.nftService.mintNFT(body.userAddress, body.tokenId, body.uri);
   }
 

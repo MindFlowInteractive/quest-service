@@ -18,8 +18,12 @@ export class PuzzleDifficultyService {
    * Returns a difficulty score from 1 (easy) to 5 (hard) for the puzzle.
    */
   async getPuzzleDifficulty(puzzleId: string): Promise<number> {
-    const puzzle = await this.puzzleRepository.findOne({ where: { id: puzzleId } });
-    const ratings = await this.puzzleRatingRepository.find({ where: { puzzleId } });
+    const puzzle = await this.puzzleRepository.findOne({
+      where: { id: puzzleId },
+    });
+    const ratings = await this.puzzleRatingRepository.find({
+      where: { puzzleId },
+    });
     return calculatePuzzleDifficulty(puzzle, ratings);
   }
 }

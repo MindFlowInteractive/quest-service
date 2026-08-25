@@ -10,7 +10,12 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { BlockchainTransactionService } from './blockchain-transaction.service';
 import { TransactionQueryDto, TransactionAnalyticsQueryDto } from './dto';
 import { TransactionRetryService } from './services/transaction-retry.service';
@@ -195,7 +200,9 @@ export class BlockchainTransactionController {
   @ApiOperation({ summary: 'Sync transactions for a Stellar account' })
   @ApiResponse({ status: 200, description: 'Sync completed' })
   async syncAccountTransactions(@Param('accountId') accountId: string) {
-    const result = await this.transactionService.syncAccountTransactions(accountId);
+    const result = await this.transactionService.syncAccountTransactions(
+      accountId,
+    );
     return {
       status: 'success',
       message: `Synced ${result.count} transactions for account ${accountId}`,

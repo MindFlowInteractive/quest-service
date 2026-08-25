@@ -23,7 +23,10 @@ describe('RatingSystem', () => {
       where: jest.fn().mockReturnThis(),
       getRawOne: jest.fn().mockResolvedValue({ average: '4.5', count: '10' }),
       groupBy: jest.fn().mockReturnThis(),
-      getRawMany: jest.fn().mockResolvedValue([{ rating: '5', count: '5' }, { rating: '4', count: '5' }]),
+      getRawMany: jest.fn().mockResolvedValue([
+        { rating: '5', count: '5' },
+        { rating: '4', count: '5' },
+      ]),
     })),
   };
 
@@ -68,7 +71,10 @@ describe('RatingSystem', () => {
         PuzzleRatingService,
         PuzzleReviewService,
         { provide: getRepositoryToken(PuzzleRating), useValue: mockRatingRepo },
-        { provide: getRepositoryToken(PuzzleRatingAggregate), useValue: mockAggregateRepo },
+        {
+          provide: getRepositoryToken(PuzzleRatingAggregate),
+          useValue: mockAggregateRepo,
+        },
         { provide: getRepositoryToken(PuzzleReview), useValue: mockReviewRepo },
         { provide: getRepositoryToken(ReviewVote), useValue: mockVoteRepo },
         { provide: getRepositoryToken(Puzzle), useValue: mockPuzzleRepo },
@@ -93,7 +99,9 @@ describe('RatingSystem', () => {
       mockRatingRepo.save.mockResolvedValue({ id: 'rating-1', rating: 5 });
       mockAggregateRepo.findOne.mockResolvedValue({ id: 'agg-1' });
 
-      const result = await ratingService.submitRating('user-1', 'puzzle-1', { rating: 5 });
+      const result = await ratingService.submitRating('user-1', 'puzzle-1', {
+        rating: 5,
+      });
       expect(result).toBeDefined();
       expect(mockRatingRepo.create).toHaveBeenCalled();
       expect(mockRatingRepo.save).toHaveBeenCalled();
@@ -102,9 +110,11 @@ describe('RatingSystem', () => {
     it('should update existing rating', async () => {
       mockPuzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-1' });
       mockRatingRepo.findOne.mockResolvedValue({ id: 'rating-1', rating: 3 });
-      mockRatingRepo.save.mockImplementation(r => Promise.resolve(r));
+      mockRatingRepo.save.mockImplementation((r) => Promise.resolve(r));
 
-      const result = await ratingService.submitRating('user-1', 'puzzle-1', { rating: 5 });
+      const result = await ratingService.submitRating('user-1', 'puzzle-1', {
+        rating: 5,
+      });
       expect(result.rating).toBe(5);
       expect(mockRatingRepo.create).not.toHaveBeenCalled();
       expect(mockRatingRepo.save).toHaveBeenCalled();
@@ -115,12 +125,20 @@ describe('RatingSystem', () => {
     it('should create a new review', async () => {
       mockPuzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-1' });
       mockReviewRepo.findOne.mockResolvedValue(null);
-      mockReviewRepo.create.mockReturnValue({ id: 'review-1', reviewText: 'Great puzzle!' });
-      mockReviewRepo.save.mockResolvedValue({ id: 'review-1', reviewText: 'Great puzzle!' });
+      mockReviewRepo.create.mockReturnValue({
+        id: 'review-1',
+        reviewText: 'Great puzzle!',
+      });
+      mockReviewRepo.save.mockResolvedValue({
+        id: 'review-1',
+        reviewText: 'Great puzzle!',
+      });
       mockReviewRepo.count.mockResolvedValue(1);
       mockAggregateRepo.findOne.mockResolvedValue({ id: 'agg-1' });
 
-      const result = await reviewService.submitReview('user-1', 'puzzle-1', { reviewText: 'Great puzzle!' });
+      const result = await reviewService.submitReview('user-1', 'puzzle-1', {
+        reviewText: 'Great puzzle!',
+      });
       expect(result).toBeDefined();
       expect(mockReviewRepo.create).toHaveBeenCalled();
       expect(mockReviewRepo.save).toHaveBeenCalled();
@@ -129,32 +147,48 @@ describe('RatingSystem', () => {
     it('should flag profanity automatically', async () => {
       mockPuzzleRepo.findOne.mockResolvedValue({ id: 'puzzle-1' });
       mockReviewRepo.findOne.mockResolvedValue(null);
-      mockReviewRepo.create.mockImplementation(dto => ({ ...dto, moderationStatus: 'flagged' }));
-      mockReviewRepo.save.mockImplementation(r => Promise.resolve(r));
+      mockReviewRepo.create.mockImplementation((dto) => ({
+        ...dto,
+        moderationStatus: 'flagged',
+      }));
+      mockReviewRepo.save.mockImplementation((r) => Promise.resolve(r));
 
       // Assume 'badword1' is in the blacklist
-      const result = await reviewService.submitReview('user-1', 'puzzle-1', { reviewText: 'This contains badword1' });
+      const result = await reviewService.submitReview('user-1', 'puzzle-1', {
+        reviewText: 'This contains badword1',
+      });
       expect(result.moderationStatus).toBe('flagged');
     });
   });
 
   describe('voteReview', () => {
     it('should allow voting on a review', async () => {
-      mockReviewRepo.findOne.mockResolvedValue({ id: 'review-1', userId: 'other-user', helpfulVotes: 0 });
+      mockReviewRepo.findOne.mockResolvedValue({
+        id: 'review-1',
+        userId: 'other-user',
+        helpfulVotes: 0,
+      });
       mockVoteRepo.findOne.mockResolvedValue(null);
       mockVoteRepo.create.mockReturnValue({ voteType: 'helpful' });
 
-      await reviewService.voteReview('user-1', 'review-1', { voteType: 'helpful' } as any);
-      
+      await reviewService.voteReview('user-1', 'review-1', {
+        voteType: 'helpful',
+      } as any);
+
       expect(mockVoteRepo.save).toHaveBeenCalled();
       expect(mockReviewRepo.save).toHaveBeenCalled();
     });
 
     it('should prevent voting on own review', async () => {
-      mockReviewRepo.findOne.mockResolvedValue({ id: 'review-1', userId: 'user-1' });
-      
+      mockReviewRepo.findOne.mockResolvedValue({
+        id: 'review-1',
+        userId: 'user-1',
+      });
+
       await expect(
-        reviewService.voteReview('user-1', 'review-1', { voteType: 'helpful' } as any)
+        reviewService.voteReview('user-1', 'review-1', {
+          voteType: 'helpful',
+        } as any),
       ).rejects.toThrow();
     });
   });

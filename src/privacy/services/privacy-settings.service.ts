@@ -6,7 +6,11 @@ import {
   PrivacySettings,
   DataProcessingPurpose,
 } from '../entities/privacy-settings.entity';
-import { ConsentLog, ConsentType, ConsentAction } from '../entities/consent-log.entity';
+import {
+  ConsentLog,
+  ConsentType,
+  ConsentAction,
+} from '../entities/consent-log.entity';
 import { UpdatePrivacySettingsDto } from '../dto/update-privacy-settings.dto';
 import { ConsentUpdateDto } from '../dto/consent-update.dto';
 
@@ -65,7 +69,7 @@ export class PrivacySettingsService {
 
     // Update settings
     Object.assign(settings, dto);
-    
+
     // Update consent dates if consent fields changed
     if (dto.marketingConsent !== undefined) {
       settings.marketingConsentDate = dto.marketingConsent ? new Date() : null;
@@ -74,13 +78,19 @@ export class PrivacySettingsService {
       settings.analyticsConsentDate = dto.analyticsConsent ? new Date() : null;
     }
     if (dto.personalizationConsent !== undefined) {
-      settings.personalizationConsentDate = dto.personalizationConsent ? new Date() : null;
+      settings.personalizationConsentDate = dto.personalizationConsent
+        ? new Date()
+        : null;
     }
     if (dto.thirdPartySharingConsent !== undefined) {
-      settings.thirdPartySharingDate = dto.thirdPartySharingConsent ? new Date() : null;
+      settings.thirdPartySharingDate = dto.thirdPartySharingConsent
+        ? new Date()
+        : null;
     }
     if (dto.blockchainConsent !== undefined) {
-      settings.blockchainConsentDate = dto.blockchainConsent ? new Date() : null;
+      settings.blockchainConsentDate = dto.blockchainConsent
+        ? new Date()
+        : null;
     }
 
     const updated = await this.privacySettingsRepository.save(settings);
@@ -129,7 +139,10 @@ export class PrivacySettingsService {
   /**
    * Check if user has consented to a specific purpose
    */
-  async hasConsent(userId: string, purpose: DataProcessingPurpose): Promise<boolean> {
+  async hasConsent(
+    userId: string,
+    purpose: DataProcessingPurpose,
+  ): Promise<boolean> {
     const settings = await this.getSettings(userId);
 
     switch (purpose) {
@@ -199,15 +212,20 @@ export class PrivacySettingsService {
       { field: 'marketingConsent', type: ConsentType.MARKETING },
       { field: 'analyticsConsent', type: ConsentType.ANALYTICS },
       { field: 'personalizationConsent', type: ConsentType.PERSONALIZATION },
-      { field: 'thirdPartySharingConsent', type: ConsentType.THIRD_PARTY_SHARING },
+      {
+        field: 'thirdPartySharingConsent',
+        type: ConsentType.THIRD_PARTY_SHARING,
+      },
       { field: 'blockchainConsent', type: ConsentType.BLOCKCHAIN },
     ];
 
     for (const mapping of consentMappings) {
       const newValue = dto[mapping.field as keyof UpdatePrivacySettingsDto];
       if (newValue !== undefined) {
-        const previousValue = settings[mapping.field as keyof PrivacySettings] as boolean;
-        
+        const previousValue = settings[
+          mapping.field as keyof PrivacySettings
+        ] as boolean;
+
         if (previousValue !== newValue) {
           await this.logConsentChange({
             userId,
@@ -238,13 +256,18 @@ export class PrivacySettingsService {
     const log = this.consentLogRepository.create(data);
     await this.consentLogRepository.save(log);
 
-    this.logger.log(`Consent ${data.action} for ${data.consentType} by user ${data.userId}`);
+    this.logger.log(
+      `Consent ${data.action} for ${data.consentType} by user ${data.userId}`,
+    );
   }
 
   /**
    * Get consent value from settings
    */
-  private getConsentValue(settings: PrivacySettings, type: ConsentType): boolean {
+  private getConsentValue(
+    settings: PrivacySettings,
+    type: ConsentType,
+  ): boolean {
     switch (type) {
       case ConsentType.MARKETING:
         return settings.marketingConsent;
@@ -264,7 +287,11 @@ export class PrivacySettingsService {
   /**
    * Set consent value in settings
    */
-  private setConsentValue(settings: PrivacySettings, type: ConsentType, value: boolean): void {
+  private setConsentValue(
+    settings: PrivacySettings,
+    type: ConsentType,
+    value: boolean,
+  ): void {
     switch (type) {
       case ConsentType.MARKETING:
         settings.marketingConsent = value;

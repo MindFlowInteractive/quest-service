@@ -15,10 +15,7 @@ export class NotificationAggregationService {
     });
   }
 
-  async increment(
-    userId: string,
-    aggregateKey: string,
-  ): Promise<number> {
+  async increment(userId: string, aggregateKey: string): Promise<number> {
     const key = `notification:aggregate:${userId}:${aggregateKey}`;
 
     const count = await this.redis.incr(key);
@@ -30,10 +27,7 @@ export class NotificationAggregationService {
     return count;
   }
 
-  async getCount(
-    userId: string,
-    aggregateKey: string,
-  ): Promise<number> {
+  async getCount(userId: string, aggregateKey: string): Promise<number> {
     const key = `notification:aggregate:${userId}:${aggregateKey}`;
     const value = await this.redis.get(key);
 

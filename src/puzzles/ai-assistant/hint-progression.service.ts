@@ -9,7 +9,7 @@ export class HintProgressionService {
     if (!this.playerHintLevels.has(userId)) {
       this.playerHintLevels.set(userId, new Map());
     }
-    
+
     const userHints = this.playerHintLevels.get(userId);
     return userHints.get(puzzleId) || 1;
   }
@@ -17,19 +17,22 @@ export class HintProgressionService {
   async generateHint(
     analysis: PuzzleAnalysis,
     currentHintLevel: number,
-    previousAttempts: number
+    previousAttempts: number,
   ): Promise<Hint> {
     // Adjust hint level based on attempts
-    const adjustedLevel = this.adjustHintLevel(currentHintLevel, previousAttempts);
-    
+    const adjustedLevel = this.adjustHintLevel(
+      currentHintLevel,
+      previousAttempts,
+    );
+
     // Generate hint that matches the level
     const hint = this.createHintForLevel(analysis, adjustedLevel);
-    
+
     // Ensure hint doesn't give away the solution
     if (!hint.avoidsSolution) {
       return this.dilutehint(hint);
     }
-    
+
     return hint;
   }
 
@@ -63,14 +66,17 @@ export class HintProgressionService {
       type: 'observation',
       content: this.generateObservation(analysis),
       reasoning: 'Encouraging careful observation without directing solution',
-      nextSteps: ['Think about what this observation means', 'Look for similar patterns'],
+      nextSteps: [
+        'Think about what this observation means',
+        'Look for similar patterns',
+      ],
       avoidsSolution: true,
     };
   }
 
   private createQuestionBasedHint(analysis: PuzzleAnalysis): Hint {
     const questions = this.generateGuidingQuestions(analysis);
-    
+
     return {
       level: 2,
       type: 'question',
@@ -83,7 +89,7 @@ export class HintProgressionService {
 
   private createStrategyHint(analysis: PuzzleAnalysis): Hint {
     const strategy = analysis.suggestedStrategies[0];
-    
+
     return {
       level: 3,
       type: 'strategy',
@@ -99,7 +105,7 @@ export class HintProgressionService {
 
   private createPatternHint(analysis: PuzzleAnalysis): Hint {
     const pattern = analysis.identifiedPatterns[0] || 'structure';
-    
+
     return {
       level: 4,
       type: 'pattern',
@@ -119,7 +125,10 @@ export class HintProgressionService {
       type: 'strategy',
       content: this.generateDirectionalGuidance(analysis),
       reasoning: 'Providing clear direction while maintaining discovery',
-      nextSteps: ['Apply this approach step by step', 'Verify each step as you go'],
+      nextSteps: [
+        'Apply this approach step by step',
+        'Verify each step as you go',
+      ],
       avoidsSolution: true,
     };
   }
@@ -131,7 +140,7 @@ export class HintProgressionService {
       'Look for any symmetries or repetitions in the puzzle.',
       'Consider what constraints are limiting your moves.',
     ];
-    
+
     return observations[Math.floor(Math.random() * observations.length)];
   }
 
@@ -147,9 +156,9 @@ export class HintProgressionService {
     if (analysis.currentProgress < 30) {
       return 'Start by focusing on the areas with the most constraints.';
     } else if (analysis.currentProgress < 70) {
-      return 'You\'re making progress! Now look for implications of what you\'ve determined.';
+      return "You're making progress! Now look for implications of what you've determined.";
     } else {
-      return 'You\'re close! Double-check your logic and look for the final connections.';
+      return "You're close! Double-check your logic and look for the final connections.";
     }
   }
 

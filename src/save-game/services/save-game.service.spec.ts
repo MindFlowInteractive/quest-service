@@ -37,7 +37,11 @@ describe('SaveGameService', () => {
     },
     compressedData: Buffer.from('test'),
     checksum: { algorithm: 'sha256', value: 'abc123' },
-    compressionInfo: { algorithm: 'gzip', originalSize: 100, compressedSize: 50 },
+    compressionInfo: {
+      algorithm: 'gzip',
+      originalSize: 100,
+      compressedSize: 50,
+    },
     encryptionInfo: { algorithm: 'aes-256-gcm', iv: 'iv', tag: 'tag' },
     syncStatus: SyncStatus.LOCAL_ONLY,
     lastModifiedAt: new Date(),
@@ -133,11 +137,18 @@ describe('SaveGameService', () => {
 
     beforeEach(() => {
       saveGameRepo.findOne.mockResolvedValue(null);
-      versioningService.validateDataStructure.mockReturnValue({ valid: true, errors: [] });
+      versioningService.validateDataStructure.mockReturnValue({
+        valid: true,
+        errors: [],
+      });
       versioningService.mergeWithDefaults.mockReturnValue(createDto.data);
       compressionService.compress.mockResolvedValue({
         compressedData: Buffer.from('compressed'),
-        compressionInfo: { algorithm: 'gzip', originalSize: 100, compressedSize: 50 },
+        compressionInfo: {
+          algorithm: 'gzip',
+          originalSize: 100,
+          compressedSize: 50,
+        },
       });
       encryptionService.encrypt.mockResolvedValue({
         encryptedData: Buffer.from('encrypted'),
@@ -257,16 +268,24 @@ describe('SaveGameService', () => {
     });
 
     it('should throw if save is corrupted', async () => {
-      const corruptedSave = { ...mockSaveGame, isCorrupted: true, corruptionReason: 'test' };
+      const corruptedSave = {
+        ...mockSaveGame,
+        isCorrupted: true,
+        corruptionReason: 'test',
+      };
       saveGameRepo.findOne.mockResolvedValue(corruptedSave as SaveGame);
 
-      await expect(service.load(mockUserId, 0)).rejects.toThrow(BadRequestException);
+      await expect(service.load(mockUserId, 0)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw and mark corrupted if checksum fails', async () => {
       encryptionService.verifyChecksum.mockReturnValue(false);
 
-      await expect(service.load(mockUserId, 0)).rejects.toThrow(BadRequestException);
+      await expect(service.load(mockUserId, 0)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(analyticsService.recordCorruption).toHaveBeenCalled();
     });
   });
@@ -284,11 +303,18 @@ describe('SaveGameService', () => {
 
     beforeEach(() => {
       saveGameRepo.findOne.mockResolvedValue(mockSaveGame as SaveGame);
-      versioningService.validateDataStructure.mockReturnValue({ valid: true, errors: [] });
+      versioningService.validateDataStructure.mockReturnValue({
+        valid: true,
+        errors: [],
+      });
       versioningService.mergeWithDefaults.mockReturnValue(updateDto.data);
       compressionService.compress.mockResolvedValue({
         compressedData: Buffer.from('compressed'),
-        compressionInfo: { algorithm: 'gzip', originalSize: 100, compressedSize: 50 },
+        compressionInfo: {
+          algorithm: 'gzip',
+          originalSize: 100,
+          compressedSize: 50,
+        },
       });
       encryptionService.encrypt.mockResolvedValue({
         encryptedData: Buffer.from('encrypted'),
@@ -331,7 +357,9 @@ describe('SaveGameService', () => {
     it('should throw if save not found', async () => {
       saveGameRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.delete(mockUserId, 0)).rejects.toThrow(NotFoundException);
+      await expect(service.delete(mockUserId, 0)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

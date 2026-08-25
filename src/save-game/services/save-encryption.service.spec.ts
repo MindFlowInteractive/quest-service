@@ -76,7 +76,9 @@ describe('SaveEncryptionService', () => {
     it('should decrypt data correctly', async () => {
       const originalData = NodeBuffer.from('Secret message');
 
-      const { encryptedData, encryptionInfo } = await service.encrypt(originalData);
+      const { encryptedData, encryptionInfo } = await service.encrypt(
+        originalData,
+      );
       const decrypted = await service.decrypt(encryptedData, encryptionInfo);
 
       expect(decrypted).toEqual(originalData);
@@ -85,7 +87,9 @@ describe('SaveEncryptionService', () => {
     it('should throw on tampered ciphertext', async () => {
       const originalData = NodeBuffer.from('Secret message');
 
-      const { encryptedData, encryptionInfo } = await service.encrypt(originalData);
+      const { encryptedData, encryptionInfo } = await service.encrypt(
+        originalData,
+      );
 
       // Tamper with the ciphertext
       encryptedData[0] ^= 0xff;
@@ -98,7 +102,9 @@ describe('SaveEncryptionService', () => {
     it('should throw on wrong IV', async () => {
       const originalData = NodeBuffer.from('Secret message');
 
-      const { encryptedData, encryptionInfo } = await service.encrypt(originalData);
+      const { encryptedData, encryptionInfo } = await service.encrypt(
+        originalData,
+      );
 
       // Use wrong IV
       const wrongInfo = {
@@ -128,13 +134,17 @@ describe('SaveEncryptionService', () => {
       const testCases = [
         NodeBuffer.from('Simple text'),
         NodeBuffer.from('日本語テスト'),
-        NodeBuffer.from(JSON.stringify({ key: 'value', nested: { data: true } })),
+        NodeBuffer.from(
+          JSON.stringify({ key: 'value', nested: { data: true } }),
+        ),
         NodeBuffer.alloc(100, 0), // Zeros
         NodeBuffer.from([0x00, 0xff, 0x7f, 0x80]), // Binary data
       ];
 
       for (const original of testCases) {
-        const { encryptedData, encryptionInfo } = await service.encrypt(original);
+        const { encryptedData, encryptionInfo } = await service.encrypt(
+          original,
+        );
         const decrypted = await service.decrypt(encryptedData, encryptionInfo);
 
         expect(decrypted).toEqual(original);
@@ -181,7 +191,9 @@ describe('SaveEncryptionService', () => {
 
     it('should return false for non-matching checksum', () => {
       const data = NodeBuffer.from('Test data');
-      const wrongChecksum = service.generateChecksum(NodeBuffer.from('Different data'));
+      const wrongChecksum = service.generateChecksum(
+        NodeBuffer.from('Different data'),
+      );
 
       expect(service.verifyChecksum(data, wrongChecksum)).toBe(false);
     });

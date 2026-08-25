@@ -162,7 +162,8 @@ export class SaveGameController {
   async enableAutoSave(
     @Request() req: AuthenticatedRequest,
     @Query('slotId', new ParseIntPipe({ optional: true })) slotId?: number,
-    @Query('intervalMs', new ParseIntPipe({ optional: true })) intervalMs?: number,
+    @Query('intervalMs', new ParseIntPipe({ optional: true }))
+    intervalMs?: number,
   ) {
     await this.autoSaveService.enableAutoSave(req.user.id, slotId, intervalMs);
     return { enabled: true, slotId, intervalMs };

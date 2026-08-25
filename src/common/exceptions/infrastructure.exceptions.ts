@@ -66,19 +66,14 @@ export class ForeignKeyViolationException extends DatabaseException {
       cause?: Error;
     },
   ) {
-    super(
-      `Foreign key violation on table ${table}`,
-      undefined,
-      undefined,
-      {
-        ...options,
-        errorCode: ERROR_CODES.FOREIGN_KEY_VIOLATION,
-        statusCode: HttpStatus.BAD_REQUEST,
-        severity: ErrorSeverity.MEDIUM,
-        isOperational: true,
-        details: { table, constraint, foreignKey, ...options?.details },
-      },
-    );
+    super(`Foreign key violation on table ${table}`, undefined, undefined, {
+      ...options,
+      errorCode: ERROR_CODES.FOREIGN_KEY_VIOLATION,
+      statusCode: HttpStatus.BAD_REQUEST,
+      severity: ErrorSeverity.MEDIUM,
+      isOperational: true,
+      details: { table, constraint, foreignKey, ...options?.details },
+    });
   }
 }
 
@@ -149,18 +144,13 @@ export class ExternalServiceUnavailableException extends ExternalServiceExceptio
       cause?: Error;
     },
   ) {
-    super(
-      serviceName,
-      'Service unavailable',
-      HttpStatus.SERVICE_UNAVAILABLE,
-      {
-        ...options,
-        errorCode: ERROR_CODES.EXTERNAL_SERVICE_UNAVAILABLE,
-        retryable: true,
-        retryAfter: retryAfterSeconds,
-        details: { retryAfterSeconds, ...options?.details },
-      },
-    );
+    super(serviceName, 'Service unavailable', HttpStatus.SERVICE_UNAVAILABLE, {
+      ...options,
+      errorCode: ERROR_CODES.EXTERNAL_SERVICE_UNAVAILABLE,
+      retryable: true,
+      retryAfter: retryAfterSeconds,
+      details: { retryAfterSeconds, ...options?.details },
+    });
   }
 }
 
@@ -248,15 +238,11 @@ export class CacheUnavailableException extends CacheException {
       cause?: Error;
     },
   ) {
-    super(
-      `Cache service ${cacheService} is unavailable`,
-      undefined,
-      {
-        ...options,
-        retryable: true,
-        details: { cacheService, ...options?.details },
-      },
-    );
+    super(`Cache service ${cacheService} is unavailable`, undefined, {
+      ...options,
+      retryable: true,
+      details: { cacheService, ...options?.details },
+    });
   }
 }
 
@@ -268,18 +254,14 @@ export class CacheKeyNotFoundException extends CacheException {
       cause?: Error;
     },
   ) {
-    super(
-      `Cache key not found: ${cacheKey}`,
-      cacheKey,
-      {
-        ...options,
-        errorCode: ERROR_CODES.CACHE_KEY_NOT_FOUND,
-        statusCode: HttpStatus.NOT_FOUND,
-        severity: ErrorSeverity.LOW,
-        isOperational: true,
-        retryable: false,
-      },
-    );
+    super(`Cache key not found: ${cacheKey}`, cacheKey, {
+      ...options,
+      errorCode: ERROR_CODES.CACHE_KEY_NOT_FOUND,
+      statusCode: HttpStatus.NOT_FOUND,
+      severity: ErrorSeverity.LOW,
+      isOperational: true,
+      retryable: false,
+    });
   }
 }
 
@@ -400,17 +382,12 @@ export class BlockchainNetworkUnreachableException extends BlockchainException {
       cause?: Error;
     },
   ) {
-    super(
-      `Blockchain network ${network} is unreachable`,
-      network,
-      undefined,
-      {
-        ...options,
-        errorCode: ERROR_CODES.BLOCKCHAIN_NETWORK_UNREACHABLE,
-        retryable: true,
-        details: { endpoint, ...options?.details },
-      },
-    );
+    super(`Blockchain network ${network} is unreachable`, network, undefined, {
+      ...options,
+      errorCode: ERROR_CODES.BLOCKCHAIN_NETWORK_UNREACHABLE,
+      retryable: true,
+      details: { endpoint, ...options?.details },
+    });
   }
 }
 
@@ -458,7 +435,13 @@ export class BlockchainInsufficientFundsException extends BlockchainException {
         errorCode: ERROR_CODES.BLOCKCHAIN_INSUFFICIENT_FUNDS,
         statusCode: HttpStatus.PAYMENT_REQUIRED,
         retryable: false,
-        details: { address, requiredAmount, currentAmount, currency, ...options?.details },
+        details: {
+          address,
+          requiredAmount,
+          currentAmount,
+          currency,
+          ...options?.details,
+        },
       },
     );
   }

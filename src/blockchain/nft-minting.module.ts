@@ -7,11 +7,7 @@ import { NFTOwnership } from './entities/nft-ownership.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([NFTOwnership])],
-  providers: [
-    NFTMintingService,
-    StellarService,
-    SorobanContractService,
-  ],
+  providers: [NFTMintingService, StellarService, SorobanContractService],
   exports: [NFTMintingService],
 })
 export class NFTMintingModule {}

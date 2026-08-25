@@ -1,6 +1,14 @@
-import { MigrationInterface, QueryRunner, Table, Index, TableForeignKey } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  Index,
+  TableForeignKey,
+} from 'typeorm';
 
-export class CreateSkillRatingTables1738000000000 implements MigrationInterface {
+export class CreateSkillRatingTables1738000000000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create Seasons table
     await queryRunner.createTable(
@@ -188,7 +196,10 @@ export class CreateSkillRatingTables1738000000000 implements MigrationInterface 
           },
         ],
         indices: [
-          { name: 'IDX_player_ratings_user_season', columnNames: ['userId', 'seasonId'] },
+          {
+            name: 'IDX_player_ratings_user_season',
+            columnNames: ['userId', 'seasonId'],
+          },
           { name: 'IDX_player_ratings_rating', columnNames: ['rating'] },
           { name: 'IDX_player_ratings_tier', columnNames: ['tier'] },
           { name: 'IDX_player_ratings_seasonId', columnNames: ['seasonId'] },
@@ -275,7 +286,10 @@ export class CreateSkillRatingTables1738000000000 implements MigrationInterface 
           },
         ],
         indices: [
-          { name: 'IDX_rating_history_player_rating', columnNames: ['playerRatingId', 'createdAt'] },
+          {
+            name: 'IDX_rating_history_player_rating',
+            columnNames: ['playerRatingId', 'createdAt'],
+          },
           { name: 'IDX_rating_history_createdAt', columnNames: ['createdAt'] },
           { name: 'IDX_rating_history_reason', columnNames: ['reason'] },
           { name: 'IDX_rating_history_puzzleId', columnNames: ['puzzleId'] },

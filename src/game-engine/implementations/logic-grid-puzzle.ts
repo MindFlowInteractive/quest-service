@@ -1,10 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { BasePuzzle } from './base-puzzle';
 import type { IPuzzle } from '../interfaces/puzzle.interfaces';
-import {
-  PuzzleType,
-  PuzzleStatus,
-} from '../types/puzzle.types';
+import { PuzzleType, PuzzleStatus } from '../types/puzzle.types';
 import type {
   PuzzleMove,
   PuzzleHint,
@@ -294,7 +291,7 @@ export class LogicGridPuzzle extends BasePuzzle {
 
     // Check if all rules are satisfied
     return this.puzzleState.rules.every((rule) =>
-      rule.constraint(this.puzzleState!.grid),
+      rule.constraint(this.puzzleState.grid),
     );
   }
 
@@ -321,11 +318,12 @@ export class LogicGridPuzzle extends BasePuzzle {
     if (!solution || !solution.grid) {
       return false;
     }
-    
+
     // Check if all rules are satisfied using the same logic as completion check
-    return this.puzzleState?.rules.every((rule) =>
-      rule.constraint(solution.grid)
-    ) || false;
+    return (
+      this.puzzleState?.rules.every((rule) => rule.constraint(solution.grid)) ||
+      false
+    );
   }
 
   getSolution(): any {
@@ -335,7 +333,7 @@ export class LogicGridPuzzle extends BasePuzzle {
       if (this.canSolve(solutionGrid)) {
         return {
           grid: solutionGrid,
-          rules: this.puzzleState.rules
+          rules: this.puzzleState.rules,
         };
       }
     }
@@ -346,7 +344,7 @@ export class LogicGridPuzzle extends BasePuzzle {
     return {
       grid: this.puzzleState?.grid || null,
       rules: this.puzzleState?.rules || [],
-      completed: this.isComplete()
+      completed: this.isComplete(),
     };
   }
 
@@ -435,7 +433,9 @@ export class LogicGridPuzzle extends BasePuzzle {
         const nextMove = this.findBestNextMove();
         if (nextMove) {
           targetElements = [`cell-${nextMove.row}-${nextMove.col}`];
-          content = `Consider placing "${nextMove.value}" at row ${nextMove.row + 1}, column ${nextMove.col + 1}`;
+          content = `Consider placing "${nextMove.value}" at row ${
+            nextMove.row + 1
+          }, column ${nextMove.col + 1}`;
         }
         break;
 

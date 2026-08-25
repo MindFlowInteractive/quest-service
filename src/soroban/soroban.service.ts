@@ -9,7 +9,6 @@ import {
 } from '@stellar/stellar-sdk';
 import { ConfigService } from '@nestjs/config';
 
-
 @Injectable()
 export class SorobanService {
   private readonly logger = new Logger(SorobanService.name);
@@ -18,15 +17,21 @@ export class SorobanService {
   private sourceKeypair: Keypair;
 
   constructor(private configService: ConfigService) {
-    const rpcUrl = this.configService.get<string>('SOROBAN_RPC_URL') || 'https://soroban-testnet.stellar.org';
+    const rpcUrl =
+      this.configService.get<string>('SOROBAN_RPC_URL') ||
+      'https://soroban-testnet.stellar.org';
     this.server = new rpc.Server(rpcUrl);
-    this.networkPassphrase = this.configService.get<string>('STELLAR_NETWORK_PASSPHRASE') || Networks.TESTNET;
-    
+    this.networkPassphrase =
+      this.configService.get<string>('STELLAR_NETWORK_PASSPHRASE') ||
+      Networks.TESTNET;
+
     const secretKey = this.configService.get<string>('STELLAR_SECRET_KEY');
     if (secretKey) {
       this.sourceKeypair = Keypair.fromSecret(secretKey);
     } else {
-      this.logger.warn('STELLAR_SECRET_KEY not provided. SorobanService will be unable to sign transactions.');
+      this.logger.warn(
+        'STELLAR_SECRET_KEY not provided. SorobanService will be unable to sign transactions.',
+      );
     }
   }
 
@@ -36,7 +41,9 @@ export class SorobanService {
     params: xdr.ScVal[],
   ) {
     if (!this.sourceKeypair) {
-      throw new Error('Source keypair not initialized. Cannot invoke contract.');
+      throw new Error(
+        'Source keypair not initialized. Cannot invoke contract.',
+      );
     }
 
     try {
@@ -53,16 +60,22 @@ export class SorobanService {
         .setTimeout(30)
         .build();
 
-      const preparedTransaction = await this.server.prepareTransaction(transaction);
+      const preparedTransaction = await this.server.prepareTransaction(
+        transaction,
+      );
       preparedTransaction.sign(this.sourceKeypair);
 
       const response = await this.server.sendTransaction(preparedTransaction);
-      
+
       if (response.status === 'ERROR') {
-        throw new Error(`Transaction failed: ${JSON.stringify(response.errorResult)}`);
+        throw new Error(
+          `Transaction failed: ${JSON.stringify(response.errorResult)}`,
+        );
       }
 
-      this.logger.log(`Transaction sent: ${response.hash}. Waiting for confirmation...`);
+      this.logger.log(
+        `Transaction sent: ${response.hash}. Waiting for confirmation...`,
+      );
 
       // Wait for confirmation
       let status = await this.server.getTransaction(response.hash);
@@ -77,7 +90,9 @@ export class SorobanService {
 
       const isSuccess = status.status === 'SUCCESS';
       if (!isSuccess) {
-        this.logger.error(`Transaction ${response.hash} failed or timed out with status: ${status.status}`);
+        this.logger.error(
+          `Transaction ${response.hash} failed or timed out with status: ${status.status}`,
+        );
       } else {
         this.logger.log(`Transaction ${response.hash} confirmed successfully.`);
       }
@@ -88,7 +103,10 @@ export class SorobanService {
         result: status,
       };
     } catch (error) {
-      this.logger.error(`Error invoking contract ${contractId} method ${method}:`, error);
+      this.logger.error(
+        `Error invoking contract ${contractId} method ${method}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -107,7 +125,10 @@ export class SorobanService {
       const response = await this.server.getLedgerEntries(ledgerKey);
       return response.entries[0];
     } catch (error) {
-      this.logger.error(`Error fetching contract data for ${contractId}:`, error);
+      this.logger.error(
+        `Error fetching contract data for ${contractId}:`,
+        error,
+      );
       throw error;
     }
   }

@@ -30,24 +30,34 @@ const mockFlag: FeatureFlag = {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function makeRepos(overrides: {
-  experimentFind?: jest.Mock;
-  experimentFindOne?: jest.Mock;
-  conversionFind?: jest.Mock;
-  flagFindOne?: jest.Mock;
-  assignmentFindOne?: jest.Mock;
-} = {}) {
+function makeRepos(
+  overrides: {
+    experimentFind?: jest.Mock;
+    experimentFindOne?: jest.Mock;
+    conversionFind?: jest.Mock;
+    flagFindOne?: jest.Mock;
+    assignmentFindOne?: jest.Mock;
+  } = {},
+) {
   return {
     experimentRepo: {
-      find: overrides.experimentFind ?? jest.fn().mockResolvedValue([mockExperiment]),
-      findOne: overrides.experimentFindOne ?? jest.fn().mockResolvedValue(mockExperiment),
+      find:
+        overrides.experimentFind ??
+        jest.fn().mockResolvedValue([mockExperiment]),
+      findOne:
+        overrides.experimentFindOne ??
+        jest.fn().mockResolvedValue(mockExperiment),
       create: jest.fn().mockImplementation((dto) => ({ ...dto })),
-      save: jest.fn().mockImplementation((e) => Promise.resolve({ ...e, id: 'new-uuid' })),
+      save: jest
+        .fn()
+        .mockImplementation((e) => Promise.resolve({ ...e, id: 'new-uuid' })),
     },
     conversionRepo: {
       find: overrides.conversionFind ?? jest.fn().mockResolvedValue([]),
       create: jest.fn().mockImplementation((dto) => ({ ...dto })),
-      save: jest.fn().mockImplementation((c) => Promise.resolve({ ...c, id: 'conv-uuid' })),
+      save: jest
+        .fn()
+        .mockImplementation((c) => Promise.resolve({ ...c, id: 'conv-uuid' })),
     },
     flagRepo: {
       find: jest.fn().mockResolvedValue([mockFlag]),
@@ -70,10 +80,19 @@ async function buildService(overrides = {}): Promise<ExperimentsService> {
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       ExperimentsService,
-      { provide: getRepositoryToken(Experiment), useValue: repos.experimentRepo },
-      { provide: getRepositoryToken(ExperimentConversion), useValue: repos.conversionRepo },
+      {
+        provide: getRepositoryToken(Experiment),
+        useValue: repos.experimentRepo,
+      },
+      {
+        provide: getRepositoryToken(ExperimentConversion),
+        useValue: repos.conversionRepo,
+      },
       { provide: getRepositoryToken(FeatureFlag), useValue: repos.flagRepo },
-      { provide: getRepositoryToken(ExperimentAssignment), useValue: repos.assignmentRepo },
+      {
+        provide: getRepositoryToken(ExperimentAssignment),
+        useValue: repos.assignmentRepo,
+      },
     ],
   }).compile();
 
@@ -152,9 +171,24 @@ describe('ExperimentsService — result aggregation', () => {
 
   it('calculates conversion rate correctly', async () => {
     const conversions: Partial<ExperimentConversion>[] = [
-      { experiment_id: 'exp-uuid-1', user_id: 'u1', variant_name: 'control', event_type: 'done' },
-      { experiment_id: 'exp-uuid-1', user_id: 'u1', variant_name: 'control', event_type: 'done' },
-      { experiment_id: 'exp-uuid-1', user_id: 'u2', variant_name: 'variant_a', event_type: 'done' },
+      {
+        experiment_id: 'exp-uuid-1',
+        user_id: 'u1',
+        variant_name: 'control',
+        event_type: 'done',
+      },
+      {
+        experiment_id: 'exp-uuid-1',
+        user_id: 'u1',
+        variant_name: 'control',
+        event_type: 'done',
+      },
+      {
+        experiment_id: 'exp-uuid-1',
+        user_id: 'u2',
+        variant_name: 'variant_a',
+        event_type: 'done',
+      },
     ];
     const svc = await buildService({
       conversionFind: jest.fn().mockResolvedValue(conversions),

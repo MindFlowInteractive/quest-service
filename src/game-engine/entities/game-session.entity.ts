@@ -23,7 +23,6 @@ export class GameSession {
   @Index()
   sessionId: string;
 
-
   @Column({ type: 'uuid' })
   @Index()
   userId: string;

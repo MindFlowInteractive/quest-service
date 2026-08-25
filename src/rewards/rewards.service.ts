@@ -11,7 +11,8 @@ export class RewardsService {
     private sorobanService: SorobanService,
     private configService: ConfigService,
   ) {
-    this.rewardContractId = this.configService.get<string>('REWARD_CONTRACT_ID');
+    this.rewardContractId =
+      this.configService.get<string>('REWARD_CONTRACT_ID');
   }
 
   async distributeReward(userAddress: string, amount: number) {

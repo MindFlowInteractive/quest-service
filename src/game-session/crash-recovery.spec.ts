@@ -32,7 +32,7 @@ function makeSession(overrides: Partial<GameSession> = {}): GameSession {
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
-  } as GameSession;
+  };
 }
 
 function makeMockRepo(session?: GameSession) {
@@ -60,8 +60,14 @@ describe('Crash Recovery — GameSessionService', () => {
       providers: [
         GameSessionService,
         { provide: getRepositoryToken(GameSession), useValue: repo },
-        { provide: PlayerEventsService, useValue: { emitPlayerEvent: jest.fn() } },
-        { provide: PuzzleVersionService, useValue: { getCurrentVersionId: jest.fn() } },
+        {
+          provide: PlayerEventsService,
+          useValue: { emitPlayerEvent: jest.fn() },
+        },
+        {
+          provide: PuzzleVersionService,
+          useValue: { getCurrentVersionId: jest.fn() },
+        },
         { provide: CacheService, useValue: cache },
       ],
     }).compile();
@@ -87,7 +93,9 @@ describe('Crash Recovery — GameSessionService', () => {
 
     it('throws NotFoundException when session does not exist', async () => {
       repo.findOneBy.mockResolvedValueOnce(null);
-      await expect(service.suspend(SESSION_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.suspend(SESSION_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -111,7 +119,9 @@ describe('Crash Recovery — GameSessionService', () => {
     it('restores state from Redis snapshot', async () => {
       const result = await service.resumeById(SESSION_ID, USER_ID);
       expect(result.state).toEqual({ progressPercent: 40, currentLevel: 2 });
-      expect(cache.delete).toHaveBeenCalledWith(`session:suspended:${SESSION_ID}`);
+      expect(cache.delete).toHaveBeenCalledWith(
+        `session:suspended:${SESSION_ID}`,
+      );
     });
 
     it('falls back to DB state when Redis snapshot is missing', async () => {
@@ -129,41 +139,61 @@ describe('Crash Recovery — GameSessionService', () => {
 
     it('throws ForbiddenException when grace window has expired', async () => {
       const expiredAt = new Date(Date.now() - (GRACE_SECS + 60) * 1000);
-      const expired = makeSession({ status: 'SUSPENDED', suspendedAt: expiredAt });
+      const expired = makeSession({
+        status: 'SUSPENDED',
+        suspendedAt: expiredAt,
+      });
       repo.findOneBy.mockResolvedValueOnce(expired);
 
-      await expect(service.resumeById(SESSION_ID, USER_ID)).rejects.toThrow(ForbiddenException);
+      await expect(service.resumeById(SESSION_ID, USER_ID)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('throws ForbiddenException when session belongs to a different user', async () => {
-      const otherUser = makeSession({ status: 'SUSPENDED', suspendedAt: new Date(), userId: 'other-user' });
+      const otherUser = makeSession({
+        status: 'SUSPENDED',
+        suspendedAt: new Date(),
+        userId: 'other-user',
+      });
       repo.findOneBy.mockResolvedValueOnce(otherUser);
 
-      await expect(service.resumeById(SESSION_ID, USER_ID)).rejects.toThrow(ForbiddenException);
+      await expect(service.resumeById(SESSION_ID, USER_ID)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('throws ForbiddenException when session is not suspended', async () => {
       const active = makeSession({ status: 'IN_PROGRESS' });
       repo.findOneBy.mockResolvedValueOnce(active);
 
-      await expect(service.resumeById(SESSION_ID, USER_ID)).rejects.toThrow(ForbiddenException);
+      await expect(service.resumeById(SESSION_ID, USER_ID)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('throws NotFoundException when session does not exist', async () => {
       repo.findOneBy.mockResolvedValueOnce(null);
-      await expect(service.resumeById(SESSION_ID, USER_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.resumeById(SESSION_ID, USER_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('getSuspendedSessions()', () => {
     it('returns all SUSPENDED sessions for the user', async () => {
-      const suspended = makeSession({ status: 'SUSPENDED', suspendedAt: new Date() });
+      const suspended = makeSession({
+        status: 'SUSPENDED',
+        suspendedAt: new Date(),
+      });
       repo.find.mockResolvedValueOnce([suspended]);
 
       const result = await service.getSuspendedSessions(USER_ID);
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe('SUSPENDED');
-      expect(repo.find).toHaveBeenCalledWith({ where: { userId: USER_ID, status: 'SUSPENDED' } });
+      expect(repo.find).toHaveBeenCalledWith({
+        where: { userId: USER_ID, status: 'SUSPENDED' },
+      });
     });
 
     it('returns empty array when no suspended sessions exist', async () => {
@@ -182,14 +212,21 @@ describe('Crash Recovery — CrashRecoveryJob', () => {
   let cache: { get: jest.Mock; set: jest.Mock; delete: jest.Mock };
 
   beforeEach(async () => {
-    notificationService = { emitPushEvent: jest.fn().mockResolvedValue(undefined) };
-    playerEventsService = { emitPlayerEvent: jest.fn().mockResolvedValue(undefined) };
+    notificationService = {
+      emitPushEvent: jest.fn().mockResolvedValue(undefined),
+    };
+    playerEventsService = {
+      emitPlayerEvent: jest.fn().mockResolvedValue(undefined),
+    };
     cache = { get: jest.fn(), set: jest.fn(), delete: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CrashRecoveryJob,
-        { provide: getRepositoryToken(GameSession), useValue: repo = makeMockRepo() },
+        {
+          provide: getRepositoryToken(GameSession),
+          useValue: (repo = makeMockRepo()),
+        },
         { provide: NotificationService, useValue: notificationService },
         { provide: PlayerEventsService, useValue: playerEventsService },
         { provide: CacheService, useValue: cache },
@@ -208,7 +245,10 @@ describe('Crash Recovery — CrashRecoveryJob', () => {
 
   it('marks expired sessions as ABANDONED', async () => {
     const expiredAt = new Date(Date.now() - (GRACE_SECS + 120) * 1000);
-    const session = makeSession({ status: 'SUSPENDED', suspendedAt: expiredAt });
+    const session = makeSession({
+      status: 'SUSPENDED',
+      suspendedAt: expiredAt,
+    });
     repo.find.mockResolvedValueOnce([session]);
 
     await job.expireSuspendedSessions();
@@ -245,7 +285,10 @@ describe('Crash Recovery — CrashRecoveryJob', () => {
 
   it('sends a push notification to the player', async () => {
     const expiredAt = new Date(Date.now() - (GRACE_SECS + 120) * 1000);
-    const session = makeSession({ status: 'SUSPENDED', suspendedAt: expiredAt });
+    const session = makeSession({
+      status: 'SUSPENDED',
+      suspendedAt: expiredAt,
+    });
     repo.find.mockResolvedValueOnce([session]);
 
     await job.expireSuspendedSessions();
@@ -261,18 +304,31 @@ describe('Crash Recovery — CrashRecoveryJob', () => {
 
   it('cleans up the Redis snapshot after expiry', async () => {
     const expiredAt = new Date(Date.now() - (GRACE_SECS + 120) * 1000);
-    const session = makeSession({ status: 'SUSPENDED', suspendedAt: expiredAt });
+    const session = makeSession({
+      status: 'SUSPENDED',
+      suspendedAt: expiredAt,
+    });
     repo.find.mockResolvedValueOnce([session]);
 
     await job.expireSuspendedSessions();
 
-    expect(cache.delete).toHaveBeenCalledWith(`session:suspended:${SESSION_ID}`);
+    expect(cache.delete).toHaveBeenCalledWith(
+      `session:suspended:${SESSION_ID}`,
+    );
   });
 
   it('continues processing other sessions if one throws', async () => {
     const expiredAt = new Date(Date.now() - (GRACE_SECS + 120) * 1000);
-    const s1 = makeSession({ id: 'session-1', status: 'SUSPENDED', suspendedAt: expiredAt });
-    const s2 = makeSession({ id: 'session-2', status: 'SUSPENDED', suspendedAt: expiredAt });
+    const s1 = makeSession({
+      id: 'session-1',
+      status: 'SUSPENDED',
+      suspendedAt: expiredAt,
+    });
+    const s2 = makeSession({
+      id: 'session-2',
+      status: 'SUSPENDED',
+      suspendedAt: expiredAt,
+    });
     repo.find.mockResolvedValueOnce([s1, s2]);
 
     // First save throws, second should still proceed

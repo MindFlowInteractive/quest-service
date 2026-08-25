@@ -17,4 +17,4 @@ import { AchievementsModule } from '../achievements/achievements.module';
   providers: [LeaderboardService],
   exports: [LeaderboardService],
 })
-export class LeaderboardModule { }
+export class LeaderboardModule {}

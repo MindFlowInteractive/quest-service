@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+} from 'typeorm';
 import { Content } from './content.entity';
 import { User } from '../users/entities/user.entity';
 
@@ -16,7 +22,11 @@ export class Report {
   @Column({ type: 'text' })
   reason: string;
 
-  @Column({ type: 'enum', enum: ['open', 'reviewing', 'resolved', 'dismissed'], default: 'open' })
+  @Column({
+    type: 'enum',
+    enum: ['open', 'reviewing', 'resolved', 'dismissed'],
+    default: 'open',
+  })
   status: 'open' | 'reviewing' | 'resolved' | 'dismissed';
 
   @CreateDateColumn()

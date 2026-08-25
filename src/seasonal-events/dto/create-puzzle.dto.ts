@@ -1,4 +1,14 @@
-import { IsString, IsNotEmpty, IsInt, IsBoolean, IsOptional, IsObject, IsArray, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  IsBoolean,
+  IsOptional,
+  IsObject,
+  IsArray,
+  Min,
+  Max,
+} from 'class-validator';
 
 export class CreatePuzzleDto {
   @IsString()

@@ -11,7 +11,10 @@ import { SaveGameBackup } from '../src/save-game/entities/save-game-backup.entit
 import { SaveGameAnalytics } from '../src/save-game/entities/save-game-analytics.entity';
 import { User } from '../src/users/entities/user.entity';
 import { Role } from '../src/auth/entities/role.entity';
-import { SaveType, SyncStatus } from '../src/save-game/interfaces/save-game.interfaces';
+import {
+  SaveType,
+  SyncStatus,
+} from '../src/save-game/interfaces/save-game.interfaces';
 
 describe('SaveGame System (e2e)', () => {
   let app: INestApplication;

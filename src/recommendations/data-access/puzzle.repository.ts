@@ -33,29 +33,35 @@ export class PuzzleRepository {
       .andWhere('puzzle.publishedAt IS NOT NULL');
 
     if (filters.category) {
-      query = query.andWhere('puzzle.category = :category', { category: filters.category });
+      query = query.andWhere('puzzle.category = :category', {
+        category: filters.category,
+      });
     }
 
     if (filters.difficulty) {
-      query = query.andWhere('puzzle.difficulty = :difficulty', { difficulty: filters.difficulty });
+      query = query.andWhere('puzzle.difficulty = :difficulty', {
+        difficulty: filters.difficulty,
+      });
     }
 
     if (filters.excludeIds && filters.excludeIds.length > 0) {
-      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', { 
-        excludeIds: filters.excludeIds 
+      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', {
+        excludeIds: filters.excludeIds,
       });
     }
 
     if (filters.minRating) {
-      query = query.andWhere('puzzle.averageRating >= :minRating', { 
-        minRating: filters.minRating 
+      query = query.andWhere('puzzle.averageRating >= :minRating', {
+        minRating: filters.minRating,
       });
     }
 
     if (filters.maxAge) {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - filters.maxAge);
-      query = query.andWhere('puzzle.publishedAt >= :cutoffDate', { cutoffDate });
+      query = query.andWhere('puzzle.publishedAt >= :cutoffDate', {
+        cutoffDate,
+      });
     }
 
     const puzzles = await query
@@ -77,16 +83,20 @@ export class PuzzleRepository {
       .andWhere('puzzle.publishedAt IS NOT NULL');
 
     if (filters.category) {
-      query = query.andWhere('puzzle.category = :category', { category: filters.category });
+      query = query.andWhere('puzzle.category = :category', {
+        category: filters.category,
+      });
     }
 
     if (filters.difficulty) {
-      query = query.andWhere('puzzle.difficulty = :difficulty', { difficulty: filters.difficulty });
+      query = query.andWhere('puzzle.difficulty = :difficulty', {
+        difficulty: filters.difficulty,
+      });
     }
 
     if (filters.excludeIds && filters.excludeIds.length > 0) {
-      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', { 
-        excludeIds: filters.excludeIds 
+      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', {
+        excludeIds: filters.excludeIds,
       });
     }
 
@@ -120,7 +130,9 @@ export class PuzzleRepository {
       .andWhere('puzzle.id != :targetId', { targetId: targetPuzzle.id });
 
     if (excludeIds.length > 0) {
-      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', { excludeIds });
+      query = query.andWhere('puzzle.id NOT IN (:...excludeIds)', {
+        excludeIds,
+      });
     }
 
     // Find puzzles with similar characteristics
@@ -130,7 +142,7 @@ export class PuzzleRepository {
         category: targetPuzzle.category,
         difficulty: targetPuzzle.difficulty,
         tags: targetPuzzle.tags,
-      }
+      },
     );
 
     const puzzles = await query
@@ -141,11 +153,16 @@ export class PuzzleRepository {
     return this.enrichWithMetrics(puzzles);
   }
 
-  async getCategoryStats(): Promise<Record<string, {
-    count: number;
-    avgRating: number;
-    avgCompletions: number;
-  }>> {
+  async getCategoryStats(): Promise<
+    Record<
+      string,
+      {
+        count: number;
+        avgRating: number;
+        avgCompletions: number;
+      }
+    >
+  > {
     const stats = await this.repository
       .createQueryBuilder('puzzle')
       .select('puzzle.category', 'category')
@@ -157,7 +174,7 @@ export class PuzzleRepository {
       .getRawMany();
 
     const result: Record<string, any> = {};
-    stats.forEach(stat => {
+    stats.forEach((stat) => {
       result[stat.category] = {
         count: parseInt(stat.count),
         avgRating: parseFloat(stat.avgRating) || 0,
@@ -178,14 +195,17 @@ export class PuzzleRepository {
       .getRawMany();
 
     const result: Record<string, number> = {};
-    distribution.forEach(item => {
+    distribution.forEach((item) => {
       result[item.difficulty] = parseInt(item.count);
     });
 
     return result;
   }
 
-  async getRecentPuzzles(days: number = 7, limit: number = 20): Promise<PuzzleWithMetrics[]> {
+  async getRecentPuzzles(
+    days: number = 7,
+    limit: number = 20,
+  ): Promise<PuzzleWithMetrics[]> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
@@ -202,11 +222,14 @@ export class PuzzleRepository {
 
   private enrichWithMetrics(puzzles: Puzzle[]): PuzzleWithMetrics[] {
     const now = new Date();
-    
-    return puzzles.map(puzzle => {
+
+    return puzzles.map((puzzle) => {
       const publishedAt = puzzle.publishedAt || puzzle.createdAt;
-      const ageInDays = Math.floor((now.getTime() - publishedAt.getTime()) / (1000 * 60 * 60 * 24));
-      const completionRate = puzzle.attempts > 0 ? puzzle.completions / puzzle.attempts : 0;
+      const ageInDays = Math.floor(
+        (now.getTime() - publishedAt.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      const completionRate =
+        puzzle.attempts > 0 ? puzzle.completions / puzzle.attempts : 0;
 
       return {
         ...puzzle,

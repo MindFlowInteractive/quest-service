@@ -61,7 +61,9 @@ export class PuzzleSessionService {
   }
 
   async get(sessionId: string) {
-    const session = await this.sessionRepository.findOne({ where: { id: sessionId } });
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+    });
     if (!session) throw new NotFoundException('Puzzle session not found');
     return session;
   }
@@ -71,7 +73,11 @@ export class PuzzleSessionService {
     if (state) return state;
 
     const session = await this.get(sessionId);
-    return this.stateService.create(session.id, session.puzzleId, session.status);
+    return this.stateService.create(
+      session.id,
+      session.puzzleId,
+      session.status,
+    );
   }
 
   async join(sessionId: string, userId: string) {
@@ -95,10 +101,10 @@ export class PuzzleSessionService {
 
     const player = await this.playerService.join(sessionId, userId);
 
-    let state = await this.stateService.mutate(
+    const state = await this.stateService.mutate(
       sessionId,
       undefined,
-      current => {
+      (current) => {
         current.players[userId] = {
           userId,
           status: player.status,
@@ -116,7 +122,11 @@ export class PuzzleSessionService {
       session.status = PuzzleSessionStatus.ACTIVE;
       session.startedAt = new Date();
       await this.sessionRepository.save(session);
-      await this.persistence.recordEvent(sessionId, PuzzleSessionEventType.SESSION_STARTED, userId);
+      await this.persistence.recordEvent(
+        sessionId,
+        PuzzleSessionEventType.SESSION_STARTED,
+        userId,
+      );
     }
 
     await this.persistence.recordEvent(
@@ -131,12 +141,16 @@ export class PuzzleSessionService {
   async leave(sessionId: string, userId: string) {
     await this.playerService.leave(sessionId, userId);
 
-    const state = await this.stateService.mutate(sessionId, undefined, current => {
-      if (current.players[userId]) {
-        current.players[userId].status = 'LEFT' as any;
-        current.players[userId].connected = false;
-      }
-    });
+    const state = await this.stateService.mutate(
+      sessionId,
+      undefined,
+      (current) => {
+        if (current.players[userId]) {
+          current.players[userId].status = 'LEFT' as any;
+          current.players[userId].connected = false;
+        }
+      },
+    );
 
     await this.persistence.recordEvent(
       sessionId,
@@ -149,12 +163,16 @@ export class PuzzleSessionService {
 
   async disconnect(sessionId: string, userId: string) {
     await this.playerService.disconnect(sessionId, userId);
-    const state = await this.stateService.mutate(sessionId, undefined, current => {
-      if (current.players[userId]) {
-        current.players[userId].status = 'DISCONNECTED' as any;
-        current.players[userId].connected = false;
-      }
-    });
+    const state = await this.stateService.mutate(
+      sessionId,
+      undefined,
+      (current) => {
+        if (current.players[userId]) {
+          current.players[userId].status = 'DISCONNECTED' as any;
+          current.players[userId].connected = false;
+        }
+      },
+    );
     await this.persistence.recordEvent(
       sessionId,
       PuzzleSessionEventType.PLAYER_DISCONNECTED,
@@ -165,15 +183,19 @@ export class PuzzleSessionService {
 
   async reconnect(sessionId: string, userId: string) {
     const player = await this.playerService.reconnect(sessionId, userId);
-    const state = await this.stateService.mutate(sessionId, undefined, current => {
-      current.players[userId] = {
-        userId,
-        status: player.status,
-        connected: true,
-        score: player.score,
-        progress: player.progress,
-      };
-    });
+    const state = await this.stateService.mutate(
+      sessionId,
+      undefined,
+      (current) => {
+        current.players[userId] = {
+          userId,
+          status: player.status,
+          connected: true,
+          score: player.score,
+          progress: player.progress,
+        };
+      },
+    );
     await this.persistence.recordEvent(
       sessionId,
       PuzzleSessionEventType.PLAYER_RECONNECTED,
@@ -183,17 +205,23 @@ export class PuzzleSessionService {
   }
 
   async updatePartialSolution(dto: UpdatePartialSolutionDto, userId: string) {
-    const state = await this.assertActive(dto.sessionId, userId, dto.clientVersion);
+    const state = await this.assertActive(
+      dto.sessionId,
+      userId,
+      dto.clientVersion,
+    );
 
     const updated = await this.stateService.mutate(
       dto.sessionId,
       state.version,
-      current => {
+      (current) => {
         current.partialSolutions[userId] = {
           userId,
           content: dto.content,
           ...(dto.stepId ? { stepId: dto.stepId } : {}),
-          ...(dto.confidence !== undefined ? { confidence: dto.confidence } : {}),
+          ...(dto.confidence !== undefined
+            ? { confidence: dto.confidence }
+            : {}),
           updatedAt: new Date().toISOString(),
         };
       },
@@ -210,7 +238,11 @@ export class PuzzleSessionService {
   }
 
   async submitSolution(dto: SubmitSolutionDto, userId: string) {
-    const state = await this.assertActive(dto.sessionId, userId, dto.clientVersion);
+    const state = await this.assertActive(
+      dto.sessionId,
+      userId,
+      dto.clientVersion,
+    );
 
     // Replace this deterministic placeholder with the repository's puzzle validation service.
     const correct = dto.content.trim().length > 0;
@@ -229,8 +261,12 @@ export class PuzzleSessionService {
     const updated = await this.stateService.mutate(
       dto.sessionId,
       state.version,
-      current => {
-        if (dto.stepId && correct && !current.sharedProgress.solvedSteps.includes(dto.stepId)) {
+      (current) => {
+        if (
+          dto.stepId &&
+          correct &&
+          !current.sharedProgress.solvedSteps.includes(dto.stepId)
+        ) {
           current.sharedProgress.solvedSteps.push(dto.stepId);
         }
         current.players[userId].score += correct ? 1 : 0;
@@ -254,9 +290,13 @@ export class PuzzleSessionService {
   async complete(sessionId: string, userId: string) {
     await this.get(sessionId);
 
-    const state = await this.stateService.mutate(sessionId, undefined, current => {
-      current.status = PuzzleSessionStatus.COMPLETED;
-    });
+    const state = await this.stateService.mutate(
+      sessionId,
+      undefined,
+      (current) => {
+        current.status = PuzzleSessionStatus.COMPLETED;
+      },
+    );
 
     const session = await this.get(sessionId);
     session.status = PuzzleSessionStatus.COMPLETED;
@@ -287,9 +327,13 @@ export class PuzzleSessionService {
     session.status = PuzzleSessionStatus.EXPIRED;
     await this.sessionRepository.save(session);
 
-    const state = await this.stateService.mutate(sessionId, undefined, current => {
-      current.status = PuzzleSessionStatus.EXPIRED;
-    });
+    const state = await this.stateService.mutate(
+      sessionId,
+      undefined,
+      (current) => {
+        current.status = PuzzleSessionStatus.EXPIRED;
+      },
+    );
 
     await this.persistence.recordEvent(
       sessionId,

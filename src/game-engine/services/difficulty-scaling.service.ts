@@ -1,153 +1,218 @@
-import { Inject, Injectable, Logger } from "@nestjs/common"
-import type { ConfigType } from "@nestjs/config"
-import type { IDifficultyScaler, PlayerMetrics, PerformanceMetrics } from "../interfaces/puzzle.interfaces"
-import { PuzzleType } from "../types/puzzle.types"
-import type { DifficultyLevel } from "../types/puzzle.types"
-import { gameEngineConfig } from "../config/game-engine.config"
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { ConfigType } from '@nestjs/config';
+import type {
+  IDifficultyScaler,
+  PlayerMetrics,
+  PerformanceMetrics,
+} from '../interfaces/puzzle.interfaces';
+import { PuzzleType } from '../types/puzzle.types';
+import type { DifficultyLevel } from '../types/puzzle.types';
+import { gameEngineConfig } from '../config/game-engine.config';
 
 @Injectable()
 export class DifficultyScalingService implements IDifficultyScaler {
-  private readonly logger = new Logger(DifficultyScalingService.name)
+  private readonly logger = new Logger(DifficultyScalingService.name);
 
   constructor(
     @Inject(gameEngineConfig.KEY)
     private readonly config: ConfigType<typeof gameEngineConfig>,
-  ) { }
+  ) {}
 
-  calculateDifficulty(playerMetrics: PlayerMetrics, puzzleType: PuzzleType): DifficultyLevel {
+  calculateDifficulty(
+    playerMetrics: PlayerMetrics,
+    puzzleType: PuzzleType,
+  ): DifficultyLevel {
     try {
       if (!this.config.difficulty.adaptiveScaling) {
-        return playerMetrics.preferredDifficulty
+        return playerMetrics.preferredDifficulty;
       }
 
       // Get player's skill level for this puzzle type
-      const skillLevel = playerMetrics.skillLevels[puzzleType] || 1
-      const recentPerformance = this.getRecentPerformance(playerMetrics, puzzleType)
+      const skillLevel = playerMetrics.skillLevels[puzzleType] || 1;
+      const recentPerformance = this.getRecentPerformance(
+        playerMetrics,
+        puzzleType,
+      );
 
       // Calculate base difficulty from skill level
-      let targetDifficulty = Math.min(Math.max(Math.round(skillLevel), 1), 10)
+      let targetDifficulty = Math.min(Math.max(Math.round(skillLevel), 1), 10);
 
       // Adjust based on recent performance
       if (recentPerformance.length > 0) {
-        const avgSuccessRate = this.calculateAverageSuccessRate(recentPerformance)
-        const avgCompletionTime = this.calculateAverageCompletionTime(recentPerformance)
+        const avgSuccessRate =
+          this.calculateAverageSuccessRate(recentPerformance);
+        const avgCompletionTime =
+          this.calculateAverageCompletionTime(recentPerformance);
 
         // Increase difficulty if player is performing well
-        if (avgSuccessRate > 0.8 && avgCompletionTime < this.getExpectedTime(targetDifficulty)) {
-          targetDifficulty = Math.min(targetDifficulty + 1, this.config.difficulty.difficultyRange.max)
+        if (
+          avgSuccessRate > 0.8 &&
+          avgCompletionTime < this.getExpectedTime(targetDifficulty)
+        ) {
+          targetDifficulty = Math.min(
+            targetDifficulty + 1,
+            this.config.difficulty.difficultyRange.max,
+          );
         }
         // Decrease difficulty if player is struggling
         else if (avgSuccessRate < 0.4) {
-          targetDifficulty = Math.max(targetDifficulty - 1, this.config.difficulty.difficultyRange.min)
+          targetDifficulty = Math.max(
+            targetDifficulty - 1,
+            this.config.difficulty.difficultyRange.min,
+          );
         }
       }
 
       // Consider current streak
       if (playerMetrics.currentStreak > 5) {
-        targetDifficulty = Math.min(targetDifficulty + 1, this.config.difficulty.difficultyRange.max)
+        targetDifficulty = Math.min(
+          targetDifficulty + 1,
+          this.config.difficulty.difficultyRange.max,
+        );
       } else if (playerMetrics.currentStreak < -3) {
-        targetDifficulty = Math.max(targetDifficulty - 1, this.config.difficulty.difficultyRange.min)
+        targetDifficulty = Math.max(
+          targetDifficulty - 1,
+          this.config.difficulty.difficultyRange.min,
+        );
       }
 
-      this.logger.debug(`Calculated difficulty ${targetDifficulty} for player`, {
-        playerId: playerMetrics.playerId,
-        puzzleType,
-        skillLevel,
-        recentPerformanceCount: recentPerformance.length,
-        currentStreak: playerMetrics.currentStreak,
-      })
+      this.logger.debug(
+        `Calculated difficulty ${targetDifficulty} for player`,
+        {
+          playerId: playerMetrics.playerId,
+          puzzleType,
+          skillLevel,
+          recentPerformanceCount: recentPerformance.length,
+          currentStreak: playerMetrics.currentStreak,
+        },
+      );
 
       return Math.max(
         this.config.difficulty.difficultyRange.min,
         Math.min(targetDifficulty, this.config.difficulty.difficultyRange.max),
-      ) as DifficultyLevel
+      );
     } catch (error) {
-      this.logger.error("Error calculating difficulty:", error)
-      return playerMetrics.preferredDifficulty
+      this.logger.error('Error calculating difficulty:', error);
+      return playerMetrics.preferredDifficulty;
     }
   }
 
-  adjustDifficulty(currentDifficulty: DifficultyLevel, performance: PerformanceMetrics): DifficultyLevel {
+  adjustDifficulty(
+    currentDifficulty: DifficultyLevel,
+    performance: PerformanceMetrics,
+  ): DifficultyLevel {
     try {
-      let adjustment = 0
+      let adjustment = 0;
 
       // Adjust based on completion
       if (performance.completed) {
         // Fast completion suggests difficulty is too low
-        const expectedTime = this.getExpectedTime(currentDifficulty)
+        const expectedTime = this.getExpectedTime(currentDifficulty);
         if (performance.timeSpent < expectedTime * 0.5) {
-          adjustment += 1
+          adjustment += 1;
         }
         // Efficient solution (few moves, no hints)
-        if (performance.hintsUsed === 0 && performance.movesUsed <= this.getExpectedMoves(currentDifficulty)) {
-          adjustment += 0.5
+        if (
+          performance.hintsUsed === 0 &&
+          performance.movesUsed <= this.getExpectedMoves(currentDifficulty)
+        ) {
+          adjustment += 0.5;
         }
       } else {
         // Failed to complete - reduce difficulty
-        adjustment -= 1
+        adjustment -= 1;
 
         // Significant struggle indicators
         if (performance.hintsUsed > 2) {
-          adjustment -= 0.5
+          adjustment -= 0.5;
         }
-        if (performance.timeSpent > this.getExpectedTime(currentDifficulty) * 1.5) {
-          adjustment -= 0.5
+        if (
+          performance.timeSpent >
+          this.getExpectedTime(currentDifficulty) * 1.5
+        ) {
+          adjustment -= 0.5;
         }
       }
 
       const newDifficulty = Math.max(
         this.config.difficulty.difficultyRange.min,
-        Math.min(currentDifficulty + adjustment, this.config.difficulty.difficultyRange.max),
-      )
+        Math.min(
+          currentDifficulty + adjustment,
+          this.config.difficulty.difficultyRange.max,
+        ),
+      );
 
-      this.logger.debug(`Adjusted difficulty from ${currentDifficulty} to ${newDifficulty}`, {
-        completed: performance.completed,
-        timeSpent: performance.timeSpent,
-        hintsUsed: performance.hintsUsed,
-        adjustment,
-      })
+      this.logger.debug(
+        `Adjusted difficulty from ${currentDifficulty} to ${newDifficulty}`,
+        {
+          completed: performance.completed,
+          timeSpent: performance.timeSpent,
+          hintsUsed: performance.hintsUsed,
+          adjustment,
+        },
+      );
 
-      return Math.round(newDifficulty) as DifficultyLevel
+      return Math.round(newDifficulty);
     } catch (error) {
-      this.logger.error("Error adjusting difficulty:", error)
-      return currentDifficulty
+      this.logger.error('Error adjusting difficulty:', error);
+      return currentDifficulty;
     }
   }
 
-  getPuzzleParameters(difficulty: DifficultyLevel, puzzleType: PuzzleType): any {
-    const baseParams = this.getBasePuzzleParameters(puzzleType)
+  getPuzzleParameters(
+    difficulty: DifficultyLevel,
+    puzzleType: PuzzleType,
+  ): any {
+    const baseParams = this.getBasePuzzleParameters(puzzleType);
 
     // Scale parameters based on difficulty
-    const difficultyMultiplier = difficulty / 5 // Normalize to 0.2-2.0 range
+    const difficultyMultiplier = difficulty / 5; // Normalize to 0.2-2.0 range
 
     return {
       ...baseParams,
       complexity: Math.round(baseParams.complexity * difficultyMultiplier),
       timeLimit: Math.round(baseParams.timeLimit / difficultyMultiplier),
-      maxMoves: Math.round(baseParams.maxMoves * (1 + difficultyMultiplier * 0.5)),
-      hintsAvailable: Math.max(1, Math.round(baseParams.hintsAvailable / difficultyMultiplier)),
+      maxMoves: Math.round(
+        baseParams.maxMoves * (1 + difficultyMultiplier * 0.5),
+      ),
+      hintsAvailable: Math.max(
+        1,
+        Math.round(baseParams.hintsAvailable / difficultyMultiplier),
+      ),
       constraints: this.scaleConstraints(baseParams.constraints, difficulty),
-    }
+    };
   }
 
-  private getRecentPerformance(playerMetrics: PlayerMetrics, puzzleType: PuzzleType): PerformanceMetrics[] {
-    const windowSize = this.config.difficulty.performanceWindow
-    return playerMetrics.recentPerformance.filter((p) => p.puzzleType === puzzleType).slice(-windowSize)
+  private getRecentPerformance(
+    playerMetrics: PlayerMetrics,
+    puzzleType: PuzzleType,
+  ): PerformanceMetrics[] {
+    const windowSize = this.config.difficulty.performanceWindow;
+    return playerMetrics.recentPerformance
+      .filter((p) => p.puzzleType === puzzleType)
+      .slice(-windowSize);
   }
 
-  private calculateAverageSuccessRate(performances: PerformanceMetrics[]): number {
-    if (performances.length === 0) return 0.5
+  private calculateAverageSuccessRate(
+    performances: PerformanceMetrics[],
+  ): number {
+    if (performances.length === 0) return 0.5;
 
-    const completedCount = performances.filter((p) => p.completed).length
-    return completedCount / performances.length
+    const completedCount = performances.filter((p) => p.completed).length;
+    return completedCount / performances.length;
   }
 
-  private calculateAverageCompletionTime(performances: PerformanceMetrics[]): number {
-    const completedPerformances = performances.filter((p) => p.completed)
-    if (completedPerformances.length === 0) return 0
+  private calculateAverageCompletionTime(
+    performances: PerformanceMetrics[],
+  ): number {
+    const completedPerformances = performances.filter((p) => p.completed);
+    if (completedPerformances.length === 0) return 0;
 
-    const totalTime = completedPerformances.reduce((sum, p) => sum + p.timeSpent, 0)
-    return totalTime / completedPerformances.length
+    const totalTime = completedPerformances.reduce(
+      (sum, p) => sum + p.timeSpent,
+      0,
+    );
+    return totalTime / completedPerformances.length;
   }
 
   private getExpectedTime(difficulty: DifficultyLevel): number {
@@ -161,9 +226,9 @@ export class DifficultyScalingService implements IDifficultyScaler {
       6: 600000, // 10 minutes
       7: 900000, // 15 minutes
       8: 1200000, // 20 minutes
-    }
+    };
 
-    return baseTimes[difficulty as keyof typeof baseTimes] || 300000
+    return baseTimes[difficulty] || 300000;
   }
 
   private getExpectedMoves(difficulty: DifficultyLevel): number {
@@ -177,9 +242,9 @@ export class DifficultyScalingService implements IDifficultyScaler {
       6: 35,
       7: 50,
       8: 70,
-    }
+    };
 
-    return baseMoves[difficulty as keyof typeof baseMoves] || 20
+    return baseMoves[difficulty] || 20;
   }
 
   private getBasePuzzleParameters(puzzleType: PuzzleType): any {
@@ -224,7 +289,7 @@ export class DifficultyScalingService implements IDifficultyScaler {
         timeLimit: 240000,
         maxMoves: 16,
         hintsAvailable: 3,
-        constraints: { wordLength: 6, vocabulary: "medium" },
+        constraints: { wordLength: 6, vocabulary: 'medium' },
       },
       [PuzzleType.CUSTOM]: {
         complexity: 5,
@@ -233,22 +298,25 @@ export class DifficultyScalingService implements IDifficultyScaler {
         hintsAvailable: 3,
         constraints: {},
       },
-    }
+    };
 
-    return parameterMap[puzzleType] || parameterMap[PuzzleType.CUSTOM]
+    return parameterMap[puzzleType] || parameterMap[PuzzleType.CUSTOM];
   }
 
-  private scaleConstraints(baseConstraints: any, difficulty: DifficultyLevel): any {
-    const scaledConstraints = { ...baseConstraints }
+  private scaleConstraints(
+    baseConstraints: any,
+    difficulty: DifficultyLevel,
+  ): any {
+    const scaledConstraints = { ...baseConstraints };
 
     // Scale numeric constraints
     for (const [key, value] of Object.entries(scaledConstraints)) {
-      if (typeof value === "number") {
-        const scaleFactor = 0.5 + difficulty / 10 // 0.6 to 1.3 range
-        scaledConstraints[key] = Math.round(value * scaleFactor)
+      if (typeof value === 'number') {
+        const scaleFactor = 0.5 + difficulty / 10; // 0.6 to 1.3 range
+        scaledConstraints[key] = Math.round(value * scaleFactor);
       }
     }
 
-    return scaledConstraints
+    return scaledConstraints;
   }
 }

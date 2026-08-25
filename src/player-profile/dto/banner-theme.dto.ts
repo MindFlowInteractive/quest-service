@@ -10,7 +10,7 @@ export enum BannerTheme {
   DARK = 'dark',
   LIGHT = 'light',
   GRADIENT = 'gradient',
-  CUSTOM = 'custom'
+  CUSTOM = 'custom',
 }
 
 export class UpdateBannerDto {

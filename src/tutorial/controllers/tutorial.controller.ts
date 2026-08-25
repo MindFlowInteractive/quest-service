@@ -41,7 +41,9 @@ export class TutorialController {
 
   @Get()
   async findAll(@Query() filters: TutorialFilterDto) {
-    this.logger.log(`Fetching tutorials with filters: ${JSON.stringify(filters)}`);
+    this.logger.log(
+      `Fetching tutorials with filters: ${JSON.stringify(filters)}`,
+    );
     return this.tutorialService.findAll(filters);
   }
 
@@ -52,7 +54,9 @@ export class TutorialController {
   }
 
   @Get('recommended/:userId')
-  async getRecommendedTutorials(@Param('userId', ParseUUIDPipe) userId: string) {
+  async getRecommendedTutorials(
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ) {
     this.logger.log(`Fetching recommended tutorials for user: ${userId}`);
     return this.tutorialService.getRecommendedTutorials(userId);
   }
@@ -100,7 +104,9 @@ export class TutorialController {
     @Param('id', ParseUUIDPipe) id: string,
     @Param('userId', ParseUUIDPipe) userId: string,
   ) {
-    this.logger.log(`Validating prerequisites for tutorial ${id} and user ${userId}`);
+    this.logger.log(
+      `Validating prerequisites for tutorial ${id} and user ${userId}`,
+    );
     return this.tutorialService.validatePrerequisites(userId, id);
   }
 
@@ -125,7 +131,9 @@ export class TutorialController {
 
     if (locale) {
       return Promise.all(
-        steps.map((step) => this.localizationService.localizeStep(step, locale)),
+        steps.map((step) =>
+          this.localizationService.localizeStep(step, locale),
+        ),
       );
     }
 

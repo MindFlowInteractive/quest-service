@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PuzzleSessionPlayer } from '../entities/puzzle-session-player.entity';
@@ -87,8 +91,11 @@ export class PuzzleSessionPlayerService {
   }
 
   private async find(sessionId: string, userId: string) {
-    const player = await this.repository.findOne({ where: { sessionId, userId } });
-    if (!player) throw new NotFoundException('Player is not part of this session');
+    const player = await this.repository.findOne({
+      where: { sessionId, userId },
+    });
+    if (!player)
+      throw new NotFoundException('Player is not part of this session');
     return player;
   }
 }

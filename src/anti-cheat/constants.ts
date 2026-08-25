@@ -17,7 +17,7 @@ export enum ViolationType {
   CLIENT_MANIPULATION = 'client_manipulation',
   IMPOSSIBLE_MOVE_SEQUENCE = 'impossible_move_sequence',
   ABNORMAL_BEHAVIOR = 'abnormal_behavior',
-  SUSPICIOUS_STATISTICAL_PATTERN = 'suspicious_statistical_pattern'
+  SUSPICIOUS_STATISTICAL_PATTERN = 'suspicious_statistical_pattern',
 }
 
 /**
@@ -27,7 +27,7 @@ export enum Severity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 /**
@@ -40,7 +40,7 @@ export enum ViolationStatus {
   FALSE_POSITIVE = 'false_positive',
   APPEALED = 'appealed',
   RESOLVED = 'resolved',
-  DISMISSED = 'dismissed'
+  DISMISSED = 'dismissed',
 }
 
 /**
@@ -51,7 +51,7 @@ export enum AppealStatus {
   UNDER_REVIEW = 'under_review',
   APPROVED = 'approved',
   DENIED = 'denied',
-  WITHDRAWN = 'withdrawn'
+  WITHDRAWN = 'withdrawn',
 }
 
 /**
@@ -63,7 +63,7 @@ export enum ReportType {
   SOLUTION_SHARING = 'solution_sharing',
   MULTIPLE_ACCOUNTS = 'multiple_accounts',
   SUSPICIOUS_BEHAVIOR = 'suspicious_behavior',
-  OTHER = 'other'
+  OTHER = 'other',
 }
 
 /**
@@ -74,7 +74,7 @@ export enum ReportStatus {
   REVIEWING = 'reviewing',
   CONFIRMED = 'confirmed',
   DISMISSED = 'dismissed',
-  DUPLICATE = 'duplicate'
+  DUPLICATE = 'duplicate',
 }
 
 /**
@@ -86,7 +86,7 @@ export enum ActionType {
   TEMP_BAN = 'temp_ban',
   PERMANENT_BAN = 'permanent_ban',
   ACCOUNT_RESTRICTION = 'account_restriction',
-  MANUAL_REVIEW_REQUIRED = 'manual_review_required'
+  MANUAL_REVIEW_REQUIRED = 'manual_review_required',
 }
 
 /**
@@ -95,7 +95,7 @@ export enum ActionType {
 export enum AppealOutcome {
   APPROVED = 'approved',
   DENIED = 'denied',
-  PARTIAL = 'partial'
+  PARTIAL = 'partial',
 }
 
 /**
@@ -138,7 +138,7 @@ export const DEFAULT_CONFIG = {
 
   // Appeals
   MAX_APPEALS_PER_VIOLATION: 1,
-  APPEAL_REVIEW_SLA_HOURS: 72
+  APPEAL_REVIEW_SLA_HOURS: 72,
 } as const;
 
 /**
@@ -148,7 +148,7 @@ export const TRUST_DECAY = {
   [Severity.LOW]: 5,
   [Severity.MEDIUM]: 10,
   [Severity.HIGH]: 25,
-  [Severity.CRITICAL]: 50
+  [Severity.CRITICAL]: 50,
 } as const;
 
 /**
@@ -158,5 +158,5 @@ export const ACTION_TIERS = {
   TIER_1: { violations: 1, action: ActionType.WARNING },
   TIER_2: { violations: 2, action: ActionType.TEMP_BAN, duration: 24 },
   TIER_3: { violations: 3, action: ActionType.TEMP_BAN, duration: 168 }, // 7 days
-  TIER_4: { violations: 5, action: ActionType.PERMANENT_BAN }
+  TIER_4: { violations: 5, action: ActionType.PERMANENT_BAN },
 } as const;

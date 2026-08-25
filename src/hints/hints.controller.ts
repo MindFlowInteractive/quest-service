@@ -1,6 +1,10 @@
 import { Body, Controller, Get, Post, Query, Patch } from '@nestjs/common';
 import { HintsService } from './hints.service';
-import { CreateHintDto, RequestHintDto, HintUsageDto } from './dto/create-hint.dto';
+import {
+  CreateHintDto,
+  RequestHintDto,
+  HintUsageDto,
+} from './dto/create-hint.dto';
 
 @Controller('hints')
 export class HintsController {
@@ -35,10 +39,7 @@ export class HintsController {
   }
 
   @Patch('templates')
-  async updateTemplate(
-    @Query('id') id: string,
-    @Body() body: any,
-  ) {
+  async updateTemplate(@Query('id') id: string, @Body() body: any) {
     return this.hintsService.updateTemplate(id, body);
   }
 
@@ -55,5 +56,3 @@ export class HintsController {
     return this.hintsService.seedDefaultTemplates();
   }
 }
-
-

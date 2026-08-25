@@ -103,7 +103,10 @@ describe('FriendRequestService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FriendRequestService,
-        { provide: 'IFriendRequestRepository', useValue: mockFriendRequestRepo },
+        {
+          provide: 'IFriendRequestRepository',
+          useValue: mockFriendRequestRepo,
+        },
         { provide: 'IFriendshipRepository', useValue: mockFriendshipRepo },
         { provide: 'IBlockRepository', useValue: mockBlockRepo },
         { provide: 'ICacheService', useValue: mockCacheService },
@@ -128,7 +131,11 @@ describe('FriendRequestService', () => {
       mockFriendRequestRepo.findByUsersPair.mockResolvedValueOnce(null);
       mockFriendRequestRepo.findByUsersPair.mockResolvedValueOnce(null);
 
-      const result = await service.sendFriendRequest(userId, toUserId, 'Hi, let\'s be friends!');
+      const result = await service.sendFriendRequest(
+        userId,
+        toUserId,
+        "Hi, let's be friends!",
+      );
 
       expect(result).toBeDefined();
       expect(result.fromUserId.value).toBe(userId);
@@ -156,9 +163,9 @@ describe('FriendRequestService', () => {
       mockFriendRequestRepo.findOutboundByUserId.mockResolvedValueOnce([]);
       mockFriendshipRepo.isFriend.mockResolvedValueOnce(true);
 
-      await expect(
-        service.sendFriendRequest(userId, toUserId),
-      ).rejects.toThrow(FriendshipAlreadyExistsException);
+      await expect(service.sendFriendRequest(userId, toUserId)).rejects.toThrow(
+        FriendshipAlreadyExistsException,
+      );
     });
 
     it('should throw error if sender is blocked', async () => {
@@ -169,9 +176,9 @@ describe('FriendRequestService', () => {
       mockUserService.checkUserExists.mockResolvedValueOnce(true);
       mockBlockRepo.isBlocked.mockResolvedValueOnce(true);
 
-      await expect(
-        service.sendFriendRequest(userId, toUserId),
-      ).rejects.toThrow(UserBlockedException);
+      await expect(service.sendFriendRequest(userId, toUserId)).rejects.toThrow(
+        UserBlockedException,
+      );
     });
 
     it('should throw error if rate limit exceeded', async () => {
@@ -195,11 +202,13 @@ describe('FriendRequestService', () => {
           return req;
         });
 
-      mockFriendRequestRepo.findOutboundByUserId.mockResolvedValueOnce(pendingRequests);
+      mockFriendRequestRepo.findOutboundByUserId.mockResolvedValueOnce(
+        pendingRequests,
+      );
 
-      await expect(
-        service.sendFriendRequest(userId, toUserId),
-      ).rejects.toThrow(RateLimitExceededException);
+      await expect(service.sendFriendRequest(userId, toUserId)).rejects.toThrow(
+        RateLimitExceededException,
+      );
     });
   });
 

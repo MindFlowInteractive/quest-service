@@ -82,7 +82,7 @@ export interface RetryError {
 export class RetryStrategy {
   private readonly logger = new Logger(RetryStrategy.name);
   private readonly config: RetryStrategyConfig;
-  
+
   private stats: RetryStats = {
     totalAttempts: 0,
     successfulAttempts: 0,
@@ -109,7 +109,7 @@ export class RetryStrategy {
     while (attempt < this.config.maxAttempts) {
       attempt++;
       this.stats.totalAttempts++;
-      
+
       const attemptStartTime = Date.now();
       const operationLabel = operationName || `operation attempt ${attempt}`;
 
@@ -153,13 +153,13 @@ export class RetryStrategy {
 
     // All attempts failed
     const totalTime = Date.now() - startTime;
-    
+
     if (this.config.logRetries) {
-      this.logRetryFailure(lastError!, attempt, totalTime, operationName);
+      this.logRetryFailure(lastError, attempt, totalTime, operationName);
     }
 
     return {
-      error: lastError!,
+      error: lastError,
       attempts: attempt,
       totalTime,
       success: false,
@@ -173,16 +173,11 @@ export class RetryStrategy {
     operation: () => Promise<T>,
     operationLabel: string,
   ): Promise<T> {
-    const timeout = this.config.timeoutPerAttempt!;
-    
+    const timeout = this.config.timeoutPerAttempt;
+
     return new Promise<T>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(
-          new TimeoutException(
-            operationLabel,
-            timeout,
-          ),
-        );
+        reject(new TimeoutException(operationLabel, timeout));
       }, timeout);
 
       operation()
@@ -217,7 +212,7 @@ export class RetryStrategy {
     // Add jitter to avoid thundering herd problem
     if (this.config.jitterFactor > 0) {
       const jitter = delay * this.config.jitterFactor;
-      delay += (Math.random() * 2 * jitter) - jitter;
+      delay += Math.random() * 2 * jitter - jitter;
       delay = Math.max(this.config.baseDelay, delay); // Ensure minimum delay
     }
 
@@ -253,7 +248,7 @@ export class RetryStrategy {
     // Check error name or message
     const errorName = error.constructor.name;
     const errorMessage = error.message.toLowerCase();
-    
+
     return (
       retryableErrorNames.includes(errorName) ||
       errorMessage.includes('timeout') ||
@@ -277,13 +272,13 @@ export class RetryStrategy {
    */
   private recordSuccessfulAttempt(duration: number): void {
     this.stats.successfulAttempts++;
-    
+
     // Update average duration
     const totalSuccessfulAttempts = this.stats.successfulAttempts;
-    this.stats.averageAttemptDuration = (
-      (this.stats.averageAttemptDuration * (totalSuccessfulAttempts - 1) + duration) / 
-      totalSuccessfulAttempts
-    );
+    this.stats.averageAttemptDuration =
+      (this.stats.averageAttemptDuration * (totalSuccessfulAttempts - 1) +
+        duration) /
+      totalSuccessfulAttempts;
   }
 
   /**
@@ -381,8 +376,8 @@ export class RetryStrategyRegistry {
       this.strategies.set(name, new RetryStrategy(config));
       this.logger.debug(`Created retry strategy ${name}`);
     }
-    
-    return this.strategies.get(name)!;
+
+    return this.strategies.get(name);
   }
 
   /**
@@ -404,11 +399,11 @@ export class RetryStrategyRegistry {
    */
   getAllStats(): Record<string, RetryStats> {
     const stats: Record<string, RetryStats> = {};
-    
+
     for (const [name, strategy] of this.strategies) {
       stats[name] = strategy.getStats();
     }
-    
+
     return stats;
   }
 
@@ -439,11 +434,11 @@ export async function retry<T>(
 ): Promise<T> {
   const strategy = new RetryStrategy(options?.config);
   const result = await strategy.execute(operation, options?.operationName);
-  
+
   if (!result.success) {
     throw result.error;
   }
-  
+
   return result.result;
 }
 
@@ -458,20 +453,20 @@ export function Retryable(options?: Partial<RetryStrategyConfig>) {
   ) {
     const originalMethod = descriptor.value;
     const operationName = `${target.constructor.name}.${propertyKey}`;
-    
+
     descriptor.value = async function (...args: any[]) {
       const strategy = new RetryStrategy(options);
       const operation = () => originalMethod.apply(this, args);
-      
+
       const result = await strategy.execute(operation, operationName);
-      
+
       if (!result.success) {
         throw result.error;
       }
-      
+
       return result.result;
     };
-    
+
     return descriptor;
   };
 }

@@ -148,7 +148,7 @@ describe('QuestChainService', () => {
     it('should add a puzzle to a quest chain', async () => {
       const chainId = uuidv4();
       const puzzleId = uuidv4();
-      
+
       const mockChain = { id: chainId, name: 'Test Chain' };
       const mockChainPuzzle = {
         id: uuidv4(),
@@ -179,12 +179,14 @@ describe('QuestChainService', () => {
     it('should throw BadRequestException when puzzle already exists in chain', async () => {
       const chainId = uuidv4();
       const puzzleId = uuidv4();
-      
+
       const mockChain = { id: chainId, name: 'Test Chain' };
       const existingChainPuzzle = { id: uuidv4(), puzzleId };
 
       mockQuestChainRepository.findOne.mockResolvedValue(mockChain);
-      mockQuestChainPuzzleRepository.findOne.mockResolvedValue(existingChainPuzzle);
+      mockQuestChainPuzzleRepository.findOne.mockResolvedValue(
+        existingChainPuzzle,
+      );
 
       await expect(
         service.addPuzzleToChain(chainId, {

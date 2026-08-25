@@ -37,16 +37,20 @@ export class WebhookDeliveryProcessor extends WorkerHost {
     }
 
     try {
-      const response = await axios.post(delivery.webhook.url, delivery.payload, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Webhook-Signature': delivery.signature,
-          'X-Webhook-Event': delivery.event,
-          'X-Webhook-Delivery-ID': delivery.id,
-          'X-Webhook-Timestamp': delivery.createdAt.toISOString(),
+      const response = await axios.post(
+        delivery.webhook.url,
+        delivery.payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Webhook-Signature': delivery.signature,
+            'X-Webhook-Event': delivery.event,
+            'X-Webhook-Delivery-ID': delivery.id,
+            'X-Webhook-Timestamp': delivery.createdAt.toISOString(),
+          },
+          timeout: 10000,
         },
-        timeout: 10000,
-      });
+      );
 
       delivery.status = 'success';
       delivery.responseCode = response.status;
@@ -63,14 +67,17 @@ export class WebhookDeliveryProcessor extends WorkerHost {
       const shouldRetry = currentAttempt <= WEBHOOK_MAX_RETRIES;
 
       delivery.responseCode = axiosError.response?.status;
-      delivery.responseBody = this.serializeResponseBody(axiosError.response?.data);
+      delivery.responseBody = this.serializeResponseBody(
+        axiosError.response?.data,
+      );
       delivery.error = axiosError.message;
       delivery.retryCount = Math.min(currentAttempt, WEBHOOK_MAX_RETRIES);
 
       if (shouldRetry) {
         delivery.status = 'retry';
         delivery.nextRetryAt = new Date(
-          Date.now() + WEBHOOK_INITIAL_RETRY_DELAY_MS * Math.pow(2, currentAttempt - 1),
+          Date.now() +
+            WEBHOOK_INITIAL_RETRY_DELAY_MS * Math.pow(2, currentAttempt - 1),
         );
 
         this.logger.warn(

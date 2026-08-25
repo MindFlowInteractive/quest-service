@@ -43,10 +43,7 @@ export class PuzzleSessionStateService {
     const state = await this.get(sessionId);
     if (!state) throw new Error('ACTIVE_SESSION_STATE_NOT_FOUND');
 
-    if (
-      expectedVersion !== undefined &&
-      expectedVersion !== state.version
-    ) {
+    if (expectedVersion !== undefined && expectedVersion !== state.version) {
       throw new Error(`STALE_SESSION_STATE:${state.version}`);
     }
 

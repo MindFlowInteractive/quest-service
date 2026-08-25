@@ -5,7 +5,11 @@ import { AutoSaveService } from './auto-save.service';
 import { SaveGame } from '../entities/save-game.entity';
 import { SaveGameService } from './save-game.service';
 import { CloudSyncService } from './cloud-sync.service';
-import { SaveType, SyncStatus, SaveGameData } from '../interfaces/save-game.interfaces';
+import {
+  SaveType,
+  SyncStatus,
+  SaveGameData,
+} from '../interfaces/save-game.interfaces';
 
 describe('AutoSaveService', () => {
   let service: AutoSaveService;
@@ -162,10 +166,13 @@ describe('AutoSaveService', () => {
       const config = service.getAutoSaveConfig(mockUserId);
       if (config) {
         // Manually set lastAutoSave to test interval check
-        (service as any).autoSaveConfigs.set(`${mockUserId}:${AUTO_SAVE_SLOT}`, {
-          ...config,
-          lastAutoSave: new Date(),
-        });
+        (service as any).autoSaveConfigs.set(
+          `${mockUserId}:${AUTO_SAVE_SLOT}`,
+          {
+            ...config,
+            lastAutoSave: new Date(),
+          },
+        );
       }
 
       // Second queue should be skipped due to interval
@@ -222,7 +229,11 @@ describe('AutoSaveService', () => {
   describe('quickSave', () => {
     it('should create new quick save when none exists', async () => {
       saveGameRepo.findOne.mockResolvedValue(null);
-      const quickSave = { ...mockSaveGame, slotId: QUICK_SAVE_SLOT, saveType: SaveType.QUICKSAVE };
+      const quickSave = {
+        ...mockSaveGame,
+        slotId: QUICK_SAVE_SLOT,
+        saveType: SaveType.QUICKSAVE,
+      };
       saveGameService.create.mockResolvedValue(quickSave as SaveGame);
 
       const result = await service.quickSave(mockUserId, mockSaveData);
@@ -262,7 +273,10 @@ describe('AutoSaveService', () => {
 
       const result = await service.quickLoad(mockUserId);
 
-      expect(saveGameService.load).toHaveBeenCalledWith(mockUserId, QUICK_SAVE_SLOT);
+      expect(saveGameService.load).toHaveBeenCalledWith(
+        mockUserId,
+        QUICK_SAVE_SLOT,
+      );
       expect(result).toEqual(mockSaveData);
     });
   });

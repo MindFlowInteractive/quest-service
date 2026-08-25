@@ -54,7 +54,11 @@ export class PuzzleComment {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'enum', enum: PuzzleCommentStatus, default: PuzzleCommentStatus.ACTIVE })
+  @Column({
+    type: 'enum',
+    enum: PuzzleCommentStatus,
+    default: PuzzleCommentStatus.ACTIVE,
+  })
   @Index()
   status: PuzzleCommentStatus;
 

@@ -103,7 +103,7 @@ export abstract class BasePuzzle implements IPuzzle {
       this.redoStack.push({ ...this.gameState });
     }
 
-    const previousState = this.undoStack.pop()!;
+    const previousState = this.undoStack.pop();
     this.gameState = { ...previousState };
 
     this.logger.debug(`Undid move for puzzle ${this.id}`);
@@ -119,7 +119,7 @@ export abstract class BasePuzzle implements IPuzzle {
       this.undoStack.push({ ...this.gameState });
     }
 
-    const nextState = this.redoStack.pop()!;
+    const nextState = this.redoStack.pop();
     this.gameState = { ...nextState };
 
     this.logger.debug(`Redid move for puzzle ${this.id}`);

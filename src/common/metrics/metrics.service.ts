@@ -71,12 +71,15 @@ export class MetricsService {
 
   // HTTP Metrics Methods
   incrementHttpRequests(method: string, route: string, statusCode: string) {
-    this.httpRequestsTotal
-      .labels(method, route, statusCode)
-      .inc();
+    this.httpRequestsTotal.labels(method, route, statusCode).inc();
   }
 
-  recordHttpRequestDuration(method: string, route: string, statusCode: string, duration: number) {
+  recordHttpRequestDuration(
+    method: string,
+    route: string,
+    statusCode: string,
+    duration: number,
+  ) {
     this.httpRequestDuration
       .labels(method, route, statusCode)
       .observe(duration);
@@ -84,28 +87,28 @@ export class MetricsService {
 
   // Game Session Metrics Methods
   incrementGameSessions(userId: string, puzzleType: string) {
-    this.gameSessionsTotal
-      .labels(userId, puzzleType)
-      .inc();
+    this.gameSessionsTotal.labels(userId, puzzleType).inc();
   }
 
   setActiveGameSessions(puzzleType: string, count: number) {
-    this.gameSessionsActive
-      .labels(puzzleType)
-      .set(count);
+    this.gameSessionsActive.labels(puzzleType).set(count);
   }
 
-  incrementPuzzleCompletions(puzzleType: string, difficulty: string, userId: string) {
-    this.puzzleCompletions
-      .labels(puzzleType, difficulty, userId)
-      .inc();
+  incrementPuzzleCompletions(
+    puzzleType: string,
+    difficulty: string,
+    userId: string,
+  ) {
+    this.puzzleCompletions.labels(puzzleType, difficulty, userId).inc();
   }
 
   // Economy Metrics Methods
-  incrementEconomyTransactions(transactionType: string, status: string, userId: string) {
-    this.economyTransactions
-      .labels(transactionType, status, userId)
-      .inc();
+  incrementEconomyTransactions(
+    transactionType: string,
+    status: string,
+    userId: string,
+  ) {
+    this.economyTransactions.labels(transactionType, status, userId).inc();
   }
 
   getRegistry(): Registry {

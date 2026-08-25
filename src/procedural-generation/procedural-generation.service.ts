@@ -99,7 +99,10 @@ export class ProceduralGenerationService {
           similar: uniqueness.similarPuzzles.length,
         });
         // Regenerate with new seed
-        const newConfig = { ...config, seed: Math.floor(Math.random() * 1000000) };
+        const newConfig = {
+          ...config,
+          seed: Math.floor(Math.random() * 1000000),
+        };
         return this.generatePuzzle(newConfig, userId);
       }
 
@@ -166,7 +169,10 @@ export class ProceduralGenerationService {
     userId: string,
     context: PersonalizationContext,
   ): Promise<GeneratedPuzzle> {
-    const config = this.userPreferences.generatePersonalizedConfig(userId, context);
+    const config = this.userPreferences.generatePersonalizedConfig(
+      userId,
+      context,
+    );
     const result = await this.generatePuzzle(config, userId);
 
     return result.puzzle;
@@ -175,14 +181,12 @@ export class ProceduralGenerationService {
   /**
    * Batch generation
    */
-  async generateBatch(
-    config: {
-      count: number;
-      puzzleType: string;
-      difficulty: string;
-      parallel?: boolean;
-    },
-  ): Promise<GeneratedPuzzle[]> {
+  async generateBatch(config: {
+    count: number;
+    puzzleType: string;
+    difficulty: string;
+    parallel?: boolean;
+  }): Promise<GeneratedPuzzle[]> {
     const batchConfig = {
       count: config.count,
       puzzleType: config.puzzleType as any,
@@ -190,14 +194,18 @@ export class ProceduralGenerationService {
       parallel: config.parallel ?? true,
     };
 
-    const result = await this.performanceOptimization.performBatchGeneration(batchConfig);
+    const result = await this.performanceOptimization.performBatchGeneration(
+      batchConfig,
+    );
     return result.puzzles;
   }
 
   /**
    * Validate and debug puzzle generation
    */
-  async debugGeneratePuzzle(config: GenerationConfig): Promise<GenerationDebugInfo> {
+  async debugGeneratePuzzle(
+    config: GenerationConfig,
+  ): Promise<GenerationDebugInfo> {
     const startTime = Date.now();
     const genStartTime = Date.now();
 
@@ -208,7 +216,8 @@ export class ProceduralGenerationService {
 
     // Validate
     const validStartTime = Date.now();
-    const validation = this.qualityAssessment.performComprehensiveValidation(puzzle);
+    const validation =
+      this.qualityAssessment.performComprehensiveValidation(puzzle);
     const validTime = Date.now() - validStartTime;
 
     // Assess quality
@@ -278,19 +287,25 @@ export class ProceduralGenerationService {
     const bottlenecks = this.performanceOptimization.analyzeBottlenecks();
 
     bottlenecks.forEach((bottleneck) => {
-      recommendations.push(`[${bottleneck.severity}] ${bottleneck.recommendation}`);
+      recommendations.push(
+        `[${bottleneck.severity}] ${bottleneck.recommendation}`,
+      );
     });
 
     // Variety diagnostics
     const uniqueStats = this.varietyUniqueness.getUniquenessStatistics();
     if (uniqueStats.duplicateRate > 0.2) {
-      recommendations.push('High duplicate rate - reduce generation frequency or increase diversity');
+      recommendations.push(
+        'High duplicate rate - reduce generation frequency or increase diversity',
+      );
     }
 
     // Analytics diagnostics
     const analytics = this.analytics.getAnalytics();
     if (analytics.successRate < 0.7) {
-      recommendations.push('Low success rate - generation quality may be declining');
+      recommendations.push(
+        'Low success rate - generation quality may be declining',
+      );
     }
 
     return {

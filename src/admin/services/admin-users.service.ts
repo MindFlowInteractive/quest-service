@@ -7,42 +7,44 @@ import { UserRole } from '../../auth/constants';
 
 @Injectable()
 export class AdminUsersService {
-    constructor(
-        @InjectRepository(User)
-        private usersRepository: Repository<User>,
-        @InjectRepository(Role)
-        private rolesRepository: Repository<Role>,
-    ) { }
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+    @InjectRepository(Role)
+    private rolesRepository: Repository<Role>,
+  ) {}
 
-    async findAll() {
-        return await this.usersRepository.find({
-            relations: ['role'],
-            order: { createdAt: 'DESC' },
-        });
+  async findAll() {
+    return await this.usersRepository.find({
+      relations: ['role'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async updateRole(userId: string, roleName: UserRole) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
-    async updateRole(userId: string, roleName: UserRole) {
-        const user = await this.usersRepository.findOne({ where: { id: userId } });
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-
-        const role = await this.rolesRepository.findOne({ where: { name: roleName } });
-        if (!role) {
-            throw new NotFoundException(`Role ${roleName} not found`);
-        }
-
-        user.role = role;
-        return await this.usersRepository.save(user);
+    const role = await this.rolesRepository.findOne({
+      where: { name: roleName },
+    });
+    if (!role) {
+      throw new NotFoundException(`Role ${roleName} not found`);
     }
 
-    async updateStatus(userId: string, isVerified: boolean) {
-        const user = await this.usersRepository.findOne({ where: { id: userId } });
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
+    user.role = role;
+    return await this.usersRepository.save(user);
+  }
 
-        user.isVerified = isVerified;
-        return await this.usersRepository.save(user);
+  async updateStatus(userId: string, isVerified: boolean) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+
+    user.isVerified = isVerified;
+    return await this.usersRepository.save(user);
+  }
 }

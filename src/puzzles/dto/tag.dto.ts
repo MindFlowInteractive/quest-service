@@ -16,7 +16,8 @@ export class CreateTagDto {
   @MinLength(1)
   @MaxLength(100)
   @Matches(/^[a-z0-9\-]+$/, {
-    message: 'Tag name must contain only lowercase letters, numbers, and hyphens',
+    message:
+      'Tag name must contain only lowercase letters, numbers, and hyphens',
   })
   @Transform(({ value }: any) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,

@@ -1,9 +1,9 @@
-import { Controller, Get, Header } from "@nestjs/common"
-import type { MetricsService } from "../services/metrics.service"
-import type { PerformanceService } from "../services/performance.service"
-import type { AlertingService } from "../services/alerting.service"
+import { Controller, Get, Header } from '@nestjs/common';
+import type { MetricsService } from '../services/metrics.service';
+import type { PerformanceService } from '../services/performance.service';
+import type { AlertingService } from '../services/alerting.service';
 
-@Controller("metrics")
+@Controller('metrics')
 export class MetricsController {
   constructor(
     private readonly metricsService: MetricsService,
@@ -12,33 +12,36 @@ export class MetricsController {
   ) {}
 
   @Get()
-  @Header("Content-Type", "text/plain")
+  @Header('Content-Type', 'text/plain')
   async getMetrics() {
-    return this.metricsService.getMetrics()
+    return this.metricsService.getMetrics();
   }
 
-  @Get("json")
+  @Get('json')
   async getMetricsJSON() {
-    return this.metricsService.getMetricsJSON()
+    return this.metricsService.getMetricsJSON();
   }
 
-  @Get("performance")
+  @Get('performance')
   async getPerformanceMetrics() {
     return {
       recent: this.performanceService.getMetrics(undefined, 50),
       stats: {
-        httpRequests: this.performanceService.getPerformanceStats("http_request"),
-        databaseQueries: this.performanceService.getPerformanceStats("database_query"),
-        cacheOperations: this.performanceService.getPerformanceStats("cache_operation"),
+        httpRequests:
+          this.performanceService.getPerformanceStats('http_request'),
+        databaseQueries:
+          this.performanceService.getPerformanceStats('database_query'),
+        cacheOperations:
+          this.performanceService.getPerformanceStats('cache_operation'),
       },
-    }
+    };
   }
 
-  @Get("alerts")
+  @Get('alerts')
   async getActiveAlerts() {
     return {
       active: this.alertingService.getActiveAlerts(),
       total: this.alertingService.getActiveAlerts().length,
-    }
+    };
   }
 }

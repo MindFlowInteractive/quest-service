@@ -45,7 +45,9 @@ export class ActivityEventEntity {
  * PostgreSQL implementation of ActivityEventRepository
  */
 @Injectable()
-export class PostgresActivityEventRepository implements IActivityEventRepository {
+export class PostgresActivityEventRepository
+  implements IActivityEventRepository
+{
   private ormRepository: Repository<ActivityEventEntity>;
 
   constructor(private dataSource: DataSource) {

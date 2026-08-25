@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsUUID, IsArray, ArrayUnique } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUUID,
+  IsArray,
+  ArrayUnique,
+} from 'class-validator';
 
 export class CreateContentDto {
   @IsString()

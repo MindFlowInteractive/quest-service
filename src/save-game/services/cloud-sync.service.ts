@@ -12,7 +12,11 @@ import {
   SaveGameSummary,
   SaveType,
 } from '../interfaces/save-game.interfaces';
-import { SyncSaveGameDto, ResolveConflictDto, BatchSyncDto } from '../dto/sync-save-game.dto';
+import {
+  SyncSaveGameDto,
+  ResolveConflictDto,
+  BatchSyncDto,
+} from '../dto/sync-save-game.dto';
 import { SaveCompressionService } from './save-compression.service';
 import { SaveEncryptionService } from './save-encryption.service';
 import { SaveVersioningService } from './save-versioning.service';
@@ -36,7 +40,10 @@ export class CloudSyncService {
     private readonly analyticsService: SaveAnalyticsService,
   ) {}
 
-  async syncSave(userId: string, dto: SyncSaveGameDto): Promise<CloudSyncResult> {
+  async syncSave(
+    userId: string,
+    dto: SyncSaveGameDto,
+  ): Promise<CloudSyncResult> {
     const cloudSave = await this.saveGameRepo.findOne({
       where: { userId, slotId: dto.slotId },
     });
@@ -53,7 +60,10 @@ export class CloudSyncService {
     const syncResult = this.determineSyncStatus(cloudSave, dto);
 
     // Record analytics
-    await this.analyticsService.recordSync(userId, syncResult.syncStatus === SyncStatus.CONFLICT);
+    await this.analyticsService.recordSync(
+      userId,
+      syncResult.syncStatus === SyncStatus.CONFLICT,
+    );
 
     return syncResult;
   }
@@ -97,7 +107,9 @@ export class CloudSyncService {
       };
     }
 
-    const timeDiff = Math.abs(localModified.getTime() - cloudModified.getTime());
+    const timeDiff = Math.abs(
+      localModified.getTime() - cloudModified.getTime(),
+    );
 
     // Check for conflict (both modified within threshold)
     if (timeDiff < this.CONFLICT_THRESHOLD_MS) {
@@ -110,7 +122,10 @@ export class CloudSyncService {
           cloudLastModified: cloudModified,
           localChecksum: localInfo.localChecksum || '',
           cloudChecksum: cloudSave.checksum?.value || '',
-          suggestedResolution: this.suggestResolution(localModified, cloudModified),
+          suggestedResolution: this.suggestResolution(
+            localModified,
+            cloudModified,
+          ),
         },
       };
     }
@@ -131,7 +146,10 @@ export class CloudSyncService {
     };
   }
 
-  private suggestResolution(localModified: Date, cloudModified: Date): ConflictResolution {
+  private suggestResolution(
+    localModified: Date,
+    cloudModified: Date,
+  ): ConflictResolution {
     // If one is significantly more recent, suggest using it
     if (localModified > cloudModified) {
       return ConflictResolution.USE_LOCAL;
@@ -139,7 +157,10 @@ export class CloudSyncService {
     return ConflictResolution.USE_CLOUD;
   }
 
-  async resolveConflict(userId: string, dto: ResolveConflictDto): Promise<SaveGame> {
+  async resolveConflict(
+    userId: string,
+    dto: ResolveConflictDto,
+  ): Promise<SaveGame> {
     const cloudSave = await this.saveGameRepo.findOne({
       where: { id: dto.saveId, userId },
     });
@@ -169,7 +190,9 @@ export class CloudSyncService {
 
       case ConflictResolution.MERGE:
         if (!dto.mergedData) {
-          throw new BadRequestException('Merged data required for MERGE resolution');
+          throw new BadRequestException(
+            'Merged data required for MERGE resolution',
+          );
         }
         await this.updateSaveData(cloudSave, dto.mergedData);
         cloudSave.syncStatus = SyncStatus.SYNCED;
@@ -219,7 +242,9 @@ export class CloudSyncService {
     // Validate data
     const validation = this.versioningService.validateDataStructure(data);
     if (!validation.valid) {
-      throw new BadRequestException(`Invalid save data: ${validation.errors.join(', ')}`);
+      throw new BadRequestException(
+        `Invalid save data: ${validation.errors.join(', ')}`,
+      );
     }
 
     const saveData = this.versioningService.mergeWithDefaults(data);
@@ -281,7 +306,10 @@ export class CloudSyncService {
     return this.saveGameRepo.save(cloudSave);
   }
 
-  async downloadFromCloud(userId: string, slotId: number): Promise<{
+  async downloadFromCloud(
+    userId: string,
+    slotId: number,
+  ): Promise<{
     data: SaveGameData;
     metadata: SaveGameSummary;
   }> {
@@ -304,8 +332,15 @@ export class CloudSyncService {
     );
 
     // Verify checksum
-    if (!this.encryptionService.verifyChecksum(decryptedData, cloudSave.checksum.value)) {
-      throw new BadRequestException('Cloud save data corrupted - checksum mismatch');
+    if (
+      !this.encryptionService.verifyChecksum(
+        decryptedData,
+        cloudSave.checksum.value,
+      )
+    ) {
+      throw new BadRequestException(
+        'Cloud save data corrupted - checksum mismatch',
+      );
     }
 
     const saveData = await this.compressionService.decompress(
@@ -314,7 +349,8 @@ export class CloudSyncService {
     );
 
     // Migrate if needed
-    const migratedData = this.versioningService.migrateToCurrentVersion(saveData);
+    const migratedData =
+      this.versioningService.migrateToCurrentVersion(saveData);
 
     // Update sync status
     cloudSave.syncStatus = SyncStatus.SYNCED;
@@ -327,7 +363,10 @@ export class CloudSyncService {
     };
   }
 
-  async batchSync(userId: string, dto: BatchSyncDto): Promise<CloudSyncResult[]> {
+  async batchSync(
+    userId: string,
+    dto: BatchSyncDto,
+  ): Promise<CloudSyncResult[]> {
     const results: CloudSyncResult[] = [];
 
     for (const save of dto.saves) {
@@ -350,7 +389,10 @@ export class CloudSyncService {
     return saves.map((save) => this.toSummary(save));
   }
 
-  private async updateSaveData(save: SaveGame, data: SaveGameData): Promise<void> {
+  private async updateSaveData(
+    save: SaveGame,
+    data: SaveGameData,
+  ): Promise<void> {
     const saveData = this.versioningService.mergeWithDefaults(data);
 
     const { compressedData, compressionInfo } =

@@ -1,29 +1,32 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { ElasticsearchService } from "@nestjs/elasticsearch";
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 import {
   INDEX_NAMES,
   INDEX_MAPPINGS,
   INDEX_SETTINGS,
-} from "../common/constants/index.constants";
+} from '../common/constants/index.constants';
 import {
   Puzzle,
   Player,
   Achievement,
   IndexingResult,
-} from "../common/interfaces/search.interface";
+} from '../common/interfaces/search.interface';
 
 @Injectable()
 export class IndexService implements OnModuleInit {
   private readonly logger = new Logger(IndexService.name);
 
-  constructor(private readonly elasticsearchService: ElasticsearchService & Record<string, any>) {}
+  constructor(
+    private readonly elasticsearchService: ElasticsearchService &
+      Record<string, any>,
+  ) {}
 
   async onModuleInit() {
     await this.initializeIndices();
   }
 
   async initializeIndices(): Promise<void> {
-    this.logger.log("Initializing Elasticsearch indices...");
+    this.logger.log('Initializing Elasticsearch indices...');
 
     for (const [key, indexName] of Object.entries(INDEX_NAMES)) {
       try {
@@ -119,7 +122,7 @@ export class IndexService implements OnModuleInit {
       result.success = false;
       result.failed = puzzles.length;
       result.errors = [error.message];
-      this.logger.error("Bulk indexing failed:", error.message);
+      this.logger.error('Bulk indexing failed:', error.message);
     }
 
     return result;
@@ -175,7 +178,7 @@ export class IndexService implements OnModuleInit {
       result.success = false;
       result.failed = players.length;
       result.errors = [error.message];
-      this.logger.error("Bulk indexing failed:", error.message);
+      this.logger.error('Bulk indexing failed:', error.message);
     }
 
     return result;
@@ -233,7 +236,7 @@ export class IndexService implements OnModuleInit {
       result.success = false;
       result.failed = achievements.length;
       result.errors = [error.message];
-      this.logger.error("Bulk indexing failed:", error.message);
+      this.logger.error('Bulk indexing failed:', error.message);
     }
 
     return result;

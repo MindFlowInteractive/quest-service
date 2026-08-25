@@ -1,5 +1,8 @@
 import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { TransactionType, TransactionCategory } from '../entities/blockchain-transaction.entity';
+import {
+  TransactionType,
+  TransactionCategory,
+} from '../entities/blockchain-transaction.entity';
 
 export enum AnalyticsPeriod {
   HOUR = '1h',

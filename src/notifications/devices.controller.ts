@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Param, Delete, Get, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Get,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Device } from './entities/device.entity';
@@ -9,7 +18,9 @@ import { ActiveUser } from '../auth/decorators/active-user.decorator';
 @Controller('notifications/device-tokens')
 @UseGuards(JwtAuthGuard)
 export class DevicesController {
-  constructor(@InjectRepository(Device) private readonly repo: Repository<Device>) {}
+  constructor(
+    @InjectRepository(Device) private readonly repo: Repository<Device>,
+  ) {}
 
   @Post()
   async register(@ActiveUser() user: any, @Body() body: RegisterDeviceDto) {
@@ -24,7 +35,11 @@ export class DevicesController {
       if (count >= 10) {
         throw new BadRequestException('Maximum of 10 device tokens per user');
       }
-      device = this.repo.create({ userId, token: body.token, platform: body.platform });
+      device = this.repo.create({
+        userId,
+        token: body.token,
+        platform: body.platform,
+      });
     }
 
     await this.repo.save(device);

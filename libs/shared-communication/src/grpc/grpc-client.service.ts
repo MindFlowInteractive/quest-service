@@ -62,7 +62,7 @@ export class GrpcClientService implements OnModuleInit {
    */
   getService<T>(serviceName: string, serviceInterface: string): T {
     const client = this.clients.get(serviceName);
-    
+
     if (!client) {
       throw new Error(`gRPC client not found for service: ${serviceName}`);
     }
@@ -86,8 +86,10 @@ export class GrpcClientService implements OnModuleInit {
     const service = this.getService<any>(serviceName, serviceInterface);
     const config = this.serviceConfigs.get(serviceName);
 
-    const timeoutMs = options?.timeout || config?.timeout || DEFAULT_GRPC_TIMEOUT;
-    const maxRetries = options?.maxRetries || config?.maxRetries || DEFAULT_MAX_RETRIES;
+    const timeoutMs =
+      options?.timeout || config?.timeout || DEFAULT_GRPC_TIMEOUT;
+    const maxRetries =
+      options?.maxRetries || config?.maxRetries || DEFAULT_MAX_RETRIES;
 
     this.logger.debug(
       `Calling gRPC method: ${serviceName}.${serviceInterface}.${method}`,

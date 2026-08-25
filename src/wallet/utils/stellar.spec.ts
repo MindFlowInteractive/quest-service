@@ -66,12 +66,17 @@ describe('stellar utils', () => {
   });
 
   it('rejects amounts with too many decimals', () => {
-    expect(() => parseAmountToInt('1.00000001')).toThrow('Amount exceeds allowed decimals');
+    expect(() => parseAmountToInt('1.00000001')).toThrow(
+      'Amount exceeds allowed decimals',
+    );
   });
 
   it('validates stellar public keys and signatures', () => {
     const { publicKey, privateKey } = generateKeyPairSync('ed25519');
-    const publicDer = publicKey.export({ format: 'der', type: 'spki' }) as Buffer;
+    const publicDer = publicKey.export({
+      format: 'der',
+      type: 'spki',
+    }) as Buffer;
     const rawPublicKey = publicDer.subarray(publicDer.length - 32);
     const stellarPublicKey = encodePublicKey(rawPublicKey);
 
@@ -79,9 +84,17 @@ describe('stellar utils', () => {
     expect(isValidStellarPublicKey('GABC')).toBe(false);
 
     const message = 'LogiQuest Wallet Authentication';
-    const signature = sign(null, Buffer.from(message, 'utf8'), privateKey).toString('base64');
+    const signature = sign(
+      null,
+      Buffer.from(message, 'utf8'),
+      privateKey,
+    ).toString('base64');
 
-    expect(verifyEd25519Signature(stellarPublicKey, message, signature)).toBe(true);
-    expect(verifyEd25519Signature(stellarPublicKey, message, 'deadbeef')).toBe(false);
+    expect(verifyEd25519Signature(stellarPublicKey, message, signature)).toBe(
+      true,
+    );
+    expect(verifyEd25519Signature(stellarPublicKey, message, 'deadbeef')).toBe(
+      false,
+    );
   });
 });

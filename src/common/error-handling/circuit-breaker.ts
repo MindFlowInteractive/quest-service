@@ -5,8 +5,8 @@ import { ExternalServiceUnavailableException } from '../exceptions/infrastructur
  * Circuit breaker states
  */
 export enum CircuitBreakerState {
-  CLOSED = 'CLOSED',    // Normal operation - requests flow through
-  OPEN = 'OPEN',        // Service is failing - requests fail fast
+  CLOSED = 'CLOSED', // Normal operation - requests flow through
+  OPEN = 'OPEN', // Service is failing - requests fail fast
   HALF_OPEN = 'HALF_OPEN', // Recovery window - allow test requests
 }
 
@@ -58,7 +58,7 @@ export interface CircuitBreakerStats {
 export class CircuitBreaker {
   private readonly logger = new Logger(CircuitBreaker.name);
   private readonly config: CircuitBreakerConfig;
-  
+
   private state: CircuitBreakerState = CircuitBreakerState.CLOSED;
   private failureCount = 0;
   private successCount = 0;
@@ -106,17 +106,19 @@ export class CircuitBreaker {
     } catch (error) {
       this.stats.failedRequests++;
       this.recordFailure();
-      
+
       // Try fallback if provided
       if (fallback) {
-        this.logger.debug(`Circuit breaker falling back for ${this.config.name}`);
+        this.logger.debug(
+          `Circuit breaker falling back for ${this.config.name}`,
+        );
         try {
           return await fallback();
         } catch (fallbackError) {
           throw error; // Throw original error if fallback also fails
         }
       }
-      
+
       throw error;
     }
   }
@@ -319,13 +321,13 @@ export class CircuitBreakerRegistry {
    */
   getOrCreate(config: CircuitBreakerConfig): CircuitBreaker {
     const key = config.name;
-    
+
     if (!this.breakers.has(key)) {
       this.breakers.set(key, new CircuitBreaker(config));
       this.logger.debug(`Created circuit breaker for ${key}`);
     }
-    
-    return this.breakers.get(key)!;
+
+    return this.breakers.get(key);
   }
 
   /**
@@ -347,11 +349,11 @@ export class CircuitBreakerRegistry {
    */
   getAllStats(): Record<string, CircuitBreakerStats> {
     const stats: Record<string, CircuitBreakerStats> = {};
-    
+
     for (const [name, breaker] of this.breakers) {
       stats[name] = breaker.getStats();
     }
-    
+
     return stats;
   }
 

@@ -1,4 +1,10 @@
-import { IsOptional, IsString, IsUUID, IsDateString, IsEnum } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsDateString,
+  IsEnum,
+} from 'class-validator';
 
 export enum PuzzleDifficulty {
   EASY = 'easy',

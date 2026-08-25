@@ -105,7 +105,12 @@ describe('DailyChallengesService', () => {
       userStreakRepo.create.mockReturnValue(newStreak);
       userStreakRepo.save.mockResolvedValue(newStreak);
 
-      const completion = { id: 'comp1', streakBonusAwarded: 0, bonusXPAwarded: 50, bonusXPClaimed: false };
+      const completion = {
+        id: 'comp1',
+        streakBonusAwarded: 0,
+        bonusXPAwarded: 50,
+        bonusXPClaimed: false,
+      };
       completionRepo.create.mockReturnValue(completion);
       completionRepo.save.mockResolvedValue(completion);
       dailyChallengeRepo.increment.mockResolvedValue({});
@@ -223,7 +228,10 @@ describe('DailyChallengesService', () => {
       };
 
       completionRepo.findOne.mockResolvedValue(completion);
-      completionRepo.save.mockResolvedValue({ ...completion, bonusXPClaimed: true });
+      completionRepo.save.mockResolvedValue({
+        ...completion,
+        bonusXPClaimed: true,
+      });
 
       const result = await service.claimBonusXP(userId, completionId);
 
@@ -244,8 +252,9 @@ describe('DailyChallengesService', () => {
 
       completionRepo.findOne.mockResolvedValue(completion);
 
-      await expect(service.claimBonusXP(userId, completionId))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.claimBonusXP(userId, completionId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -267,7 +276,7 @@ describe('DailyChallengesService', () => {
       const newCompletion = {
         userId,
         weeklyChallengeId,
-        completedPuzzleIds: [ puzzleId],
+        completedPuzzleIds: [puzzleId],
         allPuzzlesCompleted: true,
         bonusXPAwarded: 250,
         completedAt: new Date(),
@@ -279,7 +288,11 @@ describe('DailyChallengesService', () => {
       weeklyCompletionRepo.save.mockResolvedValue(newCompletion);
       weeklyChallengeRepo.increment.mockResolvedValue({});
 
-      const result = await service.completeWeeklyPuzzle(userId, weeklyChallengeId, puzzleId);
+      const result = await service.completeWeeklyPuzzle(
+        userId,
+        weeklyChallengeId,
+        puzzleId,
+      );
 
       expect(result.success).toBe(true);
       expect(result.completedPuzzleIds).toContain(puzzleId);
@@ -311,15 +324,17 @@ describe('DailyChallengesService', () => {
       weeklyChallengeRepo.findOne.mockResolvedValue(weeklyChallenge);
       weeklyCompletionRepo.findOne.mockResolvedValue(existingCompletion);
 
-      await expect(service.completeWeeklyPuzzle(userId, weeklyChallengeId, puzzleId))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.completeWeeklyPuzzle(userId, weeklyChallengeId, puzzleId),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should prevent completing non-existent weekly challenge', async () => {
       weeklyChallengeRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.completeWeeklyPuzzle('u1', 'w1', 'p1'))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.completeWeeklyPuzzle('u1', 'w1', 'p1'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -375,8 +390,12 @@ describe('DailyChallengesService', () => {
     it('should throw when completing inactive daily challenge', async () => {
       dailyChallengeRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.completeDailyChallenge('u1', 'c1', { score: 95, timeSpent: 60 }))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.completeDailyChallenge('u1', 'c1', {
+          score: 95,
+          timeSpent: 60,
+        }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should prevent completing challenge twice', async () => {
@@ -395,9 +414,12 @@ describe('DailyChallengesService', () => {
         userId,
       });
 
-      await expect(service.completeDailyChallenge(userId, challengeId, { score: 95, timeSpent: 60 }))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.completeDailyChallenge(userId, challengeId, {
+          score: 95,
+          timeSpent: 60,
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });
-

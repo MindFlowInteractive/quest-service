@@ -38,7 +38,8 @@ export class GenerationAnalyticsService {
   private readonly logger = new Logger(GenerationAnalyticsService.name);
 
   private readonly eventLog: GenerationEventLog[] = [];
-  private readonly engagementData: Map<string, PlayerEngagementData> = new Map();
+  private readonly engagementData: Map<string, PlayerEngagementData> =
+    new Map();
   private readonly analytics: GenerationAnalytics = {
     totalGenerated: 0,
     successRate: 0,
@@ -93,7 +94,8 @@ export class GenerationAnalyticsService {
 
     if (eventType === 'failed') {
       const reason = data?.reason || 'unknown';
-      this.analytics.failureReasons[reason] = (this.analytics.failureReasons[reason] || 0) + 1;
+      this.analytics.failureReasons[reason] =
+        (this.analytics.failureReasons[reason] || 0) + 1;
     }
   }
 
@@ -125,7 +127,8 @@ export class GenerationAnalyticsService {
       engagement.completedAt = new Date();
       engagement.success = true;
       if (engagement.playedAt) {
-        engagement.timeToCompletion = engagement.completedAt.getTime() - engagement.playedAt.getTime();
+        engagement.timeToCompletion =
+          engagement.completedAt.getTime() - engagement.playedAt.getTime();
       }
     } else if (eventType === 'failed') {
       engagement.success = false;
@@ -144,8 +147,11 @@ export class GenerationAnalyticsService {
   getAnalytics(): GenerationAnalytics {
     // Calculate success rate
     const totalEvents = this.eventLog.length;
-    const successCount = this.eventLog.filter((e) => e.eventType === 'completed').length;
-    this.analytics.successRate = totalEvents > 0 ? successCount / totalEvents : 0;
+    const successCount = this.eventLog.filter(
+      (e) => e.eventType === 'completed',
+    ).length;
+    this.analytics.successRate =
+      totalEvents > 0 ? successCount / totalEvents : 0;
 
     // Calculate average quality score
     const qualityScores = this.eventLog
@@ -161,7 +167,9 @@ export class GenerationAnalyticsService {
       .filter((e) => e.eventType === 'generated' && e.data?.generationTime)
       .map((e) => e.data.generationTime);
     this.analytics.averageGenerationTime =
-      genTimes.length > 0 ? genTimes.reduce((a, b) => a + b, 0) / genTimes.length : 0;
+      genTimes.length > 0
+        ? genTimes.reduce((a, b) => a + b, 0) / genTimes.length
+        : 0;
 
     return { ...this.analytics };
   }
@@ -213,12 +221,15 @@ export class GenerationAnalyticsService {
     const newSize = oldSize + 1;
 
     metrics.sampleSize = newSize;
-    metrics.successRate = (metrics.successRate * oldSize + (result.success ? 1 : 0)) / newSize;
+    metrics.successRate =
+      (metrics.successRate * oldSize + (result.success ? 1 : 0)) / newSize;
     metrics.averageEngagement =
       (metrics.averageEngagement * oldSize + result.engagement) / newSize;
     metrics.averageCompletionTime =
-      (metrics.averageCompletionTime * oldSize + result.completionTime) / newSize;
-    metrics.qualityScore = (metrics.qualityScore * oldSize + result.qualityScore) / newSize;
+      (metrics.averageCompletionTime * oldSize + result.completionTime) /
+      newSize;
+    metrics.qualityScore =
+      (metrics.qualityScore * oldSize + result.qualityScore) / newSize;
 
     // Calculate statistical significance (simplified Chi-square approximation)
     if (newSize > 30) {
@@ -254,19 +265,30 @@ export class GenerationAnalyticsService {
     }
 
     // Calculate improvement in success rate
-    const improvementPercent = ((treatmentMetrics.successRate - controlMetrics.successRate) / controlMetrics.successRate) * 100;
+    const improvementPercent =
+      ((treatmentMetrics.successRate - controlMetrics.successRate) /
+        controlMetrics.successRate) *
+      100;
 
     // Determine winner
-    const winner = improvementPercent > 5 ? treatmentTestId : improvementPercent < -5 ? controlTestId : 'tie';
+    const winner =
+      improvementPercent > 5
+        ? treatmentTestId
+        : improvementPercent < -5
+        ? controlTestId
+        : 'tie';
 
     // Generate recommendation
     let recommendation = '';
     if (winner === controlTestId) {
-      recommendation = 'Control variant is performing better. Stick with current approach.';
+      recommendation =
+        'Control variant is performing better. Stick with current approach.';
     } else if (winner === treatmentTestId) {
-      recommendation = 'Treatment variant is performing better. Consider adopting new approach.';
+      recommendation =
+        'Treatment variant is performing better. Consider adopting new approach.';
     } else {
-      recommendation = 'No significant difference between variants. Increase sample size or try different parameters.';
+      recommendation =
+        'No significant difference between variants. Increase sample size or try different parameters.';
     }
 
     return {
@@ -289,18 +311,30 @@ export class GenerationAnalyticsService {
     report += 'OVERVIEW:\n';
     report += `  Total Generated: ${analytics.totalGenerated}\n`;
     report += `  Success Rate: ${(analytics.successRate * 100).toFixed(2)}%\n`;
-    report += `  Average Quality: ${analytics.averageQualityScore.toFixed(2)}\n`;
-    report += `  Avg Generation Time: ${analytics.averageGenerationTime.toFixed(2)}ms\n\n`;
+    report += `  Average Quality: ${analytics.averageQualityScore.toFixed(
+      2,
+    )}\n`;
+    report += `  Avg Generation Time: ${analytics.averageGenerationTime.toFixed(
+      2,
+    )}ms\n\n`;
 
     report += 'TYPE DISTRIBUTION:\n';
     for (const [type, count] of Object.entries(analytics.typeDistribution)) {
-      const percent = analytics.totalGenerated > 0 ? ((count / analytics.totalGenerated) * 100).toFixed(1) : '0';
+      const percent =
+        analytics.totalGenerated > 0
+          ? ((count / analytics.totalGenerated) * 100).toFixed(1)
+          : '0';
       report += `  ${type}: ${count} (${percent}%)\n`;
     }
 
     report += '\nDIFFICULTY DISTRIBUTION:\n';
-    for (const [difficulty, count] of Object.entries(analytics.difficultyDistribution)) {
-      const percent = analytics.totalGenerated > 0 ? ((count / analytics.totalGenerated) * 100).toFixed(1) : '0';
+    for (const [difficulty, count] of Object.entries(
+      analytics.difficultyDistribution,
+    )) {
+      const percent =
+        analytics.totalGenerated > 0
+          ? ((count / analytics.totalGenerated) * 100).toFixed(1)
+          : '0';
       report += `  ${difficulty}: ${count} (${percent}%)\n`;
     }
 
@@ -315,7 +349,9 @@ export class GenerationAnalyticsService {
       report += '\nDETAILED EVENT LOG (Last 20):\n';
       const recentEvents = this.eventLog.slice(-20);
       for (const event of recentEvents) {
-        report += `  [${event.timestamp.toISOString()}] ${event.eventType} - ${event.puzzleType} (${event.difficulty})\n`;
+        report += `  [${event.timestamp.toISOString()}] ${event.eventType} - ${
+          event.puzzleType
+        } (${event.difficulty})\n`;
       }
     }
 
@@ -347,10 +383,12 @@ export class GenerationAnalyticsService {
     }
 
     const playedCount = engagements.filter((e) => e.playedAt).length;
-    const completedCount = engagements.filter((e) => e.success && e.completedAt).length;
+    const completedCount = engagements.filter(
+      (e) => e.success && e.completedAt,
+    ).length;
     const completionTimes = engagements
       .filter((e) => e.timeToCompletion)
-      .map((e) => e.timeToCompletion as number);
+      .map((e) => e.timeToCompletion);
     const hintsUsed = engagements.map((e) => e.hintsUsed);
 
     return {
@@ -362,7 +400,10 @@ export class GenerationAnalyticsService {
         completionTimes.length > 0
           ? completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length
           : 0,
-      avgHintsUsed: hintsUsed.length > 0 ? hintsUsed.reduce((a, b) => a + b, 0) / hintsUsed.length : 0,
+      avgHintsUsed:
+        hintsUsed.length > 0
+          ? hintsUsed.reduce((a, b) => a + b, 0) / hintsUsed.length
+          : 0,
     };
   }
 
@@ -397,7 +438,8 @@ export class GenerationAnalyticsService {
       const bucket = buckets.get(i);
       if (bucket) {
         const timestamp = new Date(now - (10 - i) * bucketSize);
-        const successRate = bucket.total > 0 ? bucket.success / bucket.total : 0;
+        const successRate =
+          bucket.total > 0 ? bucket.success / bucket.total : 0;
         trend.push({ timestamp, successRate });
       }
     }
@@ -414,7 +456,10 @@ export class GenerationAnalyticsService {
     completionRate: number;
     sampleSize: number;
   }[] {
-    const parameterPerformance: Map<string, { success: number; total: number }> = new Map();
+    const parameterPerformance: Map<
+      string,
+      { success: number; total: number }
+    > = new Map();
 
     for (const engagement of this.engagementData.values()) {
       // In a real system, would track parameters with each puzzle

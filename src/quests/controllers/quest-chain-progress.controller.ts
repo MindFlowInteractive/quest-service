@@ -27,7 +27,11 @@ export class QuestChainProgressController {
 
   @Post(':id/start')
   @ApiOperation({ summary: 'Start a quest chain for a user' })
-  @ApiResponse({ status: 201, description: 'Quest chain started successfully', type: UserQuestChainProgress })
+  @ApiResponse({
+    status: 201,
+    description: 'Quest chain started successfully',
+    type: UserQuestChainProgress,
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Quest chain not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
@@ -40,7 +44,11 @@ export class QuestChainProgressController {
 
   @Get(':id/progress')
   @ApiOperation({ summary: 'Get user progress for a quest chain' })
-  @ApiResponse({ status: 200, description: 'User progress details', type: UserQuestChainProgress })
+  @ApiResponse({
+    status: 200,
+    description: 'User progress details',
+    type: UserQuestChainProgress,
+  })
   @ApiResponse({ status: 404, description: 'Progress not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
   async getProgress(
@@ -53,7 +61,10 @@ export class QuestChainProgressController {
   @Get(':id/next-puzzle')
   @ApiOperation({ summary: 'Get the next available puzzle in the quest chain' })
   @ApiResponse({ status: 200, description: 'Next puzzle details' })
-  @ApiResponse({ status: 404, description: 'No next puzzle available or progress not found' })
+  @ApiResponse({
+    status: 404,
+    description: 'No next puzzle available or progress not found',
+  })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
   async getNextPuzzle(
     @Param('id') chainId: string,
@@ -64,8 +75,15 @@ export class QuestChainProgressController {
 
   @Post(':id/puzzles/:puzzleId/complete')
   @ApiOperation({ summary: 'Complete a puzzle in the quest chain' })
-  @ApiResponse({ status: 200, description: 'Puzzle completed successfully', type: UserQuestChainProgress })
-  @ApiResponse({ status: 400, description: 'Bad request or unlock conditions not met' })
+  @ApiResponse({
+    status: 200,
+    description: 'Puzzle completed successfully',
+    type: UserQuestChainProgress,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request or unlock conditions not met',
+  })
   @ApiResponse({ status: 404, description: 'Puzzle or progress not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
   @ApiParam({ name: 'puzzleId', description: 'Puzzle ID' })
@@ -76,12 +94,21 @@ export class QuestChainProgressController {
     @Body('userId') userId: string,
     @Body(ValidationPipe) completionData: PuzzleCompletionDto,
   ): Promise<UserQuestChainProgress> {
-    return this.progressionService.completePuzzle(userId, chainId, puzzleId, completionData);
+    return this.progressionService.completePuzzle(
+      userId,
+      chainId,
+      puzzleId,
+      completionData,
+    );
   }
 
   @Post(':id/reset')
   @ApiOperation({ summary: 'Reset user progress for a quest chain' })
-  @ApiResponse({ status: 200, description: 'Progress reset successfully', type: UserQuestChainProgress })
+  @ApiResponse({
+    status: 200,
+    description: 'Progress reset successfully',
+    type: UserQuestChainProgress,
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Progress not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })

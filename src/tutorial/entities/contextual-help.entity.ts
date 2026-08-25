@@ -19,7 +19,12 @@ export type TriggerContext =
   | 'achievement_near'
   | 'custom';
 
-export type HelpDisplayType = 'tooltip' | 'modal' | 'overlay' | 'sidebar' | 'banner';
+export type HelpDisplayType =
+  | 'tooltip'
+  | 'modal'
+  | 'overlay'
+  | 'sidebar'
+  | 'banner';
 
 export interface HelpContent {
   title: string;

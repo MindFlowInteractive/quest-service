@@ -59,7 +59,9 @@ describe('SaveAnalyticsService', () => {
 
   describe('getOrCreateAnalytics', () => {
     it('should return existing analytics', async () => {
-      analyticsRepo.findOne.mockResolvedValue(mockAnalytics as SaveGameAnalytics);
+      analyticsRepo.findOne.mockResolvedValue(
+        mockAnalytics as SaveGameAnalytics,
+      );
 
       const result = await service.getOrCreateAnalytics(mockUserId);
 
@@ -85,8 +87,12 @@ describe('SaveAnalyticsService', () => {
 
   describe('recordSave', () => {
     beforeEach(() => {
-      analyticsRepo.findOne.mockResolvedValue({ ...mockAnalytics } as SaveGameAnalytics);
-      analyticsRepo.save.mockImplementation(async (entity) => entity as SaveGameAnalytics);
+      analyticsRepo.findOne.mockResolvedValue({
+        ...mockAnalytics,
+      } as SaveGameAnalytics);
+      analyticsRepo.save.mockImplementation(
+        async (entity) => entity as SaveGameAnalytics,
+      );
     });
 
     it('should increment totalSaves and update lastSaveAt', async () => {
@@ -144,8 +150,12 @@ describe('SaveAnalyticsService', () => {
 
   describe('recordLoad', () => {
     beforeEach(() => {
-      analyticsRepo.findOne.mockResolvedValue({ ...mockAnalytics } as SaveGameAnalytics);
-      analyticsRepo.save.mockImplementation(async (entity) => entity as SaveGameAnalytics);
+      analyticsRepo.findOne.mockResolvedValue({
+        ...mockAnalytics,
+      } as SaveGameAnalytics);
+      analyticsRepo.save.mockImplementation(
+        async (entity) => entity as SaveGameAnalytics,
+      );
     });
 
     it('should increment totalLoads and update lastLoadAt', async () => {
@@ -162,8 +172,12 @@ describe('SaveAnalyticsService', () => {
 
   describe('recordSync', () => {
     beforeEach(() => {
-      analyticsRepo.findOne.mockResolvedValue({ ...mockAnalytics } as SaveGameAnalytics);
-      analyticsRepo.save.mockImplementation(async (entity) => entity as SaveGameAnalytics);
+      analyticsRepo.findOne.mockResolvedValue({
+        ...mockAnalytics,
+      } as SaveGameAnalytics);
+      analyticsRepo.save.mockImplementation(
+        async (entity) => entity as SaveGameAnalytics,
+      );
     });
 
     it('should increment cloudSyncs and update lastSyncAt', async () => {
@@ -200,8 +214,12 @@ describe('SaveAnalyticsService', () => {
 
   describe('recordConflictResolved', () => {
     beforeEach(() => {
-      analyticsRepo.findOne.mockResolvedValue({ ...mockAnalytics } as SaveGameAnalytics);
-      analyticsRepo.save.mockImplementation(async (entity) => entity as SaveGameAnalytics);
+      analyticsRepo.findOne.mockResolvedValue({
+        ...mockAnalytics,
+      } as SaveGameAnalytics);
+      analyticsRepo.save.mockImplementation(
+        async (entity) => entity as SaveGameAnalytics,
+      );
     });
 
     it('should increment conflictsResolved', async () => {
@@ -217,8 +235,12 @@ describe('SaveAnalyticsService', () => {
 
   describe('recordCorruption', () => {
     beforeEach(() => {
-      analyticsRepo.findOne.mockResolvedValue({ ...mockAnalytics } as SaveGameAnalytics);
-      analyticsRepo.save.mockImplementation(async (entity) => entity as SaveGameAnalytics);
+      analyticsRepo.findOne.mockResolvedValue({
+        ...mockAnalytics,
+      } as SaveGameAnalytics);
+      analyticsRepo.save.mockImplementation(
+        async (entity) => entity as SaveGameAnalytics,
+      );
     });
 
     it('should increment corruptionEvents', async () => {
@@ -234,8 +256,12 @@ describe('SaveAnalyticsService', () => {
 
   describe('recordRecoveryAttempt', () => {
     beforeEach(() => {
-      analyticsRepo.findOne.mockResolvedValue({ ...mockAnalytics } as SaveGameAnalytics);
-      analyticsRepo.save.mockImplementation(async (entity) => entity as SaveGameAnalytics);
+      analyticsRepo.findOne.mockResolvedValue({
+        ...mockAnalytics,
+      } as SaveGameAnalytics);
+      analyticsRepo.save.mockImplementation(
+        async (entity) => entity as SaveGameAnalytics,
+      );
     });
 
     it('should increment recoveryAttempts', async () => {
@@ -262,7 +288,9 @@ describe('SaveAnalyticsService', () => {
 
   describe('getAnalytics', () => {
     it('should return analytics summary', async () => {
-      analyticsRepo.findOne.mockResolvedValue(mockAnalytics as SaveGameAnalytics);
+      analyticsRepo.findOne.mockResolvedValue(
+        mockAnalytics as SaveGameAnalytics,
+      );
 
       const result = await service.getAnalytics(mockUserId);
 

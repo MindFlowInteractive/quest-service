@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('leaderboards')
 export class Leaderboard {
@@ -28,4 +34,4 @@ export class Leaderboard {
 
   @UpdateDateColumn()
   updatedAt: Date;
-} 
+}

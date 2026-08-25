@@ -1,7 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, Controller } from '@nestjs/common';
-import { GrpcMethod, GrpcModule as NestGrpcModule } from '@nestjs/microservices';
-import { GrpcModule, GrpcClientService, createGrpcServerOptions } from '../../src';
+import {
+  GrpcMethod,
+  GrpcModule as NestGrpcModule,
+} from '@nestjs/microservices';
+import {
+  GrpcModule,
+  GrpcClientService,
+  createGrpcServerOptions,
+} from '../../src';
 import { join } from 'path';
 
 // Mock service implementation
@@ -45,7 +52,7 @@ describe('gRPC Integration Tests', () => {
     }).compile();
 
     serverApp = serverModule.createNestApplication();
-    
+
     const grpcServerOptions = createGrpcServerOptions({
       name: 'test-service',
       host: 'localhost',
@@ -55,7 +62,7 @@ describe('gRPC Integration Tests', () => {
     });
 
     serverApp.connectMicroservice(grpcServerOptions);
-    
+
     await serverApp.startAllMicroservices();
     await serverApp.init();
 
@@ -98,12 +105,10 @@ describe('gRPC Integration Tests', () => {
 
   describe('Basic gRPC Communication', () => {
     it('should make a successful gRPC call', async () => {
-      const response = await grpcClient.call<{ name: string }, { message: string }>(
-        'test-service',
-        'TestService',
-        'sayHello',
-        { name: 'World' },
-      );
+      const response = await grpcClient.call<
+        { name: string },
+        { message: string }
+      >('test-service', 'TestService', 'sayHello', { name: 'World' });
 
       expect(response).toBeDefined();
       expect(response.message).toBe('Hello World!');

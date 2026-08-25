@@ -72,13 +72,18 @@ describe('CacheWarmingModule', () => {
   });
 
   it('should have all controllers defined', () => {
-    const moduleMetadata = Reflect.getMetadata('controllers', CacheWarmingModule);
+    const moduleMetadata = Reflect.getMetadata(
+      'controllers',
+      CacheWarmingModule,
+    );
     expect(moduleMetadata).toContain(CacheWarmingController);
   });
 
   it('should import TypeOrmModule with correct entities', () => {
     const moduleMetadata = Reflect.getMetadata('imports', CacheWarmingModule);
-    const typeOrmModuleImport = moduleMetadata.find(imp => imp.imports && imp.imports[0]?.name === 'TypeOrmModule');
+    const typeOrmModuleImport = moduleMetadata.find(
+      (imp) => imp.imports && imp.imports[0]?.name === 'TypeOrmModule',
+    );
     expect(typeOrmModuleImport).toBeDefined();
   });
 

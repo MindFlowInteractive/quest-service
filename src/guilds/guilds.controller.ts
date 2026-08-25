@@ -15,7 +15,11 @@ import { GuildsService } from './guilds.service';
 import { CreateGuildDto } from './dto/create-guild.dto';
 import { JoinGuildDto } from './dto/join-guild.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { GuildResponseDto, GuildLeaderboardResponseDto, GuildMemberResponseDto } from './dto/guild-response.dto';
+import {
+  GuildResponseDto,
+  GuildLeaderboardResponseDto,
+  GuildMemberResponseDto,
+} from './dto/guild-response.dto';
 
 @Controller('guilds')
 export class GuildsController {
@@ -85,7 +89,9 @@ export class GuildsController {
   }
 
   @Get(':id')
-  async getGuildProfile(@Param('id') guildId: string): Promise<GuildResponseDto> {
+  async getGuildProfile(
+    @Param('id') guildId: string,
+  ): Promise<GuildResponseDto> {
     return this.guildsService.getGuildProfile(guildId);
   }
 

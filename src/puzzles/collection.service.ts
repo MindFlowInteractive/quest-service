@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Not, IsNull } from 'typeorm';
 import { Collection } from './entities/collection.entity';
@@ -22,7 +26,8 @@ export class CollectionsService {
   ) {}
 
   async create(createCollectionDto: CreateCollectionDto): Promise<Collection> {
-    const { puzzleIds, categoryIds, rewards, ...collectionData } = createCollectionDto;
+    const { puzzleIds, categoryIds, rewards, ...collectionData } =
+      createCollectionDto;
 
     const collection = this.collectionsRepository.create({
       ...collectionData,
@@ -31,7 +36,9 @@ export class CollectionsService {
 
     // Associate puzzles
     if (puzzleIds && puzzleIds.length > 0) {
-      const puzzles = await this.puzzlesRepository.findBy({ id: In(puzzleIds) });
+      const puzzles = await this.puzzlesRepository.findBy({
+        id: In(puzzleIds),
+      });
       if (puzzles.length !== puzzleIds.length) {
         throw new BadRequestException('One or more puzzle IDs not found.');
       }
@@ -40,7 +47,9 @@ export class CollectionsService {
 
     // Associate categories
     if (categoryIds && categoryIds.length > 0) {
-      const categories = await this.categoriesRepository.findBy({ id: In(categoryIds) });
+      const categories = await this.categoriesRepository.findBy({
+        id: In(categoryIds),
+      });
       if (categories.length !== categoryIds.length) {
         throw new BadRequestException('One or more category IDs not found.');
       }
@@ -67,10 +76,14 @@ export class CollectionsService {
     return collection;
   }
 
-  async update(id: string, updateCollectionDto: UpdateCollectionDto): Promise<Collection> {
+  async update(
+    id: string,
+    updateCollectionDto: UpdateCollectionDto,
+  ): Promise<Collection> {
     const collection = await this.findOne(id);
 
-    const { puzzleIds, categoryIds, rewards, ...collectionData } = updateCollectionDto;
+    const { puzzleIds, categoryIds, rewards, ...collectionData } =
+      updateCollectionDto;
 
     Object.assign(collection, collectionData);
 
@@ -83,7 +96,9 @@ export class CollectionsService {
     // Re-associate puzzles if provided
     if (puzzleIds !== undefined) {
       if (puzzleIds.length > 0) {
-        const puzzles = await this.puzzlesRepository.findBy({ id: In(puzzleIds) });
+        const puzzles = await this.puzzlesRepository.findBy({
+          id: In(puzzleIds),
+        });
         if (puzzles.length !== puzzleIds.length) {
           throw new BadRequestException('One or more puzzle IDs not found.');
         }
@@ -96,7 +111,9 @@ export class CollectionsService {
     // Re-associate categories if provided
     if (categoryIds !== undefined) {
       if (categoryIds.length > 0) {
-        const categories = await this.categoriesRepository.findBy({ id: In(categoryIds) });
+        const categories = await this.categoriesRepository.findBy({
+          id: In(categoryIds),
+        });
         if (categories.length !== categoryIds.length) {
           throw new BadRequestException('One or more category IDs not found.');
         }
@@ -140,7 +157,9 @@ export class CollectionsService {
     //   // await economyService.addCurrency(userId, reward.value.amount);
     // }
 
-    console.log(`Granting ${collection.rewards.length} rewards to user ${userId} for completing collection ${collectionId}.`);
+    console.log(
+      `Granting ${collection.rewards.length} rewards to user ${userId} for completing collection ${collectionId}.`,
+    );
     // For now, just log the action.
   }
 

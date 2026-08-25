@@ -33,8 +33,14 @@ describe('PuzzlesService', () => {
       providers: [
         PuzzlesService,
         { provide: getRepositoryToken(Puzzle), useFactory: mockRepository },
-        { provide: getRepositoryToken(PuzzleProgress), useFactory: mockRepository },
-        { provide: getRepositoryToken(PuzzleRating), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(PuzzleProgress),
+          useFactory: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(PuzzleRating),
+          useFactory: mockRepository,
+        },
       ],
     }).compile();
 

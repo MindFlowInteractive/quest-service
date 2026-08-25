@@ -51,11 +51,15 @@ describe('SaveCompressionService', () => {
         playerState: {
           inventory: Array(50).fill('item'),
           stats: Object.fromEntries(
-            Array(20).fill(0).map((_, i) => [`stat${i}`, i * 10]),
+            Array(20)
+              .fill(0)
+              .map((_, i) => [`stat${i}`, i * 10]),
           ),
         },
         progressState: {
-          completedLevels: Array(100).fill('level').map((l, i) => `${l}${i}`),
+          completedLevels: Array(100)
+            .fill('level')
+            .map((l, i) => `${l}${i}`),
         },
       };
 
@@ -113,10 +117,15 @@ describe('SaveCompressionService', () => {
       };
 
       // Compress first
-      const { compressedData, compressionInfo } = await service.compress(originalData);
+      const { compressedData, compressionInfo } = await service.compress(
+        originalData,
+      );
 
       // Then decompress
-      const decompressed = await service.decompress(compressedData, compressionInfo);
+      const decompressed = await service.decompress(
+        compressedData,
+        compressionInfo,
+      );
 
       expect(decompressed).toEqual(originalData);
     });
@@ -196,8 +205,13 @@ describe('SaveCompressionService', () => {
       ];
 
       for (const original of testCases) {
-        const { compressedData, compressionInfo } = await service.compress(original);
-        const restored = await service.decompress(compressedData, compressionInfo);
+        const { compressedData, compressionInfo } = await service.compress(
+          original,
+        );
+        const restored = await service.decompress(
+          compressedData,
+          compressionInfo,
+        );
 
         expect(restored).toEqual(original);
       }

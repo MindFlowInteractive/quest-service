@@ -62,7 +62,10 @@ export class TournamentEventParticipant {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => TournamentEvent, tournamentEvent => tournamentEvent.participants)
+  @ManyToOne(
+    () => TournamentEvent,
+    (tournamentEvent) => tournamentEvent.participants,
+  )
   @JoinColumn({ name: 'tournamentEventId' })
   tournamentEvent: TournamentEvent;
 }

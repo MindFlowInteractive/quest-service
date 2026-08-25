@@ -4,4 +4,4 @@ export class CreateLeaderboardEntryDto {
   score: number;
   timeTaken?: number;
   efficiency?: number;
-} 
+}

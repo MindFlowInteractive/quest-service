@@ -8,7 +8,9 @@ export class UpdateTicketDto {
   @IsEnum(TicketStatus)
   status?: TicketStatus;
 
-  @ApiPropertyOptional({ description: 'UUID of the support agent to assign the ticket to' })
+  @ApiPropertyOptional({
+    description: 'UUID of the support agent to assign the ticket to',
+  })
   @IsOptional()
   @IsUUID()
   assignedTo?: string;

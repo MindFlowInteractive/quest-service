@@ -27,7 +27,7 @@ export class DifficultyFeedbackService {
    * Returns all feedback for a given puzzle.
    */
   getFeedbackForPuzzle(puzzleId: string): DifficultyFeedback[] {
-    return this.feedbacks.filter(f => f.puzzleId === puzzleId);
+    return this.feedbacks.filter((f) => f.puzzleId === puzzleId);
   }
 
   /**

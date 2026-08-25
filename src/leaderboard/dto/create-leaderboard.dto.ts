@@ -4,4 +4,4 @@ export class CreateLeaderboardDto {
   period: string; // e.g., daily, weekly, all-time
   visibility?: 'public' | 'friends' | 'private';
   allowedUserIds?: number[];
-} 
+}

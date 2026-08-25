@@ -37,7 +37,8 @@ interface ParameterOptimizationHistory {
 export class ParameterTuningService {
   private readonly logger = new Logger(ParameterTuningService.name);
 
-  private readonly algorithmConfigs: Map<string, GenerationAlgorithmConfig> = new Map();
+  private readonly algorithmConfigs: Map<string, GenerationAlgorithmConfig> =
+    new Map();
   private readonly parameterHistory: ParameterOptimizationHistory[] = [];
 
   constructor() {
@@ -89,12 +90,15 @@ export class ParameterTuningService {
       constraints: [
         {
           name: 'constraintGridMatch',
-          condition: (config) => config.parameters?.constraintCount <= config.parameters?.gridSize * 3,
+          condition: (config) =>
+            config.parameters?.constraintCount <=
+            config.parameters?.gridSize * 3,
           message: 'Constraint count should not exceed grid size * 3',
         },
         {
           name: 'gridVariableMatch',
-          condition: (config) => config.parameters?.gridSize === config.parameters?.variableCount,
+          condition: (config) =>
+            config.parameters?.gridSize === config.parameters?.variableCount,
           message: 'Grid size should match variable count for logic puzzles',
         },
       ],
@@ -139,7 +143,8 @@ export class ParameterTuningService {
       constraints: [
         {
           name: 'missingCountLimit',
-          condition: (config) => config.parameters?.missingCount < config.parameters?.sequenceLength,
+          condition: (config) =>
+            config.parameters?.missingCount < config.parameters?.sequenceLength,
           message: 'Missing count must be less than sequence length',
         },
       ],
@@ -277,7 +282,11 @@ export class ParameterTuningService {
   } {
     const config = this.algorithmConfigs.get(puzzleType);
     if (!config) {
-      return { valid: false, errors: [`Unknown puzzle type: ${puzzleType}`], warnings: [] };
+      return {
+        valid: false,
+        errors: [`Unknown puzzle type: ${puzzleType}`],
+        warnings: [],
+      };
     }
 
     const errors: string[] = [];
@@ -293,7 +302,9 @@ export class ParameterTuningService {
 
       // Type validation
       if (typeof value !== paramDef.type && paramDef.type !== 'array') {
-        errors.push(`Parameter ${paramDef.name} must be of type ${paramDef.type}`);
+        errors.push(
+          `Parameter ${paramDef.name} must be of type ${paramDef.type}`,
+        );
         continue;
       }
 
@@ -354,7 +365,10 @@ export class ParameterTuningService {
     for (const param of config.parameters) {
       if (param.type === 'number') {
         const adjusted = Math.round(param.default * multiplier);
-        const clamped = Math.max(param.min || 0, Math.min(param.max || adjusted, adjusted));
+        const clamped = Math.max(
+          param.min || 0,
+          Math.min(param.max || adjusted, adjusted),
+        );
         optimized[param.name] = clamped;
       } else if (param.type === 'boolean') {
         optimized[param.name] = param.default;
@@ -383,7 +397,8 @@ export class ParameterTuningService {
 
     // Calculate metrics for current parameters
     const originalQuality = this.calculateAverageQuality(generatedPuzzles);
-    const originalSolvability = this.calculateAverageSolvability(generatedPuzzles);
+    const originalSolvability =
+      this.calculateAverageSolvability(generatedPuzzles);
 
     // Generate candidate parameter sets
     const candidates = this.generateCandidateParameters(config, currentParams);
@@ -438,7 +453,13 @@ export class ParameterTuningService {
         const max = param.max || base * 2;
 
         // Create variations
-        const variations = [base * 0.8, base * 0.9, base, base * 1.1, base * 1.2];
+        const variations = [
+          base * 0.8,
+          base * 0.9,
+          base,
+          base * 1.1,
+          base * 1.2,
+        ];
 
         for (const variation of variations) {
           const clamped = Math.max(min, Math.min(max, variation));
@@ -455,7 +476,10 @@ export class ParameterTuningService {
   /**
    * Simulates quality for parameter set
    */
-  private simulateQuality(params: Record<string, any>, config: GenerationAlgorithmConfig): number {
+  private simulateQuality(
+    params: Record<string, any>,
+    config: GenerationAlgorithmConfig,
+  ): number {
     // Simplified simulation based on parameter values
     let score = 0.5;
 
@@ -499,7 +523,10 @@ export class ParameterTuningService {
   private calculateAverageSolvability(puzzles: GeneratedPuzzle[]): number {
     if (puzzles.length === 0) return 0.5;
 
-    const totalSolvability = puzzles.reduce((sum, p) => sum + p.metadata.solvabilityScore, 0);
+    const totalSolvability = puzzles.reduce(
+      (sum, p) => sum + p.metadata.solvabilityScore,
+      0,
+    );
 
     return totalSolvability / puzzles.length;
   }
@@ -591,7 +618,10 @@ export class ParameterTuningService {
     parameters: Record<string, any>;
   } {
     const config = JSON.parse(configJson);
-    const validation = this.validateParameters(config.puzzleType, config.parameters);
+    const validation = this.validateParameters(
+      config.puzzleType,
+      config.parameters,
+    );
 
     if (!validation.valid) {
       throw new Error(`Invalid configuration: ${validation.errors.join(', ')}`);

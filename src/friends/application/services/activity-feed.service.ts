@@ -1,6 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { ActivityEvent, ActivityEventType, PrivacyLevel, UserId } from '../../domain/entities/domain-entities';
+import {
+  ActivityEvent,
+  ActivityEventType,
+  PrivacyLevel,
+  UserId,
+} from '../../domain/entities/domain-entities';
 import {
   IActivityEventRepository,
   ICacheService,
@@ -95,7 +100,10 @@ export class ActivityFeedService {
     }
 
     // Get user's friends
-    const friendships = await this.friendshipRepo.findFriendsOfUser(userId, 10000);
+    const friendships = await this.friendshipRepo.findFriendsOfUser(
+      userId,
+      10000,
+    );
     const friendIds = friendships.map((f) => f.friendId.value);
 
     if (friendIds.length === 0) {
@@ -104,12 +112,12 @@ export class ActivityFeedService {
 
     // Try to get from cache first (fan-out-on-write format)
     const cacheKey = `feed:user:${userId}`;
-    let feedEventIds = await this.cacheService.zrevrange(
+    let feedEventIds = (await this.cacheService.zrevrange(
       cacheKey,
       0,
       limit * 2 - 1,
       false,
-    ) as string[];
+    )) as string[];
 
     // If cache miss, fetch from DB and populate
     if (feedEventIds.length === 0) {
@@ -146,7 +154,9 @@ export class ActivityFeedService {
     }
 
     // Fetch full event details
-    const events = await this.activityEventRepo.findByIds(slicedIds.slice(0, limit));
+    const events = await this.activityEventRepo.findByIds(
+      slicedIds.slice(0, limit),
+    );
 
     // Filter by visibility
     const filtered: ActivityEvent[] = [];
@@ -190,7 +200,10 @@ export class ActivityFeedService {
     }
 
     // Get actor's friends
-    const friendships = await this.friendshipRepo.findFriendsOfUser(actorUserId, 10000);
+    const friendships = await this.friendshipRepo.findFriendsOfUser(
+      actorUserId,
+      10000,
+    );
 
     if (friendships.length === 0) {
       return;

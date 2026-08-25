@@ -3,7 +3,7 @@ import { CreatePuzzleDto } from './create-puzzle.dto';
 import { IsOptional, IsBoolean, IsString, MaxLength } from 'class-validator';
 
 export class UpdatePuzzleDto extends PartialType(
-  OmitType(CreatePuzzleDto, ['parentPuzzleId'] as const)
+  OmitType(CreatePuzzleDto, ['parentPuzzleId'] as const),
 ) {
   @IsOptional()
   @IsBoolean()
