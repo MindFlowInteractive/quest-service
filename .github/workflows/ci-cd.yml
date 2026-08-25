@@ -10,10 +10,6 @@ env:
   NODE_VERSION: '20.x'
   POSTGRES_VERSION: '14'
 
-defaults:
-  run:
-    working-directory: microservices/config-service
-
 jobs:
   # Code Quality Checks
   lint-and-format:
@@ -29,7 +25,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: microservices/config-service/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -57,7 +53,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: microservices/config-service/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -88,7 +84,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: microservices/config-service/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -147,7 +143,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: microservices/config-service/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -209,7 +205,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: microservices/config-service/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -268,7 +264,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: microservices/config-service/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: 📋 Install dependencies
         run: npm ci
@@ -332,7 +328,7 @@ jobs:
       - name: 🏗️ Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: microservices/config-service
+          context: .
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
