@@ -1,0 +1,7 @@
+export enum PuzzleSessionStatus {
+  WAITING = 'WAITING',
+  ACTIVE = 'ACTIVE',
+  COMPLETED = 'COMPLETED',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+}
