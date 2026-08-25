@@ -31,7 +31,7 @@ jobs:
         run: npm run format:check
 
       - name: TypeScript Type Check
-        run: npm run type-check
+        run: npm run typecheck
 
       - name: Run Unit Tests
         run: npm test
