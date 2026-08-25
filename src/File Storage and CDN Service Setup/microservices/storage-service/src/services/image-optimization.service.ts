@@ -1,7 +1,7 @@
-import { Injectable, Inject } from "@nestjs/common";
-import { ConfigType } from "@nestjs/config";
-import sharp from "sharp";
-import storageConfig from "../config/storage.config";
+import { Injectable, Inject } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
+import sharp from 'sharp';
+import storageConfig from '../config/storage.config';
 
 export interface OptimizationResult {
   buffer: Buffer;
@@ -26,7 +26,7 @@ export class ImageOptimizationService {
     // Resize if needed
     if (imageMetadata.width > maxWidth || imageMetadata.height > maxHeight) {
       processedImage = processedImage.resize(maxWidth, maxHeight, {
-        fit: "inside",
+        fit: 'inside',
         withoutEnlargement: true,
       });
     }
@@ -49,6 +49,6 @@ export class ImageOptimizationService {
   }
 
   isImage(mimeType: string): boolean {
-    return mimeType.startsWith("image/");
+    return mimeType.startsWith('image/');
   }
 }

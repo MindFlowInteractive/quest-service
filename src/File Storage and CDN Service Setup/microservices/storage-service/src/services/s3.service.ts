@@ -1,13 +1,13 @@
-import { Injectable, Inject } from "@nestjs/common";
-import { ConfigType } from "@nestjs/config";
+import { Injectable, Inject } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import storageConfig from "../config/storage.config";
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import storageConfig from '../config/storage.config';
 
 @Injectable()
 export class S3Service {

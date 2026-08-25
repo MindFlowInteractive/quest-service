@@ -1,2 +1,1 @@
-export declare class CacheWarmingModule {
-}
+export declare class CacheWarmingModule {}

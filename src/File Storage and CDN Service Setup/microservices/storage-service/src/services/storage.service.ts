@@ -3,17 +3,17 @@ import {
   NotFoundException,
   ForbiddenException,
   Inject,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { ConfigType } from "@nestjs/config";
-import * as crypto from "crypto";
-import { File, Upload, Metadata } from "../entities";
-import { UploadFileDto } from "../dto";
-import { S3Service } from "./s3.service";
-import { ImageOptimizationService } from "./image-optimization.service";
-import { FileValidationService } from "./file-validation.service";
-import storageConfig from "../config/storage.config";
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ConfigType } from '@nestjs/config';
+import * as crypto from 'crypto';
+import { File, Upload, Metadata } from '../entities';
+import { UploadFileDto } from '../dto';
+import { S3Service } from './s3.service';
+import { ImageOptimizationService } from './image-optimization.service';
+import { FileValidationService } from './file-validation.service';
+import storageConfig from '../config/storage.config';
 
 @Injectable()
 export class StorageService {
@@ -41,12 +41,12 @@ export class StorageService {
     // Create upload record
     const upload = this.uploadRepository.create({
       userId: uploadDto.userId,
-      status: "pending",
+      status: 'pending',
     });
     await this.uploadRepository.save(upload);
 
     try {
-      upload.status = "processing";
+      upload.status = 'processing';
       await this.uploadRepository.save(upload);
 
       // Generate unique filename
@@ -58,8 +58,9 @@ export class StorageService {
       let metadata: Record<string, any> = uploadDto.metadata || {};
 
       if (this.imageOptimizationService.isImage(file.mimetype)) {
-        const optimized =
-          await this.imageOptimizationService.optimizeImage(buffer);
+        const optimized = await this.imageOptimizationService.optimizeImage(
+          buffer,
+        );
         buffer = optimized.buffer;
         metadata = { ...metadata, ...optimized.metadata };
       }
@@ -90,7 +91,7 @@ export class StorageService {
 
       // Update upload record
       upload.fileId = fileRecord.id;
-      upload.status = "completed";
+      upload.status = 'completed';
       await this.uploadRepository.save(upload);
 
       // Save metadata
@@ -100,7 +101,7 @@ export class StorageService {
 
       return fileRecord;
     } catch (error) {
-      upload.status = "failed";
+      upload.status = 'failed';
       upload.errorMessage = error.message;
       await this.uploadRepository.save(upload);
       throw error;
@@ -113,12 +114,12 @@ export class StorageService {
     });
 
     if (!file) {
-      throw new NotFoundException("File not found");
+      throw new NotFoundException('File not found');
     }
 
     // Check access control
     if (!file.isPublic && file.userId !== userId) {
-      throw new ForbiddenException("Access denied");
+      throw new ForbiddenException('Access denied');
     }
 
     return file;
@@ -137,7 +138,7 @@ export class StorageService {
     const file = await this.getFile(fileId, userId);
 
     if (file.userId !== userId) {
-      throw new ForbiddenException("Cannot delete file");
+      throw new ForbiddenException('Cannot delete file');
     }
 
     // Soft delete
@@ -157,7 +158,7 @@ export class StorageService {
     const originalFile = await this.getFile(fileId, userId);
 
     if (originalFile.userId !== userId) {
-      throw new ForbiddenException("Cannot version file");
+      throw new ForbiddenException('Cannot version file');
     }
 
     const newVersion = await this.uploadFile(newFile, {
@@ -181,16 +182,16 @@ export class StorageService {
     limit: number = 20,
   ): Promise<{ files: File[]; total: number }> {
     const query = this.fileRepository
-      .createQueryBuilder("file")
-      .where("file.userId = :userId", { userId })
-      .andWhere("file.deletedAt IS NULL");
+      .createQueryBuilder('file')
+      .where('file.userId = :userId', { userId })
+      .andWhere('file.deletedAt IS NULL');
 
     if (category) {
-      query.andWhere("file.category = :category", { category });
+      query.andWhere('file.category = :category', { category });
     }
 
     const [files, total] = await query
-      .orderBy("file.createdAt", "DESC")
+      .orderBy('file.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -231,8 +232,8 @@ export class StorageService {
   }
 
   private generateFileName(originalName: string): string {
-    const ext = originalName.split(".").pop();
-    const hash = crypto.randomBytes(16).toString("hex");
+    const ext = originalName.split('.').pop();
+    const hash = crypto.randomBytes(16).toString('hex');
     return `${Date.now()}-${hash}.${ext}`;
   }
 
