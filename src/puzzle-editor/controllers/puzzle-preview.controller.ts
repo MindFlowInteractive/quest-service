@@ -15,7 +15,12 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PuzzleEditorService } from '../services/puzzle-editor.service';
 import { PuzzlePreviewService } from '../services/puzzle-preview.service';
@@ -85,7 +90,12 @@ export class PuzzlePreviewController {
     // Verify user has access to editor
     await this.editorService.getEditor(editorId, req.user.id);
 
-    return this.previewService.recordMove(sessionId, dto.action, dto.details || {}, dto.metadata);
+    return this.previewService.recordMove(
+      sessionId,
+      dto.action,
+      dto.details || {},
+      dto.metadata,
+    );
   }
 
   /**

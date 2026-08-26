@@ -16,27 +16,21 @@ import { Role } from '../auth/entities/role.entity';
 import { PrivacyModule } from '../privacy/privacy.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([AdminAuditLog, User, Role]),
-        PuzzlesModule,
-        AuthModule,
-        AnalyticsModule,
-        PrivacyModule,
-    ],
-    controllers: [
-        AdminPuzzlesController,
-        AdminUsersController,
-        AdminAnalyticsController,
-        AdminModerationController,
-        AdminMonitoringController,
-    ],
-    providers: [
-        AdminAuditLogService,
-        AdminUsersService,
-    ],
-    exports: [
-        AdminAuditLogService,
-        AdminUsersService,
-    ],
+  imports: [
+    TypeOrmModule.forFeature([AdminAuditLog, User, Role]),
+    PuzzlesModule,
+    AuthModule,
+    AnalyticsModule,
+    PrivacyModule,
+  ],
+  controllers: [
+    AdminPuzzlesController,
+    AdminUsersController,
+    AdminAnalyticsController,
+    AdminModerationController,
+    AdminMonitoringController,
+  ],
+  providers: [AdminAuditLogService, AdminUsersService],
+  exports: [AdminAuditLogService, AdminUsersService],
 })
-export class AdminModule { }
+export class AdminModule {}

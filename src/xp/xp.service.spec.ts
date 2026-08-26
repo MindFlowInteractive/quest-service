@@ -45,7 +45,9 @@ describe('XpService', () => {
 
       return entity;
     }),
-    count: jest.fn(async ({ where }) => (matchers.count ? matchers.count(where) : 0)),
+    count: jest.fn(async ({ where }) =>
+      matchers.count ? matchers.count(where) : 0,
+    ),
     update: jest.fn(async (criteria, partial) => {
       if (matchers.update) {
         matchers.update(criteria, partial);
@@ -70,7 +72,8 @@ describe('XpService', () => {
     eventEmitter = { emit: jest.fn() };
 
     const playerLevelRepo = createRepository(playerLevels, {
-      findOne: (where) => playerLevels.find((level) => level.userId === where.userId),
+      findOne: (where) =>
+        playerLevels.find((level) => level.userId === where.userId),
     });
 
     const xpAwardRepo = createRepository(xpAwards, {

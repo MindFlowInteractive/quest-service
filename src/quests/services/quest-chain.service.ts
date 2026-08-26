@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,7 +33,9 @@ export class QuestChainService {
 
       return await this.questChainRepository.save(chain);
     } catch (error) {
-      throw new BadRequestException(`Failed to create quest chain: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to create quest chain: ${error.message}`,
+      );
     }
   }
 
@@ -47,7 +53,13 @@ export class QuestChainService {
   }
 
   async getChains(query: GetQuestChainsDto): Promise<QuestChain[]> {
-    const { status, limit = 10, offset = 0, sortBy = 'createdAt', sortOrder = 'DESC' } = query;
+    const {
+      status,
+      limit = 10,
+      offset = 0,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+    } = query;
 
     const qb = this.questChainRepository.createQueryBuilder('questChain');
 
@@ -55,14 +67,15 @@ export class QuestChainService {
       qb.andWhere('questChain.status = :status', { status });
     }
 
-    qb.orderBy(`questChain.${sortBy}`, sortOrder)
-      .skip(offset)
-      .take(limit);
+    qb.orderBy(`questChain.${sortBy}`, sortOrder).skip(offset).take(limit);
 
     return await qb.getMany();
   }
 
-  async updateChain(id: string, updateData: UpdateQuestChainDto): Promise<QuestChain> {
+  async updateChain(
+    id: string,
+    updateData: UpdateQuestChainDto,
+  ): Promise<QuestChain> {
     const chain = await this.getChainById(id);
 
     Object.assign(chain, updateData);
@@ -70,7 +83,9 @@ export class QuestChainService {
     try {
       return await this.questChainRepository.save(chain);
     } catch (error) {
-      throw new BadRequestException(`Failed to update quest chain: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to update quest chain: ${error.message}`,
+      );
     }
   }
 
@@ -80,11 +95,16 @@ export class QuestChainService {
     try {
       await this.questChainRepository.remove(chain);
     } catch (error) {
-      throw new BadRequestException(`Failed to delete quest chain: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to delete quest chain: ${error.message}`,
+      );
     }
   }
 
-  async addPuzzleToChain(chainId: string, puzzleData: AddPuzzleToChainDto): Promise<QuestChainPuzzle> {
+  async addPuzzleToChain(
+    chainId: string,
+    puzzleData: AddPuzzleToChainDto,
+  ): Promise<QuestChainPuzzle> {
     const chain = await this.getChainById(chainId);
 
     // Check if puzzle already exists in this chain
@@ -96,7 +116,9 @@ export class QuestChainService {
     });
 
     if (existingChainPuzzle) {
-      throw new BadRequestException('Puzzle already exists in this quest chain');
+      throw new BadRequestException(
+        'Puzzle already exists in this quest chain',
+      );
     }
 
     try {
@@ -108,11 +130,16 @@ export class QuestChainService {
 
       return await this.questChainPuzzleRepository.save(chainPuzzle);
     } catch (error) {
-      throw new BadRequestException(`Failed to add puzzle to chain: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to add puzzle to chain: ${error.message}`,
+      );
     }
   }
 
-  async removePuzzleFromChain(chainId: string, puzzleId: string): Promise<void> {
+  async removePuzzleFromChain(
+    chainId: string,
+    puzzleId: string,
+  ): Promise<void> {
     const chainPuzzle = await this.questChainPuzzleRepository.findOne({
       where: {
         questChainId: chainId,
@@ -127,7 +154,9 @@ export class QuestChainService {
     try {
       await this.questChainPuzzleRepository.remove(chainPuzzle);
     } catch (error) {
-      throw new BadRequestException(`Failed to remove puzzle from chain: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to remove puzzle from chain: ${error.message}`,
+      );
     }
   }
 
@@ -145,8 +174,10 @@ export class QuestChainService {
     const chainPuzzles = await this.getChainPuzzles(chainId);
 
     // Check for sequential order gaps
-    const sequenceOrders = chainPuzzles.map(cp => cp.sequenceOrder).sort((a, b) => a - b);
-    
+    const sequenceOrders = chainPuzzles
+      .map((cp) => cp.sequenceOrder)
+      .sort((a, b) => a - b);
+
     for (let i = 0; i < sequenceOrders.length - 1; i++) {
       if (sequenceOrders[i + 1] - sequenceOrders[i] > 1) {
         return false;
@@ -155,8 +186,9 @@ export class QuestChainService {
 
     // Check unlock conditions reference valid puzzles
     for (const chainPuzzle of chainPuzzles) {
-      for (const prevPuzzleId of chainPuzzle.unlockConditions.previousPuzzles || []) {
-        const exists = chainPuzzles.some(cp => cp.puzzleId === prevPuzzleId);
+      for (const prevPuzzleId of chainPuzzle.unlockConditions.previousPuzzles ||
+        []) {
+        const exists = chainPuzzles.some((cp) => cp.puzzleId === prevPuzzleId);
         if (!exists) {
           return false;
         }

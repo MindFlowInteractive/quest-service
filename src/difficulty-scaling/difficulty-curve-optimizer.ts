@@ -7,7 +7,10 @@ export class DifficultyCurveOptimizer {
    * Given a sequence of puzzle difficulties and player outcomes, returns a smoothed curve.
    * Uses a moving average to avoid abrupt jumps.
    */
-  static smoothDifficultyCurve(difficulties: number[], windowSize = 3): number[] {
+  static smoothDifficultyCurve(
+    difficulties: number[],
+    windowSize = 3,
+  ): number[] {
     if (difficulties.length === 0) return [];
     const smoothed: number[] = [];
     for (let i = 0; i < difficulties.length; i++) {
@@ -23,13 +26,24 @@ export class DifficultyCurveOptimizer {
    * Suggests the next optimal difficulty to maximize engagement, given recent player performance.
    * If player is breezing through, increase; if struggling, decrease.
    */
-  static suggestNextDifficulty(recentDifficulties: number[], recentOutcomes: boolean[]): number {
+  static suggestNextDifficulty(
+    recentDifficulties: number[],
+    recentOutcomes: boolean[],
+  ): number {
     // Simple heuristic: if last 3 are all success, increase; if all fail, decrease
     const n = Math.min(3, recentOutcomes.length);
     if (n === 0) return 3;
     const lastOutcomes = recentOutcomes.slice(-n);
-    if (lastOutcomes.every((x) => x)) return Math.min(5, recentDifficulties[recentDifficulties.length - 1] + 0.5);
-    if (lastOutcomes.every((x) => !x)) return Math.max(1, recentDifficulties[recentDifficulties.length - 1] - 0.5);
+    if (lastOutcomes.every((x) => x))
+      return Math.min(
+        5,
+        recentDifficulties[recentDifficulties.length - 1] + 0.5,
+      );
+    if (lastOutcomes.every((x) => !x))
+      return Math.max(
+        1,
+        recentDifficulties[recentDifficulties.length - 1] - 0.5,
+      );
     // Otherwise, maintain
     return recentDifficulties[recentDifficulties.length - 1];
   }

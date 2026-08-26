@@ -18,8 +18,7 @@ export function getTypeOrmConfig(): TypeOrmModuleOptions {
 
     synchronize: false,
 
-    logging:
-      process.env.NODE_ENV !== 'production',
+    logging: process.env.NODE_ENV !== 'production',
 
     ssl:
       process.env.DB_SSL === 'true'
@@ -28,33 +27,22 @@ export function getTypeOrmConfig(): TypeOrmModuleOptions {
           }
         : false,
 
-    migrations: [
-      'dist/database/migrations/*.js',
-    ],
+    migrations: ['dist/database/migrations/*.js'],
 
     migrationsRun: false,
 
     entities: ['dist/**/*.entity.js'],
 
     extra: {
-      max: Number(
-        process.env.DB_POOL_SIZE ?? 20,
-      ),
+      max: Number(process.env.DB_POOL_SIZE ?? 20),
 
-      min: Number(
-        process.env.DB_POOL_MIN ?? 5,
-      ),
+      min: Number(process.env.DB_POOL_MIN ?? 5),
 
-      idleTimeoutMillis: Number(
-        process.env.DB_IDLE_TIMEOUT ??
-          30000,
-      ),
+      idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT ?? 30000),
 
-      connectionTimeoutMillis:
-        Number(
-          process.env.DB_CONNECTION_TIMEOUT ??
-            5000,
-        ),
+      connectionTimeoutMillis: Number(
+        process.env.DB_CONNECTION_TIMEOUT ?? 5000,
+      ),
     },
   };
 }

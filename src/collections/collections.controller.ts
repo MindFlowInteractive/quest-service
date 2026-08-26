@@ -11,8 +11,15 @@ export class CollectionsController {
   }
 
   @Post(':id/assign')
-  assignPuzzle(@Param('id') collection_id: string, @Body() body: { puzzle_id: string; order_index?: number }) {
-    return this.svc.assignPuzzleToCollection(body.puzzle_id, collection_id, body.order_index || 0);
+  assignPuzzle(
+    @Param('id') collection_id: string,
+    @Body() body: { puzzle_id: string; order_index?: number },
+  ) {
+    return this.svc.assignPuzzleToCollection(
+      body.puzzle_id,
+      collection_id,
+      body.order_index || 0,
+    );
   }
 
   @Post('complete')
@@ -22,12 +29,22 @@ export class CollectionsController {
 
   @Get('featured')
   featured(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.svc.getFeaturedCollections(Number(page) || 0, Number(limit) || 20);
+    return this.svc.getFeaturedCollections(
+      Number(page) || 0,
+      Number(limit) || 20,
+    );
   }
 
   @Get('search')
   search(@Query() q: any) {
-    return this.svc.searchCollections(q.q, q.category, q.difficulty ? Number(q.difficulty) : undefined, q.reward_type, Number(q.page) || 0, Number(q.limit) || 20);
+    return this.svc.searchCollections(
+      q.q,
+      q.category,
+      q.difficulty ? Number(q.difficulty) : undefined,
+      q.reward_type,
+      Number(q.page) || 0,
+      Number(q.limit) || 20,
+    );
   }
 
   @Get(':id')

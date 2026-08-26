@@ -66,9 +66,11 @@ describe('BlockchainTransactionService', () => {
       ],
     }).compile();
 
-    service = module.get<BlockchainTransactionService>(BlockchainTransactionService);
+    service = module.get<BlockchainTransactionService>(
+      BlockchainTransactionService,
+    );
     repository = module.get<Repository<BlockchainTransaction>>(
-      getRepositoryToken(BlockchainTransaction)
+      getRepositoryToken(BlockchainTransaction),
     );
 
     jest.clearAllMocks();
@@ -92,7 +94,7 @@ describe('BlockchainTransactionService', () => {
       mockRepository.create.mockReturnValue(expectedTransaction);
       mockRepository.save.mockResolvedValue(expectedTransaction);
 
-      const result = await service.create(createDto as any);
+      const result = await service.create(createDto);
 
       expect(mockRepository.create).toHaveBeenCalledWith({
         ...createDto,
@@ -125,7 +127,7 @@ describe('BlockchainTransactionService', () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(service.findByHash('nonexistent')).rejects.toThrow(
-        'Transaction with hash nonexistent not found'
+        'Transaction with hash nonexistent not found',
       );
     });
   });
@@ -145,7 +147,10 @@ describe('BlockchainTransactionService', () => {
         confirmedAt: expect.any(Date),
       });
 
-      const result = await service.updateStatus('abc123', TransactionStatus.CONFIRMED);
+      const result = await service.updateStatus(
+        'abc123',
+        TransactionStatus.CONFIRMED,
+      );
 
       expect(result.status).toBe(TransactionStatus.CONFIRMED);
       expect(result.confirmedAt).toBeDefined();
@@ -165,7 +170,10 @@ describe('BlockchainTransactionService', () => {
         failedAt: expect.any(Date),
       });
 
-      const result = await service.updateStatus('abc123', TransactionStatus.FAILED);
+      const result = await service.updateStatus(
+        'abc123',
+        TransactionStatus.FAILED,
+      );
 
       expect(result.status).toBe(TransactionStatus.FAILED);
       expect(result.failedAt).toBeDefined();
@@ -188,7 +196,7 @@ describe('BlockchainTransactionService', () => {
 
       mockRepository.findAndCount.mockResolvedValue([transactions, 2]);
 
-      const result = await service.findAll(query as any);
+      const result = await service.findAll(query);
 
       expect(mockRepository.findAndCount).toHaveBeenCalledWith({
         where: {
@@ -236,7 +244,7 @@ describe('BlockchainTransactionService', () => {
         type: TransactionType.TOKEN_PAYMENT,
       });
       mockTransactionParserService.categorizeTransaction.mockReturnValue(
-        TransactionCategory.GAME_REWARD
+        TransactionCategory.GAME_REWARD,
       );
       mockTransactionParserService.extractUserId.mockReturnValue('user-uuid');
       mockRepository.save.mockResolvedValue({ id: 'uuid' });
@@ -246,7 +254,7 @@ describe('BlockchainTransactionService', () => {
       expect(result.count).toBe(1);
       expect(mockHorizonApiService.getAccountTransactions).toHaveBeenCalledWith(
         accountId,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

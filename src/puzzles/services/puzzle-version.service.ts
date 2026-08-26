@@ -156,7 +156,15 @@ export class PuzzleVersionService {
     const [versions, total] = await this.versionRepository.findAndCount({
       where: { puzzleId },
       order: { version: 'DESC' },
-      select: ['id', 'puzzleId', 'version', 'changedBy', 'changeNote', 'diff', 'createdAt'],
+      select: [
+        'id',
+        'puzzleId',
+        'version',
+        'changedBy',
+        'changeNote',
+        'diff',
+        'createdAt',
+      ],
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -173,7 +181,10 @@ export class PuzzleVersionService {
   /**
    * Retrieve the full snapshot for a specific version number.
    */
-  async getVersion(puzzleId: string, version: number): Promise<PuzzleVersionDetail> {
+  async getVersion(
+    puzzleId: string,
+    version: number,
+  ): Promise<PuzzleVersionDetail> {
     await this.assertPuzzleExists(puzzleId);
 
     const record = await this.versionRepository.findOne({
@@ -186,7 +197,7 @@ export class PuzzleVersionService {
       );
     }
 
-    return record as PuzzleVersionDetail;
+    return record;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -310,10 +321,14 @@ export class PuzzleVersionService {
     });
 
     if (!fromRecord) {
-      throw new NotFoundException(`Version ${fromVersion} not found for puzzle ${puzzleId}`);
+      throw new NotFoundException(
+        `Version ${fromVersion} not found for puzzle ${puzzleId}`,
+      );
     }
     if (!toRecord) {
-      throw new NotFoundException(`Version ${toVersion} not found for puzzle ${puzzleId}`);
+      throw new NotFoundException(
+        `Version ${toVersion} not found for puzzle ${puzzleId}`,
+      );
     }
 
     const changedFields: Array<{ field: string; before: any; after: any }> = [];

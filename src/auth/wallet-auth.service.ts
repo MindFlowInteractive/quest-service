@@ -17,7 +17,11 @@ export class WalletAuthService {
     return `Login challenge for ${walletAddress} at ${Date.now()}`;
   }
 
-  async verifySignature(walletAddress: string, signature: string, challenge: string) {
+  async verifySignature(
+    walletAddress: string,
+    signature: string,
+    challenge: string,
+  ) {
     const keypair = StellarSdk.Keypair.fromPublicKey(walletAddress);
     const messageBytes = Buffer.from(challenge);
     const signatureBytes = Buffer.from(signature, 'base64');
@@ -35,7 +39,7 @@ export class WalletAuthService {
     // Issue JWT
     const token = jwt.sign(
       { walletAddress: user.walletAddress, userId: user.userId },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET,
       { expiresIn: '1h' },
     );
 

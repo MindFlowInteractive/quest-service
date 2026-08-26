@@ -20,8 +20,12 @@ describe('Spectator API (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    sessionRepo = moduleFixture.get<Repository<GameSession>>(getRepositoryToken(GameSession));
-    spectatorRepo = moduleFixture.get<Repository<Spectator>>(getRepositoryToken(Spectator));
+    sessionRepo = moduleFixture.get<Repository<GameSession>>(
+      getRepositoryToken(GameSession),
+    );
+    spectatorRepo = moduleFixture.get<Repository<Spectator>>(
+      getRepositoryToken(Spectator),
+    );
   });
 
   afterEach(async () => {
@@ -119,7 +123,9 @@ describe('Spectator API (e2e)', () => {
       const savedSession = await sessionRepo.save(session);
 
       await request(app.getHttpServer())
-        .delete(`/game-sessions/${savedSession.id}/spectate?userId=non-spectator`)
+        .delete(
+          `/game-sessions/${savedSession.id}/spectate?userId=non-spectator`,
+        )
         .expect(404);
     });
   });
@@ -156,8 +162,12 @@ describe('Spectator API (e2e)', () => {
       expect(response.body.message).toBe('Active spectators retrieved');
       expect(response.body.count).toBe(2);
       expect(response.body.spectators).toHaveLength(2);
-      expect(response.body.spectators.map(s => s.userId)).toContain('spectator-1');
-      expect(response.body.spectators.map(s => s.userId)).toContain('spectator-2');
+      expect(response.body.spectators.map((s) => s.userId)).toContain(
+        'spectator-1',
+      );
+      expect(response.body.spectators.map((s) => s.userId)).toContain(
+        'spectator-2',
+      );
     });
 
     it('should return empty list for no spectators', async () => {
@@ -187,7 +197,9 @@ describe('Spectator API (e2e)', () => {
       const savedSession = await sessionRepo.save(session);
 
       const response = await request(app.getHttpServer())
-        .patch(`/game-sessions/${savedSession.id}/spectate/toggle?userId=owner-1`)
+        .patch(
+          `/game-sessions/${savedSession.id}/spectate/toggle?userId=owner-1`,
+        )
         .send({ spectatingAllowed: true })
         .expect(200);
 
@@ -204,7 +216,9 @@ describe('Spectator API (e2e)', () => {
       const savedSession = await sessionRepo.save(session);
 
       const response = await request(app.getHttpServer())
-        .patch(`/game-sessions/${savedSession.id}/spectate/toggle?userId=owner-1`)
+        .patch(
+          `/game-sessions/${savedSession.id}/spectate/toggle?userId=owner-1`,
+        )
         .send({ spectatingAllowed: false })
         .expect(200);
 
@@ -221,7 +235,9 @@ describe('Spectator API (e2e)', () => {
       const savedSession = await sessionRepo.save(session);
 
       await request(app.getHttpServer())
-        .patch(`/game-sessions/${savedSession.id}/spectate/toggle?userId=other-user`)
+        .patch(
+          `/game-sessions/${savedSession.id}/spectate/toggle?userId=other-user`,
+        )
         .send({ spectatingAllowed: false })
         .expect(403);
     });
@@ -244,7 +260,9 @@ describe('Spectator API (e2e)', () => {
       await spectatorRepo.save(spectator);
 
       await request(app.getHttpServer())
-        .patch(`/game-sessions/${savedSession.id}/spectate/toggle?userId=owner-1`)
+        .patch(
+          `/game-sessions/${savedSession.id}/spectate/toggle?userId=owner-1`,
+        )
         .send({ spectatingAllowed: false })
         .expect(200);
 

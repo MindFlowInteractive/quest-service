@@ -21,7 +21,13 @@ export class HintTemplate {
   description: string;
 
   @Column({ type: 'varchar', length: 50 })
-  puzzleType: 'multiple-choice' | 'fill-blank' | 'drag-drop' | 'code' | 'visual' | 'logic-grid';
+  puzzleType:
+    | 'multiple-choice'
+    | 'fill-blank'
+    | 'drag-drop'
+    | 'code'
+    | 'visual'
+    | 'logic-grid';
 
   @Column({ type: 'varchar', length: 50 })
   category: string;

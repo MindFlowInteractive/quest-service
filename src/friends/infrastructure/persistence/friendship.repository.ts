@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository, In } from 'typeorm';
-import {
-  Friendship,
-  UserId,
-} from '../../domain/entities/domain-entities';
+import { Friendship, UserId } from '../../domain/entities/domain-entities';
 import { IFriendshipRepository } from '../../domain/repositories/repository-interfaces';
 import { Entity, PrimaryColumn, Column, Index } from 'typeorm';
 
@@ -147,7 +144,10 @@ export class PostgresFriendshipRepository implements IFriendshipRepository {
     return this.exists(userId, friendId);
   }
 
-  async getMutualFriendsCount(userId1: string, userId2: string): Promise<number> {
+  async getMutualFriendsCount(
+    userId1: string,
+    userId2: string,
+  ): Promise<number> {
     // Query for friends of userId1 that are also friends of userId2
     const result = await this.dataSource.query(
       `

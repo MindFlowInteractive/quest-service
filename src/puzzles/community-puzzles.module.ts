@@ -32,7 +32,7 @@ import { CommunityPuzzlesController } from './controllers/community-puzzles.cont
     CommunityPuzzlesService,
     FeaturedPuzzlesService,
     CreatorRewardsService,
-    
+
     // Guards
     JwtAuthGuard,
   ],

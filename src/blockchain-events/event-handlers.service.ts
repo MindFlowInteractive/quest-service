@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { OnChainEvent, OnChainEventType } from './entities/onchain-event.entity';
+import {
+  OnChainEvent,
+  OnChainEventType,
+} from './entities/onchain-event.entity';
 
 interface RewardClaimedPayload {
   playerId: string;
@@ -84,34 +87,53 @@ export class EventHandlersService {
 
   private async handleRewardClaimed(event: OnChainEvent): Promise<void> {
     const payload = event.payload as RewardClaimedPayload;
-    this.logger.log(`Processing RewardClaimed event for player ${payload.playerId}, amount ${payload.amount}`);
+    this.logger.log(
+      `Processing RewardClaimed event for player ${payload.playerId}, amount ${payload.amount}`,
+    );
 
-    await this.updatePlayerBalanceCache(payload.playerId, payload.amount, payload.rewardType);
+    await this.updatePlayerBalanceCache(
+      payload.playerId,
+      payload.amount,
+      payload.rewardType,
+    );
     await this.logRewardTransaction(payload);
     await this.triggerRewardNotification(payload);
   }
 
   private async handleAchievementUnlocked(event: OnChainEvent): Promise<void> {
     const payload = event.payload as AchievementUnlockedPayload;
-    this.logger.log(`Processing AchievementUnlocked event for player ${payload.playerId}, achievement ${payload.achievementId}`);
+    this.logger.log(
+      `Processing AchievementUnlocked event for player ${payload.playerId}, achievement ${payload.achievementId}`,
+    );
 
-    await this.updatePlayerAchievements(payload.playerId, payload.achievementId);
+    await this.updatePlayerAchievements(
+      payload.playerId,
+      payload.achievementId,
+    );
     await this.unlockAchievementRewards(payload);
     await this.triggerAchievementNotification(payload);
   }
 
   private async handleNFTMinted(event: OnChainEvent): Promise<void> {
     const payload = event.payload as NFTMintedPayload;
-    this.logger.log(`Processing NFTMinted event for player ${payload.playerId}, token ${payload.tokenId}`);
+    this.logger.log(
+      `Processing NFTMinted event for player ${payload.playerId}, token ${payload.tokenId}`,
+    );
 
-    await this.updateNFTOwnership(payload.playerId, payload.tokenId, payload.contractAddress);
+    await this.updateNFTOwnership(
+      payload.playerId,
+      payload.tokenId,
+      payload.contractAddress,
+    );
     await this.indexNFTMetadata(payload.tokenId, payload.metadata);
     await this.triggerNFTMintNotification(payload);
   }
 
   private async handleTournamentCompleted(event: OnChainEvent): Promise<void> {
     const payload = event.payload as TournamentCompletedPayload;
-    this.logger.log(`Processing TournamentCompleted event for tournament ${payload.tournamentId}, player ${payload.playerId}`);
+    this.logger.log(
+      `Processing TournamentCompleted event for tournament ${payload.tournamentId}, player ${payload.playerId}`,
+    );
 
     await this.updateTournamentResults(payload);
     await this.distributeTournamentPrizes(payload);
@@ -121,79 +143,159 @@ export class EventHandlersService {
 
   private async handleStakeDeposited(event: OnChainEvent): Promise<void> {
     const payload = event.payload as StakeDepositedPayload;
-    this.logger.log(`Processing StakeDeposited event for player ${payload.playerId}, amount ${payload.amount}`);
+    this.logger.log(
+      `Processing StakeDeposited event for player ${payload.playerId}, amount ${payload.amount}`,
+    );
 
-    await this.updatePlayerStakeBalance(payload.playerId, payload.amount, payload.tokenAddress);
+    await this.updatePlayerStakeBalance(
+      payload.playerId,
+      payload.amount,
+      payload.tokenAddress,
+    );
     await this.recordStakingTransaction(payload);
     await this.calculateStakingRewards(payload);
     await this.triggerStakeNotification(payload);
   }
 
-  private async updatePlayerBalanceCache(playerId: string, amount: number, rewardType: string): Promise<void> {
-    this.logger.debug(`Updating balance cache for player ${playerId}, amount ${amount}, type ${rewardType}`);
+  private async updatePlayerBalanceCache(
+    playerId: string,
+    amount: number,
+    rewardType: string,
+  ): Promise<void> {
+    this.logger.debug(
+      `Updating balance cache for player ${playerId}, amount ${amount}, type ${rewardType}`,
+    );
   }
 
-  private async logRewardTransaction(payload: RewardClaimedPayload): Promise<void> {
-    this.logger.debug(`Logging reward transaction for player ${payload.playerId}`);
+  private async logRewardTransaction(
+    payload: RewardClaimedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Logging reward transaction for player ${payload.playerId}`,
+    );
   }
 
-  private async triggerRewardNotification(payload: RewardClaimedPayload): Promise<void> {
-    this.logger.debug(`Triggering reward notification for player ${payload.playerId}`);
+  private async triggerRewardNotification(
+    payload: RewardClaimedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Triggering reward notification for player ${payload.playerId}`,
+    );
   }
 
-  private async updatePlayerAchievements(playerId: string, achievementId: string): Promise<void> {
-    this.logger.debug(`Updating achievements for player ${playerId}, achievement ${achievementId}`);
+  private async updatePlayerAchievements(
+    playerId: string,
+    achievementId: string,
+  ): Promise<void> {
+    this.logger.debug(
+      `Updating achievements for player ${playerId}, achievement ${achievementId}`,
+    );
   }
 
-  private async unlockAchievementRewards(payload: AchievementUnlockedPayload): Promise<void> {
-    this.logger.debug(`Unlocking achievement rewards for player ${payload.playerId}`);
+  private async unlockAchievementRewards(
+    payload: AchievementUnlockedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Unlocking achievement rewards for player ${payload.playerId}`,
+    );
   }
 
-  private async triggerAchievementNotification(payload: AchievementUnlockedPayload): Promise<void> {
-    this.logger.debug(`Triggering achievement notification for player ${payload.playerId}`);
+  private async triggerAchievementNotification(
+    payload: AchievementUnlockedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Triggering achievement notification for player ${payload.playerId}`,
+    );
   }
 
-  private async updateNFTOwnership(playerId: string, tokenId: string, contractAddress: string): Promise<void> {
-    this.logger.debug(`Updating NFT ownership for player ${playerId}, token ${tokenId}`);
+  private async updateNFTOwnership(
+    playerId: string,
+    tokenId: string,
+    contractAddress: string,
+  ): Promise<void> {
+    this.logger.debug(
+      `Updating NFT ownership for player ${playerId}, token ${tokenId}`,
+    );
   }
 
-  private async indexNFTMetadata(tokenId: string, metadata: Record<string, any>): Promise<void> {
+  private async indexNFTMetadata(
+    tokenId: string,
+    metadata: Record<string, any>,
+  ): Promise<void> {
     this.logger.debug(`Indexing NFT metadata for token ${tokenId}`);
   }
 
-  private async triggerNFTMintNotification(payload: NFTMintedPayload): Promise<void> {
-    this.logger.debug(`Triggering NFT mint notification for player ${payload.playerId}`);
+  private async triggerNFTMintNotification(
+    payload: NFTMintedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Triggering NFT mint notification for player ${payload.playerId}`,
+    );
   }
 
-  private async updateTournamentResults(payload: TournamentCompletedPayload): Promise<void> {
-    this.logger.debug(`Updating tournament results for tournament ${payload.tournamentId}`);
+  private async updateTournamentResults(
+    payload: TournamentCompletedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Updating tournament results for tournament ${payload.tournamentId}`,
+    );
   }
 
-  private async distributeTournamentPrizes(payload: TournamentCompletedPayload): Promise<void> {
-    this.logger.debug(`Distributing tournament prizes for player ${payload.playerId}`);
+  private async distributeTournamentPrizes(
+    payload: TournamentCompletedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Distributing tournament prizes for player ${payload.playerId}`,
+    );
   }
 
-  private async updatePlayerRankings(payload: TournamentCompletedPayload): Promise<void> {
-    this.logger.debug(`Updating player rankings for player ${payload.playerId}`);
+  private async updatePlayerRankings(
+    payload: TournamentCompletedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Updating player rankings for player ${payload.playerId}`,
+    );
   }
 
-  private async triggerTournamentCompletionNotification(payload: TournamentCompletedPayload): Promise<void> {
-    this.logger.debug(`Triggering tournament completion notification for player ${payload.playerId}`);
+  private async triggerTournamentCompletionNotification(
+    payload: TournamentCompletedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Triggering tournament completion notification for player ${payload.playerId}`,
+    );
   }
 
-  private async updatePlayerStakeBalance(playerId: string, amount: number, tokenAddress: string): Promise<void> {
-    this.logger.debug(`Updating stake balance for player ${playerId}, amount ${amount}`);
+  private async updatePlayerStakeBalance(
+    playerId: string,
+    amount: number,
+    tokenAddress: string,
+  ): Promise<void> {
+    this.logger.debug(
+      `Updating stake balance for player ${playerId}, amount ${amount}`,
+    );
   }
 
-  private async recordStakingTransaction(payload: StakeDepositedPayload): Promise<void> {
-    this.logger.debug(`Recording staking transaction for player ${payload.playerId}`);
+  private async recordStakingTransaction(
+    payload: StakeDepositedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Recording staking transaction for player ${payload.playerId}`,
+    );
   }
 
-  private async calculateStakingRewards(payload: StakeDepositedPayload): Promise<void> {
-    this.logger.debug(`Calculating staking rewards for player ${payload.playerId}`);
+  private async calculateStakingRewards(
+    payload: StakeDepositedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Calculating staking rewards for player ${payload.playerId}`,
+    );
   }
 
-  private async triggerStakeNotification(payload: StakeDepositedPayload): Promise<void> {
-    this.logger.debug(`Triggering stake notification for player ${payload.playerId}`);
+  private async triggerStakeNotification(
+    payload: StakeDepositedPayload,
+  ): Promise<void> {
+    this.logger.debug(
+      `Triggering stake notification for player ${payload.playerId}`,
+    );
   }
 }

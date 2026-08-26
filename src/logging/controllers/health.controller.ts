@@ -1,8 +1,8 @@
-import { Controller, Get } from "@nestjs/common"
-import type { HealthService } from "../services/health.service"
-import type { MonitoringService } from "../services/monitoring.service"
+import { Controller, Get } from '@nestjs/common';
+import type { HealthService } from '../services/health.service';
+import type { MonitoringService } from '../services/monitoring.service';
 
-@Controller("health")
+@Controller('health')
 export class HealthController {
   constructor(
     private readonly healthService: HealthService,
@@ -11,26 +11,26 @@ export class HealthController {
 
   @Get()
   async check() {
-    return this.healthService.check()
+    return this.healthService.check();
   }
 
-  @Get("database")
+  @Get('database')
   async checkDatabase() {
-    return this.healthService.checkDatabase()
+    return this.healthService.checkDatabase();
   }
 
-  @Get("memory")
+  @Get('memory')
   async checkMemory() {
-    return this.healthService.checkMemory()
+    return this.healthService.checkMemory();
   }
 
-  @Get("disk")
+  @Get('disk')
   async checkDisk() {
-    return this.healthService.checkDisk()
+    return this.healthService.checkDisk();
   }
 
-  @Get("system")
+  @Get('system')
   async getSystemHealth() {
-    return this.monitoringService.getSystemHealth()
+    return this.monitoringService.getSystemHealth();
   }
 }

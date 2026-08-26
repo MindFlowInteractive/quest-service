@@ -32,10 +32,19 @@ describe('AchievementsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AchievementsService,
-        { provide: getRepositoryToken(Achievement), useFactory: mockRepository },
-        { provide: getRepositoryToken(UserAchievement), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(Achievement),
+          useFactory: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(UserAchievement),
+          useFactory: mockRepository,
+        },
         { provide: NotificationService, useFactory: mockNotificationService },
-        { provide: AchievementConditionEngine, useFactory: mockConditionEngine },
+        {
+          provide: AchievementConditionEngine,
+          useFactory: mockConditionEngine,
+        },
       ],
     }).compile();
 

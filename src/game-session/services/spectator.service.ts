@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Spectator } from '../entities/spectator.entity';
@@ -14,14 +18,19 @@ export class SpectatorService {
     private readonly sessionRepo: Repository<GameSession>,
   ) {}
 
-  async joinSession(sessionId: string, dto: SpectateSessionDto): Promise<Spectator> {
+  async joinSession(
+    sessionId: string,
+    dto: SpectateSessionDto,
+  ): Promise<Spectator> {
     const session = await this.sessionRepo.findOneBy({ id: sessionId });
     if (!session) {
       throw new NotFoundException('Session not found');
     }
 
     if (!session.isSpectatorAllowed) {
-      throw new ForbiddenException('Spectating is not allowed for this session');
+      throw new ForbiddenException(
+        'Spectating is not allowed for this session',
+      );
     }
 
     // Check if user is already spectating
@@ -71,7 +80,11 @@ export class SpectatorService {
     });
   }
 
-  async toggleSpectating(sessionId: string, userId: string, spectatingAllowed: boolean): Promise<GameSession> {
+  async toggleSpectating(
+    sessionId: string,
+    userId: string,
+    spectatingAllowed: boolean,
+  ): Promise<GameSession> {
     const session = await this.sessionRepo.findOneBy({ id: sessionId });
     if (!session) {
       throw new NotFoundException('Session not found');
@@ -82,12 +95,12 @@ export class SpectatorService {
     }
 
     session.isSpectatorAllowed = spectatingAllowed;
-    
+
     // If disabling spectating, remove all active spectators
     if (!spectatingAllowed) {
       await this.spectatorRepo.update(
         { sessionId, isActive: true },
-        { isActive: false, leftAt: new Date() }
+        { isActive: false, leftAt: new Date() },
       );
     }
 

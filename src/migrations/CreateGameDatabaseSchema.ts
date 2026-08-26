@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, Index, TableForeignKey } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  Index,
+  TableForeignKey,
+} from 'typeorm';
 
 export class CreateGameDatabaseSchema implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -141,7 +147,11 @@ export class CreateGameDatabaseSchema implements MigrationInterface {
         ],
         indices: [
           { name: 'IDX_users_email', columnNames: ['email'], isUnique: true },
-          { name: 'IDX_users_username', columnNames: ['username'], isUnique: true },
+          {
+            name: 'IDX_users_username',
+            columnNames: ['username'],
+            isUnique: true,
+          },
           { name: 'IDX_users_status', columnNames: ['status'] },
           { name: 'IDX_users_role', columnNames: ['role'] },
           { name: 'IDX_users_totalScore', columnNames: ['totalScore'] },
@@ -224,12 +234,25 @@ export class CreateGameDatabaseSchema implements MigrationInterface {
           },
         ],
         indices: [
-          { name: 'IDX_puzzle_categories_slug', columnNames: ['slug'], isUnique: true },
+          {
+            name: 'IDX_puzzle_categories_slug',
+            columnNames: ['slug'],
+            isUnique: true,
+          },
           { name: 'IDX_puzzle_categories_name', columnNames: ['name'] },
           { name: 'IDX_puzzle_categories_isActive', columnNames: ['isActive'] },
-          { name: 'IDX_puzzle_categories_sortOrder', columnNames: ['sortOrder'] },
-          { name: 'IDX_puzzle_categories_puzzleCount', columnNames: ['puzzleCount'] },
-          { name: 'IDX_puzzle_categories_createdAt', columnNames: ['createdAt'] },
+          {
+            name: 'IDX_puzzle_categories_sortOrder',
+            columnNames: ['sortOrder'],
+          },
+          {
+            name: 'IDX_puzzle_categories_puzzleCount',
+            columnNames: ['puzzleCount'],
+          },
+          {
+            name: 'IDX_puzzle_categories_createdAt',
+            columnNames: ['createdAt'],
+          },
         ],
       }),
       true,
@@ -391,10 +414,19 @@ export class CreateGameDatabaseSchema implements MigrationInterface {
         ],
         indices: [
           { name: 'IDX_puzzles_title', columnNames: ['title'] },
-          { name: 'IDX_puzzles_category_difficulty', columnNames: ['category', 'difficulty'] },
-          { name: 'IDX_puzzles_isActive_publishedAt', columnNames: ['isActive', 'publishedAt'] },
+          {
+            name: 'IDX_puzzles_category_difficulty',
+            columnNames: ['category', 'difficulty'],
+          },
+          {
+            name: 'IDX_puzzles_isActive_publishedAt',
+            columnNames: ['isActive', 'publishedAt'],
+          },
           { name: 'IDX_puzzles_createdBy', columnNames: ['createdBy'] },
-          { name: 'IDX_puzzles_difficultyRating', columnNames: ['difficultyRating'] },
+          {
+            name: 'IDX_puzzles_difficultyRating',
+            columnNames: ['difficultyRating'],
+          },
           { name: 'IDX_puzzles_attempts', columnNames: ['attempts'] },
           { name: 'IDX_puzzles_completions', columnNames: ['completions'] },
           { name: 'IDX_puzzles_averageRating', columnNames: ['averageRating'] },

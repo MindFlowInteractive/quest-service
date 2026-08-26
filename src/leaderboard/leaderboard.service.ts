@@ -21,7 +21,7 @@ export class LeaderboardService {
     @Inject(CACHE_MANAGER) private cacheManager: any,
     private achievementsService: AchievementsService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   async createLeaderboard(dto: CreateLeaderboardDto): Promise<Leaderboard> {
     const leaderboard = this.leaderboardRepository.create(dto);
@@ -37,7 +37,10 @@ export class LeaderboardService {
     // Invalidate cache for this leaderboard
     await this.cacheManager.reset();
     // Award leaderboard achievements if criteria met
-    await this.checkAndAwardLeaderboardAchievements(dto.leaderboardId, dto.userId);
+    await this.checkAndAwardLeaderboardAchievements(
+      dto.leaderboardId,
+      dto.userId,
+    );
 
     this.eventEmitter.emit(WEBHOOK_INTERNAL_EVENTS.leaderboardUpdated, {
       leaderboardId: dto.leaderboardId,
@@ -50,26 +53,36 @@ export class LeaderboardService {
     return saved;
   }
 
-  private async checkAndAwardLeaderboardAchievements(leaderboardId: number, userId: number) {
+  private async checkAndAwardLeaderboardAchievements(
+    leaderboardId: number,
+    userId: number,
+  ) {
     // Find all leaderboard achievements for this leaderboard
     // (Assume AchievementsService has a method to find by type/criteria)
-    const achievements = await this.achievementsService.findLeaderboardAchievements(leaderboardId);
+    const achievements =
+      await this.achievementsService.findLeaderboardAchievements(leaderboardId);
     if (!achievements?.length) return;
     // Get current leaderboard entries ordered by score DESC
     const entries = await this.entryRepository.find({
       where: { leaderboard: { id: leaderboardId } },
       order: { score: 'DESC', userId: 'ASC' },
     });
-    const userRank = entries.findIndex(e => e.userId === userId) + 1;
+    const userRank = entries.findIndex((e) => e.userId === userId) + 1;
     for (const achievement of achievements) {
       const criteria = (achievement as any).criteria;
       if (criteria?.rank && userRank > 0 && userRank <= criteria.rank) {
-        await this.achievementsService.awardAchievementToUser(achievement.id, userId);
+        await this.achievementsService.awardAchievementToUser(
+          achievement.id,
+          userId,
+        );
       }
     }
   }
 
-  async getLeaderboardsByCategoryAndPeriod(category: string, period: string): Promise<Leaderboard[]> {
+  async getLeaderboardsByCategoryAndPeriod(
+    category: string,
+    period: string,
+  ): Promise<Leaderboard[]> {
     return this.leaderboardRepository.find({
       where: { category, period, isActive: true },
     });
@@ -82,7 +95,9 @@ export class LeaderboardService {
     period?: string,
     userId?: number,
   ): Promise<Leaderboard & { entries: LeaderboardEntry[] }> {
-    const cacheKey = `leaderboard:${leaderboardId}:${ranking}:${order}:${period || 'all'}:${userId || 'anon'}`;
+    const cacheKey = `leaderboard:${leaderboardId}:${ranking}:${order}:${
+      period || 'all'
+    }:${userId || 'anon'}`;
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) return cached;
     const leaderboard = await this.leaderboardRepository.findOne({
@@ -90,10 +105,16 @@ export class LeaderboardService {
     });
     if (!leaderboard) throw new Error('Leaderboard not found');
     // Privacy/visibility check
-    if (leaderboard.visibility === 'private' && (!userId || !leaderboard.allowedUserIds?.includes(userId))) {
+    if (
+      leaderboard.visibility === 'private' &&
+      (!userId || !leaderboard.allowedUserIds?.includes(userId))
+    ) {
       throw new Error('Access denied: private leaderboard');
     }
-    if (leaderboard.visibility === 'friends' && (!userId || !leaderboard.allowedUserIds?.includes(userId))) {
+    if (
+      leaderboard.visibility === 'friends' &&
+      (!userId || !leaderboard.allowedUserIds?.includes(userId))
+    ) {
       throw new Error('Access denied: friends-only leaderboard');
     }
     const entryWhere: any = { leaderboard: { id: leaderboardId } };
@@ -115,15 +136,17 @@ export class LeaderboardService {
     const entries = await this.entryRepository.find({
       where: { leaderboard: { id: leaderboardId }, archived: false },
     });
-    const participantSet = new Set(entries.map(e => e.userId));
+    const participantSet = new Set(entries.map((e) => e.userId));
     const participantCount = participantSet.size;
     const entryCount = entries.length;
-    const averageScore = entries.length ? entries.reduce((sum, e) => sum + (e.score || 0), 0) / entries.length : 0;
+    const averageScore = entries.length
+      ? entries.reduce((sum, e) => sum + (e.score || 0), 0) / entries.length
+      : 0;
     // Top 5 users by score
     const topUsers = entries
       .sort((a, b) => b.score - a.score)
       .slice(0, 5)
-      .map(e => ({ userId: e.userId, score: e.score }));
+      .map((e) => ({ userId: e.userId, score: e.score }));
     return {
       participantCount,
       entryCount,
@@ -137,7 +160,7 @@ export class LeaderboardService {
     // Mark all non-archived entries as archived
     await this.entryRepository.update(
       { leaderboard: { id: leaderboardId }, archived: false },
-      { archived: true, archivedAt: now }
+      { archived: true, archivedAt: now },
     );
     // Optionally, delete or keep archived entries; here we keep them for history
     // (If you want to delete, use delete instead of update above)
@@ -156,15 +179,27 @@ export class LeaderboardService {
       where: { leaderboard: { id: leaderboardId }, archived: false },
       order: { score: 'DESC', userId: 'ASC' },
     });
-    const userRank = entries.findIndex(e => e.userId === userId) + 1;
-    const userEntry = entries.find(e => e.userId === userId);
-    if (!userEntry) return { userId, rank: null, score: null, shareMessage: 'No entry found.' };
+    const userRank = entries.findIndex((e) => e.userId === userId) + 1;
+    const userEntry = entries.find((e) => e.userId === userId);
+    if (!userEntry)
+      return {
+        userId,
+        rank: null,
+        score: null,
+        shareMessage: 'No entry found.',
+      };
     const shareMessage = `I am ranked #${userRank} on the leaderboard with a score of ${userEntry.score}! Can you beat me?`;
     return { userId, rank: userRank, score: userEntry.score, shareMessage };
   }
 
-  async challengeUser(leaderboardId: number, fromUserId: number, toUserId: number) {
+  async challengeUser(
+    leaderboardId: number,
+    fromUserId: number,
+    toUserId: number,
+  ) {
     // Stub: In a real app, you might send a notification or create a challenge record
-    return { message: `User ${fromUserId} challenged user ${toUserId} on leaderboard ${leaderboardId}` };
+    return {
+      message: `User ${fromUserId} challenged user ${toUserId} on leaderboard ${leaderboardId}`,
+    };
   }
-} 
+}

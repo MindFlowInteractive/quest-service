@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException, Inject } from "@nestjs/common";
-import { ConfigType } from "@nestjs/config";
-import storageConfig from "../config/storage.config";
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
+import storageConfig from '../config/storage.config';
 
 @Injectable()
 export class FileValidationService {
@@ -29,9 +29,11 @@ export class FileValidationService {
       this.config.upload.allowedMimeTypes[category] ||
       this.config.upload.allowedMimeTypes.other;
 
-    if (!allowedTypes.includes("*") && !allowedTypes.includes(file.mimetype)) {
+    if (!allowedTypes.includes('*') && !allowedTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        `Invalid file type for category ${category}. Allowed: ${allowedTypes.join(", ")}`,
+        `Invalid file type for category ${category}. Allowed: ${allowedTypes.join(
+          ', ',
+        )}`,
       );
     }
   }

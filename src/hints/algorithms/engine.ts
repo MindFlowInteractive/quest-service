@@ -1,10 +1,20 @@
-export type PuzzleType = 'multiple-choice' | 'fill-blank' | 'drag-drop' | 'code' | 'visual' | 'logic-grid';
+export type PuzzleType =
+  | 'multiple-choice'
+  | 'fill-blank'
+  | 'drag-drop'
+  | 'code'
+  | 'visual'
+  | 'logic-grid';
 
 export interface HintContext {
   puzzleType: PuzzleType;
   difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   puzzleState?: any;
-  playerState?: { skillLevel?: number; mistakes?: number; timeElapsed?: number };
+  playerState?: {
+    skillLevel?: number;
+    mistakes?: number;
+    timeElapsed?: number;
+  };
 }
 
 export interface GeneratedHint {
@@ -48,7 +58,10 @@ export function generateAlgorithmicHints(ctx: HintContext): GeneratedHint[] {
   return [generic, contextual, strategic, specific];
 }
 
-function baseGuidance(type: PuzzleType, difficulty: HintContext['difficulty']): string {
+function baseGuidance(
+  type: PuzzleType,
+  difficulty: HintContext['difficulty'],
+): string {
   switch (type) {
     case 'multiple-choice':
       return 'Eliminate clearly wrong options first to narrow your choices.';
@@ -65,17 +78,26 @@ function baseGuidance(type: PuzzleType, difficulty: HintContext['difficulty']): 
   }
 }
 
-function contextualGuidance(type: PuzzleType, progress: number, errors: string[]): string {
+function contextualGuidance(
+  type: PuzzleType,
+  progress: number,
+  errors: string[],
+): string {
   if (progress < 0.33) {
     return 'Focus on the initial constraints before exploring alternatives.';
   }
   if (errors?.length) {
-    return `Review recent steps; watch out for: ${errors.slice(0, 2).join(', ')}.`;
+    return `Review recent steps; watch out for: ${errors
+      .slice(0, 2)
+      .join(', ')}.`;
   }
   return 'You are on track—double-check the last step for consistency.';
 }
 
-function strategicGuidance(type: PuzzleType, difficulty: HintContext['difficulty']): string {
+function strategicGuidance(
+  type: PuzzleType,
+  difficulty: HintContext['difficulty'],
+): string {
   if (difficulty === 'hard' || difficulty === 'expert') {
     return 'Consider tackling sub-problems first and merging insights later.';
   }
@@ -99,5 +121,3 @@ function maskPotentialSpoilers(text: string): string {
   // Ensure we nudge, not reveal; redact any digits or explicit option labels
   return text.replace(/[A-Z]\)/g, 'option').replace(/\b\d+\b/g, 'n');
 }
-
-

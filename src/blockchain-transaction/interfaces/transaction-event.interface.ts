@@ -1,7 +1,15 @@
-import { TransactionStatus, TransactionType, TransactionCategory } from '../entities/blockchain-transaction.entity';
+import {
+  TransactionStatus,
+  TransactionType,
+  TransactionCategory,
+} from '../entities/blockchain-transaction.entity';
 
 export interface TransactionEvent {
-  eventType: 'transaction_created' | 'transaction_confirmed' | 'transaction_failed' | 'transaction_retry';
+  eventType:
+    | 'transaction_created'
+    | 'transaction_confirmed'
+    | 'transaction_failed'
+    | 'transaction_retry';
   transactionHash: string;
   userId?: string;
   status: TransactionStatus;
@@ -21,7 +29,11 @@ export interface TransactionEvent {
 }
 
 export interface TransactionAlert {
-  alertType: 'high_failure_rate' | 'transaction_stuck' | 'network_issue' | 'large_transaction';
+  alertType:
+    | 'high_failure_rate'
+    | 'transaction_stuck'
+    | 'network_issue'
+    | 'large_transaction';
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
   transactionHash?: string;

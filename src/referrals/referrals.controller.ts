@@ -95,15 +95,9 @@ export class ReferralsController {
    */
   @Get('my-referrals')
   @UseGuards(JwtAuthGuard)
-  async getMyReferrals(
-    @Request() req: any,
-    @Query('status') status?: string,
-  ) {
+  async getMyReferrals(@Request() req: any, @Query('status') status?: string) {
     const userId = req.user?.id || req.user?.sub || req.user?.userId;
-    return this.referralsService.getReferralsByReferrer(
-      userId,
-      status as any,
-    );
+    return this.referralsService.getReferralsByReferrer(userId, status as any);
   }
 
   /**
@@ -141,10 +135,7 @@ export class ReferralsController {
    */
   @Get('leaderboard/rank')
   @UseGuards(JwtAuthGuard)
-  async getUserRank(
-    @Request() req: any,
-    @Query('type') type?: string,
-  ) {
+  async getUserRank(@Request() req: any, @Query('type') type?: string) {
     const userId = req.user?.id || req.user?.sub || req.user?.userId;
     return this.leaderboardService.getUserRank(userId, type as any);
   }

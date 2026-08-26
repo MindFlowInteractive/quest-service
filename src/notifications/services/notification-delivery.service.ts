@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -84,10 +88,7 @@ export class NotificationDeliveryService {
     return notification;
   }
 
-  async markFailed(
-    notificationId: string,
-    error: Error,
-  ): Promise<void> {
+  async markFailed(notificationId: string, error: Error): Promise<void> {
     await this.deliveryRepository.update(
       { notificationId },
       {

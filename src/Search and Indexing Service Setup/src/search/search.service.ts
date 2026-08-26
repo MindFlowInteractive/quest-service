@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ElasticsearchService } from "@nestjs/elasticsearch";
-import { INDEX_NAMES } from "../common/constants/index.constants";
+import { Injectable, Logger } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { INDEX_NAMES } from '../common/constants/index.constants';
 import {
   SearchResult,
   SearchHit,
@@ -8,20 +8,23 @@ import {
   Puzzle,
   Player,
   Achievement,
-} from "../common/interfaces/search.interface";
+} from '../common/interfaces/search.interface';
 import {
   SearchDto,
   PuzzleSearchDto,
   PlayerSearchDto,
   AchievementSearchDto,
   AutocompleteDto,
-} from "../common/dto/search.dto";
+} from '../common/dto/search.dto';
 
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
 
-  constructor(private readonly elasticsearchService: ElasticsearchService & Record<string, any>) {}
+  constructor(
+    private readonly elasticsearchService: ElasticsearchService &
+      Record<string, any>,
+  ) {}
 
   async searchPuzzles(
     searchDto: PuzzleSearchDto,
@@ -31,7 +34,7 @@ export class SearchService {
       page = 1,
       size = 20,
       sort,
-      order = "desc",
+      order = 'desc',
       filters,
     } = searchDto;
     const from = (page - 1) * size;
@@ -44,9 +47,9 @@ export class SearchService {
       must.push({
         multi_match: {
           query,
-          fields: ["title^3", "description^2", "category", "tags"],
-          type: "best_fields",
-          fuzziness: "AUTO",
+          fields: ['title^3', 'description^2', 'category', 'tags'],
+          type: 'best_fields',
+          fuzziness: 'AUTO',
         },
       });
     }
@@ -97,19 +100,19 @@ export class SearchService {
           title: {},
           description: {},
         },
-        pre_tags: ["<mark>"],
-        post_tags: ["</mark>"],
+        pre_tags: ['<mark>'],
+        post_tags: ['</mark>'],
       },
       aggs: {
         difficulties: {
-          terms: { field: "difficulty", size: 10 },
+          terms: { field: 'difficulty', size: 10 },
         },
         categories: {
-          terms: { field: "category", size: 20 },
+          terms: { field: 'category', size: 20 },
         },
         rating_ranges: {
           range: {
-            field: "rating",
+            field: 'rating',
             ranges: [
               { to: 2 },
               { from: 2, to: 3 },
@@ -125,9 +128,9 @@ export class SearchService {
     if (sort) {
       body.sort = [{ [sort]: { order } }];
     } else if (query) {
-      body.sort = [{ _score: { order: "desc" } }];
+      body.sort = [{ _score: { order: 'desc' } }];
     } else {
-      body.sort = [{ createdAt: { order: "desc" } }];
+      body.sort = [{ createdAt: { order: 'desc' } }];
     }
 
     try {
@@ -140,7 +143,7 @@ export class SearchService {
 
       return this.formatSearchResponse<Puzzle>(response, took);
     } catch (error) {
-      this.logger.error("Search failed:", error.message);
+      this.logger.error('Search failed:', error.message);
       throw error;
     }
   }
@@ -153,7 +156,7 @@ export class SearchService {
       page = 1,
       size = 20,
       sort,
-      order = "desc",
+      order = 'desc',
       filters,
     } = searchDto;
     const from = (page - 1) * size;
@@ -165,9 +168,9 @@ export class SearchService {
       must.push({
         multi_match: {
           query,
-          fields: ["username^3", "displayName^2", "bio"],
-          type: "best_fields",
-          fuzziness: "AUTO",
+          fields: ['username^3', 'displayName^2', 'bio'],
+          type: 'best_fields',
+          fuzziness: 'AUTO',
         },
       });
     }
@@ -210,7 +213,7 @@ export class SearchService {
       aggs: {
         level_ranges: {
           range: {
-            field: "level",
+            field: 'level',
             ranges: [
               { to: 10 },
               { from: 10, to: 25 },
@@ -225,9 +228,9 @@ export class SearchService {
     if (sort) {
       body.sort = [{ [sort]: { order } }];
     } else if (query) {
-      body.sort = [{ _score: { order: "desc" } }];
+      body.sort = [{ _score: { order: 'desc' } }];
     } else {
-      body.sort = [{ totalScore: { order: "desc" } }];
+      body.sort = [{ totalScore: { order: 'desc' } }];
     }
 
     try {
@@ -240,7 +243,7 @@ export class SearchService {
 
       return this.formatSearchResponse<Player>(response, took);
     } catch (error) {
-      this.logger.error("Search failed:", error.message);
+      this.logger.error('Search failed:', error.message);
       throw error;
     }
   }
@@ -253,7 +256,7 @@ export class SearchService {
       page = 1,
       size = 20,
       sort,
-      order = "desc",
+      order = 'desc',
       filters,
     } = searchDto;
     const from = (page - 1) * size;
@@ -265,9 +268,9 @@ export class SearchService {
       must.push({
         multi_match: {
           query,
-          fields: ["title^3", "description^2", "category"],
-          type: "best_fields",
-          fuzziness: "AUTO",
+          fields: ['title^3', 'description^2', 'category'],
+          type: 'best_fields',
+          fuzziness: 'AUTO',
         },
       });
     }
@@ -309,10 +312,10 @@ export class SearchService {
       },
       aggs: {
         rarities: {
-          terms: { field: "rarity", size: 10 },
+          terms: { field: 'rarity', size: 10 },
         },
         categories: {
-          terms: { field: "category", size: 20 },
+          terms: { field: 'category', size: 20 },
         },
       },
     };
@@ -320,9 +323,9 @@ export class SearchService {
     if (sort) {
       body.sort = [{ [sort]: { order } }];
     } else if (query) {
-      body.sort = [{ _score: { order: "desc" } }];
+      body.sort = [{ _score: { order: 'desc' } }];
     } else {
-      body.sort = [{ points: { order: "desc" } }];
+      body.sort = [{ points: { order: 'desc' } }];
     }
 
     try {
@@ -335,7 +338,7 @@ export class SearchService {
 
       return this.formatSearchResponse<Achievement>(response, took);
     } catch (error) {
-      this.logger.error("Search failed:", error.message);
+      this.logger.error('Search failed:', error.message);
       throw error;
     }
   }
@@ -364,7 +367,7 @@ export class SearchService {
               size,
               skip_duplicates: true,
               fuzzy: {
-                fuzziness: "AUTO",
+                fuzziness: 'AUTO',
               },
             },
           },
@@ -390,7 +393,7 @@ export class SearchService {
 
       return results.sort((a, b) => b.score - a.score).slice(0, size);
     } catch (error) {
-      this.logger.error("Autocomplete failed:", error.message);
+      this.logger.error('Autocomplete failed:', error.message);
       return [];
     }
   }
@@ -415,16 +418,16 @@ export class SearchService {
   }
 
   private getCompletionField(index: string): string {
-    if (index === INDEX_NAMES.PUZZLES) return "title.completion";
-    if (index === INDEX_NAMES.PLAYERS) return "username.completion";
-    if (index === INDEX_NAMES.ACHIEVEMENTS) return "title.completion";
-    return "title.completion";
+    if (index === INDEX_NAMES.PUZZLES) return 'title.completion';
+    if (index === INDEX_NAMES.PLAYERS) return 'username.completion';
+    if (index === INDEX_NAMES.ACHIEVEMENTS) return 'title.completion';
+    return 'title.completion';
   }
 
   private getIndexCategory(index: string): string {
-    if (index === INDEX_NAMES.PUZZLES) return "puzzle";
-    if (index === INDEX_NAMES.PLAYERS) return "player";
-    if (index === INDEX_NAMES.ACHIEVEMENTS) return "achievement";
-    return "unknown";
+    if (index === INDEX_NAMES.PUZZLES) return 'puzzle';
+    if (index === INDEX_NAMES.PLAYERS) return 'player';
+    if (index === INDEX_NAMES.ACHIEVEMENTS) return 'achievement';
+    return 'unknown';
   }
 }

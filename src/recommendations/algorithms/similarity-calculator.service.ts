@@ -11,9 +11,9 @@ export class SimilarityCalculatorService {
    * Calculate Jaccard similarity between two sets of puzzle IDs
    */
   calculateJaccardSimilarity(setA: string[], setB: string[]): number {
-    const intersection = setA.filter(id => setB.includes(id));
+    const intersection = setA.filter((id) => setB.includes(id));
     const union = [...new Set([...setA, ...setB])];
-    
+
     return union.length > 0 ? intersection.length / union.length : 0;
   }
 
@@ -75,7 +75,7 @@ export class SimilarityCalculatorService {
     minSimilarity: number = 0.1,
   ): T[] {
     return similarities
-      .filter(item => item.similarity >= minSimilarity)
+      .filter((item) => item.similarity >= minSimilarity)
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, k);
   }

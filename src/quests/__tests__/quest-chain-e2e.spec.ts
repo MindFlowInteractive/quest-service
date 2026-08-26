@@ -64,8 +64,6 @@ describe('Quest Chain End-to-End Tests', () => {
     })),
   };
 
-
-
   const mockPuzzleRepository = {
     findOne: jest.fn(),
     find: jest.fn(),
@@ -99,9 +97,15 @@ describe('Quest Chain End-to-End Tests', () => {
 
     app = moduleRef.createNestApplication();
     questChainService = moduleRef.get<QuestChainService>(QuestChainService);
-    progressionService = moduleRef.get<QuestChainProgressionService>(QuestChainProgressionService);
-    validationService = moduleRef.get<QuestChainValidationService>(QuestChainValidationService);
-    leaderboardService = moduleRef.get<QuestChainLeaderboardService>(QuestChainLeaderboardService);
+    progressionService = moduleRef.get<QuestChainProgressionService>(
+      QuestChainProgressionService,
+    );
+    validationService = moduleRef.get<QuestChainValidationService>(
+      QuestChainValidationService,
+    );
+    leaderboardService = moduleRef.get<QuestChainLeaderboardService>(
+      QuestChainLeaderboardService,
+    );
 
     await app.init();
   });
@@ -114,7 +118,7 @@ describe('Quest Chain End-to-End Tests', () => {
     it('should complete a full chain with rewards and progression', async () => {
       const userId = uuidv4();
       const chainId = uuidv4();
-      
+
       // Create a quest chain with puzzles
       const mockChain = {
         id: chainId,
@@ -124,31 +128,35 @@ describe('Quest Chain End-to-End Tests', () => {
         story: {
           intro: 'Welcome to the test chain!',
           outro: 'Congratulations, you completed the chain!',
-          chapters: [{
-            id: 'chapter1',
-            title: 'Chapter 1',
-            description: 'First chapter',
-            storyText: 'Begin your journey here'
-          }]
+          chapters: [
+            {
+              id: 'chapter1',
+              title: 'Chapter 1',
+              description: 'First chapter',
+              storyText: 'Begin your journey here',
+            },
+          ],
         },
         rewards: {
           completion: {
             xp: 100,
             coins: 50,
-            items: ['medal']
+            items: ['medal'],
           },
-          milestones: [{
-            puzzleIndex: 2,
-            rewards: {
-              xp: 50,
-              coins: 25,
-              items: ['hint']
-            }
-          }]
+          milestones: [
+            {
+              puzzleIndex: 2,
+              rewards: {
+                xp: 50,
+                coins: 25,
+                items: ['hint'],
+              },
+            },
+          ],
         },
         createdAt: new Date(),
         updatedAt: new Date(),
-        chainPuzzles: []
+        chainPuzzles: [],
       };
 
       const mockPuzzle1 = {
@@ -157,7 +165,7 @@ describe('Quest Chain End-to-End Tests', () => {
         description: 'First puzzle in the chain',
         difficulty: 'easy',
         category: 'logic',
-        maxHints: 3
+        maxHints: 3,
       };
 
       const mockPuzzle2 = {
@@ -166,7 +174,7 @@ describe('Quest Chain End-to-End Tests', () => {
         description: 'Second puzzle in the chain',
         difficulty: 'medium',
         category: 'logic',
-        maxHints: 3
+        maxHints: 3,
       };
 
       const mockChainPuzzle1 = {
@@ -175,14 +183,14 @@ describe('Quest Chain End-to-End Tests', () => {
         puzzleId: mockPuzzle1.id,
         sequenceOrder: 0,
         unlockConditions: {
-          previousPuzzles: []
+          previousPuzzles: [],
         },
         isCheckpoint: true,
         checkpointRewards: {
           xp: 10,
           coins: 5,
-          items: ['bronze_medal']
-        }
+          items: ['bronze_medal'],
+        },
       };
 
       const mockChainPuzzle2 = {
@@ -191,15 +199,18 @@ describe('Quest Chain End-to-End Tests', () => {
         puzzleId: mockPuzzle2.id,
         sequenceOrder: 1,
         unlockConditions: {
-          previousPuzzles: [mockPuzzle1.id]
+          previousPuzzles: [mockPuzzle1.id],
         },
         isCheckpoint: false,
-        checkpointRewards: {}
+        checkpointRewards: {},
       };
 
       // Mock the service calls
       mockQuestChainRepository.findOne.mockResolvedValue(mockChain);
-      mockQuestChainPuzzleRepository.find.mockResolvedValue([mockChainPuzzle1, mockChainPuzzle2]);
+      mockQuestChainPuzzleRepository.find.mockResolvedValue([
+        mockChainPuzzle1,
+        mockChainPuzzle2,
+      ]);
       mockPuzzleRepository.findOne.mockImplementation((opts) => {
         if (opts.where.id === mockPuzzle1.id) return mockPuzzle1;
         if (opts.where.id === mockPuzzle2.id) return mockPuzzle2;
@@ -207,8 +218,11 @@ describe('Quest Chain End-to-End Tests', () => {
       });
 
       // Start the chain
-      const startedProgress = await progressionService.startChain(userId, chainId);
-      
+      const startedProgress = await progressionService.startChain(
+        userId,
+        chainId,
+      );
+
       expect(startedProgress).toBeDefined();
       expect(startedProgress.userId).toBe(userId);
       expect(startedProgress.questChainId).toBe(chainId);
@@ -218,14 +232,14 @@ describe('Quest Chain End-to-End Tests', () => {
       const completionData1 = {
         score: 100,
         timeTaken: 120, // seconds
-        hintsUsed: 1
+        hintsUsed: 1,
       };
 
       const updatedProgress1 = await progressionService.completePuzzle(
-        userId, 
-        chainId, 
-        mockPuzzle1.id, 
-        completionData1
+        userId,
+        chainId,
+        mockPuzzle1.id,
+        completionData1,
       );
 
       expect(updatedProgress1.completedPuzzleIds).toContain(mockPuzzle1.id);
@@ -237,14 +251,14 @@ describe('Quest Chain End-to-End Tests', () => {
       const completionData2 = {
         score: 150,
         timeTaken: 180, // seconds
-        hintsUsed: 0
+        hintsUsed: 0,
       };
 
       const finalProgress = await progressionService.completePuzzle(
-        userId, 
-        chainId, 
-        mockPuzzle2.id, 
-        completionData2
+        userId,
+        chainId,
+        mockPuzzle2.id,
+        completionData2,
       );
 
       expect(finalProgress.completedPuzzleIds).toContain(mockPuzzle2.id);
@@ -258,7 +272,7 @@ describe('Quest Chain End-to-End Tests', () => {
     it('should handle branching paths based on performance', async () => {
       const userId = uuidv4();
       const chainId = uuidv4();
-      
+
       // Create a chain with branching conditions
       const mockChain = {
         id: chainId,
@@ -268,18 +282,18 @@ describe('Quest Chain End-to-End Tests', () => {
         story: {
           intro: 'Welcome to the branching chain!',
           outro: 'You completed one of the paths!',
-          chapters: []
+          chapters: [],
         },
         rewards: {
           completion: {
             xp: 100,
             coins: 50,
-            items: ['branch_medal']
-          }
+            items: ['branch_medal'],
+          },
         },
         createdAt: new Date(),
         updatedAt: new Date(),
-        chainPuzzles: []
+        chainPuzzles: [],
       };
 
       const mockPuzzle1 = {
@@ -288,7 +302,7 @@ describe('Quest Chain End-to-End Tests', () => {
         description: 'First puzzle with branching',
         difficulty: 'easy',
         category: 'logic',
-        maxHints: 3
+        maxHints: 3,
       };
 
       const mockPuzzle2 = {
@@ -297,7 +311,7 @@ describe('Quest Chain End-to-End Tests', () => {
         description: 'Puzzle for high performers',
         difficulty: 'hard',
         category: 'logic',
-        maxHints: 2
+        maxHints: 2,
       };
 
       const mockPuzzle3 = {
@@ -306,7 +320,7 @@ describe('Quest Chain End-to-End Tests', () => {
         description: 'Puzzle for lower performers',
         difficulty: 'easy',
         category: 'logic',
-        maxHints: 5
+        maxHints: 5,
       };
 
       const mockChainPuzzle1 = {
@@ -315,22 +329,22 @@ describe('Quest Chain End-to-End Tests', () => {
         puzzleId: mockPuzzle1.id,
         sequenceOrder: 0,
         unlockConditions: {
-          previousPuzzles: []
+          previousPuzzles: [],
         },
         branchConditions: [
           {
             conditionType: 'score',
             operator: 'gte',
             value: 100,
-            nextPuzzleId: mockPuzzle2.id
+            nextPuzzleId: mockPuzzle2.id,
           },
           {
             conditionType: 'score',
             operator: 'lt',
             value: 100,
-            nextPuzzleId: mockPuzzle3.id
-          }
-        ]
+            nextPuzzleId: mockPuzzle3.id,
+          },
+        ],
       };
 
       const mockChainPuzzle2 = {
@@ -339,8 +353,8 @@ describe('Quest Chain End-to-End Tests', () => {
         puzzleId: mockPuzzle2.id,
         sequenceOrder: 1,
         unlockConditions: {
-          previousPuzzles: [mockPuzzle1.id]
-        }
+          previousPuzzles: [mockPuzzle1.id],
+        },
       };
 
       const mockChainPuzzle3 = {
@@ -349,15 +363,19 @@ describe('Quest Chain End-to-End Tests', () => {
         puzzleId: mockPuzzle3.id,
         sequenceOrder: 1,
         unlockConditions: {
-          previousPuzzles: [mockPuzzle1.id]
-        }
+          previousPuzzles: [mockPuzzle1.id],
+        },
       };
 
       // Mock the service calls
       mockQuestChainRepository.findOne.mockResolvedValue(mockChain);
       mockQuestChainPuzzleRepository.find.mockImplementation((opts) => {
         if (opts.where.questChainId === chainId) {
-          return Promise.resolve([mockChainPuzzle1, mockChainPuzzle2, mockChainPuzzle3]);
+          return Promise.resolve([
+            mockChainPuzzle1,
+            mockChainPuzzle2,
+            mockChainPuzzle3,
+          ]);
         }
         return Promise.resolve([]);
       });
@@ -375,18 +393,20 @@ describe('Quest Chain End-to-End Tests', () => {
       const highScoreCompletion = {
         score: 120,
         timeTaken: 90,
-        hintsUsed: 0
+        hintsUsed: 0,
       };
 
       const progressAfterBranch = await progressionService.completePuzzle(
-        userId, 
-        chainId, 
-        mockPuzzle1.id, 
-        highScoreCompletion
+        userId,
+        chainId,
+        mockPuzzle1.id,
+        highScoreCompletion,
       );
 
       // Verify branching logic worked correctly
-      expect(progressAfterBranch.branchPath[mockChainPuzzle1.id]).toBe(mockPuzzle2.id);
+      expect(progressAfterBranch.branchPath[mockChainPuzzle1.id]).toBe(
+        mockPuzzle2.id,
+      );
     });
   });
 
@@ -394,7 +414,7 @@ describe('Quest Chain End-to-End Tests', () => {
     it('should distribute checkpoint, milestone, and completion rewards', async () => {
       const userId = uuidv4();
       const chainId = uuidv4();
-      
+
       const mockChain = {
         id: chainId,
         name: 'Reward Chain',
@@ -403,13 +423,13 @@ describe('Quest Chain End-to-End Tests', () => {
         story: {
           intro: 'Welcome to the reward chain!',
           outro: 'Thanks for playing!',
-          chapters: []
+          chapters: [],
         },
         rewards: {
           completion: {
             xp: 200,
             coins: 100,
-            items: ['gold_medal']
+            items: ['gold_medal'],
           },
           milestones: [
             {
@@ -417,22 +437,22 @@ describe('Quest Chain End-to-End Tests', () => {
               rewards: {
                 xp: 50,
                 coins: 25,
-                items: ['silver_medal']
-              }
+                items: ['silver_medal'],
+              },
             },
             {
               puzzleIndex: 2,
               rewards: {
                 xp: 75,
                 coins: 35,
-                items: ['bronze_medal']
-              }
-            }
-          ]
+                items: ['bronze_medal'],
+              },
+            },
+          ],
         },
         createdAt: new Date(),
         updatedAt: new Date(),
-        chainPuzzles: []
+        chainPuzzles: [],
       };
 
       const mockPuzzle1 = {
@@ -441,7 +461,7 @@ describe('Quest Chain End-to-End Tests', () => {
         description: 'First puzzle with checkpoint',
         difficulty: 'easy',
         category: 'logic',
-        maxHints: 3
+        maxHints: 3,
       };
 
       const mockPuzzle2 = {
@@ -450,7 +470,7 @@ describe('Quest Chain End-to-End Tests', () => {
         description: 'Second puzzle',
         difficulty: 'medium',
         category: 'logic',
-        maxHints: 3
+        maxHints: 3,
       };
 
       const mockChainPuzzle1 = {
@@ -459,14 +479,14 @@ describe('Quest Chain End-to-End Tests', () => {
         puzzleId: mockPuzzle1.id,
         sequenceOrder: 0,
         unlockConditions: {
-          previousPuzzles: []
+          previousPuzzles: [],
         },
         isCheckpoint: true,
         checkpointRewards: {
           xp: 25,
           coins: 10,
-          items: ['checkpoint_badge']
-        }
+          items: ['checkpoint_badge'],
+        },
       };
 
       const mockChainPuzzle2 = {
@@ -475,15 +495,18 @@ describe('Quest Chain End-to-End Tests', () => {
         puzzleId: mockPuzzle2.id,
         sequenceOrder: 1,
         unlockConditions: {
-          previousPuzzles: [mockPuzzle1.id]
+          previousPuzzles: [mockPuzzle1.id],
         },
         isCheckpoint: false,
-        checkpointRewards: {}
+        checkpointRewards: {},
       };
 
       // Mock the service calls
       mockQuestChainRepository.findOne.mockResolvedValue(mockChain);
-      mockQuestChainPuzzleRepository.find.mockResolvedValue([mockChainPuzzle1, mockChainPuzzle2]);
+      mockQuestChainPuzzleRepository.find.mockResolvedValue([
+        mockChainPuzzle1,
+        mockChainPuzzle2,
+      ]);
       mockPuzzleRepository.findOne.mockImplementation((opts) => {
         if (opts.where.id === mockPuzzle1.id) return mockPuzzle1;
         if (opts.where.id === mockPuzzle2.id) return mockPuzzle2;
@@ -497,28 +520,28 @@ describe('Quest Chain End-to-End Tests', () => {
       const completionData1 = {
         score: 100,
         timeTaken: 120,
-        hintsUsed: 1
+        hintsUsed: 1,
       };
 
       const progressAfterPuzzle1 = await progressionService.completePuzzle(
-        userId, 
-        chainId, 
-        mockPuzzle1.id, 
-        completionData1
+        userId,
+        chainId,
+        mockPuzzle1.id,
+        completionData1,
       );
 
       // Complete second puzzle (should complete the chain and trigger completion rewards)
       const completionData2 = {
         score: 150,
         timeTaken: 180,
-        hintsUsed: 0
+        hintsUsed: 0,
       };
 
       const finalProgress = await progressionService.completePuzzle(
-        userId, 
-        chainId, 
-        mockPuzzle2.id, 
-        completionData2
+        userId,
+        chainId,
+        mockPuzzle2.id,
+        completionData2,
       );
 
       // Verify chain is completed
@@ -532,7 +555,7 @@ describe('Quest Chain End-to-End Tests', () => {
       const chainId = uuidv4();
       const userId1 = uuidv4();
       const userId2 = uuidv4();
-      
+
       const mockProgresses = [
         {
           userId: userId1,
@@ -541,7 +564,7 @@ describe('Quest Chain End-to-End Tests', () => {
           totalTime: 300, // 5 minutes
           totalScore: 250,
           completedAt: new Date(Date.now() - 10000),
-          user: { username: 'Player1' }
+          user: { username: 'Player1' },
         },
         {
           userId: userId2,
@@ -550,8 +573,8 @@ describe('Quest Chain End-to-End Tests', () => {
           totalTime: 240, // 4 minutes
           totalScore: 220,
           completedAt: new Date(Date.now() - 5000),
-          user: { username: 'Player2' }
-        }
+          user: { username: 'Player2' },
+        },
       ];
 
       // Mock the leaderboard service calls
@@ -565,8 +588,11 @@ describe('Quest Chain End-to-End Tests', () => {
         getMany: jest.fn().mockResolvedValue(mockProgresses),
       });
 
-      const speedLeaderboard = await leaderboardService.getSpeedRunLeaderboard(chainId, 10);
-      
+      const speedLeaderboard = await leaderboardService.getSpeedRunLeaderboard(
+        chainId,
+        10,
+      );
+
       expect(speedLeaderboard.length).toBeGreaterThan(0);
       expect(speedLeaderboard[0].value).toBe(240); // Fastest time should be first
       expect(speedLeaderboard[0].userId).toBe(userId2);
@@ -577,7 +603,7 @@ describe('Quest Chain End-to-End Tests', () => {
     it('should reset chain progress completely', async () => {
       const userId = uuidv4();
       const chainId = uuidv4();
-      
+
       const initialProgress = {
         id: uuidv4(),
         userId,
@@ -586,12 +612,12 @@ describe('Quest Chain End-to-End Tests', () => {
         currentPuzzleIndex: 1,
         completedPuzzleIds: ['puzzle1'],
         checkpointData: {
-          'puzzle1': {
+          puzzle1: {
             completedAt: new Date(),
             score: 100,
             timeTaken: 120,
-            hintsUsed: 1
-          }
+            hintsUsed: 1,
+          },
         },
         branchPath: {},
         totalScore: 100,
@@ -613,15 +639,23 @@ describe('Quest Chain End-to-End Tests', () => {
       // Mock the service calls
       mockUserProgressRepository.findOne.mockResolvedValue(initialProgress);
       mockQuestChainRepository.findOne.mockResolvedValue(mockChain);
-      mockUserProgressRepository.save.mockImplementation((progress) => Promise.resolve(progress));
+      mockUserProgressRepository.save.mockImplementation((progress) =>
+        Promise.resolve(progress),
+      );
 
       // Start with initial progress
-      const startedProgress = await progressionService.getProgress(userId, chainId);
+      const startedProgress = await progressionService.getProgress(
+        userId,
+        chainId,
+      );
       expect(startedProgress.status).toBe('in_progress');
 
       // Reset the progress
-      const resetProgress = await progressionService.resetProgress(userId, chainId);
-      
+      const resetProgress = await progressionService.resetProgress(
+        userId,
+        chainId,
+      );
+
       // Verify reset values
       expect(resetProgress.status).toBe('not_started');
       expect(resetProgress.currentPuzzleIndex).toBe(0);

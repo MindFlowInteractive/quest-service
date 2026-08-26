@@ -1,8 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserPuzzleSubmission, PuzzleSubmissionStatus, ModerationAction } from '../entities/user-puzzle-submission.entity';
-import { CreatePuzzleSubmissionDto, SubmitForReviewDto, ModerationDecisionDto } from '../dto/user-puzzle-submission.dto';
+import {
+  UserPuzzleSubmission,
+  PuzzleSubmissionStatus,
+  ModerationAction,
+} from '../entities/user-puzzle-submission.entity';
+import {
+  CreatePuzzleSubmissionDto,
+  SubmitForReviewDto,
+  ModerationDecisionDto,
+} from '../dto/user-puzzle-submission.dto';
 
 @Injectable()
 export class PuzzleValidationService {
@@ -88,33 +96,42 @@ export class PuzzleValidationService {
 
     switch (content.type) {
       case 'multiple-choice':
-        return Array.isArray(content.options) && 
-               content.options.length >= 2 && 
-               content.options.includes(content.correctAnswer);
-      
+        return (
+          Array.isArray(content.options) &&
+          content.options.length >= 2 &&
+          content.options.includes(content.correctAnswer)
+        );
+
       case 'fill-blank':
-        return typeof content.correctAnswer === 'string' && 
-               content.correctAnswer.trim().length > 0;
-      
+        return (
+          typeof content.correctAnswer === 'string' &&
+          content.correctAnswer.trim().length > 0
+        );
+
       case 'drag-drop':
-        return typeof content.correctAnswer === 'object' && 
-               content.correctAnswer !== null;
-      
+        return (
+          typeof content.correctAnswer === 'object' &&
+          content.correctAnswer !== null
+        );
+
       default:
-        return content.correctAnswer !== null && 
-               content.correctAnswer !== undefined;
+        return (
+          content.correctAnswer !== null && content.correctAnswer !== undefined
+        );
     }
   }
 
   private validateExplanation(content: any): boolean {
-    return content.explanation && 
-           typeof content.explanation === 'string' && 
-           content.explanation.trim().length >= 10;
+    return (
+      content.explanation &&
+      typeof content.explanation === 'string' &&
+      content.explanation.trim().length >= 10
+    );
   }
 
   private validateDifficulty(submission: UserPuzzleSubmission): boolean {
     const { difficulty, difficultyRating, timeLimit, basePoints } = submission;
-    
+
     // Basic difficulty consistency checks
     const difficultyRanges = {
       easy: { rating: [1, 3], time: [60, 300], points: [10, 100] },
@@ -124,13 +141,15 @@ export class PuzzleValidationService {
     };
 
     const range = difficultyRanges[difficulty];
-    return range && 
-           difficultyRating >= range.rating[0] && 
-           difficultyRating <= range.rating[1] &&
-           timeLimit >= range.time[0] && 
-           timeLimit <= range.time[1] &&
-           basePoints >= range.points[0] && 
-           basePoints <= range.points[1];
+    return (
+      range &&
+      difficultyRating >= range.rating[0] &&
+      difficultyRating <= range.rating[1] &&
+      timeLimit >= range.time[0] &&
+      timeLimit <= range.time[1] &&
+      basePoints >= range.points[0] &&
+      basePoints <= range.points[1]
+    );
   }
 
   private assessContentQuality(submission: UserPuzzleSubmission): number {
@@ -142,8 +161,10 @@ export class PuzzleValidationService {
     if (submission.title && submission.title.length >= 20) qualityScore += 10;
 
     // Description quality (20 points)
-    if (submission.description && submission.description.length >= 50) qualityScore += 10;
-    if (submission.description && submission.description.length >= 100) qualityScore += 10;
+    if (submission.description && submission.description.length >= 50)
+      qualityScore += 10;
+    if (submission.description && submission.description.length >= 100)
+      qualityScore += 10;
 
     // Content structure (20 points)
     if (submission.content.question) qualityScore += 10;
@@ -152,14 +173,18 @@ export class PuzzleValidationService {
     // Hints quality (15 points)
     if (submission.hints.length > 0) qualityScore += 5;
     if (submission.hints.length >= 2) qualityScore += 5;
-    if (submission.hints.every(hint => hint.text.length >= 20)) qualityScore += 5;
+    if (submission.hints.every((hint) => hint.text.length >= 20))
+      qualityScore += 5;
 
     // Tags and categorization (15 points)
     if (submission.tags.length >= 3) qualityScore += 10;
     if (submission.tags.length >= 5) qualityScore += 5;
 
     // Creator notes (10 points)
-    if (submission.creatorNotes && Object.keys(submission.creatorNotes).length > 0) {
+    if (
+      submission.creatorNotes &&
+      Object.keys(submission.creatorNotes).length > 0
+    ) {
       qualityScore += 10;
     }
 
@@ -173,15 +198,15 @@ export class PuzzleValidationService {
 
     // Basic validation for media URLs
     if (images && Array.isArray(images)) {
-      return images.every(url => typeof url === 'string' && url.length > 0);
+      return images.every((url) => typeof url === 'string' && url.length > 0);
     }
 
     if (videos && Array.isArray(videos)) {
-      return videos.every(url => typeof url === 'string' && url.length > 0);
+      return videos.every((url) => typeof url === 'string' && url.length > 0);
     }
 
     if (audio && Array.isArray(audio)) {
-      return audio.every(url => typeof url === 'string' && url.length > 0);
+      return audio.every((url) => typeof url === 'string' && url.length > 0);
     }
 
     return true;
@@ -217,20 +242,28 @@ export class PuzzleValidationService {
     // Simple duplicate detection based on title and content similarity
     const similarPuzzles = await this.submissionRepository
       .createQueryBuilder('submission')
-      .where('submission.title ILIKE :title', { title: `%${submission.title}%` })
-      .orWhere('submission.description ILIKE :description', { description: `%${submission.description}%` })
-      .andWhere('submission.status != :rejected', { rejected: PuzzleSubmissionStatus.REJECTED })
+      .where('submission.title ILIKE :title', {
+        title: `%${submission.title}%`,
+      })
+      .orWhere('submission.description ILIKE :description', {
+        description: `%${submission.description}%`,
+      })
+      .andWhere('submission.status != :rejected', {
+        rejected: PuzzleSubmissionStatus.REJECTED,
+      })
       .andWhere('submission.id != :id', { id: submission.id })
       .select(['submission.id', 'submission.title'])
       .limit(5)
       .getMany();
 
     const similarityThreshold = 0.8;
-    const duplicates = similarPuzzles.map(puzzle => ({
-      id: puzzle.id,
-      title: puzzle.title,
-      similarity: this.calculateSimilarity(submission.title, puzzle.title),
-    })).filter(result => result.similarity >= similarityThreshold);
+    const duplicates = similarPuzzles
+      .map((puzzle) => ({
+        id: puzzle.id,
+        title: puzzle.title,
+        similarity: this.calculateSimilarity(submission.title, puzzle.title),
+      }))
+      .filter((result) => result.similarity >= similarityThreshold);
 
     return {
       isDuplicate: duplicates.length > 0,
@@ -242,15 +275,17 @@ export class PuzzleValidationService {
     // Simple Levenshtein distance-based similarity
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
-    
+
     if (longer.length === 0) return 1.0;
-    
+
     const distance = this.levenshteinDistance(longer, shorter);
     return (longer.length - distance) / longer.length;
   }
 
   private levenshteinDistance(str1: string, str2: string): number {
-    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+    const matrix = Array(str2.length + 1)
+      .fill(null)
+      .map(() => Array(str1.length + 1).fill(null));
 
     for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
     for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;

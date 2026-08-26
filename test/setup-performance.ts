@@ -2,18 +2,28 @@ import { performance } from 'perf_hooks';
 
 // Performance test utilities
 global.performanceTestUtils = {
-  measureExecutionTime: async <T>(fn: () => Promise<T>): Promise<{ result: T; duration: number }> => {
+  measureExecutionTime: async <T>(
+    fn: () => Promise<T>,
+  ): Promise<{ result: T; duration: number }> => {
     const start = performance.now();
     const result = await fn();
     const end = performance.now();
     const duration = end - start;
-    
+
     return { result, duration };
   },
 
-  expectExecutionTime: (duration: number, maxDuration: number, operation: string) => {
+  expectExecutionTime: (
+    duration: number,
+    maxDuration: number,
+    operation: string,
+  ) => {
     if (duration > maxDuration) {
-      throw new Error(`Performance test failed: ${operation} took ${duration.toFixed(2)}ms, expected < ${maxDuration}ms`);
+      throw new Error(
+        `Performance test failed: ${operation} took ${duration.toFixed(
+          2,
+        )}ms, expected < ${maxDuration}ms`,
+      );
     }
   },
 
@@ -27,11 +37,19 @@ global.performanceTestUtils = {
     };
   },
 
-  expectMemoryUsage: (memoryMB: number, maxMemoryMB: number, operation: string) => {
+  expectMemoryUsage: (
+    memoryMB: number,
+    maxMemoryMB: number,
+    operation: string,
+  ) => {
     if (memoryMB > maxMemoryMB) {
-      throw new Error(`Memory test failed: ${operation} used ${memoryMB.toFixed(2)}MB, expected < ${maxMemoryMB}MB`);
+      throw new Error(
+        `Memory test failed: ${operation} used ${memoryMB.toFixed(
+          2,
+        )}MB, expected < ${maxMemoryMB}MB`,
+      );
     }
-  }
+  },
 };
 
 // Performance benchmarks
@@ -50,17 +68,32 @@ global.performanceBenchmarks = {
   memory: {
     maxHeapUsage: 100, // MB
     maxMemoryLeak: 10, // MB per operation
-  }
+  },
 };
 
 declare global {
   namespace NodeJS {
     interface Global {
       performanceTestUtils: {
-        measureExecutionTime: <T>(fn: () => Promise<T>) => Promise<{ result: T; duration: number }>;
-        expectExecutionTime: (duration: number, maxDuration: number, operation: string) => void;
-        measureMemoryUsage: () => { heapUsed: number; heapTotal: number; external: number; rss: number };
-        expectMemoryUsage: (memoryMB: number, maxMemoryMB: number, operation: string) => void;
+        measureExecutionTime: <T>(
+          fn: () => Promise<T>,
+        ) => Promise<{ result: T; duration: number }>;
+        expectExecutionTime: (
+          duration: number,
+          maxDuration: number,
+          operation: string,
+        ) => void;
+        measureMemoryUsage: () => {
+          heapUsed: number;
+          heapTotal: number;
+          external: number;
+          rss: number;
+        };
+        expectMemoryUsage: (
+          memoryMB: number,
+          maxMemoryMB: number,
+          operation: string,
+        ) => void;
       };
       performanceBenchmarks: {
         database: {

@@ -1,50 +1,19 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+// This file is deprecated. Use the new error handling framework in:
+// - base.exception.ts (BaseException, DomainException, InfrastructureException)
+// - domain.exceptions.ts (Domain-specific exceptions)
+// - infrastructure.exceptions.ts (Infrastructure exceptions)
 
-export class ValidationErrorException extends HttpException {
-  constructor(errors: any, message = 'Validation failed') {
-    super(
-      {
-        message,
-        errorCode: 'VALIDATION_ERROR',
-        errors,
-      },
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-}
+// This file is deprecated. Use the new error handling framework in:
+// - base.exception.ts (BaseException, DomainException, InfrastructureException)
+// - domain.exceptions.ts (Domain-specific exceptions)
+// - infrastructure.exceptions.ts (Infrastructure exceptions)
 
-export class NotFoundException extends HttpException {
-  constructor(message = 'Resource not found') {
-    super(
-      {
-        message,
-        errorCode: 'NOT_FOUND',
-      },
-      HttpStatus.NOT_FOUND,
-    );
-  }
-}
+// This file is deprecated. Use the new error handling framework in:
+// - base.exception.ts (BaseException, DomainException, InfrastructureException)
+// - domain.exceptions.ts (Domain-specific exceptions)
+// - infrastructure.exceptions.ts (Infrastructure exceptions)
 
-export class UnauthorizedException extends HttpException {
-  constructor(message = 'Unauthorized') {
-    super(
-      {
-        message,
-        errorCode: 'UNAUTHORIZED',
-      },
-      HttpStatus.UNAUTHORIZED,
-    );
-  }
-}
-
-export class ForbiddenException extends HttpException {
-  constructor(message = 'Forbidden') {
-    super(
-      {
-        message,
-        errorCode: 'FORBIDDEN',
-      },
-      HttpStatus.FORBIDDEN,
-    );
-  }
-}
+export { ValidationException } from './domain.exceptions';
+export { AppNotFoundException } from './domain.exceptions';
+export { AuthenticationException } from './domain.exceptions';
+export { AuthorizationException } from './domain.exceptions';

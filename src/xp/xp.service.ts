@@ -25,7 +25,7 @@ import { PLAYER_LEVEL_UP_EVENT, XpAwardReason } from './xp.constants';
 @Injectable()
 export class XpService {
   private readonly logger = new Logger(XpService.name);
-  private readonly config: LevelConfig = levelConfig as LevelConfig;
+  private readonly config: LevelConfig = levelConfig;
 
   constructor(
     @InjectRepository(PlayerLevel)
@@ -63,7 +63,9 @@ export class XpService {
     }
 
     const level = await this.playerLevelRepo.findOne({ where: { userId } });
-    return this.toLevelView(level ?? this.playerLevelRepo.create(this.getDefaultLevelData(userId)));
+    return this.toLevelView(
+      level ?? this.playerLevelRepo.create(this.getDefaultLevelData(userId)),
+    );
   }
 
   async awardXp(dto: AwardXpDto): Promise<AwardXpResult> {
@@ -83,7 +85,12 @@ export class XpService {
       };
     }
 
-    let levelUpPayload: { userId: string; oldLevel: number; newLevel: number; totalXP: number } | null = null;
+    let levelUpPayload: {
+      userId: string;
+      oldLevel: number;
+      newLevel: number;
+      totalXP: number;
+    } | null = null;
 
     const result = await this.dataSource.transaction(async (manager) => {
       const playerLevelRepository = manager.getRepository(PlayerLevel);
@@ -95,7 +102,10 @@ export class XpService {
       });
 
       if (doubleCheckAward) {
-        const currentLevel = await this.findOrCreateLevelInManager(playerLevelRepository, dto.userId);
+        const currentLevel = await this.findOrCreateLevelInManager(
+          playerLevelRepository,
+          dto.userId,
+        );
         return {
           awarded: false,
           duplicate: true,
@@ -104,7 +114,10 @@ export class XpService {
         };
       }
 
-      const currentLevel = await this.findOrCreateLevelInManager(playerLevelRepository, dto.userId);
+      const currentLevel = await this.findOrCreateLevelInManager(
+        playerLevelRepository,
+        dto.userId,
+      );
       const oldLevel = currentLevel.level;
 
       const award = xpAwardRepository.create({
@@ -210,7 +223,9 @@ export class XpService {
         userId: params.userId,
         amount: this.config.xpAwards.firstDailySolveBonus,
         reason: XpAwardReason.FIRST_DAILY_SOLVE,
-        sourceEventId: `${params.userId}:${this.getUtcDateKey(solvedAt)}:first-daily-solve`,
+        sourceEventId: `${params.userId}:${this.getUtcDateKey(
+          solvedAt,
+        )}:first-daily-solve`,
         metadata: {
           puzzleId: params.puzzleId,
           awardedForDate: this.getUtcDateKey(solvedAt),
@@ -247,7 +262,9 @@ export class XpService {
   private async getOrCreatePlayerLevel(userId: string): Promise<PlayerLevel> {
     let playerLevel = await this.playerLevelRepo.findOne({ where: { userId } });
     if (!playerLevel) {
-      playerLevel = this.playerLevelRepo.create(this.getDefaultLevelData(userId));
+      playerLevel = this.playerLevelRepo.create(
+        this.getDefaultLevelData(userId),
+      );
       playerLevel = await this.playerLevelRepo.save(playerLevel);
     }
     return playerLevel;
@@ -274,10 +291,17 @@ export class XpService {
     };
   }
 
-  private resolveLevel(xp: number): { level: number; xpToNextLevel: number; minXp: number; nextMinXp: number | null } {
-    const thresholds = [...this.config.levels].sort((a, b) => a.minXp - b.minXp);
+  private resolveLevel(xp: number): {
+    level: number;
+    xpToNextLevel: number;
+    minXp: number;
+    nextMinXp: number | null;
+  } {
+    const thresholds = [...this.config.levels].sort(
+      (a, b) => a.minXp - b.minXp,
+    );
     let currentThreshold = thresholds[0];
-    let nextThreshold: typeof thresholds[number] | null = null;
+    let nextThreshold: (typeof thresholds)[number] | null = null;
 
     for (let i = 0; i < thresholds.length; i += 1) {
       const threshold = thresholds[i];
@@ -299,10 +323,14 @@ export class XpService {
 
   private toLevelView(level: PlayerLevel): LevelProgressView {
     const resolved = this.resolveLevel(level.xp);
-    const currentSpan = resolved.nextMinXp ? resolved.nextMinXp - resolved.minXp : 0;
+    const currentSpan = resolved.nextMinXp
+      ? resolved.nextMinXp - resolved.minXp
+      : 0;
     const earnedWithinLevel = level.xp - resolved.minXp;
     const progressPercentage =
-      currentSpan > 0 ? Math.min(100, Math.round((earnedWithinLevel / currentSpan) * 100)) : 100;
+      currentSpan > 0
+        ? Math.min(100, Math.round((earnedWithinLevel / currentSpan) * 100))
+        : 100;
 
     return {
       userId: level.userId,
@@ -313,7 +341,10 @@ export class XpService {
     };
   }
 
-  private async isFirstDailySolve(userId: string, solvedAt: Date): Promise<boolean> {
+  private async isFirstDailySolve(
+    userId: string,
+    solvedAt: Date,
+  ): Promise<boolean> {
     const dayStart = new Date(solvedAt);
     dayStart.setUTCHours(0, 0, 0, 0);
     const dayEnd = new Date(dayStart);
@@ -330,7 +361,10 @@ export class XpService {
     return awardsToday === 0;
   }
 
-  private async advanceStreak(userId: string, solvedAt: Date): Promise<UserStreak> {
+  private async advanceStreak(
+    userId: string,
+    solvedAt: Date,
+  ): Promise<UserStreak> {
     let streak = await this.userStreakRepo.findOne({
       where: { user: { id: userId } },
       relations: ['user'],
@@ -377,7 +411,9 @@ export class XpService {
     return this.userStreakRepo.save(streak);
   }
 
-  private findStreakMilestone(currentStreak: number): StreakMilestoneReward | undefined {
+  private findStreakMilestone(
+    currentStreak: number,
+  ): StreakMilestoneReward | undefined {
     return this.config.xpAwards.streakMilestones.find(
       (milestone) => milestone.streak === currentStreak,
     );

@@ -7,7 +7,11 @@ import { of, throwError } from 'rxjs';
 
 import { BlockchainEventsService } from './blockchain-events.service';
 import { EventHandlersService } from './event-handlers.service';
-import { OnChainEvent, OnChainEventType, EventProcessingStatus } from './entities/onchain-event.entity';
+import {
+  OnChainEvent,
+  OnChainEventType,
+  EventProcessingStatus,
+} from './entities/onchain-event.entity';
 import { DeadLetterEvent } from './entities/dead-letter-event.entity';
 
 describe('BlockchainEventsService', () => {
@@ -82,9 +86,9 @@ describe('BlockchainEventsService', () => {
           useValue: {
             get: jest.fn((key: string) => {
               const config = {
-                'STELLAR_HORIZON_URL': 'https://horizon-testnet.stellar.org',
-                'QUEST_CONTRACT_ADDRESSES': 'test-contract,another-contract',
-                'STELLAR_NETWORK': 'testnet',
+                STELLAR_HORIZON_URL: 'https://horizon-testnet.stellar.org',
+                QUEST_CONTRACT_ADDRESSES: 'test-contract,another-contract',
+                STELLAR_NETWORK: 'testnet',
               };
               return config[key];
             }),
@@ -113,13 +117,15 @@ describe('BlockchainEventsService', () => {
 
   describe('pollForEvents', () => {
     it('should poll events for all registered contracts', async () => {
-      httpService.get.mockReturnValue(of({
-        data: {
-          _embedded: {
-            records: [mockHorizonEvent],
+      httpService.get.mockReturnValue(
+        of({
+          data: {
+            _embedded: {
+              records: [mockHorizonEvent],
+            },
           },
-        },
-      }));
+        }),
+      );
 
       onChainEventRepository.findOne.mockResolvedValue(null);
       onChainEventRepository.create.mockReturnValue(mockOnChainEvent);
@@ -133,13 +139,15 @@ describe('BlockchainEventsService', () => {
     });
 
     it('should skip already processed events', async () => {
-      httpService.get.mockReturnValue(of({
-        data: {
-          _embedded: {
-            records: [mockHorizonEvent],
+      httpService.get.mockReturnValue(
+        of({
+          data: {
+            _embedded: {
+              records: [mockHorizonEvent],
+            },
           },
-        },
-      }));
+        }),
+      );
 
       onChainEventRepository.findOne.mockResolvedValue(mockOnChainEvent);
 
@@ -149,7 +157,9 @@ describe('BlockchainEventsService', () => {
     });
 
     it('should handle polling errors gracefully', async () => {
-      httpService.get.mockReturnValue(throwError(() => new Error('Network error')));
+      httpService.get.mockReturnValue(
+        throwError(() => new Error('Network error')),
+      );
 
       await service.pollForEvents();
 
@@ -175,7 +185,9 @@ describe('BlockchainEventsService', () => {
       onChainEventRepository.findOne.mockResolvedValue(null);
       onChainEventRepository.create.mockReturnValue(mockOnChainEvent);
       onChainEventRepository.save.mockResolvedValue(mockOnChainEvent);
-      eventHandlersService.handleEvent.mockRejectedValue(new Error('Processing error'));
+      eventHandlersService.handleEvent.mockRejectedValue(
+        new Error('Processing error'),
+      );
 
       await service['processEvent'](mockHorizonEvent, 'test-contract');
 
@@ -241,7 +253,9 @@ describe('BlockchainEventsService', () => {
     it('should handle replay errors', async () => {
       const events = [mockOnChainEvent];
       onChainEventRepository.find.mockResolvedValue(events);
-      eventHandlersService.handleEvent.mockRejectedValue(new Error('Replay error'));
+      eventHandlersService.handleEvent.mockRejectedValue(
+        new Error('Replay error'),
+      );
 
       const result = await service.replayEvents(12345);
 
@@ -258,18 +272,28 @@ describe('BlockchainEventsService', () => {
           where: expect.objectContaining({
             ledger: expect.any(Object),
           }),
-        })
+        }),
       );
     });
   });
 
   describe('mapTopicToEventType', () => {
     it('should map known topics to event types', () => {
-      expect(service['mapTopicToEventType'](['RewardClaimed'])).toBe(OnChainEventType.REWARD_CLAIMED);
-      expect(service['mapTopicToEventType'](['AchievementUnlocked'])).toBe(OnChainEventType.ACHIEVEMENT_UNLOCKED);
-      expect(service['mapTopicToEventType'](['NFTMinted'])).toBe(OnChainEventType.NFT_MINTED);
-      expect(service['mapTopicToEventType'](['TournamentCompleted'])).toBe(OnChainEventType.TOURNAMENT_COMPLETED);
-      expect(service['mapTopicToEventType'](['StakeDeposited'])).toBe(OnChainEventType.STAKE_DEPOSITED);
+      expect(service['mapTopicToEventType'](['RewardClaimed'])).toBe(
+        OnChainEventType.REWARD_CLAIMED,
+      );
+      expect(service['mapTopicToEventType'](['AchievementUnlocked'])).toBe(
+        OnChainEventType.ACHIEVEMENT_UNLOCKED,
+      );
+      expect(service['mapTopicToEventType'](['NFTMinted'])).toBe(
+        OnChainEventType.NFT_MINTED,
+      );
+      expect(service['mapTopicToEventType'](['TournamentCompleted'])).toBe(
+        OnChainEventType.TOURNAMENT_COMPLETED,
+      );
+      expect(service['mapTopicToEventType'](['StakeDeposited'])).toBe(
+        OnChainEventType.STAKE_DEPOSITED,
+      );
     });
 
     it('should return null for unknown topics', () => {

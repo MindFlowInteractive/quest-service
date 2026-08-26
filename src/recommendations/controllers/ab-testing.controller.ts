@@ -85,21 +85,22 @@ export class ABTestingController {
   @Get('significance/:testName')
   @ApiOperation({ summary: 'Calculate statistical significance for A/B test' })
   @ApiResponse({ status: 200, description: 'Statistical significance results' })
-  @ApiQuery({ 
-    name: 'metric', 
-    required: false, 
+  @ApiQuery({
+    name: 'metric',
+    required: false,
     enum: ['clickThroughRate', 'completionRate'],
-    description: 'Metric to test for significance'
+    description: 'Metric to test for significance',
   })
   async calculateSignificance(
     @Param('testName') testName: string,
     @Query('metric') metric?: 'clickThroughRate' | 'completionRate',
   ): Promise<any> {
     try {
-      const significance = await this.abTestingService.calculateStatisticalSignificance(
-        testName,
-        metric || 'clickThroughRate',
-      );
+      const significance =
+        await this.abTestingService.calculateStatisticalSignificance(
+          testName,
+          metric || 'clickThroughRate',
+        );
 
       return significance;
     } catch (error) {
@@ -113,7 +114,9 @@ export class ABTestingController {
   @Post('stop/:testName')
   @ApiOperation({ summary: 'Stop an active A/B test' })
   @ApiResponse({ status: 200, description: 'Test stopped successfully' })
-  async stopTest(@Param('testName') testName: string): Promise<{ success: boolean }> {
+  async stopTest(
+    @Param('testName') testName: string,
+  ): Promise<{ success: boolean }> {
     try {
       this.abTestingService.stopTest(testName);
       return { success: true };

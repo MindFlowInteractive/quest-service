@@ -16,6 +16,10 @@ export class WalletAuthController {
     @Body('signature') signature: string,
     @Body('challenge') challenge: string,
   ) {
-    return this.authService.verifySignature(walletAddress, signature, challenge);
+    return this.authService.verifySignature(
+      walletAddress,
+      signature,
+      challenge,
+    );
   }
 }

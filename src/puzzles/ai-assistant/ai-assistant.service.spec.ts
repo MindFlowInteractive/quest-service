@@ -29,12 +29,15 @@ describe('AiAssistantService', () => {
   describe('analyzePuzzle', () => {
     it('should identify patterns in puzzle', async () => {
       const mockPuzzle = {
-        grid: [[1, 2], [3, 4]],
+        grid: [
+          [1, 2],
+          [3, 4],
+        ],
         constraints: [],
       };
 
       const analysis = await service.analyzePuzzle(mockPuzzle, 'user123');
-      
+
       expect(analysis).toHaveProperty('puzzleType');
       expect(analysis).toHaveProperty('difficulty');
       expect(analysis).toHaveProperty('suggestedStrategies');
@@ -51,7 +54,7 @@ describe('AiAssistantService', () => {
       };
 
       const hint = await service.getProgressiveHint(request);
-      
+
       expect(hint.avoidsSolution).toBe(true);
       expect(hint.content).toBeDefined();
       expect(hint.level).toBeGreaterThan(0);
@@ -88,7 +91,6 @@ describe('AI Assistant E2E', () => {
     // 4. Requests more hints (progressively more helpful)
     // 5. Solves puzzle
     // 6. System tracks effectiveness
-    
     // This would be a full integration test
   });
 });

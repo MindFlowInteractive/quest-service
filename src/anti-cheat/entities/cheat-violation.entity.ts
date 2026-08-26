@@ -7,9 +7,14 @@ import {
   Index,
   ManyToOne,
   JoinColumn,
-  OneToMany
+  OneToMany,
 } from 'typeorm';
-import { ViolationType, Severity, ViolationStatus, ActionType } from '../constants';
+import {
+  ViolationType,
+  Severity,
+  ViolationStatus,
+  ActionType,
+} from '../constants';
 
 /**
  * Entity for tracking cheat violations detected in the system
@@ -35,14 +40,14 @@ export class CheatViolation {
 
   @Column({
     type: 'enum',
-    enum: ViolationType
+    enum: ViolationType,
   })
   @Index()
   violationType: ViolationType;
 
   @Column({
     type: 'enum',
-    enum: Severity
+    enum: Severity,
   })
   @Index()
   severity: Severity;
@@ -74,7 +79,7 @@ export class CheatViolation {
   @Column({
     type: 'enum',
     enum: ViolationStatus,
-    default: ViolationStatus.PENDING
+    default: ViolationStatus.PENDING,
   })
   @Index()
   status: ViolationStatus;

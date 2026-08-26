@@ -3,7 +3,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddPerformanceIndexes implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Composite indexes for better query performance
-    
+
     // User performance queries
     await queryRunner.query(`
       CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_users_status_totalScore" 
@@ -109,22 +109,56 @@ export class AddPerformanceIndexes implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop performance indexes
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_users_status_totalScore";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_users_level_experience";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzles_category_difficulty_rating";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzles_featured_rating";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzle_progress_user_completion";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzle_progress_user_recent";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_user_achievements_recent_unlocks";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_achievements_unlock_rate";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_game_sessions_user_recent";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_game_sessions_performance";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzles_fulltext_search";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzle_ratings_recent_public";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_users_preferences_difficulty";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzles_tags_gin";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_user_stats_leaderboard_total";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_user_stats_leaderboard_streak";');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS "IDX_user_stats_leaderboard_accuracy";');
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_users_status_totalScore";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_users_level_experience";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzles_category_difficulty_rating";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzles_featured_rating";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzle_progress_user_completion";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzle_progress_user_recent";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_user_achievements_recent_unlocks";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_achievements_unlock_rate";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_game_sessions_user_recent";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_game_sessions_performance";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzles_fulltext_search";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzle_ratings_recent_public";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_users_preferences_difficulty";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_puzzles_tags_gin";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_user_stats_leaderboard_total";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_user_stats_leaderboard_streak";',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS "IDX_user_stats_leaderboard_accuracy";',
+    );
   }
 }

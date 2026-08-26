@@ -42,7 +42,9 @@ describe('QuestChainProgressionService', () => {
       ],
     }).compile();
 
-    service = module.get<QuestChainProgressionService>(QuestChainProgressionService);
+    service = module.get<QuestChainProgressionService>(
+      QuestChainProgressionService,
+    );
     userProgressRepository = module.get<Repository<UserQuestChainProgress>>(
       getRepositoryToken(UserQuestChainProgress),
     );
@@ -59,7 +61,7 @@ describe('QuestChainProgressionService', () => {
     it('should start a new quest chain for a user', async () => {
       const userId = 'user123';
       const chainId = 'chain456';
-      
+
       const mockProgress = {
         id: 'progress789',
         userId,
@@ -96,7 +98,7 @@ describe('QuestChainProgressionService', () => {
     it('should return existing progress if chain already started', async () => {
       const userId = 'user123';
       const chainId = 'chain456';
-      
+
       const existingProgress = {
         id: 'progress789',
         userId,
@@ -174,7 +176,10 @@ describe('QuestChainProgressionService', () => {
         hintsUsed: 1,
       } as PuzzleCompletionDto;
 
-      const result = service.evaluateBranchConditions(chainPuzzle, completionData);
+      const result = service.evaluateBranchConditions(
+        chainPuzzle,
+        completionData,
+      );
       expect(result).toBeNull();
     });
 
@@ -196,7 +201,10 @@ describe('QuestChainProgressionService', () => {
         hintsUsed: 1,
       } as PuzzleCompletionDto;
 
-      const result = service.evaluateBranchConditions(chainPuzzle, completionData);
+      const result = service.evaluateBranchConditions(
+        chainPuzzle,
+        completionData,
+      );
       expect(result).toBe('puzzle5');
     });
   });

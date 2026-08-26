@@ -55,7 +55,11 @@ export class EnergyGift {
   @Column({ name: 'expires_at', type: 'timestamp with time zone' })
   expiresAt: Date;
 
-  @Column({ name: 'accepted_at', type: 'timestamp with time zone', nullable: true })
+  @Column({
+    name: 'accepted_at',
+    type: 'timestamp with time zone',
+    nullable: true,
+  })
   acceptedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })

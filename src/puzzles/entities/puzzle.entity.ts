@@ -90,7 +90,13 @@ export class Puzzle {
   // Puzzle content and configuration
   @Column({ type: 'jsonb' })
   content: {
-    type: 'multiple-choice' | 'fill-blank' | 'drag-drop' | 'code' | 'visual' | 'logic-grid';
+    type:
+      | 'multiple-choice'
+      | 'fill-blank'
+      | 'drag-drop'
+      | 'code'
+      | 'visual'
+      | 'logic-grid';
     question?: string;
     options?: string[];
     correctAnswer?: any;
@@ -213,7 +219,7 @@ export class Puzzle {
   @ManyToMany('Collection', 'puzzles')
   collections: any[];
 
-  @ManyToOne(() => Events, event => event.puzzles, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Events, (event) => event.puzzles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'eventId' })
   event: Events;
 
@@ -227,5 +233,4 @@ export class Puzzle {
     sequenceOrder: number;
     isRequired: boolean;
   }>;
-
 }

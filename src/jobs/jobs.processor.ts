@@ -15,7 +15,9 @@ export class JobsProcessor extends WorkerHost {
 
   async process(job: BullJob<any, any, string>): Promise<any> {
     console.log(
-      `Processing job ${job.id} of type ${job.name} with data ${JSON.stringify(job.data)}`,
+      `Processing job ${job.id} of type ${job.name} with data ${JSON.stringify(
+        job.data,
+      )}`,
     );
     await this.updateJobStatus(job.id, 'processing');
 

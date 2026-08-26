@@ -6,14 +6,22 @@ export class SendEnergyGiftDto {
   @IsUUID()
   recipientId: string;
 
-  @ApiProperty({ description: 'Amount of energy to gift', default: 10, minimum: 1, maximum: 50 })
+  @ApiProperty({
+    description: 'Amount of energy to gift',
+    default: 10,
+    minimum: 1,
+    maximum: 50,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
   @Max(50)
   energyAmount?: number = 10;
 
-  @ApiProperty({ description: 'Optional message to include with the gift', required: false })
+  @ApiProperty({
+    description: 'Optional message to include with the gift',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   message?: string;

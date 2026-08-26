@@ -162,7 +162,10 @@ export class AccountController {
   @ApiOperation({
     summary: 'Cancel a pending account deletion within the grace period',
   })
-  @ApiResponse({ status: 200, description: 'Deletion cancelled; account restored' })
+  @ApiResponse({
+    status: 200,
+    description: 'Deletion cancelled; account restored',
+  })
   async restoreAccount(
     @ActiveUser() user: any,
     @Body() dto: CancelDeletionDto,

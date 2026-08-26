@@ -1,6 +1,18 @@
-import { IsString, IsOptional, IsEnum, IsDateString, IsInt, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { TransactionStatus, TransactionType, TransactionCategory } from '../entities/blockchain-transaction.entity';
+import {
+  TransactionStatus,
+  TransactionType,
+  TransactionCategory,
+} from '../entities/blockchain-transaction.entity';
 
 export class TransactionQueryDto {
   @IsEnum(TransactionStatus)

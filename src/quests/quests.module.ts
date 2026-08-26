@@ -20,7 +20,11 @@ import { QuestChainLeaderboardController } from './controllers/quest-chain-leade
       UserQuestChainProgress,
     ]),
   ],
-  controllers: [QuestChainController, QuestChainProgressController, QuestChainLeaderboardController],
+  controllers: [
+    QuestChainController,
+    QuestChainProgressController,
+    QuestChainLeaderboardController,
+  ],
   providers: [
     QuestChainService,
     QuestChainProgressionService,

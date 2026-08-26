@@ -7,7 +7,10 @@ import { PlayerBehaviorProfile } from '../entities/player-behavior-profile.entit
 import { PuzzleMoveAudit } from '../entities/puzzle-move-audit.entity';
 import { DetectionService, type DetectionViolation } from './detection.service';
 import { ViolationType, Severity, ViolationStatus } from '../constants';
-import type { PuzzleMove, ValidationResult } from '../../game-engine/types/puzzle.types';
+import type {
+  PuzzleMove,
+  ValidationResult,
+} from '../../game-engine/types/puzzle.types';
 import type { AntiCheatConfig } from '../config/anti-cheat.config';
 
 /**
@@ -27,7 +30,7 @@ export class AntiCheatService {
     @InjectRepository(PuzzleMoveAudit)
     private readonly auditRepo: Repository<PuzzleMoveAudit>,
     private readonly detectionService: DetectionService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     this.config = this.configService.get<AntiCheatConfig>('antiCheat')!;
   }
@@ -42,11 +45,13 @@ export class AntiCheatService {
     move: PuzzleMove,
     moveNumber: number,
     timeSincePrevious: number,
-    validationResult: ValidationResult
+    validationResult: ValidationResult,
   ): Promise<void> {
     try {
       // Check if we should log this move
-      const shouldLog = this.config.logging.logAllMoves || this.config.logging.logSuspiciousMoves;
+      const shouldLog =
+        this.config.logging.logAllMoves ||
+        this.config.logging.logSuspiciousMoves;
 
       if (!shouldLog) {
         return;
@@ -63,12 +68,14 @@ export class AntiCheatService {
         wasValid: validationResult.isValid,
         validationResult,
         flaggedAsSuspicious: false,
-        suspicionReasons: null
+        suspicionReasons: null,
       });
 
       await this.auditRepo.save(audit);
 
-      this.logger.debug(`Audited move ${moveNumber} for player ${playerId} in puzzle ${puzzleId}`);
+      this.logger.debug(
+        `Audited move ${moveNumber} for player ${playerId} in puzzle ${puzzleId}`,
+      );
     } catch (error: any) {
       this.logger.error(`Failed to audit move: ${error.message}`, error.stack);
     }
@@ -86,7 +93,7 @@ export class AntiCheatService {
       isFirstAttempt: boolean;
       optimalMoveCount?: number;
       allMovesValid: boolean;
-    }
+    },
   ): Promise<void> {
     try {
       // Run detection algorithms
@@ -94,7 +101,7 @@ export class AntiCheatService {
 
       if (result.isAnomaly && result.violations.length > 0) {
         this.logger.warn(
-          `Detected ${result.violations.length} anomalies for player ${playerId} in puzzle ${puzzleId}`
+          `Detected ${result.violations.length} anomalies for player ${playerId} in puzzle ${puzzleId}`,
         );
 
         // Record violations
@@ -105,11 +112,14 @@ export class AntiCheatService {
         // Update player's behavior profile
         await this.updateBehaviorProfile(playerId, {
           violationDetected: true,
-          violationTypes: result.violations.map(v => v.type)
+          violationTypes: result.violations.map((v) => v.type),
         });
       }
     } catch (error: any) {
-      this.logger.error(`Failed to analyze move sequence: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to analyze move sequence: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
@@ -120,7 +130,7 @@ export class AntiCheatService {
     playerId: string,
     puzzleId: string,
     sessionId: string,
-    violation: DetectionViolation
+    violation: DetectionViolation,
   ): Promise<CheatViolation> {
     const shadowMode = this.config.shadowMode.enabled;
 
@@ -134,7 +144,7 @@ export class AntiCheatService {
       evidence: violation.evidence,
       status: ViolationStatus.PENDING,
       autoDetected: true,
-      actionTaken: false
+      actionTaken: false,
     });
 
     const saved = await this.violationRepo.save(cheatViolation);
@@ -142,12 +152,12 @@ export class AntiCheatService {
     if (shadowMode) {
       this.logger.warn(
         `[SHADOW MODE] Violation detected but not enforced: ${violation.type} for player ${playerId}`,
-        { violationId: saved.id, severity: violation.severity }
+        { violationId: saved.id, severity: violation.severity },
       );
     } else {
       this.logger.warn(
         `Violation recorded: ${violation.type} for player ${playerId}`,
-        { violationId: saved.id, severity: violation.severity }
+        { violationId: saved.id, severity: violation.severity },
       );
     }
 
@@ -157,21 +167,24 @@ export class AntiCheatService {
   /**
    * Check rate limiting for puzzle attempts
    */
-  async checkRateLimit(playerId: string, puzzleId: string): Promise<{ passed: boolean; reason?: string }> {
+  async checkRateLimit(
+    playerId: string,
+    puzzleId: string,
+  ): Promise<{ passed: boolean; reason?: string }> {
     // Get recent move audits for this player
     const oneSecondAgo = new Date(Date.now() - 1000);
 
     const recentMoves = await this.auditRepo.count({
       where: {
         playerId,
-        createdAt: MoreThan(oneSecondAgo)
-      }
+        createdAt: MoreThan(oneSecondAgo),
+      },
     });
 
     if (recentMoves >= this.config.thresholds.maxMovesPerSecond) {
       return {
         passed: false,
-        reason: `Rate limit exceeded: ${recentMoves} moves in last second`
+        reason: `Rate limit exceeded: ${recentMoves} moves in last second`,
       };
     }
 
@@ -181,7 +194,10 @@ export class AntiCheatService {
   /**
    * Validate move timestamp for clock manipulation
    */
-  validateMoveTimestamp(move: PuzzleMove): { passed: boolean; reason?: string } {
+  validateMoveTimestamp(move: PuzzleMove): {
+    passed: boolean;
+    reason?: string;
+  } {
     const now = Date.now();
     const moveTime = new Date(move.timestamp).getTime();
     const drift = Math.abs(now - moveTime);
@@ -190,7 +206,7 @@ export class AntiCheatService {
     if (drift > 5000) {
       return {
         passed: false,
-        reason: `Timestamp drift too large: ${drift}ms`
+        reason: `Timestamp drift too large: ${drift}ms`,
       };
     }
 
@@ -198,7 +214,7 @@ export class AntiCheatService {
     if (moveTime > now + 1000) {
       return {
         passed: false,
-        reason: 'Move timestamp is in the future'
+        reason: 'Move timestamp is in the future',
       };
     }
 
@@ -208,7 +224,9 @@ export class AntiCheatService {
   /**
    * Check session integrity
    */
-  async checkSessionIntegrity(headers: Record<string, any>): Promise<{ passed: boolean; reason?: string }> {
+  async checkSessionIntegrity(
+    headers: Record<string, any>,
+  ): Promise<{ passed: boolean; reason?: string }> {
     // Basic session integrity checks
     // In a production system, this would check for:
     // - Session hijacking
@@ -233,36 +251,36 @@ export class AntiCheatService {
           stdDevTimeBetweenMoves: 0,
           fastestMove: Number.MAX_SAFE_INTEGER,
           slowestMove: 0,
-          typicalPausePattern: []
+          typicalPausePattern: [],
         },
         accuracyProfile: {
           overallAccuracy: 0,
           firstAttemptAccuracy: 0,
           improvementRate: 0,
-          errorPatterns: {}
+          errorPatterns: {},
         },
         skillProfile: {
           skillLevel: 5,
           strongPuzzleTypes: [],
           weakPuzzleTypes: [],
           learningCurve: 0,
-          consistencyScore: 0
+          consistencyScore: 0,
         },
         sessionPatterns: {
           avgSessionDuration: 0,
           puzzlesPerSession: 0,
           preferredPlayTimes: [],
-          multitaskingIndicators: 0
+          multitaskingIndicators: 0,
         },
         riskFactors: {
           overallRiskScore: 0,
           flaggedBehaviors: [],
-          suspiciousPatterns: []
+          suspiciousPatterns: [],
         },
         totalPuzzlesCompleted: 0,
         totalViolations: 0,
         confirmedViolations: 0,
-        trustScore: this.config.thresholds.initialTrustScore
+        trustScore: this.config.thresholds.initialTrustScore,
       });
 
       profile = await this.profileRepo.save(profile);
@@ -280,7 +298,7 @@ export class AntiCheatService {
     update: {
       violationDetected?: boolean;
       violationTypes?: ViolationType[];
-    }
+    },
   ): Promise<void> {
     try {
       const profile = await this.getOrCreateProfile(playerId);
@@ -291,7 +309,10 @@ export class AntiCheatService {
         // Update risk factors
         if (update.violationTypes && update.violationTypes.length > 0) {
           profile.riskFactors.flaggedBehaviors = [
-            ...new Set([...profile.riskFactors.flaggedBehaviors, ...update.violationTypes])
+            ...new Set([
+              ...profile.riskFactors.flaggedBehaviors,
+              ...update.violationTypes,
+            ]),
           ];
         }
 
@@ -300,7 +321,7 @@ export class AntiCheatService {
         const decay = 5; // LOW severity decay
         profile.trustScore = Math.max(
           this.config.thresholds.minTrustScore,
-          profile.trustScore - decay
+          profile.trustScore - decay,
         );
 
         profile.lastViolationAt = new Date();
@@ -309,7 +330,10 @@ export class AntiCheatService {
       await this.profileRepo.save(profile);
       this.logger.debug(`Updated behavior profile for player ${playerId}`);
     } catch (error: any) {
-      this.logger.error(`Failed to update behavior profile: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update behavior profile: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
@@ -319,17 +343,21 @@ export class AntiCheatService {
   async getPlayerViolations(playerId: string): Promise<CheatViolation[]> {
     return this.violationRepo.find({
       where: { playerId },
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
   /**
    * Get recent move audits for a player/puzzle
    */
-  async getRecentMoves(playerId: string, puzzleId: string, sessionId: string): Promise<PuzzleMoveAudit[]> {
+  async getRecentMoves(
+    playerId: string,
+    puzzleId: string,
+    sessionId: string,
+  ): Promise<PuzzleMoveAudit[]> {
     return this.auditRepo.find({
       where: { playerId, puzzleId, sessionId },
-      order: { moveNumber: 'ASC' }
+      order: { moveNumber: 'ASC' },
     });
   }
 }

@@ -80,7 +80,11 @@ export class DailyChallengesController {
     @Query('limit') limit: number,
     @Query('type') type?: 'daily' | 'weekly',
   ) {
-    return this.dailyChallengesService.getHistory(req.user.id, limit || 30, type);
+    return this.dailyChallengesService.getHistory(
+      req.user.id,
+      limit || 30,
+      type,
+    );
   }
 
   // Legacy endpoint for backward compatibility

@@ -10,7 +10,11 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { AchievementConditionEngine } from './achievement-condition.engine';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Achievement, UserAchievement]), NotificationsModule, PlayerEventsModule],
+  imports: [
+    TypeOrmModule.forFeature([Achievement, UserAchievement]),
+    NotificationsModule,
+    PlayerEventsModule,
+  ],
   controllers: [AchievementsController],
   providers: [AchievementsService, AchievementConditionEngine],
   exports: [AchievementsService],

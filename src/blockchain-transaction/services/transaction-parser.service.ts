@@ -20,10 +20,10 @@ export class TransactionParserService {
   parseTransaction(
     horizonTx: HorizonTransactionResponse,
     userId?: string,
-    category: TransactionCategory = TransactionCategory.USER
+    category: TransactionCategory = TransactionCategory.USER,
   ): Partial<BlockchainTransaction> {
     const status = this.determineTransactionStatus(horizonTx);
-    
+
     return {
       transactionHash: horizonTx.hash,
       userId,
@@ -40,8 +40,14 @@ export class TransactionParserService {
         resultXdr: horizonTx.result_xdr,
         resultMetaXdr: horizonTx.result_meta_xdr,
       },
-      confirmedAt: status === TransactionStatus.CONFIRMED ? new Date(horizonTx.created_at) : undefined,
-      failedAt: status === TransactionStatus.FAILED ? new Date(horizonTx.created_at) : undefined,
+      confirmedAt:
+        status === TransactionStatus.CONFIRMED
+          ? new Date(horizonTx.created_at)
+          : undefined,
+      failedAt:
+        status === TransactionStatus.FAILED
+          ? new Date(horizonTx.created_at)
+          : undefined,
     };
   }
 
@@ -50,7 +56,7 @@ export class TransactionParserService {
    */
   parseOperations(
     operations: HorizonOperationResponse[],
-    baseTransaction: Partial<BlockchainTransaction>
+    baseTransaction: Partial<BlockchainTransaction>,
   ): Partial<BlockchainTransaction> {
     if (!operations || operations.length === 0) {
       return {
@@ -73,7 +79,7 @@ export class TransactionParserService {
    */
   private parseSingleOperation(
     operation: HorizonOperationResponse,
-    baseTransaction: Partial<BlockchainTransaction>
+    baseTransaction: Partial<BlockchainTransaction>,
   ): Partial<BlockchainTransaction> {
     const type = this.mapOperationType(operation.type);
     const details = this.extractOperationDetails(operation, type);
@@ -90,7 +96,7 @@ export class TransactionParserService {
    */
   private parseMultiOperation(
     operations: HorizonOperationResponse[],
-    baseTransaction: Partial<BlockchainTransaction>
+    baseTransaction: Partial<BlockchainTransaction>,
   ): Partial<BlockchainTransaction> {
     // Prioritize certain operation types
     const priorityTypes = [
@@ -132,25 +138,25 @@ export class TransactionParserService {
       payment: TransactionType.TOKEN_PAYMENT,
       path_payment_strict_receive: TransactionType.PATH_PAYMENT,
       path_payment_strict_send: TransactionType.PATH_PAYMENT,
-      
+
       // Account operations
       create_account: TransactionType.ACCOUNT_CREATE,
       account_merge: TransactionType.ACCOUNT_MERGE,
-      
+
       // Offers
       manage_buy_offer: TransactionType.OFFER_CREATE,
       manage_sell_offer: TransactionType.OFFER_CREATE,
       create_passive_sell_offer: TransactionType.OFFER_CREATE,
-      
+
       // Soroban
       invoke_host_function: TransactionType.CONTRACT_INVOKE,
       extend_footprint_ttl: TransactionType.CONTRACT_INVOKE,
       restore_footprint: TransactionType.CONTRACT_INVOKE,
-      
+
       // Clawbacks
       clawback: TransactionType.TOKEN_TRANSFER,
       clawback_claimable_balance: TransactionType.TOKEN_TRANSFER,
-      
+
       // Other
       create_clawback_claimable_balance: TransactionType.TOKEN_TRANSFER,
       claim_claimable_balance: TransactionType.TOKEN_TRANSFER,
@@ -164,7 +170,7 @@ export class TransactionParserService {
    */
   private extractOperationDetails(
     operation: HorizonOperationResponse,
-    type: TransactionType
+    type: TransactionType,
   ): Partial<BlockchainTransaction> {
     const details: Partial<BlockchainTransaction> = {};
 
@@ -194,7 +200,7 @@ export class TransactionParserService {
         details.contractId = operation.contract_id;
         details.functionName = operation.function;
         details.functionArgs = operation.parameters;
-        
+
         // Try to determine if this is an NFT operation
         if (operation.function) {
           const func = operation.function.toLowerCase();
@@ -233,7 +239,9 @@ export class TransactionParserService {
   /**
    * Determine transaction status from Horizon response
    */
-  private determineTransactionStatus(horizonTx: HorizonTransactionResponse): TransactionStatus {
+  private determineTransactionStatus(
+    horizonTx: HorizonTransactionResponse,
+  ): TransactionStatus {
     if (horizonTx.successful) {
       return TransactionStatus.CONFIRMED;
     }
@@ -245,7 +253,7 @@ export class TransactionParserService {
    */
   categorizeTransaction(
     transaction: Partial<BlockchainTransaction>,
-    operations: HorizonOperationResponse[]
+    operations: HorizonOperationResponse[],
   ): TransactionCategory {
     // Check memo for category hints
     if (transaction.memo) {
@@ -279,8 +287,10 @@ export class TransactionParserService {
       if (op.contract_id) {
         // This would be configured based on your deployed contracts
         // For now, default to game_reward for contract invocations
-        if (transaction.type === TransactionType.NFT_MINT || 
-            transaction.type === TransactionType.TOKEN_TRANSFER) {
+        if (
+          transaction.type === TransactionType.NFT_MINT ||
+          transaction.type === TransactionType.TOKEN_TRANSFER
+        ) {
           return TransactionCategory.GAME_REWARD;
         }
       }
@@ -292,12 +302,14 @@ export class TransactionParserService {
   /**
    * Extract user ID from transaction memo or other patterns
    */
-  extractUserId(transaction: Partial<BlockchainTransaction>): string | undefined {
+  extractUserId(
+    transaction: Partial<BlockchainTransaction>,
+  ): string | undefined {
     if (!transaction.memo) return undefined;
 
     // Look for UUID patterns in memo
     const uuidMatch = transaction.memo.match(
-      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
     );
     if (uuidMatch) {
       return uuidMatch[0];

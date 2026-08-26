@@ -31,7 +31,11 @@ describe('WebhooksService', () => {
     };
 
     deliveryRepository = {
-      find: jest.fn().mockResolvedValue([{ id: 'delivery-1', webhookId: 'webhook-1', status: 'success' }]),
+      find: jest
+        .fn()
+        .mockResolvedValue([
+          { id: 'delivery-1', webhookId: 'webhook-1', status: 'success' },
+        ]),
       createQueryBuilder: jest.fn(),
       delete: jest.fn(),
       save: jest.fn(),
@@ -44,10 +48,20 @@ describe('WebhooksService', () => {
       providers: [
         WebhooksService,
         { provide: getRepositoryToken(Webhook), useValue: webhookRepository },
-        { provide: getRepositoryToken(WebhookDelivery), useValue: deliveryRepository },
+        {
+          provide: getRepositoryToken(WebhookDelivery),
+          useValue: deliveryRepository,
+        },
         { provide: getQueueToken(WEBHOOK_QUEUE), useValue: { add: jest.fn() } },
         { provide: WebhookUrlValidatorService, useValue: validator },
-        { provide: ConfigService, useValue: { get: jest.fn().mockImplementation((key: string, fallback: unknown) => fallback) } },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest
+              .fn()
+              .mockImplementation((key: string, fallback: unknown) => fallback),
+          },
+        },
       ],
     }).compile();
 
@@ -86,11 +100,16 @@ describe('WebhooksService', () => {
   });
 
   it('returns delivery logs for the owning user', async () => {
-    webhookRepository.findOne.mockResolvedValue({ id: 'webhook-1', userId: 'user-1' });
+    webhookRepository.findOne.mockResolvedValue({
+      id: 'webhook-1',
+      userId: 'user-1',
+    });
 
     const deliveries = await service.getDeliveries('user-1', 'webhook-1');
 
-    expect(webhookRepository.findOne).toHaveBeenCalledWith({ where: { id: 'webhook-1', userId: 'user-1' } });
+    expect(webhookRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 'webhook-1', userId: 'user-1' },
+    });
     expect(deliveryRepository.find).toHaveBeenCalledWith({
       where: { webhookId: 'webhook-1' },
       order: { createdAt: 'DESC' },

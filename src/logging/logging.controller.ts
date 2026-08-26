@@ -4,9 +4,7 @@ import { LoggingService } from './logging.service';
 
 @Controller('logs')
 export class LoggingController {
-  constructor(
-    private readonly loggingService: LoggingService,
-  ) {}
+  constructor(private readonly loggingService: LoggingService) {}
 
   @Get('health')
   health() {
@@ -16,15 +14,8 @@ export class LoggingController {
   @Get('levels')
   levels() {
     return {
-      supported: [
-        'error',
-        'warn',
-        'info',
-        'debug',
-        'verbose',
-      ],
-      active:
-        process.env.LOG_LEVEL ?? 'info',
+      supported: ['error', 'warn', 'info', 'debug', 'verbose'],
+      active: process.env.LOG_LEVEL ?? 'info',
     };
   }
 }

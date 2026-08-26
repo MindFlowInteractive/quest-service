@@ -24,8 +24,11 @@ export class DifficultyAnalyticsService {
    * Returns analytics for a puzzle: difficulty, perceived difficulty, etc.
    */
   async getPuzzleAnalytics(puzzleId: string) {
-    const difficulty = await this.puzzleDifficultyService.getPuzzleDifficulty(puzzleId);
-    const perceived = this.feedbackService.getAveragePerceivedDifficulty(puzzleId);
+    const difficulty = await this.puzzleDifficultyService.getPuzzleDifficulty(
+      puzzleId,
+    );
+    const perceived =
+      this.feedbackService.getAveragePerceivedDifficulty(puzzleId);
     // Extend with more analytics as needed
     return { difficulty, perceivedDifficulty: perceived };
   }

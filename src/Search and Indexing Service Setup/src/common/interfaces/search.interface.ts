@@ -2,7 +2,7 @@ export interface Puzzle {
   id: string;
   title: string;
   description: string;
-  difficulty: "easy" | "medium" | "hard" | "expert";
+  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   category: string;
   tags: string[];
   rating: number;
@@ -35,7 +35,7 @@ export interface Achievement {
   description: string;
   category: string;
   points: number;
-  rarity: "common" | "rare" | "epic" | "legendary";
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
   iconUrl?: string;
   requirements: Record<string, any>;
   unlockedBy: number;
@@ -63,7 +63,7 @@ export interface SearchQuery {
   page?: number;
   size?: number;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 export interface AutocompleteResult {

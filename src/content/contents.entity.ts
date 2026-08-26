@@ -18,7 +18,12 @@ import { Comment } from './comment.entity';
 import { Like } from './like.entity';
 import { View } from './view.entity';
 
-export type ContentStatus = 'draft' | 'pending' | 'published' | 'rejected' | 'archived';
+export type ContentStatus =
+  | 'draft'
+  | 'pending'
+  | 'published'
+  | 'rejected'
+  | 'archived';
 
 @Entity('contents')
 @Index('contents_fulltext_idx', ['title', 'body'], { fulltext: true }) // TypeORM index hint; real full-text uses tsvector SQL
@@ -35,7 +40,11 @@ export class Content {
   @ManyToOne(() => User, { eager: true })
   author: User;
 
-  @Column({ type: 'enum', enum: ['draft', 'pending', 'published', 'rejected', 'archived'], default: 'draft' })
+  @Column({
+    type: 'enum',
+    enum: ['draft', 'pending', 'published', 'rejected', 'archived'],
+    default: 'draft',
+  })
   status: ContentStatus;
 
   @ManyToOne(() => Category, (c) => c.contents, { nullable: true, eager: true })

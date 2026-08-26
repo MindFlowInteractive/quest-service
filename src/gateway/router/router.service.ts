@@ -1,25 +1,15 @@
 import { Injectable } from '@nestjs/common';
 
-import {
-  ServiceDefinition,
-} from './service-registry';
+import { ServiceDefinition } from './service-registry';
 import { RouteResolver } from './route-resolver';
-import {
-  GatewayRequest,
-} from '../gateway.service';
+import { GatewayRequest } from '../gateway.service';
 
 @Injectable()
 export class RouterService {
-  constructor(
-    private readonly routeResolver: RouteResolver,
-  ) {}
+  constructor(private readonly routeResolver: RouteResolver) {}
 
-  resolveService(
-    service: string,
-  ): ServiceDefinition {
-    return this.routeResolver.resolve(
-      service,
-    );
+  resolveService(service: string): ServiceDefinition {
+    return this.routeResolver.resolve(service);
   }
 
   async forward(
@@ -38,8 +28,7 @@ export class RouterService {
     return {
       gateway: true,
       service: destination.name,
-      destination:
-        destination.baseUrl,
+      destination: destination.baseUrl,
       method: request.method,
       path: request.path,
       query: request.query,

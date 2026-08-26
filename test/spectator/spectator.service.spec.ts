@@ -37,8 +37,12 @@ describe('SpectatorService', () => {
     }).compile();
 
     service = module.get<SpectatorService>(SpectatorService);
-    spectatorRepo = module.get<Repository<Spectator>>(getRepositoryToken(Spectator));
-    sessionRepo = module.get<Repository<GameSession>>(getRepositoryToken(GameSession));
+    spectatorRepo = module.get<Repository<Spectator>>(
+      getRepositoryToken(Spectator),
+    );
+    sessionRepo = module.get<Repository<GameSession>>(
+      getRepositoryToken(GameSession),
+    );
   });
 
   it('should be defined', () => {
@@ -49,7 +53,13 @@ describe('SpectatorService', () => {
     it('should successfully join a session as spectator', async () => {
       const session = { id: 'session-1', isSpectatorAllowed: true };
       const spectatorData = { userId: 'user-1', username: 'testuser' };
-      const expectedSpectator = { id: 'spectator-1', ...spectatorData, sessionId: 'session-1', joinedAt: new Date(), isActive: true };
+      const expectedSpectator = {
+        id: 'spectator-1',
+        ...spectatorData,
+        sessionId: 'session-1',
+        joinedAt: new Date(),
+        isActive: true,
+      };
 
       sessionRepo.findOneBy.mockResolvedValue(session);
       spectatorRepo.findOne.mockResolvedValue(null);
@@ -72,26 +82,42 @@ describe('SpectatorService', () => {
     it('should throw NotFoundException if session does not exist', async () => {
       sessionRepo.findOneBy.mockResolvedValue(null);
 
-      await expect(service.joinSession('nonexistent', { userId: 'user-1', username: 'test' }))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.joinSession('nonexistent', {
+          userId: 'user-1',
+          username: 'test',
+        }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException if spectating is not allowed', async () => {
       const session = { id: 'session-1', isSpectatorAllowed: false };
       sessionRepo.findOneBy.mockResolvedValue(session);
 
-      await expect(service.joinSession('session-1', { userId: 'user-1', username: 'test' }))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.joinSession('session-1', {
+          userId: 'user-1',
+          username: 'test',
+        }),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should return existing spectator if already spectating', async () => {
       const session = { id: 'session-1', isSpectatorAllowed: true };
-      const existingSpectator = { id: 'spectator-1', userId: 'user-1', username: 'test', isActive: true };
+      const existingSpectator = {
+        id: 'spectator-1',
+        userId: 'user-1',
+        username: 'test',
+        isActive: true,
+      };
 
       sessionRepo.findOneBy.mockResolvedValue(session);
       spectatorRepo.findOne.mockResolvedValue(existingSpectator);
 
-      const result = await service.joinSession('session-1', { userId: 'user-1', username: 'test' });
+      const result = await service.joinSession('session-1', {
+        userId: 'user-1',
+        username: 'test',
+      });
 
       expect(result).toEqual(existingSpectator);
       expect(spectatorRepo.create).not.toHaveBeenCalled();
@@ -103,7 +129,11 @@ describe('SpectatorService', () => {
       const spectator = { id: 'spectator-1', isActive: true };
 
       spectatorRepo.findOne.mockResolvedValue(spectator);
-      spectatorRepo.save.mockResolvedValue({ ...spectator, isActive: false, leftAt: new Date() });
+      spectatorRepo.save.mockResolvedValue({
+        ...spectator,
+        isActive: false,
+        leftAt: new Date(),
+      });
 
       await service.leaveSession('session-1', 'user-1');
 
@@ -120,8 +150,9 @@ describe('SpectatorService', () => {
     it('should throw NotFoundException if not currently spectating', async () => {
       spectatorRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.leaveSession('session-1', 'user-1'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.leaveSession('session-1', 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -159,16 +190,27 @@ describe('SpectatorService', () => {
 
   describe('toggleSpectating', () => {
     it('should allow session owner to toggle spectating', async () => {
-      const session = { id: 'session-1', userId: 'owner-1', isSpectatorAllowed: false };
+      const session = {
+        id: 'session-1',
+        userId: 'owner-1',
+        isSpectatorAllowed: false,
+      };
       const updatedSession = { ...session, isSpectatorAllowed: true };
 
       sessionRepo.findOneBy.mockResolvedValue(session);
       sessionRepo.save.mockResolvedValue(updatedSession);
 
-      const result = await service.toggleSpectating('session-1', 'owner-1', true);
+      const result = await service.toggleSpectating(
+        'session-1',
+        'owner-1',
+        true,
+      );
 
       expect(result).toEqual(updatedSession);
-      expect(sessionRepo.save).toHaveBeenCalledWith({ ...session, isSpectatorAllowed: true });
+      expect(sessionRepo.save).toHaveBeenCalledWith({
+        ...session,
+        isSpectatorAllowed: true,
+      });
     });
 
     it('should throw ForbiddenException if not session owner', async () => {
@@ -176,22 +218,30 @@ describe('SpectatorService', () => {
 
       sessionRepo.findOneBy.mockResolvedValue(session);
 
-      await expect(service.toggleSpectating('session-1', 'other-user', true))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.toggleSpectating('session-1', 'other-user', true),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should remove all spectators when disabling spectating', async () => {
-      const session = { id: 'session-1', userId: 'owner-1', isSpectatorAllowed: true };
+      const session = {
+        id: 'session-1',
+        userId: 'owner-1',
+        isSpectatorAllowed: true,
+      };
 
       sessionRepo.findOneBy.mockResolvedValue(session);
-      sessionRepo.save.mockResolvedValue({ ...session, isSpectatorAllowed: false });
+      sessionRepo.save.mockResolvedValue({
+        ...session,
+        isSpectatorAllowed: false,
+      });
       spectatorRepo.update.mockResolvedValue({});
 
       await service.toggleSpectating('session-1', 'owner-1', false);
 
       expect(spectatorRepo.update).toHaveBeenCalledWith(
         { sessionId: 'session-1', isActive: true },
-        { isActive: false, leftAt: expect.any(Date) }
+        { isActive: false, leftAt: expect.any(Date) },
       );
     });
   });

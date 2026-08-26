@@ -4,7 +4,12 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { GeneratedPuzzle, VarietyTracker, PuzzleType, DifficultyLevel } from './types';
+import {
+  GeneratedPuzzle,
+  VarietyTracker,
+  PuzzleType,
+  DifficultyLevel,
+} from './types';
 import * as crypto from 'crypto';
 
 interface DiversityMetrics {
@@ -27,9 +32,7 @@ export class VarietyAndUniquenessService {
   /**
    * Ensures generated puzzle is unique
    */
-  ensureUniqueness(
-    puzzle: GeneratedPuzzle,
-  ): {
+  ensureUniqueness(puzzle: GeneratedPuzzle): {
     isUnique: boolean;
     similarPuzzles: GeneratedPuzzle[];
     uniquenessScore: number;
@@ -37,17 +40,22 @@ export class VarietyAndUniquenessService {
   } {
     const puzzleHash = this.generatePuzzleHash(puzzle);
     const similarPuzzles = this.findSimilarPuzzles(puzzle);
-    const uniquenessScore = 1 - (similarPuzzles.length / Math.max(1, this.generationHistory.length));
+    const uniquenessScore =
+      1 - similarPuzzles.length / Math.max(1, this.generationHistory.length);
 
     const isUnique = similarPuzzles.length === 0 && uniquenessScore >= 0.8;
 
     const suggestions: string[] = [];
     if (!isUnique) {
       if (similarPuzzles.length > 0) {
-        suggestions.push(`Found ${similarPuzzles.length} similar puzzles - consider regenerating`);
+        suggestions.push(
+          `Found ${similarPuzzles.length} similar puzzles - consider regenerating`,
+        );
       }
       if (uniquenessScore < 0.8) {
-        suggestions.push('Uniqueness score below threshold - try different parameters');
+        suggestions.push(
+          'Uniqueness score below threshold - try different parameters',
+        );
       }
     }
 
@@ -91,7 +99,11 @@ export class VarietyAndUniquenessService {
    * Helper function to hash strings
    */
   private hashString(str: string): string {
-    return crypto.createHash('sha256').update(str).digest('hex').substring(0, 16);
+    return crypto
+      .createHash('sha256')
+      .update(str)
+      .digest('hex')
+      .substring(0, 16);
   }
 
   /**
@@ -121,7 +133,10 @@ export class VarietyAndUniquenessService {
   /**
    * Calculates similarity between two puzzles
    */
-  private calculatePuzzleSimilarity(puzzle1: GeneratedPuzzle, puzzle2: GeneratedPuzzle): number {
+  private calculatePuzzleSimilarity(
+    puzzle1: GeneratedPuzzle,
+    puzzle2: GeneratedPuzzle,
+  ): number {
     let score = 0;
     let factors = 0;
 
@@ -143,7 +158,10 @@ export class VarietyAndUniquenessService {
     factors += 0.25;
 
     // Solution similarity (15%)
-    const solutionSim = this.compareSolutions(puzzle1.solution, puzzle2.solution);
+    const solutionSim = this.compareSolutions(
+      puzzle1.solution,
+      puzzle2.solution,
+    );
     score += solutionSim * 0.15;
     factors += 0.15;
 
@@ -173,7 +191,9 @@ export class VarietyAndUniquenessService {
    */
   private compareSolutions(solution1: any, solution2: any): number {
     try {
-      if (JSON.stringify(solution1.answer) === JSON.stringify(solution2.answer)) {
+      if (
+        JSON.stringify(solution1.answer) === JSON.stringify(solution2.answer)
+      ) {
         return 1.0;
       }
       return 0;
@@ -257,7 +277,10 @@ export class VarietyAndUniquenessService {
   /**
    * Gets variety tracker for puzzle type/difficulty
    */
-  getVarietyTracker(puzzleType: PuzzleType, difficulty: DifficultyLevel): VarietyTracker | null {
+  getVarietyTracker(
+    puzzleType: PuzzleType,
+    difficulty: DifficultyLevel,
+  ): VarietyTracker | null {
     const key = `${puzzleType}:${difficulty}`;
     return this.varietyTrackers.get(key) || null;
   }
@@ -285,7 +308,8 @@ export class VarietyAndUniquenessService {
 
     // Diversity score based on hash variety
     const uniqueHashes = new Set(tracker.recentHashes);
-    const diversityScore = uniqueHashes.size / Math.max(1, tracker.recentHashes.length);
+    const diversityScore =
+      uniqueHashes.size / Math.max(1, tracker.recentHashes.length);
 
     // Variety score (combination of uniqueness and diversity)
     const varietyScore = (uniquenessToBucket + diversityScore) / 2;
@@ -340,7 +364,10 @@ export class VarietyAndUniquenessService {
     targetCount: number,
   ): Record<PuzzleType, number> {
     const types: PuzzleType[] = ['logic', 'pattern', 'math', 'word', 'visual'];
-    const totalGenerated = Object.values(puzzleTypeCounts).reduce((a, b) => a + b, 0);
+    const totalGenerated = Object.values(puzzleTypeCounts).reduce(
+      (a, b) => a + b,
+      0,
+    );
 
     // Calculate ideal distribution
     const ideal = Math.floor(targetCount / types.length);
@@ -385,7 +412,9 @@ export class VarietyAndUniquenessService {
     report += '\nRECENT GENERATION HISTORY:\n';
     const recent = this.generationHistory.slice(-10);
     recent.forEach((puzzle) => {
-      report += `  ${puzzle.id.substring(0, 8)}... - ${puzzle.type} (${puzzle.difficulty})\n`;
+      report += `  ${puzzle.id.substring(0, 8)}... - ${puzzle.type} (${
+        puzzle.difficulty
+      })\n`;
     });
 
     return report;
@@ -437,8 +466,11 @@ export class VarietyAndUniquenessService {
       };
     }
 
-    const scores = Array.from(this.varietyTrackers.values()).map((t) => t.uniquenessScore);
-    const avgUniquenessScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const scores = Array.from(this.varietyTrackers.values()).map(
+      (t) => t.uniquenessScore,
+    );
+    const avgUniquenessScore =
+      scores.reduce((a, b) => a + b, 0) / scores.length;
 
     const totalUnique = this.puzzleHashes.size;
     const duplicateRate = Math.max(

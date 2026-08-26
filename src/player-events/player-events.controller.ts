@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Query, Request, UseGuards, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PlayerEventsService } from './player-events.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -17,14 +25,21 @@ export class PlayerEventsController {
 
   @Get('players/:id/events')
   @Roles(UserRole.ADMIN)
-  async getPlayerEvents(@Param('id') userId: string, @Query() query: PagedQueryDto) {
+  async getPlayerEvents(
+    @Param('id') userId: string,
+    @Query() query: PagedQueryDto,
+  ) {
     const page = query.page || 1;
     const limit = query.limit || 20;
     return this.playerEventsService.getEventsByPlayer(userId, page, limit);
   }
 
   @Get('sessions/:id/events')
-  async getSessionEvents(@Param('id') sessionId: string, @Query() query: PagedQueryDto, @Request() req: any) {
+  async getSessionEvents(
+    @Param('id') sessionId: string,
+    @Query() query: PagedQueryDto,
+    @Request() req: any,
+  ) {
     const page = query.page || 1;
     const limit = query.limit || 50;
 

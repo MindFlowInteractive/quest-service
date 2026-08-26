@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   Index,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
 } from 'typeorm';
 
 /**

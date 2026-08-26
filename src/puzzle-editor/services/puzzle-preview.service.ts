@@ -12,7 +12,10 @@ import {
   EditorComponent,
   ComponentConnection,
 } from '../interfaces/editor.interfaces';
-import { IPuzzle, PuzzleGameState } from '../../game-engine/interfaces/puzzle.interfaces';
+import {
+  IPuzzle,
+  PuzzleGameState,
+} from '../../game-engine/interfaces/puzzle.interfaces';
 
 @Injectable()
 export class PuzzlePreviewService {
@@ -28,7 +31,9 @@ export class PuzzlePreviewService {
     connections: ComponentConnection[],
     config?: Partial<PreviewConfig>,
   ): Promise<PreviewSession> {
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `session_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
     const session: PreviewSession = {
       id: sessionId,
@@ -50,7 +55,9 @@ export class PuzzlePreviewService {
 
     this.activeSessions.set(sessionId, session);
 
-    this.logger.log(`Started preview session: ${sessionId} for editor: ${editorId}`);
+    this.logger.log(
+      `Started preview session: ${sessionId} for editor: ${editorId}`,
+    );
 
     return session;
   }
@@ -247,9 +254,16 @@ export class PuzzlePreviewService {
       // Simple test: try to reach win condition within time limit
       while (Date.now() - startTime < config.maxTimePerAttempt && !success) {
         // Simulate random moves (in real scenario, this would be AI solving)
-        const randomAction = this.generateRandomAction(components, session.currentState);
+        const randomAction = this.generateRandomAction(
+          components,
+          session.currentState,
+        );
         if (randomAction) {
-          await this.recordMove(session.id, randomAction.type, randomAction.details);
+          await this.recordMove(
+            session.id,
+            randomAction.type,
+            randomAction.details,
+          );
           success = this.checkWinCondition(session.currentState);
         } else {
           break;
@@ -265,7 +279,10 @@ export class PuzzlePreviewService {
       } else {
         results.failures++;
         const reason = this.analyzeFailure(session.currentState, components);
-        results.failureReasons.set(reason, (results.failureReasons.get(reason) || 0) + 1);
+        results.failureReasons.set(
+          reason,
+          (results.failureReasons.get(reason) || 0) + 1,
+        );
       }
 
       results.totalAttempts += session.moves.length;
@@ -293,7 +310,9 @@ export class PuzzlePreviewService {
     );
 
     this.logger.log(
-      `Test puzzle completed: success rate ${successRate.toFixed(2)}%, avg time ${avgCompletionTime.toFixed(0)}ms`,
+      `Test puzzle completed: success rate ${successRate.toFixed(
+        2,
+      )}%, avg time ${avgCompletionTime.toFixed(0)}ms`,
     );
 
     return {
@@ -308,7 +327,10 @@ export class PuzzlePreviewService {
   /**
    * Build initial puzzle state
    */
-  private buildInitialState(components: EditorComponent[], connections: ComponentConnection[]): any {
+  private buildInitialState(
+    components: EditorComponent[],
+    connections: ComponentConnection[],
+  ): any {
     return {
       components: components.map((c) => ({
         id: c.id,
@@ -332,7 +354,11 @@ export class PuzzlePreviewService {
   /**
    * Process a move in the puzzle
    */
-  private processMove(state: any, action: string, details: Record<string, any>): void {
+  private processMove(
+    state: any,
+    action: string,
+    details: Record<string, any>,
+  ): void {
     state.moves++;
 
     const [componentId, actionType] = action.split(':');
@@ -407,7 +433,8 @@ export class PuzzlePreviewService {
       return null;
     }
 
-    const randomComponent = inputComponents[Math.floor(Math.random() * inputComponents.length)];
+    const randomComponent =
+      inputComponents[Math.floor(Math.random() * inputComponents.length)];
     const actionType = this.selectRandomActionType(randomComponent.type);
 
     return {
@@ -435,7 +462,10 @@ export class PuzzlePreviewService {
   /**
    * Generate random action details
    */
-  private generateActionDetails(component: EditorComponent, actionType: string): Record<string, any> {
+  private generateActionDetails(
+    component: EditorComponent,
+    actionType: string,
+  ): Record<string, any> {
     switch (actionType) {
       case 'setValue':
         return { value: Math.random().toString(36).substring(7) };
@@ -459,7 +489,9 @@ export class PuzzlePreviewService {
       return 'No components found';
     }
 
-    const incorrectComponents = state.components.filter((c: any) => c.state !== 'correct');
+    const incorrectComponents = state.components.filter(
+      (c: any) => c.state !== 'correct',
+    );
     if (incorrectComponents.length > 0) {
       return `Incorrect component: ${incorrectComponents[0].id}`;
     }
@@ -483,20 +515,28 @@ export class PuzzlePreviewService {
     const suggestions: string[] = [];
 
     if (successRate < 50) {
-      suggestions.push('Puzzle is too difficult - consider adding hints or simplifying');
+      suggestions.push(
+        'Puzzle is too difficult - consider adding hints or simplifying',
+      );
     }
 
     if (successRate > 90) {
-      suggestions.push('Puzzle may be too easy - consider increasing difficulty');
+      suggestions.push(
+        'Puzzle may be too easy - consider increasing difficulty',
+      );
     }
 
     if (avgCompletionTime > 300000) {
       // 5 minutes
-      suggestions.push('Puzzle takes too long to solve - simplify or add time limits');
+      suggestions.push(
+        'Puzzle takes too long to solve - simplify or add time limits',
+      );
     }
 
     if (avgAttempts > 5) {
-      suggestions.push('Players need many attempts - add more guidance or clearer instructions');
+      suggestions.push(
+        'Players need many attempts - add more guidance or clearer instructions',
+      );
     }
 
     if (commonFailures.length > 0) {

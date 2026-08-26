@@ -17,7 +17,12 @@ import {
   HttpCode,
   ForbiddenException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CommunitySubmissionService } from '../services/community-submission.service';
 import {
@@ -99,8 +104,13 @@ export class CommunitySubmissionController {
     @Query('limit') limit?: number,
   ) {
     // Check if user is moderator/admin
-    if (!req.user.roles?.includes('MODERATOR') && !req.user.roles?.includes('ADMIN')) {
-      throw new ForbiddenException('Only moderators can access the moderation queue');
+    if (
+      !req.user.roles?.includes('MODERATOR') &&
+      !req.user.roles?.includes('ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only moderators can access the moderation queue',
+      );
     }
 
     return this.submissionService.getModerationQueue({
@@ -127,7 +137,12 @@ export class CommunitySubmissionController {
       ? 'MODERATOR'
       : 'COMMUNITY_MEMBER';
 
-    return this.submissionService.reviewSubmission(id, dto, req.user.id, reviewerRole);
+    return this.submissionService.reviewSubmission(
+      id,
+      dto,
+      req.user.id,
+      reviewerRole,
+    );
   }
 
   /**
@@ -142,7 +157,10 @@ export class CommunitySubmissionController {
     @Request() req: any,
   ) {
     // Check if user is moderator/admin
-    if (!req.user.roles?.includes('MODERATOR') && !req.user.roles?.includes('ADMIN')) {
+    if (
+      !req.user.roles?.includes('MODERATOR') &&
+      !req.user.roles?.includes('ADMIN')
+    ) {
       throw new ForbiddenException('Only moderators can approve submissions');
     }
 
@@ -161,7 +179,10 @@ export class CommunitySubmissionController {
     @Request() req: any,
   ) {
     // Check if user is moderator/admin
-    if (!req.user.roles?.includes('MODERATOR') && !req.user.roles?.includes('ADMIN')) {
+    if (
+      !req.user.roles?.includes('MODERATOR') &&
+      !req.user.roles?.includes('ADMIN')
+    ) {
       throw new ForbiddenException('Only moderators can reject submissions');
     }
 

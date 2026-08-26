@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlayerEvent } from '../entities/player-event.entity';
@@ -25,7 +30,10 @@ export class PlayerEventService {
   /**
    * Get or create player event record
    */
-  async getOrCreatePlayerEvent(playerId: string, eventId: string): Promise<PlayerEvent> {
+  async getOrCreatePlayerEvent(
+    playerId: string,
+    eventId: string,
+  ): Promise<PlayerEvent> {
     let playerEvent = await this.playerEventRepository.findOne({
       where: { playerId, eventId },
     });
@@ -54,14 +62,20 @@ export class PlayerEventService {
       playerEvent = await this.playerEventRepository.save(playerEvent);
 
       // Increment participant count
-      await this.eventRepository.increment({ id: eventId }, 'participantCount', 1);
+      await this.eventRepository.increment(
+        { id: eventId },
+        'participantCount',
+        1,
+      );
 
       // Grant EventParticipation badge on first join
       const participationBadge = await this.rewardRepository.findOne({
         where: { eventId, type: 'badge', name: 'EventParticipation' },
       });
       if (participationBadge) {
-        const alreadyHas = playerEvent.rewards.some((r) => r.rewardId === participationBadge.id);
+        const alreadyHas = playerEvent.rewards.some(
+          (r) => r.rewardId === participationBadge.id,
+        );
         if (!alreadyHas) {
           playerEvent.rewards.push({
             rewardId: participationBadge.id,
@@ -70,8 +84,14 @@ export class PlayerEventService {
             earnedAt: new Date(),
           });
           await this.playerEventRepository.save(playerEvent);
-          await this.rewardRepository.increment({ id: participationBadge.id }, 'claimedCount', 1);
-          this.logger.log(`Granted EventParticipation badge to player ${playerId} for event ${eventId}`);
+          await this.rewardRepository.increment(
+            { id: participationBadge.id },
+            'claimedCount',
+            1,
+          );
+          this.logger.log(
+            `Granted EventParticipation badge to player ${playerId} for event ${eventId}`,
+          );
         }
       }
 
@@ -112,7 +132,9 @@ export class PlayerEventService {
     });
 
     if (!puzzle) {
-      throw new NotFoundException(`Puzzle with ID ${puzzleId} not found in this event`);
+      throw new NotFoundException(
+        `Puzzle with ID ${puzzleId} not found in this event`,
+      );
     }
 
     if (!puzzle.event.isActive) {
@@ -124,9 +146,12 @@ export class PlayerEventService {
     let isCorrect = false;
 
     if (Array.isArray(correctAnswer)) {
-      isCorrect = JSON.stringify(correctAnswer.sort()) === JSON.stringify(answer.sort());
+      isCorrect =
+        JSON.stringify(correctAnswer.sort()) === JSON.stringify(answer.sort());
     } else if (typeof correctAnswer === 'string') {
-      isCorrect = correctAnswer.toLowerCase().trim() === String(answer).toLowerCase().trim();
+      isCorrect =
+        correctAnswer.toLowerCase().trim() ===
+        String(answer).toLowerCase().trim();
     } else {
       isCorrect = correctAnswer === answer;
     }
@@ -159,7 +184,10 @@ export class PlayerEventService {
       playerEvent.puzzlesCompleted += 1;
       playerEvent.correctAnswers += 1;
       playerEvent.currentStreak += 1;
-      playerEvent.bestStreak = Math.max(playerEvent.bestStreak, playerEvent.currentStreak);
+      playerEvent.bestStreak = Math.max(
+        playerEvent.bestStreak,
+        playerEvent.currentStreak,
+      );
 
       if (hintsUsed) {
         playerEvent.hintsUsed += hintsUsed;
@@ -177,19 +205,32 @@ export class PlayerEventService {
         playerEvent.statistics.difficultyBreakdown = {};
       }
       playerEvent.statistics.difficultyBreakdown[puzzle.difficulty] =
-        (playerEvent.statistics.difficultyBreakdown[puzzle.difficulty] || 0) + 1;
+        (playerEvent.statistics.difficultyBreakdown[puzzle.difficulty] || 0) +
+        1;
 
       // Update average completion time
       if (timeTaken) {
-        const totalTime = playerEvent.averageCompletionTime * (playerEvent.puzzlesCompleted - 1);
-        playerEvent.averageCompletionTime = Math.floor((totalTime + timeTaken) / playerEvent.puzzlesCompleted);
+        const totalTime =
+          playerEvent.averageCompletionTime *
+          (playerEvent.puzzlesCompleted - 1);
+        playerEvent.averageCompletionTime = Math.floor(
+          (totalTime + timeTaken) / playerEvent.puzzlesCompleted,
+        );
       }
 
       // Increment puzzle completion count
-      await this.puzzleRepository.increment({ id: puzzleId }, 'completionCount', 1);
+      await this.puzzleRepository.increment(
+        { id: puzzleId },
+        'completionCount',
+        1,
+      );
 
       // Increment event total puzzles completed
-      await this.eventRepository.increment({ id: eventId }, 'totalPuzzlesCompleted', 1);
+      await this.eventRepository.increment(
+        { id: eventId },
+        'totalPuzzlesCompleted',
+        1,
+      );
 
       // Check for rewards
       rewardsEarned = await this.checkAndAwardRewards(playerEvent);
@@ -240,7 +281,8 @@ export class PlayerEventService {
       // Check if player qualifies
       const meetsScoreRequirement = playerEvent.score >= reward.requiredScore;
       const meetsPuzzleRequirement =
-        !reward.requiredPuzzles || playerEvent.puzzlesCompleted >= reward.requiredPuzzles;
+        !reward.requiredPuzzles ||
+        playerEvent.puzzlesCompleted >= reward.requiredPuzzles;
 
       if (meetsScoreRequirement && meetsPuzzleRequirement) {
         // Check max claims limit
@@ -264,7 +306,11 @@ export class PlayerEventService {
         });
 
         // Increment claimed count
-        await this.rewardRepository.increment({ id: reward.id }, 'claimedCount', 1);
+        await this.rewardRepository.increment(
+          { id: reward.id },
+          'claimedCount',
+          1,
+        );
 
         this.logger.log(
           `Player ${playerEvent.playerId} earned reward ${reward.name} in event ${playerEvent.eventId}`,
@@ -278,14 +324,19 @@ export class PlayerEventService {
   /**
    * Get player's event progress
    */
-  async getPlayerProgress(playerId: string, eventId: string): Promise<PlayerEvent> {
+  async getPlayerProgress(
+    playerId: string,
+    eventId: string,
+  ): Promise<PlayerEvent> {
     const playerEvent = await this.playerEventRepository.findOne({
       where: { playerId, eventId },
       relations: ['event'],
     });
 
     if (!playerEvent) {
-      throw new NotFoundException(`Player ${playerId} has not joined event ${eventId}`);
+      throw new NotFoundException(
+        `Player ${playerId} has not joined event ${eventId}`,
+      );
     }
 
     return playerEvent;
@@ -305,7 +356,10 @@ export class PlayerEventService {
   /**
    * Get player's rank in an event
    */
-  async getPlayerRank(playerId: string, eventId: string): Promise<{
+  async getPlayerRank(
+    playerId: string,
+    eventId: string,
+  ): Promise<{
     rank: number;
     totalParticipants: number;
     percentile: number;
@@ -318,9 +372,13 @@ export class PlayerEventService {
       order: { score: 'DESC', puzzlesCompleted: 'DESC' },
     });
 
-    const rank = allPlayerEvents.findIndex((pe) => pe.id === playerEvent.id) + 1;
+    const rank =
+      allPlayerEvents.findIndex((pe) => pe.id === playerEvent.id) + 1;
     const totalParticipants = allPlayerEvents.length;
-    const percentile = totalParticipants > 0 ? ((totalParticipants - rank + 1) / totalParticipants) * 100 : 0;
+    const percentile =
+      totalParticipants > 0
+        ? ((totalParticipants - rank + 1) / totalParticipants) * 100
+        : 0;
 
     return {
       rank,

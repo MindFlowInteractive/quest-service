@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, MoreThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -71,7 +76,9 @@ export class SeasonalEventService {
       }
 
       // Auto-archive events that ended more than 7 days ago and are not yet archived
-      const archiveThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const archiveThreshold = new Date(
+        now.getTime() - 7 * 24 * 60 * 60 * 1000,
+      );
       const eventsToAutoArchive = await this.eventRepository.find({
         where: {
           isActive: false,
@@ -136,7 +143,9 @@ export class SeasonalEventService {
         // intervalDays is the period of recurrence — shift both start and end by the same interval.
         // e.g. a 7-day event with intervalDays=7 repeats every 7 days (no gap between occurrences).
         const intervalMs = config.intervalDays * 24 * 60 * 60 * 1000;
-        const newStartDate = new Date(template.startDate.getTime() + intervalMs);
+        const newStartDate = new Date(
+          template.startDate.getTime() + intervalMs,
+        );
         const newEndDate = new Date(template.endDate.getTime() + intervalMs);
 
         // Guard: only spawn if the next window's start is at or before now,
@@ -173,17 +182,38 @@ export class SeasonalEventService {
 
         // Clone puzzles — strip runtime-only fields and the loaded relation object
         for (const puzzle of template.puzzles ?? []) {
-          const { id: _id, createdAt: _c, updatedAt: _u, completionCount: _cc, attemptCount: _ac, event: _ev, ...puzzleData } = puzzle as any;
+          const {
+            id: _id,
+            createdAt: _c,
+            updatedAt: _u,
+            completionCount: _cc,
+            attemptCount: _ac,
+            event: _ev,
+            ...puzzleData
+          } = puzzle as any;
           await this.puzzleRepository.save(
-            this.puzzleRepository.create({ ...puzzleData, eventId: savedEvent.id }),
+            this.puzzleRepository.create({
+              ...puzzleData,
+              eventId: savedEvent.id,
+            }),
           );
         }
 
         // Clone rewards — strip runtime-only fields and the loaded relation object
         for (const reward of template.rewards ?? []) {
-          const { id: _id, createdAt: _c, updatedAt: _u, claimedCount: _cl, event: _ev, ...rewardData } = reward as any;
+          const {
+            id: _id,
+            createdAt: _c,
+            updatedAt: _u,
+            claimedCount: _cl,
+            event: _ev,
+            ...rewardData
+          } = reward as any;
           await this.rewardRepository.save(
-            this.rewardRepository.create({ ...rewardData, eventId: savedEvent.id }),
+            this.rewardRepository.create({
+              ...rewardData,
+              eventId: savedEvent.id,
+            }),
           );
         }
 
@@ -263,17 +293,25 @@ export class SeasonalEventService {
   /**
    * Compute a human-readable status string for an event.
    */
-  computeStatus(event: Pick<SeasonalEvent, 'isActive' | 'isArchived' | 'startDate' | 'endDate'>): 'upcoming' | 'active' | 'ended' {
+  computeStatus(
+    event: Pick<
+      SeasonalEvent,
+      'isActive' | 'isArchived' | 'startDate' | 'endDate'
+    >,
+  ): 'upcoming' | 'active' | 'ended' {
     const now = new Date();
     if (event.isArchived || event.endDate <= now) return 'ended';
-    if (event.isActive && event.startDate <= now && event.endDate > now) return 'active';
+    if (event.isActive && event.startDate <= now && event.endDate > now)
+      return 'active';
     return 'upcoming';
   }
 
   /**
    * Get active events with time remaining in seconds.
    */
-  async findActiveEvents(): Promise<Array<SeasonalEvent & { status: string; timeRemainingSeconds: number }>> {
+  async findActiveEvents(): Promise<
+    Array<SeasonalEvent & { status: string; timeRemainingSeconds: number }>
+  > {
     const events = await this.eventRepository.find({
       where: {
         isActive: true,
@@ -288,7 +326,10 @@ export class SeasonalEventService {
     return events.map((event) => ({
       ...event,
       status: this.computeStatus(event),
-      timeRemainingSeconds: Math.max(0, Math.floor((event.endDate.getTime() - now.getTime()) / 1000)),
+      timeRemainingSeconds: Math.max(
+        0,
+        Math.floor((event.endDate.getTime() - now.getTime()) / 1000),
+      ),
     }));
   }
 
@@ -406,14 +447,22 @@ export class SeasonalEventService {
    * Increment participant count
    */
   async incrementParticipantCount(eventId: string): Promise<void> {
-    await this.eventRepository.increment({ id: eventId }, 'participantCount', 1);
+    await this.eventRepository.increment(
+      { id: eventId },
+      'participantCount',
+      1,
+    );
   }
 
   /**
    * Increment total puzzles completed
    */
   async incrementPuzzlesCompleted(eventId: string): Promise<void> {
-    await this.eventRepository.increment({ id: eventId }, 'totalPuzzlesCompleted', 1);
+    await this.eventRepository.increment(
+      { id: eventId },
+      'totalPuzzlesCompleted',
+      1,
+    );
   }
 
   /**
@@ -432,12 +481,15 @@ export class SeasonalEventService {
 
     const playerEvents = event.playerEvents || [];
     const totalScore = playerEvents.reduce((sum, pe) => sum + pe.score, 0);
-    const averageScore = playerEvents.length > 0 ? totalScore / playerEvents.length : 0;
+    const averageScore =
+      playerEvents.length > 0 ? totalScore / playerEvents.length : 0;
 
     const totalPuzzles = event.puzzles?.length || 0;
     const completionRate =
       totalPuzzles > 0 && event.totalPuzzlesCompleted > 0
-        ? (event.totalPuzzlesCompleted / (totalPuzzles * event.participantCount)) * 100
+        ? (event.totalPuzzlesCompleted /
+            (totalPuzzles * event.participantCount)) *
+          100
         : 0;
 
     return {
@@ -487,7 +539,9 @@ export class SeasonalEventService {
    */
   async handleEventEnd(event: SeasonalEvent): Promise<void> {
     if (event.endRewardsDistributed) {
-      this.logger.log(`End-of-event already processed for: ${event.name} (${event.id})`);
+      this.logger.log(
+        `End-of-event already processed for: ${event.name} (${event.id})`,
+      );
       return;
     }
 
@@ -495,7 +549,11 @@ export class SeasonalEventService {
       // 1. Fetch final standings ordered by score desc, puzzlesCompleted desc
       const allParticipants = await this.playerEventRepository.find({
         where: { eventId: event.id },
-        order: { score: 'DESC', puzzlesCompleted: 'DESC', lastActivityAt: 'ASC' },
+        order: {
+          score: 'DESC',
+          puzzlesCompleted: 'DESC',
+          lastActivityAt: 'ASC',
+        },
       });
 
       // 2. Archive leaderboard snapshot
@@ -507,7 +565,9 @@ export class SeasonalEventService {
       }));
 
       event.leaderboardSnapshot = snapshot;
-      this.logger.log(`Leaderboard archived for event: ${event.name} (${event.id}) — ${snapshot.length} entries`);
+      this.logger.log(
+        `Leaderboard archived for event: ${event.name} (${event.id}) — ${snapshot.length} entries`,
+      );
 
       // 3. Distribute cosmetic rewards to top-3 winners
       const cosmeticRewards = await this.rewardRepository.find({
@@ -525,7 +585,9 @@ export class SeasonalEventService {
         if (!reward) continue;
 
         // Award reward to winner's PlayerEvent record if not already granted
-        const alreadyHasReward = winner.rewards.some((r) => r.rewardId === reward.id);
+        const alreadyHasReward = winner.rewards.some(
+          (r) => r.rewardId === reward.id,
+        );
         if (!alreadyHasReward) {
           winner.rewards.push({
             rewardId: reward.id,
@@ -534,10 +596,16 @@ export class SeasonalEventService {
             earnedAt: new Date(),
           });
           await this.playerEventRepository.save(winner);
-          await this.rewardRepository.increment({ id: reward.id }, 'claimedCount', 1);
+          await this.rewardRepository.increment(
+            { id: reward.id },
+            'claimedCount',
+            1,
+          );
 
           this.logger.log(
-            `Distributed reward "${reward.name}" to player ${winner.playerId} (rank ${i + 1}) for event ${event.name}`,
+            `Distributed reward "${reward.name}" to player ${
+              winner.playerId
+            } (rank ${i + 1}) for event ${event.name}`,
           );
         }
 
@@ -563,7 +631,10 @@ export class SeasonalEventService {
         `End-of-event processing complete for: ${event.name} (${event.id}) — ${winnersCount} rewards distributed`,
       );
     } catch (error) {
-      this.logger.error(`Error in end-of-event handler for event ${event.id}`, error);
+      this.logger.error(
+        `Error in end-of-event handler for event ${event.id}`,
+        error,
+      );
     }
   }
 }

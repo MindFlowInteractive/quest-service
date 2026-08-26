@@ -1,5 +1,14 @@
-import { IsEnum, IsOptional, IsArray, IsString, IsNotEmpty } from 'class-validator';
-import { DeletionType, DeletionReason } from '../entities/data-deletion-request.entity';
+import {
+  IsEnum,
+  IsOptional,
+  IsArray,
+  IsString,
+  IsNotEmpty,
+} from 'class-validator';
+import {
+  DeletionType,
+  DeletionReason,
+} from '../entities/data-deletion-request.entity';
 
 export class DataDeletionRequestDto {
   @IsEnum(DeletionType)

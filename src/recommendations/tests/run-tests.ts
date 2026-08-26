@@ -2,7 +2,7 @@
 
 /**
  * Test Runner for Recommendation System
- * 
+ *
  * Usage:
  *   npm run test:recommendations        # Run all tests
  *   npm run test:recommendations:unit   # Run unit tests only
@@ -26,7 +26,10 @@ async function runTests(testType: keyof typeof testCommands = 'all') {
 
   try {
     // Run Jest tests
-    if ((testType as string) !== 'manual' && (testType as string) !== 'performance') {
+    if (
+      (testType as string) !== 'manual' &&
+      (testType as string) !== 'performance'
+    ) {
       console.log('📋 Running Jest Tests...');
       execSync(testCommands[testType], { stdio: 'inherit' });
       console.log('✅ Jest tests completed!\n');

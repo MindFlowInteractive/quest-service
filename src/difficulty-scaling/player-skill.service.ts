@@ -15,7 +15,9 @@ export class PlayerSkillService {
    * Returns a skill score from 1 (easy) to 5 (hard) for the player.
    */
   async getPlayerSkill(playerId: string): Promise<number> {
-    const stats = await this.userStatsRepository.findOne({ where: { userId: playerId } });
+    const stats = await this.userStatsRepository.findOne({
+      where: { userId: playerId },
+    });
     return calculatePlayerSkill(stats);
   }
 }

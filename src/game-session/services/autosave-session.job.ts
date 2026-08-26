@@ -18,7 +18,10 @@ export class AutosaveSessionJob {
         await this.sessionService.updateState(session.id, {});
         this.logger.log(`Autosaved session ${session.id}`);
       } catch (err) {
-        this.logger.error(`Failed to autosave session ${session.id}`, err.stack);
+        this.logger.error(
+          `Failed to autosave session ${session.id}`,
+          err.stack,
+        );
       }
     }
   }

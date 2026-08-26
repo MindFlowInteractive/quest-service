@@ -6,10 +6,7 @@ import { UserProgressController } from './controller/user-progress.controller';
 import { UsersModule } from '../users/users.module'; // for user relations
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserProgress]),
-    UsersModule,
-  ],
+  imports: [TypeOrmModule.forFeature([UserProgress]), UsersModule],
   controllers: [UserProgressController],
   providers: [UserProgressService],
   exports: [UserProgressService],

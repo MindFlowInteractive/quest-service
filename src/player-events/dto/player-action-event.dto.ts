@@ -1,4 +1,13 @@
-import { IsUUID, IsEnum, IsObject, IsOptional, IsNumber, Min, Max, IsString } from 'class-validator';
+import {
+  IsUUID,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PlayerActionEventType } from '../entities/player-action-event.entity';
 
@@ -10,7 +19,14 @@ export class CreatePlayerActionEventDto {
   @IsOptional()
   sessionId?: string;
 
-  @IsEnum(['puzzle.started', 'puzzle.solved', 'puzzle.abandoned', 'hint.used', 'answer.submitted', 'achievement.unlocked'])
+  @IsEnum([
+    'puzzle.started',
+    'puzzle.solved',
+    'puzzle.abandoned',
+    'hint.used',
+    'answer.submitted',
+    'achievement.unlocked',
+  ])
   eventType: PlayerActionEventType;
 
   @IsObject()

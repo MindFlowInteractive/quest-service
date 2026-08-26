@@ -19,9 +19,16 @@ export class StaleTokenListener {
 
     try {
       const result = await this.deviceRepo.delete({ token: In(data.tokens) });
-      this.logger.log(`Removed ${result.affected} stale device tokens: ${data.tokens.join(', ')}`);
+      this.logger.log(
+        `Removed ${result.affected} stale device tokens: ${data.tokens.join(
+          ', ',
+        )}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to remove stale tokens: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to remove stale tokens: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
     }
   }
 }

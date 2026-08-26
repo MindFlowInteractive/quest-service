@@ -27,7 +27,9 @@ export class SaveEncryptionService {
       this.encryptionKey = NodeBuffer.from(keyString, 'hex');
       if (this.encryptionKey.length !== this.keyLength) {
         throw new Error(
-          `Invalid encryption key length. Expected ${this.keyLength * 2} hex characters.`,
+          `Invalid encryption key length. Expected ${
+            this.keyLength * 2
+          } hex characters.`,
         );
       }
     } else {
@@ -44,9 +46,14 @@ export class SaveEncryptionService {
     encryptionInfo: EncryptionInfo;
   }> {
     const iv = crypto.randomBytes(this.ivLength);
-    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv, {
-      authTagLength: this.tagLength,
-    });
+    const cipher = crypto.createCipheriv(
+      this.algorithm,
+      this.encryptionKey,
+      iv,
+      {
+        authTagLength: this.tagLength,
+      },
+    );
 
     const encrypted = NodeBuffer.concat([cipher.update(data), cipher.final()]);
     const authTag = cipher.getAuthTag();
@@ -55,30 +62,49 @@ export class SaveEncryptionService {
       encryptedData: encrypted,
       encryptionInfo: {
         algorithm: 'aes-256-gcm',
-        iv: (iv as unknown as { toString(encoding: string): string }).toString('base64'),
-        tag: (authTag as unknown as { toString(encoding: string): string }).toString('base64'),
+        iv: (iv as unknown as { toString(encoding: string): string }).toString(
+          'base64',
+        ),
+        tag: (
+          authTag as unknown as { toString(encoding: string): string }
+        ).toString('base64'),
       },
     };
   }
 
-  async decrypt(encryptedData: Buffer, encryptionInfo: EncryptionInfo): Promise<Buffer> {
+  async decrypt(
+    encryptedData: Buffer,
+    encryptionInfo: EncryptionInfo,
+  ): Promise<Buffer> {
     if (encryptionInfo.algorithm !== 'aes-256-gcm') {
-      throw new Error(`Unsupported encryption algorithm: ${encryptionInfo.algorithm}`);
+      throw new Error(
+        `Unsupported encryption algorithm: ${encryptionInfo.algorithm}`,
+      );
     }
 
     const iv = NodeBuffer.from(encryptionInfo.iv, 'base64');
     const authTag = NodeBuffer.from(encryptionInfo.tag, 'base64');
 
-    const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, iv, {
-      authTagLength: this.tagLength,
-    });
+    const decipher = crypto.createDecipheriv(
+      this.algorithm,
+      this.encryptionKey,
+      iv,
+      {
+        authTagLength: this.tagLength,
+      },
+    );
     decipher.setAuthTag(authTag);
 
     try {
-      const decrypted = NodeBuffer.concat([decipher.update(encryptedData), decipher.final()]);
+      const decrypted = NodeBuffer.concat([
+        decipher.update(encryptedData),
+        decipher.final(),
+      ]);
       return decrypted;
     } catch (error) {
-      this.logger.error('Decryption failed - data may be corrupted or tampered with');
+      this.logger.error(
+        'Decryption failed - data may be corrupted or tampered with',
+      );
       throw new Error('Failed to decrypt save data: integrity check failed');
     }
   }

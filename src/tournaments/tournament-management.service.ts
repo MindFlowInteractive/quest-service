@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 
 export type TournamentStatus = 'pending' | 'active' | 'completed' | 'cancelled';
 
@@ -38,7 +43,9 @@ export class TournamentManagementService {
     const tournament = this.findOrThrow(tournamentId);
 
     if (tournament.status !== 'pending') {
-      throw new BadRequestException(`Tournament "${tournamentId}" is not open for registration.`);
+      throw new BadRequestException(
+        `Tournament "${tournamentId}" is not open for registration.`,
+      );
     }
     if (tournament.participants.includes(userId)) {
       throw new BadRequestException(`User ${userId} is already registered.`);
@@ -64,7 +71,9 @@ export class TournamentManagementService {
   complete(tournamentId: string): Tournament {
     const tournament = this.findOrThrow(tournamentId);
     if (tournament.status !== 'active') {
-      throw new BadRequestException(`Only active tournaments can be completed.`);
+      throw new BadRequestException(
+        `Only active tournaments can be completed.`,
+      );
     }
     tournament.status = 'completed';
     this.logger.log(`Tournament completed: ${tournamentId}`);

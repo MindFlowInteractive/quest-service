@@ -14,7 +14,7 @@ export class LearningPathService {
 
   async generateRecommendations(userId: string): Promise<LearningPath> {
     const profile = await this.getPlayerProfile(userId);
-    
+
     return {
       currentLevel: this.assessCurrentLevel(profile),
       masteredStrategies: profile.masteredStrategies || [],
@@ -27,16 +27,16 @@ export class LearningPathService {
   async updatePlayerProfile(
     userId: string,
     puzzleId: string,
-    performance: any
+    performance: any,
   ): Promise<void> {
-    let profile = await this.getPlayerProfile(userId);
-    
+    const profile = await this.getPlayerProfile(userId);
+
     // Update mastered strategies
     if (performance.strategiesUsed) {
       profile.masteredStrategies = this.updateMasteredStrategies(
         profile.masteredStrategies,
         performance.strategiesUsed,
-        performance.success
+        performance.success,
       );
     }
 
@@ -53,7 +53,7 @@ export class LearningPathService {
     // Update difficulty comfort level
     profile.comfortableDifficulty = this.updateDifficultyLevel(
       profile.comfortableDifficulty,
-      performance
+      performance,
     );
 
     this.playerProfiles.set(userId, profile);
@@ -70,7 +70,7 @@ export class LearningPathService {
 
   private assessCurrentLevel(profile: any): string {
     const strategyCount = profile.masteredStrategies?.length || 0;
-    
+
     if (strategyCount < 3) return 'beginner';
     if (strategyCount < 7) return 'intermediate';
     if (strategyCount < 12) return 'advanced';
@@ -80,12 +80,12 @@ export class LearningPathService {
   private recommendPuzzles(profile: any): string[] {
     const recommendations: string[] = [];
     const difficulty = profile.comfortableDifficulty || 2;
-    
+
     // Recommend puzzles at current level and slightly above
     recommendations.push(
       `puzzle_difficulty_${difficulty}`,
       `puzzle_difficulty_${difficulty + 1}`,
-      `strategy_practice_${this.getNextStrategy(profile)}`
+      `strategy_practice_${this.getNextStrategy(profile)}`,
     );
 
     return recommendations;
@@ -103,26 +103,26 @@ export class LearningPathService {
     ];
 
     const mastered = new Set(profile.masteredStrategies || []);
-    
+
     return allStrategies
-      .filter(strategy => !mastered.has(strategy))
+      .filter((strategy) => !mastered.has(strategy))
       .slice(0, 3);
   }
 
   private calculateOverallProgress(profile: any): number {
     const totalStrategies = 15; // Total number of strategies to master
     const masteredCount = profile.masteredStrategies?.length || 0;
-    
+
     return Math.round((masteredCount / totalStrategies) * 100);
   }
 
   private updateMasteredStrategies(
     current: string[],
     used: string[],
-    success: boolean
+    success: boolean,
   ): string[] {
     if (!success) return current;
-    
+
     const updated = new Set([...current, ...used]);
     return Array.from(updated);
   }

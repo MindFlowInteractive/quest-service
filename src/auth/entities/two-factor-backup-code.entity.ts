@@ -5,34 +5,30 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
-} from "typeorm"
-import { User } from "./user.entity"
+} from 'typeorm';
+import { User } from './user.entity';
 
-@Entity("two_factor_backup_codes")
+@Entity('two_factor_backup_codes')
 export class TwoFactorBackupCode {
-  @PrimaryGeneratedColumn("uuid")
-  id: string
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  codeHash: string
+  codeHash: string;
 
   @Column({ default: false })
-  isUsed: boolean
+  isUsed: boolean;
 
   @CreateDateColumn()
-  usedAt?: Date
+  usedAt?: Date;
 
-  @ManyToOne(
-    () => User,
-    (user) => user.backupCodes,
-    { onDelete: "CASCADE" },
-  )
-  @JoinColumn({ name: "userId" })
-  user: User
+  @ManyToOne(() => User, (user) => user.backupCodes, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @Column()
-  userId: string
+  userId: string;
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 }

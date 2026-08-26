@@ -1,6 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { FriendRequest, FriendRequestState, UserId, Friendship } from '../../domain/entities/domain-entities';
+import {
+  FriendRequest,
+  FriendRequestState,
+  UserId,
+  Friendship,
+} from '../../domain/entities/domain-entities';
 import {
   FriendRequestAlreadyExistsException,
   FriendRequestNotFoundException,
@@ -100,7 +105,10 @@ export class FriendRequestService {
       fromUserId,
       toUserId,
     );
-    if (existingRequest && existingRequest.state === FriendRequestState.PENDING) {
+    if (
+      existingRequest &&
+      existingRequest.state === FriendRequestState.PENDING
+    ) {
       throw new FriendRequestAlreadyExistsException(fromUserId, toUserId);
     }
 
@@ -221,7 +229,9 @@ export class FriendRequestService {
       this.cacheService.del(`friendships:${friendRequest.fromUserId.value}`),
       this.cacheService.del(`friendships:${friendRequest.toUserId.value}`),
       this.cacheService.del(`friend_requests:inbound:${acceptingUserId}`),
-      this.cacheService.del(`friend_requests:outbound:${friendRequest.fromUserId.value}`),
+      this.cacheService.del(
+        `friend_requests:outbound:${friendRequest.fromUserId.value}`,
+      ),
     ]);
 
     return {
@@ -285,7 +295,9 @@ export class FriendRequestService {
     // Invalidate caches
     await Promise.all([
       this.cacheService.del(`friend_requests:outbound:${cancelingUserId}`),
-      this.cacheService.del(`friend_requests:inbound:${friendRequest.toUserId.value}`),
+      this.cacheService.del(
+        `friend_requests:inbound:${friendRequest.toUserId.value}`,
+      ),
     ]);
   }
 
@@ -304,7 +316,10 @@ export class FriendRequestService {
       return cached.slice(offset, offset + limit);
     }
 
-    const requests = await this.friendRequestRepo.findInboundByUserId(userId, 100);
+    const requests = await this.friendRequestRepo.findInboundByUserId(
+      userId,
+      100,
+    );
     await this.cacheService.set(cacheKey, requests, 300); // 5 minutes TTL
 
     return requests.slice(offset, offset + limit);
@@ -325,7 +340,10 @@ export class FriendRequestService {
       return cached.slice(offset, offset + limit);
     }
 
-    const requests = await this.friendRequestRepo.findOutboundByUserId(userId, 100);
+    const requests = await this.friendRequestRepo.findOutboundByUserId(
+      userId,
+      100,
+    );
     await this.cacheService.set(cacheKey, requests, 300);
 
     return requests.slice(offset, offset + limit);

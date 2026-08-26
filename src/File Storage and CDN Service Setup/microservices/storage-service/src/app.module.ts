@@ -1,9 +1,9 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { StorageModule } from "./storage.module";
-import { File, Upload, Metadata } from "./entities";
-import databaseConfig from "./config/database.config";
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { StorageModule } from './storage.module';
+import { File, Upload, Metadata } from './entities';
+import databaseConfig from './config/database.config';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import databaseConfig from "./config/database.config";
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        ...configService.get("database"),
+        ...configService.get('database'),
         entities: [File, Upload, Metadata],
       }),
       inject: [ConfigService],

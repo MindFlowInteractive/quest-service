@@ -2,10 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ReplayService } from '../services/replay.service';
-import { PuzzleReplay, ReplaySharePermission } from '../entities/puzzle-replay.entity';
+import {
+  PuzzleReplay,
+  ReplaySharePermission,
+} from '../entities/puzzle-replay.entity';
 import { ReplayAction } from '../entities/replay-action.entity';
 import { ReplayAnalytic } from '../entities/replay-analytic.entity';
-import { CreateReplayDto, RecordActionDto, CompleteReplayDto } from '../dto/create-replay.dto';
+import {
+  CreateReplayDto,
+  RecordActionDto,
+  CompleteReplayDto,
+} from '../dto/create-replay.dto';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('ReplayService', () => {
@@ -54,9 +61,15 @@ describe('ReplayService', () => {
     }).compile();
 
     service = module.get<ReplayService>(ReplayService);
-    replayRepo = module.get<Repository<PuzzleReplay>>(getRepositoryToken(PuzzleReplay));
-    actionRepo = module.get<Repository<ReplayAction>>(getRepositoryToken(ReplayAction));
-    analyticRepo = module.get<Repository<ReplayAnalytic>>(getRepositoryToken(ReplayAnalytic));
+    replayRepo = module.get<Repository<PuzzleReplay>>(
+      getRepositoryToken(PuzzleReplay),
+    );
+    actionRepo = module.get<Repository<ReplayAction>>(
+      getRepositoryToken(ReplayAction),
+    );
+    analyticRepo = module.get<Repository<ReplayAnalytic>>(
+      getRepositoryToken(ReplayAnalytic),
+    );
   });
 
   describe('createReplay', () => {
@@ -99,7 +112,11 @@ describe('ReplayService', () => {
         actionData: { x: 5, y: 10 },
       };
 
-      const mockReplay = { id: mockReplayId, isCompleted: false, movesCount: 0 };
+      const mockReplay = {
+        id: mockReplayId,
+        isCompleted: false,
+        movesCount: 0,
+      };
       const mockAction = { id: 'action-1', sequenceNumber: 0, ...actionDto };
 
       jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
@@ -130,9 +147,9 @@ describe('ReplayService', () => {
 
       jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
 
-      await expect(service.recordAction(mockReplayId, actionDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.recordAction(mockReplayId, actionDto),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should increment sequence number for subsequent actions', async () => {
@@ -236,7 +253,9 @@ describe('ReplayService', () => {
     it('should throw NotFoundException when replay does not exist', async () => {
       jest.spyOn(replayRepo, 'findOne').mockResolvedValue(null);
 
-      await expect(service.getReplay(mockReplayId)).rejects.toThrow(NotFoundException);
+      await expect(service.getReplay(mockReplayId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -298,7 +317,11 @@ describe('ReplayService', () => {
 
   describe('shareReplay', () => {
     it('should generate share code for shared_link permission', async () => {
-      const mockReplay = { id: mockReplayId, userId: mockUserId, permission: 'private' };
+      const mockReplay = {
+        id: mockReplayId,
+        userId: mockUserId,
+        permission: 'private',
+      };
 
       jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
       jest.spyOn(replayRepo, 'save').mockImplementation((replay) => {
@@ -311,7 +334,11 @@ describe('ReplayService', () => {
 
       const shareDto = { permission: 'shared_link' };
 
-      const result = await service.shareReplay(mockReplayId, mockUserId, shareDto as any);
+      const result = await service.shareReplay(
+        mockReplayId,
+        mockUserId,
+        shareDto as any,
+      );
 
       expect(result.permission).toBe('shared_link');
       expect(result.shareCode).toBeDefined();
@@ -353,13 +380,19 @@ describe('ReplayService', () => {
 
       jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
 
-      await expect(service.getSharedReplay(shareCode)).rejects.toThrow(BadRequestException);
+      await expect(service.getSharedReplay(shareCode)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('deleteReplay', () => {
     it('should soft delete a replay', async () => {
-      const mockReplay = { id: mockReplayId, userId: mockUserId, archiveStatus: 'active' };
+      const mockReplay = {
+        id: mockReplayId,
+        userId: mockUserId,
+        archiveStatus: 'active',
+      };
 
       jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
       jest.spyOn(replayRepo, 'save').mockResolvedValue({

@@ -18,11 +18,19 @@ export class WebhookUrlValidatorService {
       }
 
       if (response.status !== 405) {
-        throw new BadRequestException(`Webhook URL is not reachable: ${response.status}`);
+        throw new BadRequestException(
+          `Webhook URL is not reachable: ${response.status}`,
+        );
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status && error.response.status !== 405) {
-        throw new BadRequestException(`Webhook URL is not reachable: ${error.response.status}`);
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.status &&
+        error.response.status !== 405
+      ) {
+        throw new BadRequestException(
+          `Webhook URL is not reachable: ${error.response.status}`,
+        );
       }
 
       if (!axios.isAxiosError(error) || !error.response) {
@@ -38,11 +46,15 @@ export class WebhookUrlValidatorService {
       });
 
       if (response.status >= 400 && response.status !== 403) {
-        throw new BadRequestException(`Webhook URL is not reachable: ${response.status}`);
+        throw new BadRequestException(
+          `Webhook URL is not reachable: ${response.status}`,
+        );
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status) {
-        throw new BadRequestException(`Webhook URL is not reachable: ${error.response.status}`);
+        throw new BadRequestException(
+          `Webhook URL is not reachable: ${error.response.status}`,
+        );
       }
 
       throw new BadRequestException('Webhook URL is not reachable');

@@ -6,8 +6,8 @@ import {
   Max,
   IsEnum,
   IsObject,
-} from "class-validator";
-import { Type } from "class-transformer";
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class SearchDto {
   @IsOptional()
@@ -32,8 +32,8 @@ export class SearchDto {
   sort?: string;
 
   @IsOptional()
-  @IsEnum(["asc", "desc"])
-  order?: "asc" | "desc" = "desc";
+  @IsEnum(['asc', 'desc'])
+  order?: 'asc' | 'desc' = 'desc';
 
   @IsOptional()
   @IsObject()

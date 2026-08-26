@@ -36,7 +36,9 @@ export class DetectionService {
   private readonly config: AntiCheatConfig['thresholds'];
 
   constructor(private configService: ConfigService) {
-    this.config = this.configService.get<AntiCheatConfig['thresholds']>('antiCheat.thresholds')!;
+    this.config = this.configService.get<AntiCheatConfig['thresholds']>(
+      'antiCheat.thresholds',
+    )!;
   }
 
   /**
@@ -50,7 +52,9 @@ export class DetectionService {
 
     const timings: number[] = [];
     for (let i = 1; i < moves.length; i++) {
-      const timeDiff = new Date(moves[i].timestamp).getTime() - new Date(moves[i - 1].timestamp).getTime();
+      const timeDiff =
+        new Date(moves[i].timestamp).getTime() -
+        new Date(moves[i - 1].timestamp).getTime();
       if (timeDiff > 0) {
         timings.push(timeDiff);
       }
@@ -60,7 +64,9 @@ export class DetectionService {
       return { isAnomaly: false, violations: [], metrics: {} };
     }
 
-    const fastMoves = timings.filter(t => t < this.config.impossiblyFastThreshold).length;
+    const fastMoves = timings.filter(
+      (t) => t < this.config.impossiblyFastThreshold,
+    ).length;
     const fastMoveRatio = fastMoves / timings.length;
 
     const violations: DetectionViolation[] = [];
@@ -70,23 +76,28 @@ export class DetectionService {
       violations.push({
         type: ViolationType.IMPOSSIBLY_FAST_COMPLETION,
         severity: Severity.HIGH,
-        confidenceScore: Math.min(95, 50 + (fastMoveRatio * 50)),
+        confidenceScore: Math.min(95, 50 + fastMoveRatio * 50),
         evidence: {
           detectionMethod: 'speed_analysis',
           metrics: {
             totalMoves: moves.length,
             fastMoves,
             fastMoveRatio,
-            avgTimeBetweenMoves: timings.reduce((a, b) => a + b, 0) / timings.length,
-            threshold: this.config.impossiblyFastThreshold
+            avgTimeBetweenMoves:
+              timings.reduce((a, b) => a + b, 0) / timings.length,
+            threshold: this.config.impossiblyFastThreshold,
           },
-          anomalies: [{
-            type: 'IMPOSSIBLY_FAST_MOVES',
-            severity: 'HIGH',
-            description: `${(fastMoveRatio * 100).toFixed(1)}% of moves are under ${this.config.impossiblyFastThreshold}ms`,
-            value: fastMoveRatio
-          }]
-        }
+          anomalies: [
+            {
+              type: 'IMPOSSIBLY_FAST_MOVES',
+              severity: 'HIGH',
+              description: `${(fastMoveRatio * 100).toFixed(
+                1,
+              )}% of moves are under ${this.config.impossiblyFastThreshold}ms`,
+              value: fastMoveRatio,
+            },
+          ],
+        },
       });
     }
 
@@ -94,27 +105,38 @@ export class DetectionService {
     const variance = this.calculateVariance(timings);
     const stdDev = Math.sqrt(variance);
 
-    if (stdDev < this.config.roboticConsistencyThreshold && timings.length >= 10) {
+    if (
+      stdDev < this.config.roboticConsistencyThreshold &&
+      timings.length >= 10
+    ) {
       violations.push({
         type: ViolationType.ROBOTIC_TIMING,
         severity: Severity.MEDIUM,
-        confidenceScore: Math.min(85, 40 + ((this.config.roboticConsistencyThreshold - stdDev) * 1.5)),
+        confidenceScore: Math.min(
+          85,
+          40 + (this.config.roboticConsistencyThreshold - stdDev) * 1.5,
+        ),
         evidence: {
           detectionMethod: 'timing_variance_analysis',
           metrics: {
             totalMoves: moves.length,
             stdDev,
             variance,
-            avgTimeBetweenMoves: timings.reduce((a, b) => a + b, 0) / timings.length,
-            threshold: this.config.roboticConsistencyThreshold
+            avgTimeBetweenMoves:
+              timings.reduce((a, b) => a + b, 0) / timings.length,
+            threshold: this.config.roboticConsistencyThreshold,
           },
-          anomalies: [{
-            type: 'ROBOTIC_TIMING',
-            severity: 'MEDIUM',
-            description: `Move timing has suspiciously low variance (σ=${stdDev.toFixed(2)}ms)`,
-            value: stdDev
-          }]
-        }
+          anomalies: [
+            {
+              type: 'ROBOTIC_TIMING',
+              severity: 'MEDIUM',
+              description: `Move timing has suspiciously low variance (σ=${stdDev.toFixed(
+                2,
+              )}ms)`,
+              value: stdDev,
+            },
+          ],
+        },
       });
     }
 
@@ -126,8 +148,8 @@ export class DetectionService {
         fastMoves,
         fastMoveRatio,
         stdDev,
-        avgTime: timings.reduce((a, b) => a + b, 0) / timings.length
-      }
+        avgTime: timings.reduce((a, b) => a + b, 0) / timings.length,
+      },
     };
   }
 
@@ -137,7 +159,7 @@ export class DetectionService {
   detectPerfectAccuracy(
     moves: PuzzleMove[],
     allValid: boolean,
-    isFirstAttempt: boolean
+    isFirstAttempt: boolean,
   ): DetectionResult {
     if (moves.length < this.config.perfectAccuracyMinMoves) {
       return { isAnomaly: false, violations: [], metrics: {} };
@@ -159,15 +181,19 @@ export class DetectionService {
               validMoves: moves.length,
               accuracy,
               isFirstAttempt,
-              threshold: this.config.suspiciousAccuracyThreshold
+              threshold: this.config.suspiciousAccuracyThreshold,
             },
-            anomalies: [{
-              type: 'PERFECT_ACCURACY',
-              severity: 'HIGH',
-              description: `Perfect accuracy (${(accuracy * 100)}%) on first attempt with ${moves.length} moves`,
-              value: accuracy
-            }]
-          }
+            anomalies: [
+              {
+                type: 'PERFECT_ACCURACY',
+                severity: 'HIGH',
+                description: `Perfect accuracy (${
+                  accuracy * 100
+                }%) on first attempt with ${moves.length} moves`,
+                value: accuracy,
+              },
+            ],
+          },
         });
       }
     }
@@ -175,7 +201,7 @@ export class DetectionService {
     return {
       isAnomaly: violations.length > 0,
       violations,
-      metrics: { totalMoves: moves.length, allValid, isFirstAttempt }
+      metrics: { totalMoves: moves.length, allValid, isFirstAttempt },
     };
   }
 
@@ -185,7 +211,7 @@ export class DetectionService {
   detectOptimalPath(
     moves: PuzzleMove[],
     optimalMoveCount: number,
-    isFirstAttempt: boolean
+    isFirstAttempt: boolean,
   ): DetectionResult {
     if (!optimalMoveCount || optimalMoveCount === 0) {
       return { isAnomaly: false, violations: [], metrics: {} };
@@ -199,7 +225,7 @@ export class DetectionService {
       violations.push({
         type: ViolationType.AUTOMATED_SOLVER,
         severity: Severity.HIGH,
-        confidenceScore: Math.min(90, 60 + (efficiency * 30)),
+        confidenceScore: Math.min(90, 60 + efficiency * 30),
         evidence: {
           detectionMethod: 'solution_path_analysis',
           metrics: {
@@ -207,22 +233,30 @@ export class DetectionService {
             optimalMoves: optimalMoveCount,
             efficiency,
             isFirstAttempt,
-            threshold: 0.95
+            threshold: 0.95,
           },
-          anomalies: [{
-            type: 'OPTIMAL_PATH',
-            severity: 'HIGH',
-            description: `Near-optimal solution path (${(efficiency * 100).toFixed(1)}% efficiency) on first attempt`,
-            value: efficiency
-          }]
-        }
+          anomalies: [
+            {
+              type: 'OPTIMAL_PATH',
+              severity: 'HIGH',
+              description: `Near-optimal solution path (${(
+                efficiency * 100
+              ).toFixed(1)}% efficiency) on first attempt`,
+              value: efficiency,
+            },
+          ],
+        },
       });
     }
 
     return {
       isAnomaly: violations.length > 0,
       violations,
-      metrics: { actualMoves: moves.length, optimalMoves: optimalMoveCount, efficiency }
+      metrics: {
+        actualMoves: moves.length,
+        optimalMoves: optimalMoveCount,
+        efficiency,
+      },
     };
   }
 
@@ -256,22 +290,25 @@ export class DetectionService {
           metrics: {
             totalMoves: moves.length,
             hasBacktracking,
-            explorationScore: 0
+            explorationScore: 0,
           },
-          anomalies: [{
-            type: 'NO_EXPLORATION',
-            severity: 'MEDIUM',
-            description: 'Perfect solution path with no exploration or backtracking',
-            value: 0
-          }]
-        }
+          anomalies: [
+            {
+              type: 'NO_EXPLORATION',
+              severity: 'MEDIUM',
+              description:
+                'Perfect solution path with no exploration or backtracking',
+              value: 0,
+            },
+          ],
+        },
       });
     }
 
     return {
       isAnomaly: violations.length > 0,
       violations,
-      metrics: { hasBacktracking, moveCount: moves.length }
+      metrics: { hasBacktracking, moveCount: moves.length },
     };
   }
 
@@ -284,22 +321,33 @@ export class DetectionService {
       isFirstAttempt: boolean;
       optimalMoveCount?: number;
       allMovesValid: boolean;
-    }
+    },
   ): DetectionResult {
     const results: DetectionResult[] = [
       this.detectSpeedAnomalies(moves),
-      this.detectPerfectAccuracy(moves, context.allMovesValid, context.isFirstAttempt),
-      this.detectOptimalPath(moves, context.optimalMoveCount || 0, context.isFirstAttempt),
-      this.detectLackOfExploration(moves)
+      this.detectPerfectAccuracy(
+        moves,
+        context.allMovesValid,
+        context.isFirstAttempt,
+      ),
+      this.detectOptimalPath(
+        moves,
+        context.optimalMoveCount || 0,
+        context.isFirstAttempt,
+      ),
+      this.detectLackOfExploration(moves),
     ];
 
-    const allViolations = results.flatMap(r => r.violations);
-    const allMetrics = results.reduce((acc, r) => ({ ...acc, ...r.metrics }), {});
+    const allViolations = results.flatMap((r) => r.violations);
+    const allMetrics = results.reduce(
+      (acc, r) => ({ ...acc, ...r.metrics }),
+      {},
+    );
 
     return {
       isAnomaly: allViolations.length > 0,
       violations: allViolations,
-      metrics: allMetrics
+      metrics: allMetrics,
     };
   }
 
@@ -310,7 +358,7 @@ export class DetectionService {
     if (values.length === 0) return 0;
 
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
+    const squaredDiffs = values.map((value) => Math.pow(value - mean, 2));
     return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
   }
 

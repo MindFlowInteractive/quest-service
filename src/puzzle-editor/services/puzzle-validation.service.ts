@@ -40,11 +40,17 @@ export class PuzzleValidationService {
     }
 
     // Validate connections
-    const connectionErrors = await this.validateConnections(components, connections);
+    const connectionErrors = await this.validateConnections(
+      components,
+      connections,
+    );
     errors.push(...connectionErrors);
 
     // Validate constraints
-    const constraintErrors = await this.validateConstraints(components, constraints);
+    const constraintErrors = await this.validateConstraints(
+      components,
+      constraints,
+    );
     errors.push(...constraintErrors);
 
     // Check for common issues
@@ -52,7 +58,12 @@ export class PuzzleValidationService {
     warnings.push(...commonIssues);
 
     // Generate suggestions
-    const puzzleSuggestions = await this.generateSuggestions(components, connections, errors, warnings);
+    const puzzleSuggestions = await this.generateSuggestions(
+      components,
+      connections,
+      errors,
+      warnings,
+    );
     suggestions.push(...puzzleSuggestions);
 
     return {
@@ -67,7 +78,9 @@ export class PuzzleValidationService {
   /**
    * Validate individual component
    */
-  private async validateComponent(component: EditorComponent): Promise<ValidationError[]> {
+  private async validateComponent(
+    component: EditorComponent,
+  ): Promise<ValidationError[]> {
     const errors: ValidationError[] = [];
 
     // Check required properties
@@ -99,7 +112,11 @@ export class PuzzleValidationService {
     }
 
     // Validate position
-    if (!component.position || typeof component.position.x !== 'number' || typeof component.position.y !== 'number') {
+    if (
+      !component.position ||
+      typeof component.position.x !== 'number' ||
+      typeof component.position.y !== 'number'
+    ) {
       errors.push({
         id: `comp_position_invalid_${component.id}`,
         componentId: component.id,
@@ -126,7 +143,9 @@ export class PuzzleValidationService {
 
     // Validate component constraints
     if (component.metadata?.constraints) {
-      const constraintErrors = await this.validateComponentConstraints(component);
+      const constraintErrors = await this.validateComponentConstraints(
+        component,
+      );
       errors.push(...constraintErrors);
     }
 
@@ -136,7 +155,9 @@ export class PuzzleValidationService {
   /**
    * Validate component type-specific rules
    */
-  private async validateComponentType(component: EditorComponent): Promise<ValidationError[]> {
+  private async validateComponentType(
+    component: EditorComponent,
+  ): Promise<ValidationError[]> {
     const errors: ValidationError[] = [];
 
     switch (component.type) {
@@ -167,7 +188,10 @@ export class PuzzleValidationService {
 
       case 'SEQUENCE_ELEMENT':
       case 'PATTERN_ELEMENT':
-        if (component.properties.value === undefined && component.properties.pattern === undefined) {
+        if (
+          component.properties.value === undefined &&
+          component.properties.pattern === undefined
+        ) {
           errors.push({
             id: `sequence_value_missing_${component.id}`,
             componentId: component.id,
@@ -206,7 +230,9 @@ export class PuzzleValidationService {
   /**
    * Validate component constraints
    */
-  private async validateComponentConstraints(component: EditorComponent): Promise<ValidationError[]> {
+  private async validateComponentConstraints(
+    component: EditorComponent,
+  ): Promise<ValidationError[]> {
     const errors: ValidationError[] = [];
     const constraints = component.metadata?.constraints || [];
 
@@ -253,7 +279,10 @@ export class PuzzleValidationService {
       }
 
       // Check for self-loops where not allowed
-      if (connection.sourceComponentId === connection.targetComponentId && !connection.properties?.allowSelfLoop) {
+      if (
+        connection.sourceComponentId === connection.targetComponentId &&
+        !connection.properties?.allowSelfLoop
+      ) {
         errors.push({
           id: `conn_self_loop_${connection.id}`,
           message: `Connection cannot reference the same component on both ends`,
@@ -268,7 +297,10 @@ export class PuzzleValidationService {
   /**
    * Validate puzzle constraints
    */
-  private async validateConstraints(components: EditorComponent[], constraints: any[]): Promise<ValidationError[]> {
+  private async validateConstraints(
+    components: EditorComponent[],
+    constraints: any[],
+  ): Promise<ValidationError[]> {
     const errors: ValidationError[] = [];
 
     for (const constraint of constraints) {
@@ -295,7 +327,9 @@ export class PuzzleValidationService {
   /**
    * Check component for warnings
    */
-  private async checkComponentWarnings(component: EditorComponent): Promise<ValidationWarning[]> {
+  private async checkComponentWarnings(
+    component: EditorComponent,
+  ): Promise<ValidationWarning[]> {
     const warnings: ValidationWarning[] = [];
 
     // Check for missing descriptions
@@ -309,7 +343,10 @@ export class PuzzleValidationService {
     }
 
     // Check for unused components
-    if (!component.metadata?.linkedComponents || component.metadata.linkedComponents.length === 0) {
+    if (
+      !component.metadata?.linkedComponents ||
+      component.metadata.linkedComponents.length === 0
+    ) {
       warnings.push({
         id: `comp_unused_${component.id}`,
         componentId: component.id,
@@ -334,7 +371,10 @@ export class PuzzleValidationService {
   /**
    * Check for common puzzle design issues
    */
-  private async checkCommonIssues(components: EditorComponent[], connections: any[]): Promise<ValidationWarning[]> {
+  private async checkCommonIssues(
+    components: EditorComponent[],
+    connections: any[],
+  ): Promise<ValidationWarning[]> {
     const warnings: ValidationWarning[] = [];
 
     // Check for isolated component groups
@@ -360,16 +400,24 @@ export class PuzzleValidationService {
 
     // Check for missing entry/exit points
     const hasInput = components.some(
-      (c) => c.type === 'BUTTON' || c.type === 'TEXT_INPUT' || c.type === 'RADIO_GROUP' || c.type === 'DROPDOWN',
+      (c) =>
+        c.type === 'BUTTON' ||
+        c.type === 'TEXT_INPUT' ||
+        c.type === 'RADIO_GROUP' ||
+        c.type === 'DROPDOWN',
     );
     const hasOutput = components.some(
-      (c) => c.type === 'SPATIAL_TARGET' || c.type === 'HINT_BOX' || c.metadata?.isSuccessState,
+      (c) =>
+        c.type === 'SPATIAL_TARGET' ||
+        c.type === 'HINT_BOX' ||
+        c.metadata?.isSuccessState,
     );
 
     if (!hasInput) {
       warnings.push({
         id: 'no_input_components',
-        message: 'Puzzle has no input components. Players may not be able to interact with it.',
+        message:
+          'Puzzle has no input components. Players may not be able to interact with it.',
         code: 'NO_INPUT_COMPONENTS',
       });
     }
@@ -377,7 +425,8 @@ export class PuzzleValidationService {
     if (!hasOutput) {
       warnings.push({
         id: 'no_output_components',
-        message: 'Puzzle has no output components. Players may not know when they succeed.',
+        message:
+          'Puzzle has no output components. Players may not know when they succeed.',
         code: 'NO_OUTPUT_COMPONENTS',
       });
     }
@@ -424,7 +473,10 @@ export class PuzzleValidationService {
     }
 
     // Suggest adding tags
-    if (components.length > 5 && !components.some((c) => c.metadata?.tags?.length)) {
+    if (
+      components.length > 5 &&
+      !components.some((c) => c.metadata?.tags?.length)
+    ) {
       suggestions.push({
         id: 'add_tags',
         message: 'Consider adding tags to components for better organization',
@@ -441,7 +493,10 @@ export class PuzzleValidationService {
   /**
    * Build a graph of component connections
    */
-  private buildComponentGraph(components: EditorComponent[], connections: any[]): Map<string, Set<string>> {
+  private buildComponentGraph(
+    components: EditorComponent[],
+    connections: any[],
+  ): Map<string, Set<string>> {
     const graph = new Map<string, Set<string>>();
 
     // Initialize with all components
@@ -451,8 +506,13 @@ export class PuzzleValidationService {
 
     // Add connections
     for (const connection of connections) {
-      if (graph.has(connection.sourceComponentId) && graph.has(connection.targetComponentId)) {
-        graph.get(connection.sourceComponentId)!.add(connection.targetComponentId);
+      if (
+        graph.has(connection.sourceComponentId) &&
+        graph.has(connection.targetComponentId)
+      ) {
+        graph
+          .get(connection.sourceComponentId)
+          .add(connection.targetComponentId);
       }
     }
 
@@ -462,7 +522,9 @@ export class PuzzleValidationService {
   /**
    * Find connected components using BFS/DFS
    */
-  private findConnectedComponents(graph: Map<string, Set<string>>): Set<string>[] {
+  private findConnectedComponents(
+    graph: Map<string, Set<string>>,
+  ): Set<string>[] {
     const visited = new Set<string>();
     const groups: Set<string>[] = [];
 
@@ -480,7 +542,12 @@ export class PuzzleValidationService {
   /**
    * Depth-first search for connected components
    */
-  private dfs(node: string, graph: Map<string, Set<string>>, visited: Set<string>, group: Set<string>) {
+  private dfs(
+    node: string,
+    graph: Map<string, Set<string>>,
+    visited: Set<string>,
+    group: Set<string>,
+  ) {
     visited.add(node);
     group.add(node);
 
@@ -512,7 +579,12 @@ export class PuzzleValidationService {
   /**
    * DFS-based cycle detection
    */
-  private hasCycle(node: string, graph: Map<string, Set<string>>, visited: Set<string>, stack: Set<string>): boolean {
+  private hasCycle(
+    node: string,
+    graph: Map<string, Set<string>>,
+    visited: Set<string>,
+    stack: Set<string>,
+  ): boolean {
     visited.add(node);
     stack.add(node);
 
@@ -538,7 +610,9 @@ export class PuzzleValidationService {
 
     // Auto-generate ID if missing
     if (!fixed.id) {
-      fixed.id = `component_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      fixed.id = `component_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
     }
 
     // Set default type if missing

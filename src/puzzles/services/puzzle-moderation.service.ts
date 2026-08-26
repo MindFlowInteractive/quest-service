@@ -1,8 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThan, In } from 'typeorm';
-import { UserPuzzleSubmission, PuzzleSubmissionStatus, ModerationAction } from '../entities/user-puzzle-submission.entity';
-import { ModerationDecisionDto, SubmitForReviewDto } from '../dto/user-puzzle-submission.dto';
+import {
+  UserPuzzleSubmission,
+  PuzzleSubmissionStatus,
+  ModerationAction,
+} from '../entities/user-puzzle-submission.entity';
+import {
+  ModerationDecisionDto,
+  SubmitForReviewDto,
+} from '../dto/user-puzzle-submission.dto';
 import { PuzzleValidationService } from './puzzle-validation.service';
 
 @Injectable()
@@ -33,10 +40,14 @@ export class PuzzleModerationService {
     }
 
     // Run validation
-    const validationResults = await this.validationService.validatePuzzle(submission);
-    
+    const validationResults = await this.validationService.validatePuzzle(
+      submission,
+    );
+
     // Check for duplicates
-    const duplicateCheck = await this.validationService.checkForDuplicates(submission);
+    const duplicateCheck = await this.validationService.checkForDuplicates(
+      submission,
+    );
 
     // Update submission with validation results
     submission.validationResults = validationResults;
@@ -44,7 +55,11 @@ export class PuzzleModerationService {
     submission.submittedAt = new Date();
 
     // Auto-approve if validation passes and no duplicates
-    if (validationResults.isValid && !duplicateCheck.isDuplicate && validationResults.score >= 85) {
+    if (
+      validationResults.isValid &&
+      !duplicateCheck.isDuplicate &&
+      validationResults.score >= 85
+    ) {
       submission.status = PuzzleSubmissionStatus.APPROVED;
       submission.moderationData = {
         action: ModerationAction.AUTO_APPROVED,
@@ -55,7 +70,9 @@ export class PuzzleModerationService {
       submission.status = PuzzleSubmissionStatus.REJECTED;
       submission.moderationData = {
         action: ModerationAction.REJECTED_DUPLICATE,
-        reviewNotes: `Duplicate of: ${duplicateCheck.similarPuzzles.map(p => p.title).join(', ')}`,
+        reviewNotes: `Duplicate of: ${duplicateCheck.similarPuzzles
+          .map((p) => p.title)
+          .join(', ')}`,
       };
     } else {
       submission.status = PuzzleSubmissionStatus.UNDER_REVIEW;
@@ -63,13 +80,18 @@ export class PuzzleModerationService {
         action: ModerationAction.PENDING_REVIEW,
         autoApprovalScore: validationResults.score,
         qualityScore: validationResults.automatedChecks.contentQuality,
-        requiredChanges: validationResults.errors.length > 0 ? validationResults.errors : undefined,
+        requiredChanges:
+          validationResults.errors.length > 0
+            ? validationResults.errors
+            : undefined,
       };
     }
 
     await this.submissionRepository.save(submission);
 
-    this.logger.log(`Puzzle ${submissionId} submitted for review with status: ${submission.status}`);
+    this.logger.log(
+      `Puzzle ${submissionId} submitted for review with status: ${submission.status}`,
+    );
     return submission;
   }
 
@@ -84,7 +106,7 @@ export class PuzzleModerationService {
     totalPages: number;
   }> {
     const where = status ? { status } : {};
-    
+
     const [submissions, total] = await this.submissionRepository.findAndCount({
       where,
       order: { submittedAt: 'DESC' },
@@ -157,7 +179,10 @@ export class PuzzleModerationService {
     return submission;
   }
 
-  async publishPuzzle(submissionId: string, userId: string): Promise<UserPuzzleSubmission> {
+  async publishPuzzle(
+    submissionId: string,
+    userId: string,
+  ): Promise<UserPuzzleSubmission> {
     const submission = await this.submissionRepository.findOne({
       where: { id: submissionId, userId },
     });
@@ -186,7 +211,9 @@ export class PuzzleModerationService {
     });
   }
 
-  async getModerationStats(timeframe: 'day' | 'week' | 'month' = 'week'): Promise<{
+  async getModerationStats(
+    timeframe: 'day' | 'week' | 'month' = 'week',
+  ): Promise<{
     total: number;
     approved: number;
     rejected: number;
@@ -212,40 +239,53 @@ export class PuzzleModerationService {
     const submissions = await this.submissionRepository.find({
       where: {
         submittedAt: Between(startDate, now),
-        status: In([PuzzleSubmissionStatus.APPROVED, PuzzleSubmissionStatus.REJECTED]),
+        status: In([
+          PuzzleSubmissionStatus.APPROVED,
+          PuzzleSubmissionStatus.REJECTED,
+        ]),
       },
     });
 
     const stats = {
       total: submissions.length,
-      approved: submissions.filter(s => s.status === PuzzleSubmissionStatus.APPROVED).length,
-      rejected: submissions.filter(s => s.status === PuzzleSubmissionStatus.REJECTED).length,
-      autoApproved: submissions.filter(s => s.moderationData?.action === ModerationAction.AUTO_APPROVED).length,
+      approved: submissions.filter(
+        (s) => s.status === PuzzleSubmissionStatus.APPROVED,
+      ).length,
+      rejected: submissions.filter(
+        (s) => s.status === PuzzleSubmissionStatus.REJECTED,
+      ).length,
+      autoApproved: submissions.filter(
+        (s) => s.moderationData?.action === ModerationAction.AUTO_APPROVED,
+      ).length,
       averageQualityScore: 0,
       averageProcessingTime: 0,
     };
 
     if (submissions.length > 0) {
       const qualityScores = submissions
-        .map(s => s.moderationData?.qualityScore || 0)
-        .filter(score => score > 0);
-      
-      stats.averageQualityScore = qualityScores.length > 0 
-        ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length 
-        : 0;
+        .map((s) => s.moderationData?.qualityScore || 0)
+        .filter((score) => score > 0);
+
+      stats.averageQualityScore =
+        qualityScores.length > 0
+          ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
+          : 0;
 
       const processingTimes = submissions
-        .map(s => {
+        .map((s) => {
           if (s.submittedAt && s.moderationData?.reviewedAt) {
-            return s.moderationData.reviewedAt.getTime() - s.submittedAt.getTime();
+            return (
+              s.moderationData.reviewedAt.getTime() - s.submittedAt.getTime()
+            );
           }
           return 0;
         })
-        .filter(time => time > 0);
+        .filter((time) => time > 0);
 
-      stats.averageProcessingTime = processingTimes.length > 0
-        ? processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length
-        : 0;
+      stats.averageProcessingTime =
+        processingTimes.length > 0
+          ? processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length
+          : 0;
     }
 
     return stats;
@@ -270,13 +310,18 @@ export class PuzzleModerationService {
       submission.moderationData = {
         ...submission.moderationData,
         action: ModerationAction.PENDING_REVIEW,
-        flaggedContent: [...(submission.moderationData?.flaggedContent || []), reason],
+        flaggedContent: [
+          ...(submission.moderationData?.flaggedContent || []),
+          reason,
+        ],
       };
     }
 
     await this.submissionRepository.save(submission);
 
-    this.logger.log(`Puzzle ${submissionId} flagged by user ${reporterId}: ${reason}`);
+    this.logger.log(
+      `Puzzle ${submissionId} flagged by user ${reporterId}: ${reason}`,
+    );
     return submission;
   }
 
@@ -292,17 +337,24 @@ export class PuzzleModerationService {
       where: { userId },
     });
 
-    const published = submissions.filter(s => s.status === PuzzleSubmissionStatus.PUBLISHED);
-    const featured = submissions.filter(s => s.status === PuzzleSubmissionStatus.FEATURED);
+    const published = submissions.filter(
+      (s) => s.status === PuzzleSubmissionStatus.PUBLISHED,
+    );
+    const featured = submissions.filter(
+      (s) => s.status === PuzzleSubmissionStatus.FEATURED,
+    );
 
-    const averageRating = published.length > 0
-      ? published.reduce((sum, s) => sum + s.averageRating, 0) / published.length
-      : 0;
+    const averageRating =
+      published.length > 0
+        ? published.reduce((sum, s) => sum + s.averageRating, 0) /
+          published.length
+        : 0;
 
     const totalPlays = published.reduce((sum, s) => sum + s.playCount, 0);
-    const acceptanceRate = submissions.length > 0
-      ? (published.length / submissions.length) * 100
-      : 0;
+    const acceptanceRate =
+      submissions.length > 0
+        ? (published.length / submissions.length) * 100
+        : 0;
 
     return {
       totalSubmissions: submissions.length,

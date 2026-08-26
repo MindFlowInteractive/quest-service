@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, MaxLength, MinLength, Max, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  MinLength,
+  Max,
+  IsInt,
+} from 'class-validator';
 
 export class CreateGuildDto {
   @IsString()

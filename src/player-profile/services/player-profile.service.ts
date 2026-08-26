@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlayerProfile } from '../entities/player-profile.entity';
@@ -27,7 +32,10 @@ export class PlayerProfileService {
     private userRepo: Repository<User>,
   ) {}
 
-  async getProfile(userId: string, viewerId?: string): Promise<ProfileResponseDto> {
+  async getProfile(
+    userId: string,
+    viewerId?: string,
+  ): Promise<ProfileResponseDto> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -40,7 +48,7 @@ export class PlayerProfileService {
       showStats: true,
       showSocialLinks: true,
       showLocation: true,
-      showWebsite: true
+      showWebsite: true,
     };
 
     if (!isOwner && !privacy.isProfilePublic) {
@@ -59,9 +67,15 @@ export class PlayerProfileService {
       website: isOwner || privacy.showWebsite ? profile?.website : undefined,
       badges: isOwner || privacy.showBadges ? profile?.badges || [] : undefined,
       customFields: isOwner ? profile?.customFields || {} : undefined,
-      socialLinks: isOwner || privacy.showSocialLinks ? profile?.socialLinks || {} : undefined,
-      displayPreferences: isOwner ? profile?.displayPreferences || {} : undefined,
-      statistics: isOwner || privacy.showStats ? profile?.statistics || {} : undefined,
+      socialLinks:
+        isOwner || privacy.showSocialLinks
+          ? profile?.socialLinks || {}
+          : undefined,
+      displayPreferences: isOwner
+        ? profile?.displayPreferences || {}
+        : undefined,
+      statistics:
+        isOwner || privacy.showStats ? profile?.statistics || {} : undefined,
       isProfilePublic: privacy.isProfilePublic,
       isOwner,
     };
@@ -69,7 +83,10 @@ export class PlayerProfileService {
     return response;
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<PlayerProfile> {
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<PlayerProfile> {
     let profile = await this.profileRepo.findOne({ where: { userId } });
     if (!profile) {
       profile = this.profileRepo.create({ userId });
@@ -87,10 +104,16 @@ export class PlayerProfileService {
     if (dto.customFields !== undefined) profile.customFields = dto.customFields;
     if (dto.socialLinks !== undefined) profile.socialLinks = dto.socialLinks;
     if (dto.displayPreferences !== undefined) {
-      profile.displayPreferences = { ...profile.displayPreferences, ...dto.displayPreferences };
+      profile.displayPreferences = {
+        ...profile.displayPreferences,
+        ...dto.displayPreferences,
+      };
     }
     if (dto.privacySettings) {
-      profile.privacySettings = { ...profile.privacySettings, ...dto.privacySettings };
+      profile.privacySettings = {
+        ...profile.privacySettings,
+        ...dto.privacySettings,
+      };
     }
 
     return this.profileRepo.save(profile);
@@ -99,7 +122,9 @@ export class PlayerProfileService {
   async uploadAvatar(userId: string, file: MulterFile): Promise<string> {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP');
+      throw new BadRequestException(
+        'Invalid file type. Allowed: JPEG, PNG, GIF, WebP',
+      );
     }
 
     const maxSize = 5 * 1024 * 1024; // 5MB
@@ -121,7 +146,9 @@ export class PlayerProfileService {
   async uploadBanner(userId: string, file: MulterFile): Promise<string> {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP');
+      throw new BadRequestException(
+        'Invalid file type. Allowed: JPEG, PNG, GIF, WebP',
+      );
     }
 
     const maxSize = 10 * 1024 * 1024; // 10MB for banners
@@ -140,14 +167,20 @@ export class PlayerProfileService {
     return uploadPath;
   }
 
-  async updateBadges(userId: string, badgeIds: string[]): Promise<PlayerProfile> {
+  async updateBadges(
+    userId: string,
+    badgeIds: string[],
+  ): Promise<PlayerProfile> {
     // Validate badge IDs exist (this would typically check against a badges service)
-    const validBadgeIds = badgeIds.filter(id => id && typeof id === 'string');
+    const validBadgeIds = badgeIds.filter((id) => id && typeof id === 'string');
 
     return this.updateProfile(userId, { badges: validBadgeIds });
   }
 
-  async updateStatistics(userId: string, stats: Partial<ProfileStatisticsDto>): Promise<PlayerProfile> {
+  async updateStatistics(
+    userId: string,
+    stats: Partial<ProfileStatisticsDto>,
+  ): Promise<PlayerProfile> {
     let profile = await this.profileRepo.findOne({ where: { userId } });
     if (!profile) {
       profile = this.profileRepo.create({ userId });
@@ -162,32 +195,38 @@ export class PlayerProfileService {
     return profile?.statistics || {};
   }
 
-  async searchProfiles(query: string, limit: number = 20): Promise<ProfileResponseDto[]> {
+  async searchProfiles(
+    query: string,
+    limit: number = 20,
+  ): Promise<ProfileResponseDto[]> {
     const users = await this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
       .where('user.username ILIKE :query', { query: `%${query}%` })
-      .andWhere('profile.privacySettings->>\'isProfilePublic\' = \'true\' OR profile.privacySettings IS NULL')
+      .andWhere(
+        "profile.privacySettings->>'isProfilePublic' = 'true' OR profile.privacySettings IS NULL",
+      )
       .limit(limit)
       .getMany();
 
-    return Promise.all(
-      users.map(user => this.getProfile(user.id))
-    );
+    return Promise.all(users.map((user) => this.getProfile(user.id)));
   }
 
-  async getPublicProfiles(limit: number = 50, offset: number = 0): Promise<ProfileResponseDto[]> {
+  async getPublicProfiles(
+    limit: number = 50,
+    offset: number = 0,
+  ): Promise<ProfileResponseDto[]> {
     const profiles = await this.profileRepo
       .createQueryBuilder('profile')
       .leftJoinAndSelect('profile.user', 'user')
-      .where('profile.privacySettings->>\'isProfilePublic\' = \'true\'')
+      .where("profile.privacySettings->>'isProfilePublic' = 'true'")
       .orderBy('profile.updatedAt', 'DESC')
       .limit(limit)
       .offset(offset)
       .getMany();
 
     return Promise.all(
-      profiles.map(profile => this.getProfile(profile.userId))
+      profiles.map((profile) => this.getProfile(profile.userId)),
     );
   }
 }

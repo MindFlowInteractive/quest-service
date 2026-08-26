@@ -82,10 +82,12 @@ describe('RecommendationsService', () => {
         {
           provide: getRepositoryToken(UserInteraction),
           useValue: {
-            find: jest.fn().mockResolvedValue([
-              { puzzle: { difficultyRating: 5 } },
-              { puzzle: { difficultyRating: 4 } },
-            ]),
+            find: jest
+              .fn()
+              .mockResolvedValue([
+                { puzzle: { difficultyRating: 5 } },
+                { puzzle: { difficultyRating: 4 } },
+              ]),
             createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
           },
         },
@@ -119,12 +121,20 @@ describe('RecommendationsService', () => {
     }).compile();
 
     service = module.get<RecommendationsService>(RecommendationsService);
-    userProgressRepo = module.get<Repository<UserProgress>>(getRepositoryToken(UserProgress));
+    userProgressRepo = module.get<Repository<UserProgress>>(
+      getRepositoryToken(UserProgress),
+    );
     puzzleRepo = module.get<Repository<Puzzle>>(getRepositoryToken(Puzzle));
-    interactionRepo = module.get<Repository<UserInteraction>>(getRepositoryToken(UserInteraction));
-    feedbackRepo = module.get<Repository<RecommendationFeedback>>(getRepositoryToken(RecommendationFeedback));
+    interactionRepo = module.get<Repository<UserInteraction>>(
+      getRepositoryToken(UserInteraction),
+    );
+    feedbackRepo = module.get<Repository<RecommendationFeedback>>(
+      getRepositoryToken(RecommendationFeedback),
+    );
     cacheService = module.get<CacheService>(CacheService);
-    difficultyService = module.get<PuzzleDifficultyService>(PuzzleDifficultyService);
+    difficultyService = module.get<PuzzleDifficultyService>(
+      PuzzleDifficultyService,
+    );
     analyticsService = module.get<AnalyticsService>(AnalyticsService);
   });
 
@@ -147,14 +157,19 @@ describe('RecommendationsService', () => {
     it('should return trending recommendations for new user (empty history fallback)', async () => {
       jest.spyOn(userProgressRepo, 'findOne').mockResolvedValue(null);
 
-      const result = await service.getPersonalizedRecommendations('new-user', 5);
+      const result = await service.getPersonalizedRecommendations(
+        'new-user',
+        5,
+      );
 
       expect(result).toBeDefined();
       expect(result.length).toBeGreaterThan(0);
     });
 
     it('should use cached results when available', async () => {
-      const cachedResult = [{ id: 'cached-puzzle', title: 'Cached', score: 0.8, reason: 'cached' }];
+      const cachedResult = [
+        { id: 'cached-puzzle', title: 'Cached', score: 0.8, reason: 'cached' },
+      ];
       jest.spyOn(cacheService, 'get').mockResolvedValue(cachedResult);
 
       const result = await service.getPersonalizedRecommendations('user1', 5);
@@ -169,7 +184,7 @@ describe('RecommendationsService', () => {
       expect(cacheService.set).toHaveBeenCalledWith(
         'recommendations:personalized:user1:5',
         expect.any(Array),
-        { ttl: 3600 }
+        { ttl: 3600 },
       );
     });
   });
@@ -184,7 +199,9 @@ describe('RecommendationsService', () => {
     });
 
     it('should use cached results when available', async () => {
-      const cachedResult = [{ id: 'trending-puzzle', completionsLast7Days: 10 }];
+      const cachedResult = [
+        { id: 'trending-puzzle', completionsLast7Days: 10 },
+      ];
       jest.spyOn(cacheService, 'get').mockResolvedValue(cachedResult);
 
       const result = await service.getTrendingRecommendations(5);

@@ -8,7 +8,9 @@ export class VerificationService {
 
   constructor() {
     // Falls back to Stellar testnet RPC endpoint
-    this.rpcInstance = new rpc.Server(process.env.STELLAR_RPC_URL || 'https://soroban-testnet.stellar.org');
+    this.rpcInstance = new rpc.Server(
+      process.env.STELLAR_RPC_URL || 'https://soroban-testnet.stellar.org',
+    );
   }
 
   /**
@@ -21,26 +23,33 @@ export class VerificationService {
   /**
    * Compares uploaded source compilation directly to live ledger states
    */
-  async verifyContractBytecode(contractId: string, uploadedWasm: Buffer): Promise<boolean> {
+  async verifyContractBytecode(
+    contractId: string,
+    uploadedWasm: Buffer,
+  ): Promise<boolean> {
     if (!StrKey.isValidContract(contractId)) {
       throw new BadRequestException('Invalid Soroban Contract ID format.');
     }
 
     try {
       // Fetch the on-chain contract binary from the network RPC
-      const contractData = await this.rpcInstance.getContractWasmByContractId(contractId);
+      const contractData = await this.rpcInstance.getContractWasmByContractId(
+        contractId,
+      );
       const contractBytes = Buffer.isBuffer(contractData)
         ? contractData
         : typeof contractData === 'string'
         ? Buffer.from(contractData, 'hex')
-        : Buffer.from(contractData as ArrayBuffer);
+        : Buffer.from(contractData);
 
       const onChainHash = this.calculateHash(contractBytes);
       const uploadedHash = this.calculateHash(uploadedWasm);
 
       return onChainHash === uploadedHash;
     } catch (error) {
-      throw new BadRequestException(`Failed to cross-verify bytecode against network: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to cross-verify bytecode against network: ${error.message}`,
+      );
     }
   }
 }

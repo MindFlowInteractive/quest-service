@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { ContractVersion } from './version.entity';
 import { SecurityAudit } from './audit.entity';
 
@@ -19,7 +26,11 @@ export class SmartContract {
   @Column()
   name: string;
 
-  @Column({ type: 'enum', enum: ContractStatus, default: ContractStatus.UNVERIFIED })
+  @Column({
+    type: 'enum',
+    enum: ContractStatus,
+    default: ContractStatus.UNVERIFIED,
+  })
   status: ContractStatus;
 
   @Column({ nullable: true })

@@ -12,7 +12,12 @@ import {
   Res,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 import { PrivacyService } from './privacy.service';
 import { PrivacySettingsService } from './services/privacy-settings.service';
@@ -85,7 +90,10 @@ export class PrivacyController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Param('purpose') purpose: string,
   ) {
-    const hasConsent = await this.settingsService.hasConsent(userId, purpose as any);
+    const hasConsent = await this.settingsService.hasConsent(
+      userId,
+      purpose as any,
+    );
     return { purpose, hasConsent };
   }
 
@@ -123,8 +131,9 @@ export class PrivacyController {
     @Param('exportId') exportId: string,
     @Res() res: Response,
   ) {
-    const { buffer, filename, contentType } = await this.exportService.downloadExport(exportId, userId);
-    
+    const { buffer, filename, contentType } =
+      await this.exportService.downloadExport(exportId, userId);
+
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
@@ -176,7 +185,9 @@ export class PrivacyController {
 
   @Get('retention/summary')
   @ApiOperation({ summary: 'Get user data retention summary' })
-  async getUserRetentionSummary(@Param('userId', ParseUUIDPipe) userId: string) {
+  async getUserRetentionSummary(
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ) {
     return this.retentionService.getUserDataRetentionSummary(userId);
   }
 
@@ -216,13 +227,14 @@ export class PrivacyController {
   @Get('gdpr-summary')
   @ApiOperation({ summary: 'Get complete GDPR summary for user' })
   async getGdprSummary(@Param('userId', ParseUUIDPipe) userId: string) {
-    const [settings, consentHistory, exportHistory, deletionStatus, auditLogs] = await Promise.all([
-      this.settingsService.getSettings(userId),
-      this.settingsService.getConsentHistory(userId),
-      this.exportService.getExportHistory(userId),
-      this.deletionService.getDeletionStatus(userId),
-      this.auditService.getUserAuditLogs(userId, { limit: 10 }),
-    ]);
+    const [settings, consentHistory, exportHistory, deletionStatus, auditLogs] =
+      await Promise.all([
+        this.settingsService.getSettings(userId),
+        this.settingsService.getConsentHistory(userId),
+        this.exportService.getExportHistory(userId),
+        this.deletionService.getDeletionStatus(userId),
+        this.auditService.getUserAuditLogs(userId, { limit: 10 }),
+      ]);
 
     return {
       userId,

@@ -47,7 +47,9 @@ export class RedisCacheService implements ICacheService {
     });
   }
 
-  async mset(records: Array<{ key: string; value: any; ttl?: number }>): Promise<void> {
+  async mset(
+    records: Array<{ key: string; value: any; ttl?: number }>,
+  ): Promise<void> {
     const pipeline = this.redisClient.pipeline();
 
     for (const { key, value, ttl } of records) {
@@ -135,7 +137,7 @@ export class RedisCacheService implements ICacheService {
   }
 
   async zinterstore(destination: string, keys: string[]): Promise<number> {
-    return this.redisClient.zinterstore(destination, keys.length, ...keys) as any;
+    return this.redisClient.zinterstore(destination, keys.length, ...keys);
   }
 
   async zrangebyscore(

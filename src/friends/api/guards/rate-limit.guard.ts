@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, BadRequestException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  BadRequestException,
+  Inject,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { ICacheService } from '../../domain/repositories/repository-interfaces';
 
@@ -38,7 +44,8 @@ export class RateLimitGuard implements CanActivate {
 
     // Calculate TTL: reset at start of new time window
     const now = Math.floor(Date.now() / 1000);
-    const windowStart = Math.floor(now / this.defaultWindow) * this.defaultWindow;
+    const windowStart =
+      Math.floor(now / this.defaultWindow) * this.defaultWindow;
     const ttl = this.defaultWindow - (now - windowStart);
 
     await this.cacheService.set(key, count, ttl || 1);
@@ -46,7 +53,10 @@ export class RateLimitGuard implements CanActivate {
     // Add rate limit headers
     request.res?.setHeader('X-RateLimit-Limit', limit);
     request.res?.setHeader('X-RateLimit-Remaining', Math.max(0, limit - count));
-    request.res?.setHeader('X-RateLimit-Reset', new Date((windowStart + this.defaultWindow) * 1000).toISOString());
+    request.res?.setHeader(
+      'X-RateLimit-Reset',
+      new Date((windowStart + this.defaultWindow) * 1000).toISOString(),
+    );
 
     return true;
   }

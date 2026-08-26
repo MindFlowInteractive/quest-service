@@ -14,8 +14,6 @@ export class NotificationSocketAuth {
     // authenticated subject/user ID.
     const userId = client.handshake.auth?.userId;
 
-    return typeof userId === 'string' && userId.length > 0
-      ? userId
-      : null;
+    return typeof userId === 'string' && userId.length > 0 ? userId : null;
   }
 }

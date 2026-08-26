@@ -1,11 +1,12 @@
-
-
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Achievement } from './entities/achievement.entity';
 import { UserAchievement } from './entities/user-achievement.entity';
-import { AchievementConditionGroup, UserContext } from './types/achievement-condition.types';
+import {
+  AchievementConditionGroup,
+  UserContext,
+} from './types/achievement-condition.types';
 
 @Injectable()
 export class AchievementConditionEngine {
@@ -29,7 +30,11 @@ export class AchievementConditionEngine {
     // Further validation can be added here
   }
 
-  async evaluate(userId: string, achievement: Achievement, userContext: UserContext): Promise<boolean> {
+  async evaluate(
+    userId: string,
+    achievement: Achievement,
+    userContext: UserContext,
+  ): Promise<boolean> {
     this.validateConditionGroup(achievement.unlockConditions);
     // Example: only support single stat condition for now
     const group = achievement.unlockConditions;
@@ -47,11 +52,18 @@ export class AchievementConditionEngine {
   /**
    * Evaluate all achievements for a user (for retroactive unlocking)
    */
-  async evaluateAllForUser(userId: string, userContext: UserContext): Promise<string[]> {
-    const achievements = await this.achievementRepo.find({ where: { isActive: true } });
+  async evaluateAllForUser(
+    userId: string,
+    userContext: UserContext,
+  ): Promise<string[]> {
+    const achievements = await this.achievementRepo.find({
+      where: { isActive: true },
+    });
     const unlocked: string[] = [];
     for (const achievement of achievements) {
-      const already = await this.userAchievementRepo.findOne({ where: { userId, achievementId: achievement.id } });
+      const already = await this.userAchievementRepo.findOne({
+        where: { userId, achievementId: achievement.id },
+      });
       if (!already?.isUnlocked) {
         const ok = await this.evaluate(userId, achievement, userContext);
         if (ok) {

@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -9,10 +14,15 @@ import {
 } from '../entities/blockchain-transaction.entity';
 import { HorizonApiService } from './horizon-api.service';
 import { TransactionParserService } from './transaction-parser.service';
-import { TransactionEvent, TransactionAlert } from '../interfaces/transaction-event.interface';
+import {
+  TransactionEvent,
+  TransactionAlert,
+} from '../interfaces/transaction-event.interface';
 
 @Injectable()
-export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy {
+export class TransactionMonitorService
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(TransactionMonitorService.name);
   private streamingController: { stop: () => void } | null = null;
   private isMonitoring = false;
@@ -118,21 +128,34 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
   private async processNewTransaction(horizonTx: any): Promise<void> {
     try {
       // Fetch operations for the transaction
-      const operationsResponse = await this.horizonApiService.getTransactionOperations(horizonTx.hash);
+      const operationsResponse =
+        await this.horizonApiService.getTransactionOperations(horizonTx.hash);
       const operations = operationsResponse._embedded.records;
 
       // Parse transaction
-      let transaction = this.transactionParserService.parseTransaction(horizonTx);
-      transaction = this.transactionParserService.parseOperations(operations, transaction);
-      
+      let transaction =
+        this.transactionParserService.parseTransaction(horizonTx);
+      transaction = this.transactionParserService.parseOperations(
+        operations,
+        transaction,
+      );
+
       // Categorize and extract user ID
-      transaction.category = this.transactionParserService.categorizeTransaction(transaction, operations);
-      transaction.userId = this.transactionParserService.extractUserId(transaction) || transaction.userId;
+      transaction.category =
+        this.transactionParserService.categorizeTransaction(
+          transaction,
+          operations,
+        );
+      transaction.userId =
+        this.transactionParserService.extractUserId(transaction) ||
+        transaction.userId;
 
       // Save transaction
       const savedTx = await this.transactionRepository.save(transaction);
-      
-      this.logger.log(`New transaction saved: ${savedTx.transactionHash} (${savedTx.type})`);
+
+      this.logger.log(
+        `New transaction saved: ${savedTx.transactionHash} (${savedTx.type})`,
+      );
 
       // Emit event
       this.emitTransactionEvent('transaction_created', savedTx);
@@ -150,7 +173,10 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
         });
       }
     } catch (error) {
-      this.logger.error(`Error processing transaction ${horizonTx.hash}:`, error);
+      this.logger.error(
+        `Error processing transaction ${horizonTx.hash}:`,
+        error,
+      );
     }
   }
 
@@ -159,14 +185,16 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
    */
   private async updateTransactionStatus(
     existingTx: BlockchainTransaction,
-    horizonTx: any
+    horizonTx: any,
   ): Promise<void> {
-    const newStatus = horizonTx.successful ? TransactionStatus.CONFIRMED : TransactionStatus.FAILED;
-    
+    const newStatus = horizonTx.successful
+      ? TransactionStatus.CONFIRMED
+      : TransactionStatus.FAILED;
+
     if (existingTx.status !== newStatus) {
       existingTx.status = newStatus;
       existingTx.ledgerSequence = horizonTx.ledger;
-      
+
       if (newStatus === TransactionStatus.CONFIRMED) {
         existingTx.confirmedAt = new Date(horizonTx.created_at);
       } else {
@@ -174,13 +202,16 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
       }
 
       await this.transactionRepository.save(existingTx);
-      
-      this.logger.log(`Transaction ${existingTx.transactionHash} status updated to ${newStatus}`);
+
+      this.logger.log(
+        `Transaction ${existingTx.transactionHash} status updated to ${newStatus}`,
+      );
 
       // Emit appropriate event
-      const eventType = newStatus === TransactionStatus.CONFIRMED 
-        ? 'transaction_confirmed' 
-        : 'transaction_failed';
+      const eventType =
+        newStatus === TransactionStatus.CONFIRMED
+          ? 'transaction_confirmed'
+          : 'transaction_failed';
       this.emitTransactionEvent(eventType, existingTx);
     }
   }
@@ -190,7 +221,7 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
    */
   private handleStreamingError(error: Error): void {
     this.logger.error('Transaction streaming error:', error);
-    
+
     this.emitAlert({
       alertType: 'network_issue',
       severity: 'high',
@@ -224,27 +255,35 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
         ],
       });
 
-      this.logger.log(`Found ${pendingTxs.length} pending transactions to check`);
+      this.logger.log(
+        `Found ${pendingTxs.length} pending transactions to check`,
+      );
 
       for (const tx of pendingTxs) {
         try {
-          const horizonTx = await this.horizonApiService.getTransaction(tx.transactionHash);
-          
+          const horizonTx = await this.horizonApiService.getTransaction(
+            tx.transactionHash,
+          );
+
           if (horizonTx) {
             await this.updateTransactionStatus(tx, horizonTx);
           } else {
             // Transaction not found on network - might be stuck
-            this.logger.warn(`Transaction ${tx.transactionHash} not found on network`);
-            
+            this.logger.warn(
+              `Transaction ${tx.transactionHash} not found on network`,
+            );
+
             // Check if it's been pending too long
             const pendingTime = Date.now() - tx.createdAt.getTime();
             const maxPendingTime = 30 * 60 * 1000; // 30 minutes
-            
+
             if (pendingTime > maxPendingTime) {
               this.emitAlert({
                 alertType: 'transaction_stuck',
                 severity: 'medium',
-                message: `Transaction stuck for ${Math.round(pendingTime / 60000)} minutes`,
+                message: `Transaction stuck for ${Math.round(
+                  pendingTime / 60000,
+                )} minutes`,
                 transactionHash: tx.transactionHash,
                 userId: tx.userId,
                 timestamp: new Date(),
@@ -252,7 +291,10 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
             }
           }
         } catch (error) {
-          this.logger.error(`Error checking transaction ${tx.transactionHash}:`, error);
+          this.logger.error(
+            `Error checking transaction ${tx.transactionHash}:`,
+            error,
+          );
         }
       }
     } catch (error) {
@@ -267,21 +309,27 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
   async checkFailureRates(): Promise<void> {
     try {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      
+
       const recentTxs = await this.transactionRepository.find({
         where: {
           createdAt: LessThan(oneHourAgo),
         },
       });
 
-      const failedCount = recentTxs.filter(tx => tx.status === TransactionStatus.FAILED).length;
-      const failureRate = recentTxs.length > 0 ? failedCount / recentTxs.length : 0;
+      const failedCount = recentTxs.filter(
+        (tx) => tx.status === TransactionStatus.FAILED,
+      ).length;
+      const failureRate =
+        recentTxs.length > 0 ? failedCount / recentTxs.length : 0;
 
-      if (failureRate > 0.1) { // More than 10% failure rate
+      if (failureRate > 0.1) {
+        // More than 10% failure rate
         this.emitAlert({
           alertType: 'high_failure_rate',
           severity: failureRate > 0.25 ? 'critical' : 'high',
-          message: `High transaction failure rate detected: ${(failureRate * 100).toFixed(1)}%`,
+          message: `High transaction failure rate detected: ${(
+            failureRate * 100
+          ).toFixed(1)}%`,
           timestamp: new Date(),
           metadata: {
             failureRate,
@@ -300,7 +348,7 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
    */
   private isLargeTransaction(tx: BlockchainTransaction): boolean {
     if (!tx.amount || tx.assetCode !== 'XLM') return false;
-    
+
     const amount = parseFloat(tx.amount);
     const threshold = 10000; // 10,000 XLM threshold
     return amount >= threshold;
@@ -311,7 +359,7 @@ export class TransactionMonitorService implements OnModuleInit, OnModuleDestroy 
    */
   private emitTransactionEvent(
     eventType: TransactionEvent['eventType'],
-    transaction: BlockchainTransaction
+    transaction: BlockchainTransaction,
   ): void {
     const event: TransactionEvent = {
       eventType,

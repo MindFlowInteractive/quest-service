@@ -18,7 +18,9 @@ import { QueryTournamentEventsDto } from './dto/query-tournament-events.dto';
 
 @Controller('tournament-events')
 export class TournamentEventsController {
-  constructor(private readonly tournamentEventsService: TournamentEventsService) {}
+  constructor(
+    private readonly tournamentEventsService: TournamentEventsService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -84,11 +86,12 @@ export class TournamentEventsController {
       const userId = req?.user?.id || 'test-user-id'; // For testing
       const username = req?.user?.username || 'TestUser';
 
-      const participant = await this.tournamentEventsService.registerParticipant(
-        id,
-        userId,
-        username,
-      );
+      const participant =
+        await this.tournamentEventsService.registerParticipant(
+          id,
+          userId,
+          username,
+        );
 
       return {
         success: true,

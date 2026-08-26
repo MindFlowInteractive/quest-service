@@ -36,12 +36,18 @@ export class DifficultyAwareGenerationService {
   ): Promise<{ calibrated: GeneratedPuzzle; adjustmentFactor: number }> {
     const expectedComplexity = this.getExpectedComplexity(difficulty);
     const actualComplexity = this.calculateComplexity(puzzle);
-    const adjustmentFactor = this.calculateAdjustment(actualComplexity, expectedComplexity);
+    const adjustmentFactor = this.calculateAdjustment(
+      actualComplexity,
+      expectedComplexity,
+    );
 
     // Adjust difficulty rating if needed
     const calibrated = {
       ...puzzle,
-      difficultyRating: Math.max(1, Math.min(10, puzzle.difficultyRating * adjustmentFactor)),
+      difficultyRating: Math.max(
+        1,
+        Math.min(10, puzzle.difficultyRating * adjustmentFactor),
+      ),
       metadata: {
         ...puzzle.metadata,
         qualityMetrics: {
@@ -87,7 +93,9 @@ export class DifficultyAwareGenerationService {
   /**
    * Solves Constraint Satisfaction Problems
    */
-  async solveCSP(csp: ConstraintSatisfactionProblem): Promise<Map<string, any> | null> {
+  async solveCSP(
+    csp: ConstraintSatisfactionProblem,
+  ): Promise<Map<string, any> | null> {
     const assignment = new Map<string, any>();
     return this.backtrack(assignment, csp);
   }
@@ -151,7 +159,10 @@ export class DifficultyAwareGenerationService {
   /**
    * Checks if current assignment is consistent
    */
-  private isConsistent(assignment: Map<string, any>, csp: ConstraintSatisfactionProblem): boolean {
+  private isConsistent(
+    assignment: Map<string, any>,
+    csp: ConstraintSatisfactionProblem,
+  ): boolean {
     for (const constraint of csp.constraints) {
       if (!constraint(assignment)) {
         return false;
@@ -216,7 +227,9 @@ export class DifficultyAwareGenerationService {
     const expectedComplexity = this.getExpectedComplexity(difficulty);
     const actual = this.calculateComplexity(puzzle);
     if (Math.abs(actual - expectedComplexity) > 0.15) {
-      issues.push(`Complexity mismatch: expected ${expectedComplexity}, got ${actual}`);
+      issues.push(
+        `Complexity mismatch: expected ${expectedComplexity}, got ${actual}`,
+      );
     }
 
     // Check engagement
@@ -231,7 +244,9 @@ export class DifficultyAwareGenerationService {
 
     const score = Math.max(
       0,
-      (1 - issues.length * 0.25) * (puzzle.metadata.solvabilityScore + actual) / 2,
+      ((1 - issues.length * 0.25) *
+        (puzzle.metadata.solvabilityScore + actual)) /
+        2,
     );
 
     return {
@@ -328,7 +343,9 @@ export class DifficultyAwareGenerationService {
    */
   private estimateSolutionSteps(puzzle: GeneratedPuzzle): number {
     const solution = puzzle.solution;
-    return (solution.steps?.length || 1) + Math.ceil(puzzle.difficultyRating / 3);
+    return (
+      (solution.steps?.length || 1) + Math.ceil(puzzle.difficultyRating / 3)
+    );
   }
 
   /**
@@ -339,7 +356,12 @@ export class DifficultyAwareGenerationService {
     targetDifficulty: DifficultyLevel,
     puzzleCount: number,
   ): DifficultyLevel[] {
-    const difficultyLevels: DifficultyLevel[] = ['easy', 'medium', 'hard', 'expert'];
+    const difficultyLevels: DifficultyLevel[] = [
+      'easy',
+      'medium',
+      'hard',
+      'expert',
+    ];
     const startIdx = difficultyLevels.indexOf(startDifficulty);
     const targetIdx = difficultyLevels.indexOf(targetDifficulty);
 

@@ -20,7 +20,10 @@ export class ReplayAnalyticsService {
   /**
    * Record a view event for analytics tracking
    */
-  async recordView(replayId: string, viewerUserId?: string): Promise<ReplayAnalytic> {
+  async recordView(
+    replayId: string,
+    viewerUserId?: string,
+  ): Promise<ReplayAnalytic> {
     const analytic = this.analyticRepo.create({
       replayId,
       metricType: 'VIEW',
@@ -42,7 +45,8 @@ export class ReplayAnalyticsService {
     afterScore: number,
   ): Promise<ReplayAnalytic> {
     const improvement = afterScore - beforeScore;
-    const improvementRate = beforeScore > 0 ? (improvement / beforeScore) * 100 : 0;
+    const improvementRate =
+      beforeScore > 0 ? (improvement / beforeScore) * 100 : 0;
 
     const analytic = this.analyticRepo.create({
       replayId,
@@ -149,9 +153,7 @@ export class ReplayAnalyticsService {
   /**
    * Get learning effectiveness summary for a puzzle
    */
-  async getLearningEffectivenessSummary(
-    puzzleId: string,
-  ): Promise<{
+  async getLearningEffectivenessSummary(puzzleId: string): Promise<{
     averageImprovement: number;
     totalViews: number;
     improvementRate: number;
@@ -171,10 +173,14 @@ export class ReplayAnalyticsService {
     const result = results[0];
 
     return {
-      averageImprovement: result.avgimprovement ? parseFloat(result.avgimprovement) : 0,
+      averageImprovement: result.avgimprovement
+        ? parseFloat(result.avgimprovement)
+        : 0,
       totalViews: parseInt(result.viewCount, 10),
       improvementRate:
-        result.improvementrate !== null ? parseFloat(result.improvementrate) : 0,
+        result.improvementrate !== null
+          ? parseFloat(result.improvementrate)
+          : 0,
     };
   }
 
@@ -184,7 +190,9 @@ export class ReplayAnalyticsService {
   async getCommonStrategies(
     puzzleId: string,
     limit: number = 5,
-  ): Promise<Array<{ pattern: string; frequency: number; successRate: number }>> {
+  ): Promise<
+    Array<{ pattern: string; frequency: number; successRate: number }>
+  > {
     const query = `
       SELECT 
         metricValue->>'pattern' as pattern,
@@ -212,9 +220,11 @@ export class ReplayAnalyticsService {
   /**
    * Get difficulty feedback for a puzzle
    */
-  async getDifficultyFeedback(
-    puzzleId: string,
-  ): Promise<{ averageRating: number; voteCount: number; distribution: Record<number, number> }> {
+  async getDifficultyFeedback(puzzleId: string): Promise<{
+    averageRating: number;
+    voteCount: number;
+    distribution: Record<number, number>;
+  }> {
     const query = `
       SELECT 
         (metricValue->>'rating')::numeric as rating,
@@ -232,7 +242,13 @@ export class ReplayAnalyticsService {
       return { averageRating: 0, voteCount: 0, distribution: {} };
     }
 
-    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const distribution: Record<number, number> = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
     let totalRating = 0;
     let voteCount = 0;
 
@@ -257,9 +273,7 @@ export class ReplayAnalyticsService {
   /**
    * Get puzzle completion analytics
    */
-  async getCompletionAnalytics(
-    puzzleId: string,
-  ): Promise<{
+  async getCompletionAnalytics(puzzleId: string): Promise<{
     totalReplays: number;
     completedReplays: number;
     solvedReplays: number;
@@ -277,12 +291,17 @@ export class ReplayAnalyticsService {
     const completedReplays = replays.filter((r) => r.isCompleted).length;
     const solvedReplays = replays.filter((r) => r.isSolved).length;
 
-    const completedWithTime = replays.filter((r) => r.isCompleted && r.totalDuration > 0);
-    const completedWithScore = replays.filter((r) => r.isCompleted && r.scoreEarned !== null);
+    const completedWithTime = replays.filter(
+      (r) => r.isCompleted && r.totalDuration > 0,
+    );
+    const completedWithScore = replays.filter(
+      (r) => r.isCompleted && r.scoreEarned !== null,
+    );
 
     const averageTime =
       completedWithTime.length > 0
-        ? completedWithTime.reduce((sum, r) => sum + r.totalDuration, 0) / completedWithTime.length
+        ? completedWithTime.reduce((sum, r) => sum + r.totalDuration, 0) /
+          completedWithTime.length
         : 0;
 
     const averageScore =
@@ -293,7 +312,8 @@ export class ReplayAnalyticsService {
 
     const completionRate =
       totalReplays > 0 ? (completedReplays / totalReplays) * 100 : 0;
-    const solveRate = totalReplays > 0 ? (solvedReplays / totalReplays) * 100 : 0;
+    const solveRate =
+      totalReplays > 0 ? (solvedReplays / totalReplays) * 100 : 0;
 
     return {
       totalReplays,
@@ -349,7 +369,7 @@ export class ReplayAnalyticsService {
         });
       }
 
-      const data = puzzleMap.get(replay.puzzleId)!;
+      const data = puzzleMap.get(replay.puzzleId);
       if (replay.scoreEarned !== null) {
         data.scores.push(replay.scoreEarned);
       }

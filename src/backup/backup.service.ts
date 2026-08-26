@@ -31,7 +31,7 @@ export class BackupService {
 
       // Encrypt backup
       const data = fs.readFileSync(file);
-      const cipher = crypto.createCipher('aes-256-cbc', process.env.BACKUP_KEY!);
+      const cipher = crypto.createCipher('aes-256-cbc', process.env.BACKUP_KEY);
       const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
       fs.writeFileSync(`${file}.enc`, encrypted);
 

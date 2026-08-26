@@ -16,7 +16,12 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { BatchOperationsService } from '../services/batch-operations.service';
 import { BatchOperationDto } from '../dto';
@@ -35,7 +40,10 @@ export class BatchOperationsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ summary: 'Start a batch operation' })
   @ApiResponse({ status: 202, description: 'Batch operation started' })
-  async startBatchOperation(@Body() dto: BatchOperationDto, @Request() req: any) {
+  async startBatchOperation(
+    @Body() dto: BatchOperationDto,
+    @Request() req: any,
+  ) {
     return this.batchService.startBatchOperation(
       dto.operationType as any,
       dto.targetPuzzles,

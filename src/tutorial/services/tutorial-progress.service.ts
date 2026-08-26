@@ -46,7 +46,10 @@ export class TutorialProgressService {
   ) {}
 
   // Progress Management
-  async startTutorial(userId: string, dto: StartTutorialDto): Promise<UserTutorialProgress> {
+  async startTutorial(
+    userId: string,
+    dto: StartTutorialDto,
+  ): Promise<UserTutorialProgress> {
     const tutorial = await this.tutorialService.findById(dto.tutorialId);
 
     // Check prerequisites
@@ -77,14 +80,19 @@ export class TutorialProgressService {
         progress.stepProgress = [];
         progress.startedAt = new Date();
         progress.completedAt = undefined;
-      } else if (dto.resumeFromCheckpoint && progress.sessionData?.checkpoints?.length) {
+      } else if (
+        dto.resumeFromCheckpoint &&
+        progress.sessionData?.checkpoints?.length
+      ) {
         // Resume from checkpoint
         progress.lastActivityAt = new Date();
         return this.progressRepo.save(progress);
       }
     } else {
       // Get total steps count
-      const steps = await this.tutorialService.getStepsByTutorial(dto.tutorialId);
+      const steps = await this.tutorialService.getStepsByTutorial(
+        dto.tutorialId,
+      );
 
       progress = this.progressRepo.create({
         userId,
@@ -117,12 +125,17 @@ export class TutorialProgressService {
     return saved;
   }
 
-  async updateStepProgress(userId: string, dto: UpdateStepProgressDto): Promise<UserTutorialProgress> {
+  async updateStepProgress(
+    userId: string,
+    dto: UpdateStepProgressDto,
+  ): Promise<UserTutorialProgress> {
     const progress = await this.getOrCreateProgress(userId, dto.tutorialId);
     const step = await this.tutorialService.getStepById(dto.stepId);
 
     // Find or create step progress entry
-    let stepProgress = progress.stepProgress.find((sp) => sp.stepId === dto.stepId);
+    let stepProgress = progress.stepProgress.find(
+      (sp) => sp.stepId === dto.stepId,
+    );
     if (!stepProgress) {
       stepProgress = {
         stepId: dto.stepId,
@@ -205,7 +218,10 @@ export class TutorialProgressService {
     return saved;
   }
 
-  async completeTutorial(userId: string, tutorialId: string): Promise<UserTutorialProgress> {
+  async completeTutorial(
+    userId: string,
+    tutorialId: string,
+  ): Promise<UserTutorialProgress> {
     const progress = await this.getUserProgress(userId, tutorialId);
 
     progress.status = 'completed';
@@ -215,7 +231,7 @@ export class TutorialProgressService {
     // Calculate overall score
     const scores = progress.stepProgress
       .filter((sp) => sp.score !== undefined)
-      .map((sp) => sp.score!);
+      .map((sp) => sp.score);
     if (scores.length > 0) {
       progress.overallScore = scores.reduce((a, b) => a + b, 0) / scores.length;
     }
@@ -244,13 +260,18 @@ export class TutorialProgressService {
     return saved;
   }
 
-  async getUserProgress(userId: string, tutorialId: string): Promise<UserTutorialProgress> {
+  async getUserProgress(
+    userId: string,
+    tutorialId: string,
+  ): Promise<UserTutorialProgress> {
     const progress = await this.progressRepo.findOne({
       where: { userId, tutorialId },
       relations: ['tutorial'],
     });
     if (!progress) {
-      throw new NotFoundException(`Progress not found for user ${userId} on tutorial ${tutorialId}`);
+      throw new NotFoundException(
+        `Progress not found for user ${userId} on tutorial ${tutorialId}`,
+      );
     }
     return progress;
   }
@@ -264,7 +285,10 @@ export class TutorialProgressService {
   }
 
   // Skip and Resume
-  async skipTutorial(userId: string, dto: SkipTutorialDto): Promise<UserTutorialProgress> {
+  async skipTutorial(
+    userId: string,
+    dto: SkipTutorialDto,
+  ): Promise<UserTutorialProgress> {
     const tutorial = await this.tutorialService.findById(dto.tutorialId);
 
     if (!tutorial.isSkippable && !dto.confirmSkip) {
@@ -278,7 +302,9 @@ export class TutorialProgressService {
     });
 
     if (!progress) {
-      const steps = await this.tutorialService.getStepsByTutorial(dto.tutorialId);
+      const steps = await this.tutorialService.getStepsByTutorial(
+        dto.tutorialId,
+      );
       progress = this.progressRepo.create({
         userId,
         tutorialId: dto.tutorialId,
@@ -305,15 +331,22 @@ export class TutorialProgressService {
     return saved;
   }
 
-  async skipStep(userId: string, dto: SkipStepDto): Promise<UserTutorialProgress> {
+  async skipStep(
+    userId: string,
+    dto: SkipStepDto,
+  ): Promise<UserTutorialProgress> {
     const progress = await this.getUserProgress(userId, dto.tutorialId);
     const step = await this.tutorialService.getStepById(dto.stepId);
 
     if (!step.isOptional) {
-      throw new BadRequestException('This step is not optional and cannot be skipped.');
+      throw new BadRequestException(
+        'This step is not optional and cannot be skipped.',
+      );
     }
 
-    let stepProgress = progress.stepProgress.find((sp) => sp.stepId === dto.stepId);
+    let stepProgress = progress.stepProgress.find(
+      (sp) => sp.stepId === dto.stepId,
+    );
     if (!stepProgress) {
       stepProgress = {
         stepId: dto.stepId,
@@ -340,11 +373,16 @@ export class TutorialProgressService {
     return this.progressRepo.save(progress);
   }
 
-  async resumeTutorial(userId: string, dto: ResumeTutorialDto): Promise<ResumeResponse> {
+  async resumeTutorial(
+    userId: string,
+    dto: ResumeTutorialDto,
+  ): Promise<ResumeResponse> {
     const progress = await this.getUserProgress(userId, dto.tutorialId);
 
     if (progress.status === 'completed') {
-      throw new BadRequestException('Tutorial already completed. Start again to restart.');
+      throw new BadRequestException(
+        'Tutorial already completed. Start again to restart.',
+      );
     }
 
     progress.status = 'in_progress';
@@ -357,11 +395,17 @@ export class TutorialProgressService {
       nextStep = await this.tutorialService.getStepById(dto.fromStepId);
       progress.currentStepId = dto.fromStepId;
       progress.currentStepOrder = nextStep.order;
-    } else if (dto.fromCheckpoint && progress.sessionData?.checkpoints?.length) {
-      const latestCheckpoint = progress.sessionData.checkpoints[
-        progress.sessionData.checkpoints.length - 1
-      ];
-      nextStep = await this.tutorialService.getStepById(latestCheckpoint.stepId);
+    } else if (
+      dto.fromCheckpoint &&
+      progress.sessionData?.checkpoints?.length
+    ) {
+      const latestCheckpoint =
+        progress.sessionData.checkpoints[
+          progress.sessionData.checkpoints.length - 1
+        ];
+      nextStep = await this.tutorialService.getStepById(
+        latestCheckpoint.stepId,
+      );
       checkpoint = latestCheckpoint.state;
       progress.currentStepId = latestCheckpoint.stepId;
     } else {
@@ -405,7 +449,10 @@ export class TutorialProgressService {
   }
 
   // Adaptive Pacing
-  async getNextStep(userId: string, tutorialId: string): Promise<TutorialStep | null> {
+  async getNextStep(
+    userId: string,
+    tutorialId: string,
+  ): Promise<TutorialStep | null> {
     const progress = await this.progressRepo.findOne({
       where: { userId, tutorialId },
     });
@@ -424,7 +471,7 @@ export class TutorialProgressService {
     if (!nextStep) return null;
 
     // Check if step should be skipped due to proficiency
-    if (progress && await this.shouldSkipStep(progress, nextStep)) {
+    if (progress && (await this.shouldSkipStep(progress, nextStep))) {
       // Mark as auto-skipped and get next
       await this.updateStepProgress(userId, {
         tutorialId,
@@ -437,7 +484,10 @@ export class TutorialProgressService {
     return nextStep;
   }
 
-  async getAdaptiveState(userId: string, tutorialId: string): Promise<AdaptiveState> {
+  async getAdaptiveState(
+    userId: string,
+    tutorialId: string,
+  ): Promise<AdaptiveState> {
     const progress = await this.getUserProgress(userId, tutorialId);
     return progress.adaptiveState;
   }
@@ -459,7 +509,8 @@ export class TutorialProgressService {
     const state = progress.adaptiveState;
 
     // Calculate learning speed based on time spent vs average
-    const avgStepTime = progress.totalTimeSpent / (progress.completedSteps || 1);
+    const avgStepTime =
+      progress.totalTimeSpent / (progress.completedSteps || 1);
     if (stepProgress.timeSpent < avgStepTime * 0.5) {
       state.learningSpeed = 'fast';
     } else if (stepProgress.timeSpent > avgStepTime * 1.5) {
@@ -470,7 +521,8 @@ export class TutorialProgressService {
 
     // Update proficiency based on scores and attempts
     if (stepProgress.score !== undefined) {
-      const performanceScore = (stepProgress.score / 100) * (1 / stepProgress.attempts);
+      const performanceScore =
+        (stepProgress.score / 100) * (1 / stepProgress.attempts);
       state.proficiencyLevel = (state.proficiencyLevel + performanceScore) / 2;
     }
 
@@ -481,7 +533,11 @@ export class TutorialProgressService {
     }
 
     // Track strong areas based on high scores
-    if (stepProgress.score && stepProgress.score >= 90 && stepProgress.attempts === 1) {
+    if (
+      stepProgress.score &&
+      stepProgress.score >= 90 &&
+      stepProgress.attempts === 1
+    ) {
       state.strongAreas = state.strongAreas || [];
       state.strongAreas.push(stepProgress.stepId);
     }

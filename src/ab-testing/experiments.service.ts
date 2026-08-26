@@ -143,9 +143,7 @@ export class ExperimentsService {
     }));
 
     const significance =
-      results.length >= 2
-        ? this.zScore(results[0], results[1])
-        : null;
+      results.length >= 2 ? this.zScore(results[0], results[1]) : null;
 
     return {
       experiment_id: experimentId,

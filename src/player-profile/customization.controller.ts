@@ -3,7 +3,10 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 import { BadgeService } from './services/badge.service';
-import { BannerThemeService, BannerThemeConfig } from './services/banner-theme.service';
+import {
+  BannerThemeService,
+  BannerThemeConfig,
+} from './services/banner-theme.service';
 import { PlayerProfileService } from './services/player-profile.service';
 import { BadgeDto, BadgeCategory } from './dto/badge-management.dto';
 
@@ -24,13 +27,17 @@ export class CustomizationController {
 
   @Get('badges/category/:category')
   @ApiOperation({ summary: 'Get badges by category' })
-  async getBadgesByCategory(@Param('category') category: BadgeCategory): Promise<BadgeDto[]> {
+  async getBadgesByCategory(
+    @Param('category') category: BadgeCategory,
+  ): Promise<BadgeDto[]> {
     return this.badgeService.getBadgesByCategory(category);
   }
 
   @Get('badges/rarity/:rarity')
   @ApiOperation({ summary: 'Get badges by rarity' })
-  async getBadgesByRarity(@Param('rarity') rarity: string): Promise<BadgeDto[]> {
+  async getBadgesByRarity(
+    @Param('rarity') rarity: string,
+  ): Promise<BadgeDto[]> {
     return this.badgeService.getBadgesByRarity(rarity);
   }
 
@@ -43,8 +50,12 @@ export class CustomizationController {
   @Get('themes/available')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get themes available to current user' })
-  async getAvailableThemes(@Req() req: RequestWithUser): Promise<BannerThemeConfig[]> {
-    const userStats = await this.profileService.getProfileStatistics(req.user.id);
+  async getAvailableThemes(
+    @Req() req: RequestWithUser,
+  ): Promise<BannerThemeConfig[]> {
+    const userStats = await this.profileService.getProfileStatistics(
+      req.user.id,
+    );
     return this.bannerThemeService.getUserUnlockedThemes(userStats);
   }
 
@@ -56,7 +67,9 @@ export class CustomizationController {
 
   @Get('themes/:themeId')
   @ApiOperation({ summary: 'Get specific theme details' })
-  async getTheme(@Param('themeId') themeId: string): Promise<BannerThemeConfig> {
+  async getTheme(
+    @Param('themeId') themeId: string,
+  ): Promise<BannerThemeConfig> {
     const theme = this.bannerThemeService.getThemeById(themeId);
     if (!theme) {
       throw new Error('Theme not found');
@@ -71,13 +84,18 @@ export class CustomizationController {
     @Param('themeId') themeId: string,
     @Req() req: RequestWithUser,
   ): Promise<{ unlocked: boolean; requirement?: string }> {
-    const userStats = await this.profileService.getProfileStatistics(req.user.id);
-    const unlocked = this.bannerThemeService.isThemeUnlocked(themeId, userStats);
+    const userStats = await this.profileService.getProfileStatistics(
+      req.user.id,
+    );
+    const unlocked = this.bannerThemeService.isThemeUnlocked(
+      themeId,
+      userStats,
+    );
     const theme = this.bannerThemeService.getThemeById(themeId);
-    
+
     return {
       unlocked,
-      requirement: theme?.unlockRequirement
+      requirement: theme?.unlockRequirement,
     };
   }
 }

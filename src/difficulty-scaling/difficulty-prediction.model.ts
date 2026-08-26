@@ -22,7 +22,8 @@ export function predictPuzzleDifficulty(puzzle: Puzzle): number {
   else if (puzzle.maxHints <= 2) score += 0.2;
 
   // Content type
-  if (puzzle.content?.type === 'code' || puzzle.content?.type === 'logic-grid') score += 0.5;
+  if (puzzle.content?.type === 'code' || puzzle.content?.type === 'logic-grid')
+    score += 0.5;
   if (puzzle.content?.type === 'visual') score -= 0.2;
 
   // Clamp to [1, 5]

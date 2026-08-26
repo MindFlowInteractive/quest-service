@@ -15,7 +15,7 @@ describe('DetectionService', () => {
       roboticConsistencyThreshold: 30,
       suspiciousAccuracyThreshold: 0.95,
       perfectAccuracyMinMoves: 15,
-    }
+    },
   };
 
   beforeEach(async () => {
@@ -51,7 +51,9 @@ describe('DetectionService', () => {
 
       expect(result.isAnomaly).toBe(true);
       expect(result.violations).toHaveLength(1);
-      expect(result.violations[0].type).toBe(ViolationType.IMPOSSIBLY_FAST_COMPLETION);
+      expect(result.violations[0].type).toBe(
+        ViolationType.IMPOSSIBLY_FAST_COMPLETION,
+      );
       expect(result.violations[0].severity).toBe(Severity.HIGH);
       expect(result.violations[0].confidenceScore).toBeGreaterThan(50);
     });
@@ -62,7 +64,7 @@ describe('DetectionService', () => {
 
       expect(result.isAnomaly).toBe(true);
       const roboticViolation = result.violations.find(
-        v => v.type === ViolationType.ROBOTIC_TIMING
+        (v) => v.type === ViolationType.ROBOTIC_TIMING,
       );
       expect(roboticViolation).toBeDefined();
       expect(roboticViolation?.severity).toBe(Severity.MEDIUM);
@@ -180,7 +182,7 @@ describe('DetectionService', () => {
       const context = {
         isFirstAttempt: true,
         optimalMoveCount: 19, // 95% efficiency
-        allMovesValid: true
+        allMovesValid: true,
       };
 
       const result = service.analyzeMoveSequence(moves, context);
@@ -188,8 +190,10 @@ describe('DetectionService', () => {
       expect(result.isAnomaly).toBe(true);
       expect(result.violations.length).toBeGreaterThan(1);
 
-      const violationTypes = result.violations.map(v => v.type);
-      expect(violationTypes).toContain(ViolationType.IMPOSSIBLY_FAST_COMPLETION);
+      const violationTypes = result.violations.map((v) => v.type);
+      expect(violationTypes).toContain(
+        ViolationType.IMPOSSIBLY_FAST_COMPLETION,
+      );
       expect(violationTypes).toContain(ViolationType.PERFECT_ACCURACY);
     });
 
@@ -198,7 +202,7 @@ describe('DetectionService', () => {
       const context = {
         isFirstAttempt: false,
         optimalMoveCount: 20,
-        allMovesValid: false // Made some mistakes
+        allMovesValid: false, // Made some mistakes
       };
 
       const result = service.analyzeMoveSequence(moves, context);
@@ -234,7 +238,7 @@ function generateMoves(count: number): PuzzleMove[] {
       puzzleId: 'test-puzzle',
       moveType: 'test',
       moveData: { action: 'test' },
-      isValid: true
+      isValid: true,
     });
     timestamp += 500; // 500ms between moves
   }
@@ -254,7 +258,7 @@ function generateFastMoves(count: number, interval: number): PuzzleMove[] {
       puzzleId: 'test-puzzle',
       moveType: 'test',
       moveData: { action: 'test' },
-      isValid: true
+      isValid: true,
     });
     timestamp += interval;
   }
@@ -262,7 +266,11 @@ function generateFastMoves(count: number, interval: number): PuzzleMove[] {
   return moves;
 }
 
-function generateConsistentMoves(count: number, interval: number, variance: number): PuzzleMove[] {
+function generateConsistentMoves(
+  count: number,
+  interval: number,
+  variance: number,
+): PuzzleMove[] {
   const moves: PuzzleMove[] = [];
   let timestamp = Date.now();
 
@@ -274,7 +282,7 @@ function generateConsistentMoves(count: number, interval: number, variance: numb
       puzzleId: 'test-puzzle',
       moveType: 'test',
       moveData: { action: 'test' },
-      isValid: true
+      isValid: true,
     });
     // Add small random variance
     const randomVariance = (Math.random() - 0.5) * 2 * variance;
@@ -296,7 +304,7 @@ function generateHumanMoves(count: number): PuzzleMove[] {
       puzzleId: 'test-puzzle',
       moveType: 'test',
       moveData: { action: 'test' },
-      isValid: true
+      isValid: true,
     });
     // Human-like timing: 300-2000ms with occasional long pauses
     const baseInterval = 300 + Math.random() * 1700;

@@ -45,7 +45,13 @@ export class PuzzleEditor {
 
   @Column({
     type: 'enum',
-    enum: ['DRAFT', 'IN_PROGRESS', 'TESTING', 'READY_FOR_PUBLICATION', 'PUBLISHED'],
+    enum: [
+      'DRAFT',
+      'IN_PROGRESS',
+      'TESTING',
+      'READY_FOR_PUBLICATION',
+      'PUBLISHED',
+    ],
     default: 'DRAFT',
   })
   status: string;
@@ -93,11 +99,19 @@ export class PuzzleEditor {
   @JoinColumn({ name: 'createdBy' })
   creator?: User;
 
-  @ManyToOne(() => Puzzle, { eager: false, onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => Puzzle, {
+    eager: false,
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'puzzleId' })
   puzzle?: Puzzle;
 
-  @ManyToOne(() => PuzzleTemplate, { eager: false, onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => PuzzleTemplate, {
+    eager: false,
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'templateId' })
   template?: PuzzleTemplate;
 
@@ -107,10 +121,14 @@ export class PuzzleEditor {
   })
   versions?: PuzzleEditorVersion[];
 
-  @OneToMany(() => CommunitySubmission, (submission) => submission.puzzleEditor, {
-    cascade: true,
-    eager: false,
-  })
+  @OneToMany(
+    () => CommunitySubmission,
+    (submission) => submission.puzzleEditor,
+    {
+      cascade: true,
+      eager: false,
+    },
+  )
   submissions?: CommunitySubmission[];
 
   @ManyToMany(() => User, { eager: false })

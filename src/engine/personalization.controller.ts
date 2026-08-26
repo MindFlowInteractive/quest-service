@@ -3,7 +3,9 @@ import { PersonalizationService } from './personalization.service';
 
 @Controller('personalization')
 export class PersonalizationController {
-  constructor(private readonly personalizationService: PersonalizationService) {}
+  constructor(
+    private readonly personalizationService: PersonalizationService,
+  ) {}
 
   @Get('resolve/:userId')
   async getUserRuntimeContext(@Param('userId') userId: string) {
@@ -14,6 +16,10 @@ export class PersonalizationController {
   async trackUserInteraction(
     @Body() body: { userId: string; category: string; weight?: number },
   ) {
-    return this.personalizationService.recordInteraction(body.userId, body.category, body.weight);
+    return this.personalizationService.recordInteraction(
+      body.userId,
+      body.category,
+      body.weight,
+    );
   }
 }

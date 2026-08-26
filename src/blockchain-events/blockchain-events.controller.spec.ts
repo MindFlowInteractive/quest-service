@@ -34,7 +34,9 @@ describe('BlockchainEventsController', () => {
       ],
     }).compile();
 
-    controller = module.get<BlockchainEventsController>(BlockchainEventsController);
+    controller = module.get<BlockchainEventsController>(
+      BlockchainEventsController,
+    );
     service = module.get(BlockchainEventsService);
   });
 
@@ -75,7 +77,9 @@ describe('BlockchainEventsController', () => {
     it('should handle replay service errors', async () => {
       service.replayEvents.mockRejectedValue(new Error('Replay error'));
 
-      await expect(controller.replayEvents(12345)).rejects.toThrow('Replay error');
+      await expect(controller.replayEvents(12345)).rejects.toThrow(
+        'Replay error',
+      );
     });
 
     it('should validate fromLedger parameter', async () => {

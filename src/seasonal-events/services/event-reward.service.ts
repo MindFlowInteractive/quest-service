@@ -24,7 +24,9 @@ export class EventRewardService {
     });
 
     if (!event) {
-      throw new NotFoundException(`Event with ID ${createRewardDto.eventId} not found`);
+      throw new NotFoundException(
+        `Event with ID ${createRewardDto.eventId} not found`,
+      );
     }
 
     const reward = this.rewardRepository.create(createRewardDto);
@@ -113,8 +115,10 @@ export class EventRewardService {
     return allRewards.filter((reward) => {
       const meetsScoreRequirement = playerScore >= reward.requiredScore;
       const meetsPuzzleRequirement =
-        !reward.requiredPuzzles || playerPuzzlesCompleted >= reward.requiredPuzzles;
-      const notMaxedOut = !reward.maxClaims || reward.claimedCount < reward.maxClaims;
+        !reward.requiredPuzzles ||
+        playerPuzzlesCompleted >= reward.requiredPuzzles;
+      const notMaxedOut =
+        !reward.maxClaims || reward.claimedCount < reward.maxClaims;
 
       return meetsScoreRequirement && meetsPuzzleRequirement && notMaxedOut;
     });

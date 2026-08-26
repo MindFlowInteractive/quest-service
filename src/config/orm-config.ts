@@ -17,11 +17,11 @@ export const AppDataSource = new DataSource({
   database: mustGetEnv('DB_NAME'),
   entities: [
     'dist/**/*.entity.js',
-    'src/**/*.entity.ts'  // For development
+    'src/**/*.entity.ts', // For development
   ],
   migrations: [
     'dist/migrations/*.js',
-    'src/migrations/*.ts'  // For development
+    'src/migrations/*.ts', // For development
   ],
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',

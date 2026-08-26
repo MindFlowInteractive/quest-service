@@ -1,13 +1,13 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { getRepositoryToken } from "@nestjs/typeorm";
-import { ConfigService } from "@nestjs/config";
-import { StorageService } from "../../src/services/storage.service";
-import { S3Service } from "../../src/services/s3.service";
-import { ImageOptimizationService } from "../../src/services/image-optimization.service";
-import { FileValidationService } from "../../src/services/file-validation.service";
-import { File, Upload, Metadata } from "../../src/entities";
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
+import { StorageService } from '../../src/services/storage.service';
+import { S3Service } from '../../src/services/s3.service';
+import { ImageOptimizationService } from '../../src/services/image-optimization.service';
+import { FileValidationService } from '../../src/services/file-validation.service';
+import { File, Upload, Metadata } from '../../src/entities';
 
-describe("StorageService", () => {
+describe('StorageService', () => {
   let service: StorageService;
   let fileRepository: any;
   let uploadRepository: any;
@@ -50,7 +50,7 @@ describe("StorageService", () => {
             uploadFile: jest.fn(),
             deleteFile: jest.fn(),
             getSignedUrl: jest.fn(),
-            getBucket: jest.fn().mockReturnValue("test-bucket"),
+            getBucket: jest.fn().mockReturnValue('test-bucket'),
           },
         },
         {
@@ -67,9 +67,9 @@ describe("StorageService", () => {
           },
         },
         {
-          provide: "CONFIGURATION(storage)",
+          provide: 'CONFIGURATION(storage)',
           useValue: {
-            cdn: { baseUrl: "" },
+            cdn: { baseUrl: '' },
             cleanup: { delayMs: 1000 },
           },
         },
@@ -82,16 +82,16 @@ describe("StorageService", () => {
     metadataRepository = module.get(getRepositoryToken(Metadata));
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe("listFiles", () => {
-    it("should return paginated files", async () => {
-      const result = await service.listFiles("user-123", "puzzle", 1, 20);
+  describe('listFiles', () => {
+    it('should return paginated files', async () => {
+      const result = await service.listFiles('user-123', 'puzzle', 1, 20);
 
-      expect(result).toHaveProperty("files");
-      expect(result).toHaveProperty("total");
+      expect(result).toHaveProperty('files');
+      expect(result).toHaveProperty('total');
       expect(Array.isArray(result.files)).toBe(true);
     });
   });

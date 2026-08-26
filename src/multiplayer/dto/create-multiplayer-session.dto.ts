@@ -1,4 +1,11 @@
-import { IsString, IsEnum, IsOptional, IsNumber, IsBoolean, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  IsArray,
+} from 'class-validator';
 import { RoomType } from '../../multiplayer/interfaces/multiplayer.interface';
 
 export class CreateMultiplayerSessionDto {

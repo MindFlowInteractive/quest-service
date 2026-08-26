@@ -56,11 +56,13 @@ export class ScoringEngineService {
   calculateQualityScore(features: PuzzleFeatures): number {
     const ratingScore = features.averageRating / 5.0;
     const completionScore = Math.min(features.completionRate, 1.0);
-    
+
     // Penalize puzzles that are too easy (completion rate > 90%) or too hard (< 10%)
-    const difficultyBalance = this.calculateDifficultyBalance(features.completionRate);
-    
-    return (ratingScore * 0.5 + completionScore * 0.3 + difficultyBalance * 0.2);
+    const difficultyBalance = this.calculateDifficultyBalance(
+      features.completionRate,
+    );
+
+    return ratingScore * 0.5 + completionScore * 0.3 + difficultyBalance * 0.2;
   }
 
   /**
@@ -73,7 +75,7 @@ export class ScoringEngineService {
   ): number {
     const normalizedCompletions = Math.min(completions / maxCompletions, 1.0);
     const timeDecay = Math.exp(-ageInDays / 30); // Decay over 30 days
-    
+
     return normalizedCompletions * (0.7 + 0.3 * timeDecay);
   }
 
@@ -95,15 +97,16 @@ export class ScoringEngineService {
     diversityWeight: number = 0.1,
   ): Array<{ puzzleId: string; category: string; score: number }> {
     const categoryCount = new Map<string, number>();
-    
+
     return scores.map((item, index) => {
       const currentCount = categoryCount.get(item.category) || 0;
       categoryCount.set(item.category, currentCount + 1);
-      
+
       // Apply penalty based on how many puzzles from this category we've already seen
       const diversityPenalty = Math.pow(0.9, currentCount);
-      const adjustedScore = item.score * (1 - diversityWeight + diversityWeight * diversityPenalty);
-      
+      const adjustedScore =
+        item.score * (1 - diversityWeight + diversityWeight * diversityPenalty);
+
       return {
         ...item,
         score: adjustedScore,
@@ -116,14 +119,14 @@ export class ScoringEngineService {
    */
   normalizeScores(scores: number[]): number[] {
     if (scores.length === 0) return [];
-    
+
     const minScore = Math.min(...scores);
     const maxScore = Math.max(...scores);
     const range = maxScore - minScore;
-    
+
     if (range === 0) return scores.map(() => 0.5);
-    
-    return scores.map(score => (score - minScore) / range);
+
+    return scores.map((score) => (score - minScore) / range);
   }
 
   /**

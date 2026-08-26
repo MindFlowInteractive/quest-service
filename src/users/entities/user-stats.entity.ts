@@ -96,14 +96,17 @@ export class UserStats {
 
   // Category-based Statistics
   @Column({ type: 'jsonb', default: {} })
-  categoryStats: Record<string, {
-    attempted: number;
-    completed: number;
-    accuracy: number;
-    averageTime: number;
-    bestScore: number;
-    mastery: number; // 0-100 percentage
-  }>;
+  categoryStats: Record<
+    string,
+    {
+      attempted: number;
+      completed: number;
+      accuracy: number;
+      averageTime: number;
+      bestScore: number;
+      mastery: number; // 0-100 percentage
+    }
+  >;
 
   // Time-based Statistics
   @Column({ type: 'jsonb', default: {} })

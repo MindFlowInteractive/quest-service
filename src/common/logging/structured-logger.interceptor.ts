@@ -1,4 +1,9 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request, Response } from 'express';
@@ -112,8 +117,8 @@ export class StructuredLoggerInterceptor implements NestInterceptor {
 
   private getTraceId(request: Request): string {
     return (
-      request.headers['x-trace-id'] as string ||
-      request.headers['x-request-id'] as string ||
+      (request.headers['x-trace-id'] as string) ||
+      (request.headers['x-request-id'] as string) ||
       uuidv4()
     );
   }
@@ -122,8 +127,8 @@ export class StructuredLoggerInterceptor implements NestInterceptor {
     // Try to extract user ID from various sources
     return (
       (request.user as any)?.id ||
-      request.headers['x-user-id'] as string ||
-      request.query.userId as string
+      (request.headers['x-user-id'] as string) ||
+      (request.query.userId as string)
     );
   }
 
@@ -131,7 +136,7 @@ export class StructuredLoggerInterceptor implements NestInterceptor {
     // In production, this would be sent to Logstash/Elasticsearch
     // For now, we'll use console with structured format
     const logOutput = JSON.stringify(logEntry);
-    
+
     if (logEntry.level === 'error') {
       console.error(logOutput);
     } else if (logEntry.level === 'warn') {

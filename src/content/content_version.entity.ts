@@ -3,15 +3,15 @@ import { Content } from './contents.entity';
 
 @Entity('content_versions')
 export class ContentVersion {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column('text')
-    body: string;
+  @Column('text')
+  body: string;
 
-    @Column()
-    version: number;
+  @Column()
+  version: number;
 
-    @ManyToOne(() => Content, (content) => content.versions)
-    content: Content;
+  @ManyToOne(() => Content, (content) => content.versions)
+  content: Content;
 }

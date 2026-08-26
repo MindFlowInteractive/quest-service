@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DeleteResult } from 'typeorm';
 import { SaveBackupService } from './save-backup.service';
-import { SaveGameBackup, BackupReason } from '../entities/save-game-backup.entity';
+import {
+  SaveGameBackup,
+  BackupReason,
+} from '../entities/save-game-backup.entity';
 import { SaveGame } from '../entities/save-game.entity';
 import { SaveCompressionService } from './save-compression.service';
 import { SaveEncryptionService } from './save-encryption.service';
@@ -31,7 +34,11 @@ describe('SaveBackupService', () => {
     },
     compressedData: Buffer.from('test-compressed-data'),
     checksum: { algorithm: 'sha256', value: 'abc123' },
-    compressionInfo: { algorithm: 'gzip', originalSize: 100, compressedSize: 50 },
+    compressionInfo: {
+      algorithm: 'gzip',
+      originalSize: 100,
+      compressedSize: 50,
+    },
     encryptionInfo: { algorithm: 'aes-256-gcm', iv: 'iv', tag: 'tag' },
     syncStatus: SyncStatus.LOCAL_ONLY,
     lastModifiedAt: new Date(),
@@ -144,7 +151,9 @@ describe('SaveBackupService', () => {
         }),
       );
 
-      const createCall = backupRepo.create.mock.calls[0][0] as { expiresAt: Date };
+      const createCall = backupRepo.create.mock.calls[0][0] as {
+        expiresAt: Date;
+      };
       const expiresAt = new Date(createCall.expiresAt.getTime());
       const now = new Date();
       const daysDiff = Math.floor(
@@ -156,9 +165,14 @@ describe('SaveBackupService', () => {
     });
 
     it('should create backup with correct retention for CONFLICT reason', async () => {
-      await service.createBackup(mockSaveGame as SaveGame, BackupReason.CONFLICT);
+      await service.createBackup(
+        mockSaveGame as SaveGame,
+        BackupReason.CONFLICT,
+      );
 
-      const createCall = backupRepo.create.mock.calls[0][0] as { expiresAt: Date };
+      const createCall = backupRepo.create.mock.calls[0][0] as {
+        expiresAt: Date;
+      };
       const expiresAt = new Date(createCall.expiresAt.getTime());
       const now = new Date();
       const daysDiff = Math.floor(
@@ -179,7 +193,10 @@ describe('SaveBackupService', () => {
         }));
       backupRepo.find.mockResolvedValue(oldBackups as SaveGameBackup[]);
 
-      await service.createBackup(mockSaveGame as SaveGame, BackupReason.PRE_UPDATE);
+      await service.createBackup(
+        mockSaveGame as SaveGame,
+        BackupReason.PRE_UPDATE,
+      );
 
       // Should delete backups beyond MAX_BACKUPS_PER_SLOT (10)
       expect(backupRepo.delete).toHaveBeenCalled();
@@ -253,17 +270,17 @@ describe('SaveBackupService', () => {
     it('should throw if backup not found', async () => {
       backupRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.restoreFromBackup('backup-123', mockUserId)).rejects.toThrow(
-        'Backup not found',
-      );
+      await expect(
+        service.restoreFromBackup('backup-123', mockUserId),
+      ).rejects.toThrow('Backup not found');
     });
 
     it('should throw if backup checksum does not match', async () => {
       encryptionService.generateChecksum.mockReturnValue('different-checksum');
 
-      await expect(service.restoreFromBackup('backup-123', mockUserId)).rejects.toThrow(
-        'Backup data corrupted - checksum mismatch',
-      );
+      await expect(
+        service.restoreFromBackup('backup-123', mockUserId),
+      ).rejects.toThrow('Backup data corrupted - checksum mismatch');
     });
 
     it('should clear corruption flags on restore', async () => {
@@ -302,9 +319,9 @@ describe('SaveBackupService', () => {
     it('should throw if backup not found', async () => {
       backupRepo.delete.mockResolvedValue({ affected: 0 } as DeleteResult);
 
-      await expect(service.deleteBackup('backup-123', mockUserId)).rejects.toThrow(
-        'Backup not found',
-      );
+      await expect(
+        service.deleteBackup('backup-123', mockUserId),
+      ).rejects.toThrow('Backup not found');
     });
   });
 

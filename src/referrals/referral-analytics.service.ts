@@ -46,9 +46,7 @@ export class ReferralAnalyticsService {
   /**
    * Get comprehensive referral analytics
    */
-  async getAnalytics(
-    dto: ReferralAnalyticsDto,
-  ): Promise<ReferralAnalytics> {
+  async getAnalytics(dto: ReferralAnalyticsDto): Promise<ReferralAnalytics> {
     const { startDate, endDate, period, userId } = dto;
 
     // Build date range
@@ -106,18 +104,13 @@ export class ReferralAnalyticsService {
       totalReferrals > 0 ? (completedReferrals / totalReferrals) * 100 : 0;
 
     const averageRewardsPerReferral =
-      completedReferrals > 0
-        ? totalRewardsDistributed / completedReferrals
-        : 0;
+      completedReferrals > 0 ? totalRewardsDistributed / completedReferrals : 0;
 
     // Referrals by status
-    const referralsByStatus = referrals.reduce(
-      (acc, r) => {
-        acc[r.status] = (acc[r.status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<ReferralStatus, number>,
-    );
+    const referralsByStatus = referrals.reduce((acc, r) => {
+      acc[r.status] = (acc[r.status] || 0) + 1;
+      return acc;
+    }, {} as Record<ReferralStatus, number>);
 
     // Referrals by period
     const referralsByPeriod = this.groupReferralsByPeriod(
@@ -126,11 +119,7 @@ export class ReferralAnalyticsService {
     );
 
     // Top referrers
-    const topReferrers = await this.getTopReferrers(
-      userId,
-      dateRange,
-      10,
-    );
+    const topReferrers = await this.getTopReferrers(userId, dateRange, 10);
 
     return {
       totalReferrals,
@@ -140,7 +129,8 @@ export class ReferralAnalyticsService {
       referrerRewards,
       refereeRewards,
       conversionRate: Math.round(conversionRate * 100) / 100,
-      averageRewardsPerReferral: Math.round(averageRewardsPerReferral * 100) / 100,
+      averageRewardsPerReferral:
+        Math.round(averageRewardsPerReferral * 100) / 100,
       referralsByStatus,
       referralsByPeriod,
       topReferrers,
@@ -150,11 +140,12 @@ export class ReferralAnalyticsService {
   /**
    * Get date range for a period
    */
-  private getPeriodDateRange(
-    period: ReferralAnalyticsPeriod,
-  ): { start: Date; end: Date } {
+  private getPeriodDateRange(period: ReferralAnalyticsPeriod): {
+    start: Date;
+    end: Date;
+  } {
     const end = new Date();
-    let start = new Date();
+    const start = new Date();
 
     switch (period) {
       case ReferralAnalyticsPeriod.DAY:
@@ -211,7 +202,7 @@ export class ReferralAnalyticsService {
         groups.set(key, { count: 0, completed: 0 });
       }
 
-      const group = groups.get(key)!;
+      const group = groups.get(key);
       group.count++;
       if (referral.status === ReferralStatus.COMPLETED) {
         group.completed++;

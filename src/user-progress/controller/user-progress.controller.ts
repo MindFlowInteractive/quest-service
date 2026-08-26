@@ -1,4 +1,11 @@
-import { Controller, Get, Param, ParseUUIDPipe, Patch, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Body,
+} from '@nestjs/common';
 import { UserProgressService } from '../services/user-progress.service';
 
 @Controller('user-progress')

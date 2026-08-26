@@ -19,12 +19,15 @@ export class GrpcModule {
           provide: GrpcClientService,
           useFactory: () => {
             const clientService = new GrpcClientService();
-            
+
             // Register all services from config
-            for (const [serviceName, serviceConfig] of config.services.entries()) {
+            for (const [
+              serviceName,
+              serviceConfig,
+            ] of config.services.entries()) {
               clientService.registerService(serviceName, serviceConfig);
             }
-            
+
             return clientService;
           },
         },

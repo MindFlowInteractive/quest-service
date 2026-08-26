@@ -93,7 +93,8 @@ export class LeaderboardService {
         },
       });
 
-      const rank = allPlayerEvents.findIndex((pe) => pe.playerId === playerId) + 1;
+      const rank =
+        allPlayerEvents.findIndex((pe) => pe.playerId === playerId) + 1;
 
       playerEntry = {
         rank,
@@ -124,12 +125,14 @@ export class LeaderboardService {
     eventId: string,
     category: string,
     limit: number = 10,
-  ): Promise<Array<{
-    rank: number;
-    playerId: string;
-    categoryPuzzlesCompleted: number;
-    totalScore: number;
-  }>> {
+  ): Promise<
+    Array<{
+      rank: number;
+      playerId: string;
+      categoryPuzzlesCompleted: number;
+      totalScore: number;
+    }>
+  > {
     const playerEvents = await this.playerEventRepository.find({
       where: { eventId },
     });
@@ -138,7 +141,8 @@ export class LeaderboardService {
     const categoryLeaderboard = playerEvents
       .map((pe) => ({
         playerId: pe.playerId,
-        categoryPuzzlesCompleted: pe.statistics.categoryBreakdown?.[category] || 0,
+        categoryPuzzlesCompleted:
+          pe.statistics.categoryBreakdown?.[category] || 0,
         totalScore: pe.score,
       }))
       .filter((entry) => entry.categoryPuzzlesCompleted > 0)
@@ -163,13 +167,15 @@ export class LeaderboardService {
   async getStreakLeaderboard(
     eventId: string,
     limit: number = 10,
-  ): Promise<Array<{
-    rank: number;
-    playerId: string;
-    bestStreak: number;
-    currentStreak: number;
-    score: number;
-  }>> {
+  ): Promise<
+    Array<{
+      rank: number;
+      playerId: string;
+      bestStreak: number;
+      currentStreak: number;
+      score: number;
+    }>
+  > {
     const playerEvents = await this.playerEventRepository.find({
       where: { eventId },
       order: {
@@ -195,13 +201,15 @@ export class LeaderboardService {
   async getSpeedLeaderboard(
     eventId: string,
     limit: number = 10,
-  ): Promise<Array<{
-    rank: number;
-    playerId: string;
-    averageCompletionTime: number;
-    puzzlesCompleted: number;
-    score: number;
-  }>> {
+  ): Promise<
+    Array<{
+      rank: number;
+      playerId: string;
+      averageCompletionTime: number;
+      puzzlesCompleted: number;
+      score: number;
+    }>
+  > {
     const playerEvents = await this.playerEventRepository.find({
       where: { eventId },
     });
@@ -230,15 +238,15 @@ export class LeaderboardService {
   /**
    * Get global leaderboard across all events
    */
-  async getGlobalLeaderboard(
-    limit: number = 10,
-  ): Promise<Array<{
-    rank: number;
-    playerId: string;
-    totalScore: number;
-    eventsParticipated: number;
-    totalPuzzlesCompleted: number;
-  }>> {
+  async getGlobalLeaderboard(limit: number = 10): Promise<
+    Array<{
+      rank: number;
+      playerId: string;
+      totalScore: number;
+      eventsParticipated: number;
+      totalPuzzlesCompleted: number;
+    }>
+  > {
     const playerEvents = await this.playerEventRepository.find();
 
     // Aggregate by player
@@ -261,7 +269,8 @@ export class LeaderboardService {
       playerStats.set(pe.playerId, {
         totalScore: existing.totalScore + pe.score,
         eventsParticipated: existing.eventsParticipated + 1,
-        totalPuzzlesCompleted: existing.totalPuzzlesCompleted + pe.puzzlesCompleted,
+        totalPuzzlesCompleted:
+          existing.totalPuzzlesCompleted + pe.puzzlesCompleted,
       });
     }
 

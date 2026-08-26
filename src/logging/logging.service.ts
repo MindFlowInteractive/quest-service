@@ -11,11 +11,7 @@ export class LoggingService implements LoggerService {
     this.logger.info(message, { context });
   }
 
-  error(
-    message: unknown,
-    trace?: string,
-    context?: string,
-  ): void {
+  error(message: unknown, trace?: string, context?: string): void {
     this.logger.error(message, {
       trace,
       context,
@@ -30,18 +26,11 @@ export class LoggingService implements LoggerService {
     this.logger.debug(message, { context });
   }
 
-  verbose(
-    message: unknown,
-    context?: string,
-  ): void {
+  verbose(message: unknown, context?: string): void {
     this.logger.verbose(message, { context });
   }
 
-  metric(
-    name: string,
-    value: number,
-    metadata?: Record<string, unknown>,
-  ) {
+  metric(name: string, value: number, metadata?: Record<string, unknown>) {
     this.logger.info({
       type: 'metric',
       name,
@@ -51,10 +40,7 @@ export class LoggingService implements LoggerService {
     });
   }
 
-  audit(
-    action: string,
-    metadata?: Record<string, unknown>,
-  ) {
+  audit(action: string, metadata?: Record<string, unknown>) {
     this.logger.info({
       type: 'audit',
       action,
@@ -63,10 +49,7 @@ export class LoggingService implements LoggerService {
     });
   }
 
-  exception(
-    error: Error,
-    metadata?: Record<string, unknown>,
-  ) {
+  exception(error: Error, metadata?: Record<string, unknown>) {
     this.logger.error({
       type: 'exception',
       name: error.name,

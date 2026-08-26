@@ -4,7 +4,13 @@
  */
 
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { ExportFormat, ImportOptions, ExportResult, ImportResult, EditorState } from '../interfaces/editor.interfaces';
+import {
+  ExportFormat,
+  ImportOptions,
+  ExportResult,
+  ImportResult,
+  EditorState,
+} from '../interfaces/editor.interfaces';
 import * as JSON5 from 'json5';
 import * as xml2js from 'xml2js';
 import * as yaml from 'js-yaml';
@@ -47,7 +53,9 @@ export class PuzzleImportExportService {
           return this.exportAsBinary(editorState, format, metadata);
 
         default:
-          throw new BadRequestException(`Unsupported export format: ${format.format}`);
+          throw new BadRequestException(
+            `Unsupported export format: ${format.format}`,
+          );
       }
 
       this.logger.log(`Exported puzzle to ${format.format}`);
@@ -90,7 +98,9 @@ export class PuzzleImportExportService {
           break;
 
         default:
-          throw new BadRequestException(`Unsupported import format: ${options.format}`);
+          throw new BadRequestException(
+            `Unsupported import format: ${options.format}`,
+          );
       }
 
       // Validate if requested
@@ -201,7 +211,9 @@ export class PuzzleImportExportService {
     const rows: string[] = [];
 
     // Header
-    rows.push('ComponentID,Type,Title,PositionX,PositionY,Width,Height,Properties');
+    rows.push(
+      'ComponentID,Type,Title,PositionX,PositionY,Width,Height,Properties',
+    );
 
     // Components
     editorState.components.forEach((component) => {
@@ -214,7 +226,9 @@ export class PuzzleImportExportService {
 
     // Add connections section
     rows.push('');
-    rows.push('ConnectionID,SourceComponentID,TargetComponentID,Type,Properties');
+    rows.push(
+      'ConnectionID,SourceComponentID,TargetComponentID,Type,Properties',
+    );
 
     editorState.connections.forEach((connection) => {
       const props = JSON.stringify(connection.properties).replace(/"/g, '""');
@@ -269,8 +283,12 @@ export class PuzzleImportExportService {
       const puzzle = parsed.puzzle;
       return this.normalizeImportedState({
         id: puzzle.id?.[0],
-        components: Array.isArray(puzzle.component) ? puzzle.component : [puzzle.component],
-        connections: Array.isArray(puzzle.connection) ? puzzle.connection : [puzzle.connection],
+        components: Array.isArray(puzzle.component)
+          ? puzzle.component
+          : [puzzle.component],
+        connections: Array.isArray(puzzle.connection)
+          ? puzzle.connection
+          : [puzzle.connection],
         metadata: puzzle.metadata?.[0],
       });
     } catch (error) {
@@ -310,13 +328,17 @@ export class PuzzleImportExportService {
           continue;
         }
 
-        if (!headerSkipped && (line.includes('ComponentID') || line.includes('ConnectionID'))) {
+        if (
+          !headerSkipped &&
+          (line.includes('ComponentID') || line.includes('ConnectionID'))
+        ) {
           headerSkipped = true;
           continue;
         }
 
         if (section === 'components') {
-          const [id, type, title, x, y, width, height, props] = this.parseCSVLine(line);
+          const [id, type, title, x, y, width, height, props] =
+            this.parseCSVLine(line);
           components.push({
             id,
             type,
@@ -347,7 +369,13 @@ export class PuzzleImportExportService {
         history: [],
         historyIndex: 0,
         isDirty: false,
-        metadata: { version: '1.0', lastSaved: new Date(), lastModifiedBy: 'system', autosaveEnabled: false, autosaveInterval: 60000 },
+        metadata: {
+          version: '1.0',
+          lastSaved: new Date(),
+          lastModifiedBy: 'system',
+          autosaveEnabled: false,
+          autosaveInterval: 60000,
+        },
       };
     } catch (error) {
       throw new BadRequestException(`Invalid CSV format: ${error.message}`);
@@ -381,7 +409,11 @@ export class PuzzleImportExportService {
       history: data.history || [],
       historyIndex: data.historyIndex || 0,
       isDirty: false,
-      metadata: data.metadata || { version: '1.0', lastSaved: new Date(), lastModifiedBy: 'import' },
+      metadata: data.metadata || {
+        version: '1.0',
+        lastSaved: new Date(),
+        lastModifiedBy: 'import',
+      },
     };
   }
 
@@ -390,25 +422,36 @@ export class PuzzleImportExportService {
    */
   private validateImportedState(state: EditorState): void {
     if (!Array.isArray(state.components)) {
-      throw new BadRequestException('Invalid state: components must be an array');
+      throw new BadRequestException(
+        'Invalid state: components must be an array',
+      );
     }
 
     if (!Array.isArray(state.connections)) {
-      throw new BadRequestException('Invalid state: connections must be an array');
+      throw new BadRequestException(
+        'Invalid state: connections must be an array',
+      );
     }
 
     // Validate components have required fields
     for (const component of state.components) {
       if (!component.id || !component.type) {
-        throw new BadRequestException('Invalid component: missing required id or type');
+        throw new BadRequestException(
+          'Invalid component: missing required id or type',
+        );
       }
     }
 
     // Validate connections reference existing components
     const componentIds = new Set(state.components.map((c) => c.id));
     for (const connection of state.connections) {
-      if (!componentIds.has(connection.sourceComponentId) || !componentIds.has(connection.targetComponentId)) {
-        throw new BadRequestException('Invalid connection: references non-existent component');
+      if (
+        !componentIds.has(connection.sourceComponentId) ||
+        !componentIds.has(connection.targetComponentId)
+      ) {
+        throw new BadRequestException(
+          'Invalid connection: references non-existent component',
+        );
       }
     }
   }

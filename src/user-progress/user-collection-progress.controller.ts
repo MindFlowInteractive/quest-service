@@ -1,4 +1,11 @@
-import { Controller, Get, Param, ParseUUIDPipe, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { UserCollectionProgressService } from './user-collection-progress.service';
 import { UserCollectionProgress } from './entities/user-collection-progress.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; // Assuming auth guards are in place
@@ -7,7 +14,9 @@ import { Request } from 'express';
 @Controller('user/collections/progress')
 @UseGuards(JwtAuthGuard) // Protect endpoints requiring user authentication
 export class UserCollectionProgressController {
-  constructor(private readonly userCollectionProgressService: UserCollectionProgressService) {}
+  constructor(
+    private readonly userCollectionProgressService: UserCollectionProgressService,
+  ) {}
 
   // Get progress for all collections for the current user
   @Get()
@@ -23,7 +32,10 @@ export class UserCollectionProgressController {
     @Req() req: Request,
   ): Promise<UserCollectionProgress> {
     const userId = (req as any).user.id;
-    return this.userCollectionProgressService.findOneForUser(userId, collectionId);
+    return this.userCollectionProgressService.findOneForUser(
+      userId,
+      collectionId,
+    );
   }
 
   // Note: Direct POST/PATCH/DELETE for UserCollectionProgress might not be needed

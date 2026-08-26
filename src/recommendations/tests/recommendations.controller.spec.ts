@@ -36,7 +36,9 @@ describe('RecommendationsController', () => {
       ],
     }).compile();
 
-    controller = module.get<RecommendationsController>(RecommendationsController);
+    controller = module.get<RecommendationsController>(
+      RecommendationsController,
+    );
     recommendationEngineService = module.get(RecommendationEngineService);
     preferenceTrackingService = module.get(PreferenceTrackingService);
   });
@@ -65,11 +67,15 @@ describe('RecommendationsController', () => {
         },
       ];
 
-      recommendationEngineService.generateRecommendations.mockResolvedValue(mockRecommendations);
+      recommendationEngineService.generateRecommendations.mockResolvedValue(
+        mockRecommendations,
+      );
 
       const result = await controller.getRecommendations(userId, 10);
 
-      expect(recommendationEngineService.generateRecommendations).toHaveBeenCalledWith(
+      expect(
+        recommendationEngineService.generateRecommendations,
+      ).toHaveBeenCalledWith(
         userId,
         10,
         undefined,
@@ -84,7 +90,7 @@ describe('RecommendationsController', () => {
 
     it('should handle filters correctly', async () => {
       const userId = 'test-user';
-      
+
       recommendationEngineService.generateRecommendations.mockResolvedValue([]);
 
       await controller.getRecommendations(
@@ -93,10 +99,12 @@ describe('RecommendationsController', () => {
         'logic',
         'hard',
         'collaborative',
-        'test-group'
+        'test-group',
       );
 
-      expect(recommendationEngineService.generateRecommendations).toHaveBeenCalledWith(
+      expect(
+        recommendationEngineService.generateRecommendations,
+      ).toHaveBeenCalledWith(
         userId,
         5,
         'logic',
@@ -173,11 +181,15 @@ describe('RecommendationsController', () => {
         topTags: ['challenging', 'pattern', 'analytical'],
       };
 
-      preferenceTrackingService.getPreferenceInsights.mockResolvedValue(mockInsights);
+      preferenceTrackingService.getPreferenceInsights.mockResolvedValue(
+        mockInsights,
+      );
 
       const result = await controller.getUserPreferences(userId);
 
-      expect(preferenceTrackingService.getPreferenceInsights).toHaveBeenCalledWith(userId);
+      expect(
+        preferenceTrackingService.getPreferenceInsights,
+      ).toHaveBeenCalledWith(userId);
       expect(result).toEqual(mockInsights);
     });
   });
@@ -197,16 +209,15 @@ describe('RecommendationsController', () => {
         },
       ];
 
-      recommendationEngineService.getRecommendationMetrics.mockResolvedValue(mockMetrics);
+      recommendationEngineService.getRecommendationMetrics.mockResolvedValue(
+        mockMetrics,
+      );
 
       const result = await controller.getMetrics();
 
-      expect(recommendationEngineService.getRecommendationMetrics).toHaveBeenCalledWith(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      );
+      expect(
+        recommendationEngineService.getRecommendationMetrics,
+      ).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
       expect(result).toEqual(mockMetrics);
     });
   });

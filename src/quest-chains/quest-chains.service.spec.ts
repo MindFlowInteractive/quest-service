@@ -72,11 +72,7 @@ describe('QuestChainsService', () => {
       entries: [{ id: 'e1' }, { id: 'e2' }],
     });
 
-    const result = await service.markEntryCompleted(
-      'user1',
-      'chain1',
-      'e1',
-    );
+    const result = await service.markEntryCompleted('user1', 'chain1', 'e1');
 
     expect(result.completedEntries.filter((e) => e === 'e1').length).toBe(1);
   });

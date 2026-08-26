@@ -38,7 +38,7 @@ describe('SkillRatingController (e2e)', () => {
         email: 'test@example.com',
         password: 'password123',
       });
-    
+
     userId = userResponse.body.id;
 
     // Create test puzzle
@@ -59,7 +59,7 @@ describe('SkillRatingController (e2e)', () => {
           correctAnswer: '4',
         },
       });
-    
+
     puzzleId = puzzleResponse.body.id;
   });
 

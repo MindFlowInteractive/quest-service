@@ -20,7 +20,10 @@ const mockEntryRepo = () => ({
   update: jest.fn(),
 });
 const mockCache = { get: jest.fn(), set: jest.fn(), reset: jest.fn() };
-const mockAchievementsService = { findLeaderboardAchievements: jest.fn(), awardAchievementToUser: jest.fn() };
+const mockAchievementsService = {
+  findLeaderboardAchievements: jest.fn(),
+  awardAchievementToUser: jest.fn(),
+};
 
 describe('LeaderboardService', () => {
   let service: LeaderboardService;
@@ -31,8 +34,14 @@ describe('LeaderboardService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LeaderboardService,
-        { provide: getRepositoryToken(Leaderboard), useFactory: mockLeaderboardRepo },
-        { provide: getRepositoryToken(LeaderboardEntry), useFactory: mockEntryRepo },
+        {
+          provide: getRepositoryToken(Leaderboard),
+          useFactory: mockLeaderboardRepo,
+        },
+        {
+          provide: getRepositoryToken(LeaderboardEntry),
+          useFactory: mockEntryRepo,
+        },
         { provide: CACHE_MANAGER, useValue: mockCache },
         { provide: AchievementsService, useValue: mockAchievementsService },
       ],
@@ -51,7 +60,7 @@ describe('LeaderboardService', () => {
     const created = { ...dto };
     leaderboardRepo.create.mockReturnValue(created);
     leaderboardRepo.save.mockResolvedValue(created);
-    const result = await service.createLeaderboard(dto as any);
+    const result = await service.createLeaderboard(dto);
     expect(result).toEqual(created);
     expect(leaderboardRepo.create).toHaveBeenCalledWith(dto);
     expect(leaderboardRepo.save).toHaveBeenCalledWith(created);
@@ -64,7 +73,7 @@ describe('LeaderboardService', () => {
     entryRepo.save.mockResolvedValue(entry);
     mockCache.reset.mockResolvedValue(undefined);
     mockAchievementsService.findLeaderboardAchievements.mockResolvedValue([]);
-    const result = await service.createEntry(dto as any);
+    const result = await service.createEntry(dto);
     expect(result).toEqual(entry);
     expect(entryRepo.create).toHaveBeenCalled();
     expect(entryRepo.save).toHaveBeenCalled();
@@ -87,9 +96,14 @@ describe('LeaderboardService', () => {
   it('should get leaderboards by category and period', async () => {
     const leaderboards = [{ id: 1, category: 'cat', period: 'daily' }];
     leaderboardRepo.find.mockResolvedValue(leaderboards);
-    const result = await service.getLeaderboardsByCategoryAndPeriod('cat', 'daily');
+    const result = await service.getLeaderboardsByCategoryAndPeriod(
+      'cat',
+      'daily',
+    );
     expect(result).toEqual(leaderboards);
-    expect(leaderboardRepo.find).toHaveBeenCalledWith({ where: { category: 'cat', period: 'daily', isActive: true } });
+    expect(leaderboardRepo.find).toHaveBeenCalledWith({
+      where: { category: 'cat', period: 'daily', isActive: true },
+    });
   });
 
   describe('getLeaderboardWithEntries', () => {
@@ -100,24 +114,43 @@ describe('LeaderboardService', () => {
       mockCache.set.mockReset();
     });
     it('should return leaderboard with entries and cache result', async () => {
-      leaderboardRepo.findOne.mockResolvedValue({ id: 1, visibility: 'public' });
+      leaderboardRepo.findOne.mockResolvedValue({
+        id: 1,
+        visibility: 'public',
+      });
       entryRepo.find.mockResolvedValue([
         { userId: 1, score: 100 },
         { userId: 2, score: 200 },
       ]);
       mockCache.get.mockResolvedValue(undefined);
       mockCache.set.mockResolvedValue(undefined);
-      const result = await service.getLeaderboardWithEntries(1, 'score', 'DESC');
+      const result = await service.getLeaderboardWithEntries(
+        1,
+        'score',
+        'DESC',
+      );
       expect(result.entries.length).toBe(2);
       expect(mockCache.set).toHaveBeenCalled();
     });
     it('should deny access to private leaderboard', async () => {
-      leaderboardRepo.findOne.mockResolvedValue({ id: 1, visibility: 'private', allowedUserIds: [2] });
-      await expect(service.getLeaderboardWithEntries(1, 'score', 'DESC', undefined, 1)).rejects.toThrow('Access denied: private leaderboard');
+      leaderboardRepo.findOne.mockResolvedValue({
+        id: 1,
+        visibility: 'private',
+        allowedUserIds: [2],
+      });
+      await expect(
+        service.getLeaderboardWithEntries(1, 'score', 'DESC', undefined, 1),
+      ).rejects.toThrow('Access denied: private leaderboard');
     });
     it('should deny access to friends-only leaderboard', async () => {
-      leaderboardRepo.findOne.mockResolvedValue({ id: 1, visibility: 'friends', allowedUserIds: [2] });
-      await expect(service.getLeaderboardWithEntries(1, 'score', 'DESC', undefined, 1)).rejects.toThrow('Access denied: friends-only leaderboard');
+      leaderboardRepo.findOne.mockResolvedValue({
+        id: 1,
+        visibility: 'friends',
+        allowedUserIds: [2],
+      });
+      await expect(
+        service.getLeaderboardWithEntries(1, 'score', 'DESC', undefined, 1),
+      ).rejects.toThrow('Access denied: friends-only leaderboard');
     });
   });
 
@@ -127,7 +160,7 @@ describe('LeaderboardService', () => {
     await service.archiveAndResetLeaderboard(1);
     expect(entryRepo.update).toHaveBeenCalledWith(
       { leaderboard: { id: 1 }, archived: false },
-      { archived: true, archivedAt: expect.any(Date) }
+      { archived: true, archivedAt: expect.any(Date) },
     );
     expect(mockCache.reset).toHaveBeenCalled();
   });
@@ -159,6 +192,9 @@ describe('LeaderboardService', () => {
     ]);
     mockAchievementsService.awardAchievementToUser.mockResolvedValue({});
     await service['checkAndAwardLeaderboardAchievements'](1, 2);
-    expect(mockAchievementsService.awardAchievementToUser).toHaveBeenCalledWith(10, 2);
+    expect(mockAchievementsService.awardAchievementToUser).toHaveBeenCalledWith(
+      10,
+      2,
+    );
   });
-}); 
+});

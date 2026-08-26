@@ -84,7 +84,9 @@ export class UserAchievement {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Achievement, (achievement) => achievement.userAchievements, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Achievement, (achievement) => achievement.userAchievements, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'achievementId' })
   achievement: Achievement;
-} 
+}

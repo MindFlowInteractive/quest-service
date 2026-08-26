@@ -51,7 +51,12 @@ export class Notification {
   })
   deduplicationKey: string | null;
 
-  @Column({ name: 'aggregation_key', type: 'varchar', length: 255, nullable: true })
+  @Column({
+    name: 'aggregation_key',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
   aggregationKey: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

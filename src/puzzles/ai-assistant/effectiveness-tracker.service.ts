@@ -14,7 +14,11 @@ export class EffectivenessTrackerService {
   private hintHistory: HintRecord[] = [];
   private playerHistory: Map<string, any[]> = new Map();
 
-  async recordHintGiven(userId: string, puzzleId: string, hint: any): Promise<void> {
+  async recordHintGiven(
+    userId: string,
+    puzzleId: string,
+    hint: any,
+  ): Promise<void> {
     const record: HintRecord = {
       userId,
       puzzleId,
@@ -35,10 +39,10 @@ export class EffectivenessTrackerService {
     puzzleId: string,
     hintId: string,
     wasHelpful: boolean,
-    ledToProgress: boolean
+    ledToProgress: boolean,
   ): Promise<void> {
     const record = this.hintHistory.find(
-      h => h.userId === userId && h.puzzleId === puzzleId
+      (h) => h.userId === userId && h.puzzleId === puzzleId,
     );
 
     if (record) {
@@ -57,8 +61,8 @@ export class EffectivenessTrackerService {
       : this.hintHistory;
 
     const totalHints = relevantHints.length;
-    const helpfulHints = relevantHints.filter(h => h.wasHelpful).length;
-    const progressHints = relevantHints.filter(h => h.ledToProgress).length;
+    const helpfulHints = relevantHints.filter((h) => h.wasHelpful).length;
+    const progressHints = relevantHints.filter((h) => h.ledToProgress).length;
 
     return {
       totalHints,
@@ -70,8 +74,8 @@ export class EffectivenessTrackerService {
 
   private calculateAverageHintsPerPuzzle(hints: HintRecord[]): number {
     const puzzleMap = new Map<string, number>();
-    
-    hints.forEach(h => {
+
+    hints.forEach((h) => {
       puzzleMap.set(h.puzzleId, (puzzleMap.get(h.puzzleId) || 0) + 1);
     });
 
@@ -96,7 +100,7 @@ export class EffectivenessTrackerService {
   private identifyMostHelpfulType(history: any[]): string {
     const typeScores = new Map<string, number>();
 
-    history.forEach(h => {
+    history.forEach((h) => {
       if (h.wasHelpful) {
         const type = h.hint.type;
         typeScores.set(type, (typeScores.get(type) || 0) + 1);
@@ -120,10 +124,10 @@ export class EffectivenessTrackerService {
     // Identify puzzle types where player needed many hints
     const puzzleHintCounts = new Map<string, number>();
 
-    history.forEach(h => {
+    history.forEach((h) => {
       puzzleHintCounts.set(
         h.puzzleId,
-        (puzzleHintCounts.get(h.puzzleId) || 0) + 1
+        (puzzleHintCounts.get(h.puzzleId) || 0) + 1,
       );
     });
 
@@ -143,10 +147,11 @@ export class EffectivenessTrackerService {
     const recent = history.slice(-5);
     const older = history.slice(-10, -5);
 
-    const recentAvg = recent.filter(h => h.wasHelpful).length / recent.length;
-    const olderAvg = older.length > 0
-      ? older.filter(h => h.wasHelpful).length / older.length
-      : 0;
+    const recentAvg = recent.filter((h) => h.wasHelpful).length / recent.length;
+    const olderAvg =
+      older.length > 0
+        ? older.filter((h) => h.wasHelpful).length / older.length
+        : 0;
 
     if (recentAvg > olderAvg + 0.1) return 'improving';
     if (recentAvg < olderAvg - 0.1) return 'declining';

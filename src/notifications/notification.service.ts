@@ -35,11 +35,20 @@ export class NotificationService {
     private readonly deviceRepo: Repository<Device>,
     private readonly emailService: EmailService,
     @Inject(SchedulerRegistry) private readonly scheduler: any,
-    @Inject('NOTIFICATION_SERVICE') private readonly notificationClient: ClientProxy,
-  ) { }
+    @Inject('NOTIFICATION_SERVICE')
+    private readonly notificationClient: ClientProxy,
+  ) {}
 
   // Backwards-compatible convenience method used across the codebase
-  async notifyAchievementUnlocked(userId: string, achievement: { name: string; description: string; iconUrl?: string; celebrationMessage?: string }) {
+  async notifyAchievementUnlocked(
+    userId: string,
+    achievement: {
+      name: string;
+      description: string;
+      iconUrl?: string;
+      celebrationMessage?: string;
+    },
+  ) {
     this.logger.log(`User ${userId} unlocked achievement: ${achievement.name}`);
 
     // Create in-app notification
@@ -48,7 +57,10 @@ export class NotificationService {
       type: 'achievement',
       title: `Achievement unlocked: ${achievement.name}`,
       body: achievement.description,
-      meta: { iconUrl: achievement.iconUrl, celebrationMessage: achievement.celebrationMessage },
+      meta: {
+        iconUrl: achievement.iconUrl,
+        celebrationMessage: achievement.celebrationMessage,
+      },
     });
     await this.notificationRepo.save(notif);
 
@@ -56,13 +68,20 @@ export class NotificationService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) return false;
 
-    const prefs = user.preferences?.notifications ?? { email: false, push: false };
+    const prefs = user.preferences?.notifications ?? {
+      email: false,
+      push: false,
+    };
     if (prefs.email) {
       try {
-        await this.emailService.sendEmail(user.email, `You unlocked ${achievement.name}`, achievement.description);
+        await this.emailService.sendEmail(
+          user.email,
+          `You unlocked ${achievement.name}`,
+          achievement.description,
+        );
         await this.recordDelivery(notif.id, 'email', 'sent');
       } catch (err) {
-        this.logger.error('Email send failed', err as any);
+        this.logger.error('Email send failed', err);
         await this.recordDelivery(notif.id, 'email', 'failed', String(err));
       }
     }
@@ -133,35 +152,49 @@ export class NotificationService {
   }
 
   private async dispatchNotification(notificationId: string) {
-    const notif = await this.notificationRepo.findOne({ where: { id: notificationId } });
+    const notif = await this.notificationRepo.findOne({
+      where: { id: notificationId },
+    });
     if (!notif) return;
     const user = await this.userRepo.findOne({ where: { id: notif.userId } });
     if (!user) return;
 
-    const prefs = user.preferences?.notifications ?? { email: false, push: false };
+    const prefs = user.preferences?.notifications ?? {
+      email: false,
+      push: false,
+    };
 
     // deliver in-app
     await this.recordDelivery(notif.id, 'in_app', 'delivered');
 
     if (prefs.email) {
       try {
-        await this.emailService.sendEmail(user.email, notif.title, notif.body ?? '');
+        await this.emailService.sendEmail(
+          user.email,
+          notif.title,
+          notif.body ?? '',
+        );
         await this.recordDelivery(notif.id, 'email', 'sent');
       } catch (err) {
-        this.logger.error('Email send failed', err as any);
+        this.logger.error('Email send failed', err);
         await this.recordDelivery(notif.id, 'email', 'failed', String(err));
       }
     }
 
     if (prefs.push) {
       await this.emitPushEvent(notif.userId, notif.type, {
-        title: notif.title, body: notif.body ?? '',
+        title: notif.title,
+        body: notif.body ?? '',
       });
       await this.recordDelivery(notif.id, 'push', 'queued');
     }
   }
 
-  async emitPushEvent(userId: string, eventType: string, payload: { title: string; body: string; data?: Record<string, any> }) {
+  async emitPushEvent(
+    userId: string,
+    eventType: string,
+    payload: { title: string; body: string; data?: Record<string, any> },
+  ) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) return;
     const prefs = user.preferences?.notifications ?? {};
@@ -171,15 +204,24 @@ export class NotificationService {
     if (!devices?.length) return;
     const tokens = devices.map((d) => d.token);
     const pattern = this.EVENT_PATTERNS[eventType] || eventType;
-    this.notificationClient.emit(pattern, {
-      userId, tokens,
-      title: payload.title, body: payload.body,
-      data: payload.data ?? {},
-    }).subscribe();
-    this.logger.log(`Push event ${pattern} emitted for user ${userId} to ${tokens.length} devices`);
+    this.notificationClient
+      .emit(pattern, {
+        userId,
+        tokens,
+        title: payload.title,
+        body: payload.body,
+        data: payload.data ?? {},
+      })
+      .subscribe();
+    this.logger.log(
+      `Push event ${pattern} emitted for user ${userId} to ${tokens.length} devices`,
+    );
   }
 
-  async emitBroadcastPush(eventType: string, payload: { title: string; body: string; data?: Record<string, any> }) {
+  async emitBroadcastPush(
+    eventType: string,
+    payload: { title: string; body: string; data?: Record<string, any> },
+  ) {
     const PAGE_SIZE = 1000;
     let offset = 0;
     let hasMore = true;
@@ -188,9 +230,17 @@ export class NotificationService {
         .createQueryBuilder('user')
         .select(['user.id'])
         .where("user.preferences->'notifications'->>'push' = 'true'")
-        .andWhere(`COALESCE(user.preferences->'notifications'->>:eventType, 'true') != 'false'`, { eventType })
-        .skip(offset).take(PAGE_SIZE).getMany();
-      if (users.length === 0) { hasMore = false; break; }
+        .andWhere(
+          `COALESCE(user.preferences->'notifications'->>:eventType, 'true') != 'false'`,
+          { eventType },
+        )
+        .skip(offset)
+        .take(PAGE_SIZE)
+        .getMany();
+      if (users.length === 0) {
+        hasMore = false;
+        break;
+      }
       const userIds = users.map((u) => u.id);
       const devices = await this.deviceRepo
         .createQueryBuilder('device')
@@ -200,20 +250,36 @@ export class NotificationService {
       const tokens = devices.map((d) => d.token);
       if (tokens.length > 0) {
         const pattern = this.EVENT_PATTERNS[eventType] || eventType;
-        this.notificationClient.emit(pattern, {
-          type: 'broadcast', tokens,
-          title: payload.title, body: payload.body,
-          data: payload.data ?? {},
-        }).subscribe();
-        this.logger.log(`Broadcast ${pattern} emitted: ${tokens.length} tokens (batch offset=${offset})`);
+        this.notificationClient
+          .emit(pattern, {
+            type: 'broadcast',
+            tokens,
+            title: payload.title,
+            body: payload.body,
+            data: payload.data ?? {},
+          })
+          .subscribe();
+        this.logger.log(
+          `Broadcast ${pattern} emitted: ${tokens.length} tokens (batch offset=${offset})`,
+        );
       }
       offset += PAGE_SIZE;
       hasMore = users.length === PAGE_SIZE;
     }
   }
 
-  private async recordDelivery(notificationId: string, channel: string, status: string, details?: string) {
-    const d = this.deliveryRepo.create({ notificationId, channel, status, details });
+  private async recordDelivery(
+    notificationId: string,
+    channel: string,
+    status: string,
+    details?: string,
+  ) {
+    const d = this.deliveryRepo.create({
+      notificationId,
+      channel,
+      status,
+      details,
+    });
     await this.deliveryRepo.save(d);
   }
 
@@ -229,15 +295,31 @@ export class NotificationService {
     return user?.preferences ?? null;
   }
 
-  async recordFeedback(notificationId: string, userId: string, feedback: { action: string; comment?: string }) {
-    const notif = await this.notificationRepo.findOne({ where: { id: notificationId } });
+  async recordFeedback(
+    notificationId: string,
+    userId: string,
+    feedback: { action: string; comment?: string },
+  ) {
+    const notif = await this.notificationRepo.findOne({
+      where: { id: notificationId },
+    });
     if (!notif) return null;
     // Append feedback into meta.feedback array
     notif.meta = notif.meta ?? {};
     notif.meta.feedback = notif.meta.feedback ?? [];
-    notif.meta.feedback.push({ userId, action: feedback.action, comment: feedback.comment, at: new Date() });
+    notif.meta.feedback.push({
+      userId,
+      action: feedback.action,
+      comment: feedback.comment,
+      at: new Date(),
+    });
     await this.notificationRepo.save(notif);
-    await this.recordDelivery(notificationId, 'feedback', 'received', feedback.action);
+    await this.recordDelivery(
+      notificationId,
+      'feedback',
+      'received',
+      feedback.action,
+    );
     return notif;
   }
 

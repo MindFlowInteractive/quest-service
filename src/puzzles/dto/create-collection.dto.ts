@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsArray, IsUUID, ValidateNested, IsObject, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsUUID,
+  ValidateNested,
+  IsObject,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer'; // For nested object validation
 
 // Define a type for the reward structure for better validation

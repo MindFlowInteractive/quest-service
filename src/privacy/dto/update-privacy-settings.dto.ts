@@ -1,4 +1,11 @@
-import { IsBoolean, IsOptional, IsInt, Min, Max, IsEnum } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsEnum,
+} from 'class-validator';
 
 export class UpdatePrivacySettingsDto {
   @IsBoolean()

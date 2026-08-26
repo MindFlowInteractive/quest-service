@@ -1,21 +1,21 @@
-import { Controller, Get, Post, Body, Query } from "@nestjs/common";
-import { AnalyticsService } from "./analytics.service";
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import { AnalyticsService } from './analytics.service';
 
-@Controller("analytics")
+@Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-  @Post("click")
+  @Post('click')
   async trackClick(@Body() body: { searchId: string; resultId: string }) {
     await this.analyticsService.trackClick(body.searchId, body.resultId);
     return { success: true };
   }
 
-  @Get("popular-queries")
+  @Get('popular-queries')
   async getPopularQueries(
-    @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string,
-    @Query("index") index?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('index') index?: string,
   ) {
     const query = {
       startDate: startDate ? new Date(startDate) : undefined,
@@ -26,11 +26,11 @@ export class AnalyticsController {
     return this.analyticsService.getPopularQueries(query);
   }
 
-  @Get("metrics")
+  @Get('metrics')
   async getSearchMetrics(
-    @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string,
-    @Query("index") index?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('index') index?: string,
   ) {
     const query = {
       startDate: startDate ? new Date(startDate) : undefined,
@@ -41,11 +41,11 @@ export class AnalyticsController {
     return this.analyticsService.getSearchMetrics(query);
   }
 
-  @Get("failed-searches")
+  @Get('failed-searches')
   async getFailedSearches(
-    @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string,
-    @Query("index") index?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('index') index?: string,
   ) {
     const query = {
       startDate: startDate ? new Date(startDate) : undefined,

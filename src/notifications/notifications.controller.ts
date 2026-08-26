@@ -24,8 +24,13 @@ export class NotificationsController {
   }
 
   @Post(':userId/preferences')
-  async setPreferences(@Param('userId') userId: string, @Body() prefs: NotificationPreferenceDto) {
-    const updated = await this.service.setPreferences(userId, { notifications: prefs });
+  async setPreferences(
+    @Param('userId') userId: string,
+    @Body() prefs: NotificationPreferenceDto,
+  ) {
+    const updated = await this.service.setPreferences(userId, {
+      notifications: prefs,
+    });
     return { ok: true, preferences: updated?.preferences };
   }
 
@@ -36,8 +41,15 @@ export class NotificationsController {
   }
 
   @Post(':notificationId/feedback')
-  async feedback(@Param('notificationId') notificationId: string, @Body() body: NotificationFeedbackDto) {
-    const res = await this.service.recordFeedback(notificationId, (body as any).userId ?? 'unknown', { action: body.action, comment: body.comment });
+  async feedback(
+    @Param('notificationId') notificationId: string,
+    @Body() body: NotificationFeedbackDto,
+  ) {
+    const res = await this.service.recordFeedback(
+      notificationId,
+      (body as any).userId ?? 'unknown',
+      { action: body.action, comment: body.comment },
+    );
     return { ok: !!res };
   }
 }

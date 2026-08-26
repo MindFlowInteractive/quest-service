@@ -5,13 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-} from "typeorm";
+} from 'typeorm';
 
-@Entity("files")
-@Index(["userId", "category"])
-@Index(["deletedAt"])
+@Entity('files')
+@Index(['userId', 'category'])
+@Index(['deletedAt'])
 export class File {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
@@ -23,7 +23,7 @@ export class File {
   @Column()
   mimeType: string;
 
-  @Column({ type: "bigint" })
+  @Column({ type: 'bigint' })
   size: number;
 
   @Column()
@@ -32,7 +32,7 @@ export class File {
   @Column()
   bucket: string;
 
-  @Column({ type: "enum", enum: ["puzzle", "avatar", "asset", "other"] })
+  @Column({ type: 'enum', enum: ['puzzle', 'avatar', 'asset', 'other'] })
   category: string;
 
   @Column({ nullable: true })
@@ -51,7 +51,7 @@ export class File {
   @Column({ nullable: true })
   previousVersionId: string;
 
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>;
 
   @CreateDateColumn()

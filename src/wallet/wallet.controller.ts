@@ -22,10 +22,10 @@ import { WalletSyncService } from './wallet-sync.service';
 @ApiTags('Wallet')
 @Controller('wallet')
 export class WalletController {
- constructor(
-  private readonly walletService: WalletService,
-  private readonly walletSyncService: WalletSyncService,
-) {}
+  constructor(
+    private readonly walletService: WalletService,
+    private readonly walletSyncService: WalletSyncService,
+  ) {}
 
   @Post('connect')
   @HttpCode(HttpStatus.OK)
@@ -53,7 +53,7 @@ export class WalletController {
   @UseGuards(WalletSessionGuard)
   @HttpCode(HttpStatus.OK)
   getSession(@Req() req: WalletRequest) {
-    const session = req.walletSession!;
+    const session = req.walletSession;
     return {
       publicKey: session.publicKey,
       network: session.network,
@@ -65,7 +65,7 @@ export class WalletController {
   @UseGuards(WalletSessionGuard)
   @HttpCode(HttpStatus.OK)
   disconnect(@Req() req: WalletRequest) {
-    const session = req.walletSession!;
+    const session = req.walletSession;
     return this.walletService.disconnect(session.sessionToken);
   }
 
@@ -73,17 +73,15 @@ export class WalletController {
   @UseGuards(WalletSessionGuard)
   @HttpCode(HttpStatus.OK)
   getBalances(@Req() req: WalletRequest) {
-    return this.walletService.getBalances(req.walletSession!);
+    return this.walletService.getBalances(req.walletSession);
   }
 
   @Post('refresh')
-@UseGuards(WalletSessionGuard)
-@HttpCode(HttpStatus.OK)
-refresh(@Req() req: WalletRequest) {
-  return this.walletSyncService.syncBalances(req.walletSession!);
-}
-
-
+  @UseGuards(WalletSessionGuard)
+  @HttpCode(HttpStatus.OK)
+  refresh(@Req() req: WalletRequest) {
+    return this.walletSyncService.syncBalances(req.walletSession);
+  }
 
   @Get('transactions')
   @UseGuards(WalletSessionGuard)
@@ -99,7 +97,7 @@ refresh(@Req() req: WalletRequest) {
         ? parsedLimit
         : undefined;
     return this.walletService.getTransactionHistory(
-      req.walletSession!,
+      req.walletSession,
       safeLimit,
       cursor,
     );
@@ -108,14 +106,17 @@ refresh(@Req() req: WalletRequest) {
   @Post('purchase')
   @UseGuards(WalletSessionGuard)
   @HttpCode(HttpStatus.OK)
-  recordPurchase(@Req() req: WalletRequest, @Body() body: RecordTransactionDto) {
-    return this.walletService.recordPurchase(req.walletSession!, body);
+  recordPurchase(
+    @Req() req: WalletRequest,
+    @Body() body: RecordTransactionDto,
+  ) {
+    return this.walletService.recordPurchase(req.walletSession, body);
   }
 
   @Post('spend')
   @UseGuards(WalletSessionGuard)
   @HttpCode(HttpStatus.OK)
   recordSpend(@Req() req: WalletRequest, @Body() body: RecordTransactionDto) {
-    return this.walletService.recordSpend(req.walletSession!, body);
+    return this.walletService.recordSpend(req.walletSession, body);
   }
 }

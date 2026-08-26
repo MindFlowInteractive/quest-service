@@ -25,8 +25,10 @@ export class EventPublisher implements OnModuleDestroy {
    */
   private initializeConnection(): void {
     const { url, username, password, vhost, heartbeat } = this.config.rabbitmq;
-    
-    const connectionUrl = `amqp://${username}:${password}@${url}${vhost ? `/${vhost}` : ''}`;
+
+    const connectionUrl = `amqp://${username}:${password}@${url}${
+      vhost ? `/${vhost}` : ''
+    }`;
 
     this.connection = amqp.connect([connectionUrl], {
       heartbeatIntervalInSeconds: heartbeat || 60,
@@ -101,10 +103,7 @@ export class EventPublisher implements OnModuleDestroy {
         `Published event: ${eventType} [TraceID: ${metadata.traceId}]`,
       );
     } catch (error) {
-      this.logger.error(
-        `Failed to publish event: ${eventType}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to publish event: ${eventType}`, error.stack);
       throw error;
     }
   }

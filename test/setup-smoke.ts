@@ -2,11 +2,13 @@ import * as request from 'supertest';
 
 // Smoke test utilities
 global.smokeTestUtils = {
-  checkEndpointHealth: async (app: any, endpoint: string, expectedStatus: number = 200) => {
-    const response = await request(app)
-      .get(endpoint)
-      .expect(expectedStatus);
-    
+  checkEndpointHealth: async (
+    app: any,
+    endpoint: string,
+    expectedStatus: number = 200,
+  ) => {
+    const response = await request(app).get(endpoint).expect(expectedStatus);
+
     return response;
   },
 
@@ -31,24 +33,30 @@ global.smokeTestUtils = {
   },
 
   checkEnvironmentVariables: (requiredVars: string[]) => {
-    const missing = requiredVars.filter(varName => !process.env[varName]);
-    
+    const missing = requiredVars.filter((varName) => !process.env[varName]);
+
     if (missing.length > 0) {
-      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+      throw new Error(
+        `Missing required environment variables: ${missing.join(', ')}`,
+      );
     }
-    
+
     return true;
   },
 
   checkApiResponse: (response: any, expectedFields: string[]) => {
-    const missingFields = expectedFields.filter(field => !(field in response.body));
-    
+    const missingFields = expectedFields.filter(
+      (field) => !(field in response.body),
+    );
+
     if (missingFields.length > 0) {
-      throw new Error(`API response missing required fields: ${missingFields.join(', ')}`);
+      throw new Error(
+        `API response missing required fields: ${missingFields.join(', ')}`,
+      );
     }
-    
+
     return true;
-  }
+  },
 };
 
 // Common smoke test configurations
@@ -58,12 +66,12 @@ global.smokeTestConfig = {
     api: '/api',
     puzzles: '/puzzles',
     users: '/users',
-    auth: '/auth'
+    auth: '/auth',
   },
   timeouts: {
     short: 5000,
     medium: 10000,
-    long: 30000
+    long: 30000,
   },
   requiredEnvVars: [
     'DATABASE_HOST',
@@ -71,15 +79,19 @@ global.smokeTestConfig = {
     'DATABASE_USER',
     'DATABASE_PASSWORD',
     'DATABASE_NAME',
-    'JWT_SECRET'
-  ]
+    'JWT_SECRET',
+  ],
 };
 
 declare global {
   namespace NodeJS {
     interface Global {
       smokeTestUtils: {
-        checkEndpointHealth: (app: any, endpoint: string, expectedStatus?: number) => Promise<any>;
+        checkEndpointHealth: (
+          app: any,
+          endpoint: string,
+          expectedStatus?: number,
+        ) => Promise<any>;
         checkDatabaseConnection: (dataSource: any) => Promise<boolean>;
         checkRedisConnection: (redisClient: any) => Promise<boolean>;
         checkEnvironmentVariables: (requiredVars: string[]) => boolean;

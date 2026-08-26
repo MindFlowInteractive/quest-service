@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AppService {
-  constructor(@Inject(ConfigService) private configService: any) { }
+  constructor(@Inject(ConfigService) private configService: any) {}
 
   getHello(): { message: string; timestamp: string } {
     return {

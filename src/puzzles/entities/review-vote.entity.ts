@@ -35,7 +35,9 @@ export class ReviewVote {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => PuzzleReview, (review) => review.votes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => PuzzleReview, (review) => review.votes, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'reviewId' })
   review: PuzzleReview;
 }

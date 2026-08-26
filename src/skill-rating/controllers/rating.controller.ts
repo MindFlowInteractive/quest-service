@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, Logger } from '@nestjs/common';
 import { SkillRatingService } from '../skill-rating.service';
 import { PlayerRating } from '../entities/player-rating.entity';
 import { PlayerRatingDetails } from '../skill-rating.service';
@@ -31,7 +25,10 @@ export class PlayerRatingController {
     @Param('id') targetUserId: string,
     @Query('requestingUserId') requestingUserId?: string,
   ): Promise<PlayerRatingDetails> {
-    return this.skillRatingService.getPublicPlayerRating(targetUserId, requestingUserId);
+    return this.skillRatingService.getPublicPlayerRating(
+      targetUserId,
+      requestingUserId,
+    );
   }
 }
 

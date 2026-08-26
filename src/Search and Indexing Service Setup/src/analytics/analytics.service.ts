@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ElasticsearchService } from "@nestjs/elasticsearch";
-import { INDEX_NAMES } from "../common/constants/index.constants";
-import { randomUUID } from "crypto";
+import { Injectable, Logger } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { INDEX_NAMES } from '../common/constants/index.constants';
+import { randomUUID } from 'crypto';
 
 interface SearchEvent {
   query: string;
@@ -23,7 +23,10 @@ interface AnalyticsQuery {
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
 
-  constructor(private readonly elasticsearchService: ElasticsearchService & Record<string, any>) {}
+  constructor(
+    private readonly elasticsearchService: ElasticsearchService &
+      Record<string, any>,
+  ) {}
 
   async trackSearch(event: SearchEvent): Promise<void> {
     try {
@@ -40,7 +43,7 @@ export class AnalyticsService {
 
       this.logger.debug(`Tracked search: ${event.query} in ${event.index}`);
     } catch (error) {
-      this.logger.error("Failed to track search:", error.message);
+      this.logger.error('Failed to track search:', error.message);
     }
   }
 
@@ -52,7 +55,7 @@ export class AnalyticsService {
         body: {
           script: {
             source:
-              "if (ctx._source.clickedResults == null) { ctx._source.clickedResults = [] } ctx._source.clickedResults.add(params.resultId)",
+              'if (ctx._source.clickedResults == null) { ctx._source.clickedResults = [] } ctx._source.clickedResults.add(params.resultId)',
             params: { resultId },
           },
         },
@@ -60,7 +63,7 @@ export class AnalyticsService {
 
       this.logger.debug(`Tracked click: ${resultId}`);
     } catch (error) {
-      this.logger.error("Failed to track click:", error.message);
+      this.logger.error('Failed to track click:', error.message);
     }
   }
 
@@ -91,16 +94,16 @@ export class AnalyticsService {
           aggs: {
             popular_queries: {
               terms: {
-                field: "query.keyword",
+                field: 'query.keyword',
                 size: 100,
-                order: { _count: "desc" },
+                order: { _count: 'desc' },
               },
               aggs: {
                 avg_results: {
-                  avg: { field: "resultsCount" },
+                  avg: { field: 'resultsCount' },
                 },
                 avg_response_time: {
-                  avg: { field: "responseTime" },
+                  avg: { field: 'responseTime' },
                 },
               },
             },
@@ -117,7 +120,7 @@ export class AnalyticsService {
         }),
       );
     } catch (error) {
-      this.logger.error("Failed to get popular queries:", error.message);
+      this.logger.error('Failed to get popular queries:', error.message);
       return [];
     }
   }
@@ -148,13 +151,13 @@ export class AnalyticsService {
           },
           aggs: {
             total_searches: {
-              value_count: { field: "query.keyword" },
+              value_count: { field: 'query.keyword' },
             },
             avg_results: {
-              avg: { field: "resultsCount" },
+              avg: { field: 'resultsCount' },
             },
             avg_response_time: {
-              avg: { field: "responseTime" },
+              avg: { field: 'responseTime' },
             },
             zero_results: {
               filter: {
@@ -163,13 +166,13 @@ export class AnalyticsService {
             },
             searches_over_time: {
               date_histogram: {
-                field: "timestamp",
-                calendar_interval: "day",
+                field: 'timestamp',
+                calendar_interval: 'day',
               },
             },
             by_index: {
               terms: {
-                field: "index",
+                field: 'index',
                 size: 10,
               },
             },
@@ -200,7 +203,7 @@ export class AnalyticsService {
         })),
       };
     } catch (error) {
-      this.logger.error("Failed to get search metrics:", error.message);
+      this.logger.error('Failed to get search metrics:', error.message);
       return null;
     }
   }
@@ -230,9 +233,9 @@ export class AnalyticsService {
           aggs: {
             failed_queries: {
               terms: {
-                field: "query.keyword",
+                field: 'query.keyword',
                 size: 50,
-                order: { _count: "desc" },
+                order: { _count: 'desc' },
               },
             },
           },
@@ -246,7 +249,7 @@ export class AnalyticsService {
         }),
       );
     } catch (error) {
-      this.logger.error("Failed to get failed searches:", error.message);
+      this.logger.error('Failed to get failed searches:', error.message);
       return [];
     }
   }

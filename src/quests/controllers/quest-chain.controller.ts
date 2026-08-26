@@ -39,26 +39,46 @@ export class QuestChainController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new quest chain' })
-  @ApiResponse({ status: 201, description: 'Quest chain created successfully', type: QuestChain })
+  @ApiResponse({
+    status: 201,
+    description: 'Quest chain created successfully',
+    type: QuestChain,
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiBody({ type: CreateQuestChainDto })
-  async createChain(@Body(ValidationPipe) chainData: CreateQuestChainDto): Promise<QuestChain> {
+  async createChain(
+    @Body(ValidationPipe) chainData: CreateQuestChainDto,
+  ): Promise<QuestChain> {
     return this.questChainService.createChain(chainData);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all quest chains with filtering' })
-  @ApiResponse({ status: 200, description: 'List of quest chains', type: [QuestChain] })
-  @ApiQuery({ name: 'status', required: false, enum: ['active', 'inactive', 'archived', 'all'] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of quest chains',
+    type: [QuestChain],
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['active', 'inactive', 'archived', 'all'],
+  })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
-  async getChains(@Query(ValidationPipe) query: GetQuestChainsDto): Promise<QuestChain[]> {
+  async getChains(
+    @Query(ValidationPipe) query: GetQuestChainsDto,
+  ): Promise<QuestChain[]> {
     return this.questChainService.getChains(query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific quest chain by ID' })
-  @ApiResponse({ status: 200, description: 'Quest chain details', type: QuestChain })
+  @ApiResponse({
+    status: 200,
+    description: 'Quest chain details',
+    type: QuestChain,
+  })
   @ApiResponse({ status: 404, description: 'Quest chain not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
   async getChainById(@Param('id') id: string): Promise<QuestChain> {
@@ -67,7 +87,11 @@ export class QuestChainController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Update a quest chain' })
-  @ApiResponse({ status: 200, description: 'Quest chain updated successfully', type: QuestChain })
+  @ApiResponse({
+    status: 200,
+    description: 'Quest chain updated successfully',
+    type: QuestChain,
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Quest chain not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
@@ -91,7 +115,11 @@ export class QuestChainController {
 
   @Post(':id/puzzles')
   @ApiOperation({ summary: 'Add a puzzle to a quest chain' })
-  @ApiResponse({ status: 201, description: 'Puzzle added to chain successfully', type: QuestChainPuzzle })
+  @ApiResponse({
+    status: 201,
+    description: 'Puzzle added to chain successfully',
+    type: QuestChainPuzzle,
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Quest chain not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
@@ -105,7 +133,10 @@ export class QuestChainController {
 
   @Delete(':id/puzzles/:puzzleId')
   @ApiOperation({ summary: 'Remove a puzzle from a quest chain' })
-  @ApiResponse({ status: 204, description: 'Puzzle removed from chain successfully' })
+  @ApiResponse({
+    status: 204,
+    description: 'Puzzle removed from chain successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Puzzle or quest chain not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
@@ -119,10 +150,16 @@ export class QuestChainController {
 
   @Get(':id/puzzles')
   @ApiOperation({ summary: 'Get all puzzles in a quest chain' })
-  @ApiResponse({ status: 200, description: 'List of puzzles in chain', type: [QuestChainPuzzle] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of puzzles in chain',
+    type: [QuestChainPuzzle],
+  })
   @ApiResponse({ status: 404, description: 'Quest chain not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })
-  async getChainPuzzles(@Param('id') chainId: string): Promise<QuestChainPuzzle[]> {
+  async getChainPuzzles(
+    @Param('id') chainId: string,
+  ): Promise<QuestChainPuzzle[]> {
     return this.questChainService.getChainPuzzles(chainId);
   }
 
@@ -137,7 +174,10 @@ export class QuestChainController {
 
   @Post(':id/reset')
   @ApiOperation({ summary: 'Reset progress for a quest chain' })
-  @ApiResponse({ status: 200, description: 'Chain progress reset successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Chain progress reset successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Quest chain not found' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })

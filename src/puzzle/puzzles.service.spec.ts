@@ -67,15 +67,10 @@ describe('PuzzlesService.search', () => {
       total: 1,
     });
 
-    const result = await service.search(
-      { tags: 'math,algebra' },
-      'user1',
-    );
+    const result = await service.search({ tags: 'math,algebra' }, 'user1');
 
     result.data.forEach((p) => {
-      expect(p.tags).toEqual(
-        expect.arrayContaining(['math', 'algebra']),
-      );
+      expect(p.tags).toEqual(expect.arrayContaining(['math', 'algebra']));
     });
   });
 

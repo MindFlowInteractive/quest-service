@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { PuzzleRating } from '../entities/puzzle-rating.entity';
@@ -18,8 +22,14 @@ export class PuzzleRatingService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async submitRating(userId: string, puzzleId: string, createRatingDto: CreateRatingDto): Promise<PuzzleRating> {
-    const puzzle = await this.puzzleRepository.findOne({ where: { id: puzzleId } });
+  async submitRating(
+    userId: string,
+    puzzleId: string,
+    createRatingDto: CreateRatingDto,
+  ): Promise<PuzzleRating> {
+    const puzzle = await this.puzzleRepository.findOne({
+      where: { id: puzzleId },
+    });
     if (!puzzle) {
       throw new NotFoundException('Puzzle not found');
     }
@@ -58,7 +68,10 @@ export class PuzzleRatingService {
     return savedRating;
   }
 
-  async getPuzzleRating(userId: string, puzzleId: string): Promise<PuzzleRating> {
+  async getPuzzleRating(
+    userId: string,
+    puzzleId: string,
+  ): Promise<PuzzleRating> {
     const rating = await this.ratingRepository.findOne({
       where: { userId, puzzleId },
     });
@@ -81,7 +94,9 @@ export class PuzzleRatingService {
     return aggregate;
   }
 
-  private async updateAggregate(puzzleId: string): Promise<PuzzleRatingAggregate> {
+  private async updateAggregate(
+    puzzleId: string,
+  ): Promise<PuzzleRatingAggregate> {
     // Calculate aggregates using a query builder or raw query for efficiency
     const result = await this.ratingRepository
       .createQueryBuilder('rating')
@@ -124,8 +139,8 @@ export class PuzzleRatingService {
     aggregate.averageRating = averageRating;
     aggregate.totalRatings = totalRatings;
     aggregate.ratingDistribution = distribution;
-    
-    // Also update total reviews count from reviews table if needed, 
+
+    // Also update total reviews count from reviews table if needed,
     // but we can do that in the ReviewService or here if we inject the review repo.
     // For now, let's keep it simple.
 
@@ -133,8 +148,8 @@ export class PuzzleRatingService {
 
     // Also update the denormalized fields on Puzzle entity for quick access
     await this.puzzleRepository.update(puzzleId, {
-        averageRating: averageRating,
-        ratingCount: totalRatings
+      averageRating: averageRating,
+      ratingCount: totalRatings,
     });
 
     return aggregate;

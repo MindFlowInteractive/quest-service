@@ -112,7 +112,10 @@ export class DataExportService {
   /**
    * Get the status of a specific export request.
    */
-  async getExportStatus(exportId: string, userId: string): Promise<DataExportRequest> {
+  async getExportStatus(
+    exportId: string,
+    userId: string,
+  ): Promise<DataExportRequest> {
     const exportRequest = await this.exportRequestRepository.findOne({
       where: { id: exportId, userId },
     });
@@ -157,7 +160,9 @@ export class DataExportService {
     // Read stored zip file
     const filePath = this.buildFilePath(exportId);
     if (!fs.existsSync(filePath)) {
-      throw new NotFoundException('Export file not found. Please request a new export.');
+      throw new NotFoundException(
+        'Export file not found. Please request a new export.',
+      );
     }
 
     const buffer = fs.readFileSync(filePath);
@@ -217,7 +222,10 @@ export class DataExportService {
       });
 
       const userData = await this.gatherUserData(userId);
-      const { filePath, fileSize } = await this.generateZippedExport(exportId, userData);
+      const { filePath, fileSize } = await this.generateZippedExport(
+        exportId,
+        userData,
+      );
 
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + this.exportExpirationHours);
@@ -270,7 +278,7 @@ export class DataExportService {
       'privacy.gather.consentHistory',
     ].map(async (event) => {
       try {
-        const key = event.split('.').pop()!;
+        const key = event.split('.').pop();
         const data = await this.eventEmitter.emitAsync(event, { userId });
         results[key] = data?.[0] ?? null;
       } catch {
@@ -287,7 +295,10 @@ export class DataExportService {
     const skillRatings = results['skillRatings'] ?? [];
     const wallet = results['wallet'] ?? { addresses: [], balanceHistory: [] };
     const friends = results['friends'] ?? { friends: [], friendRequests: [] };
-    const notifications = results['notifications'] ?? { preferences: {}, history: [] };
+    const notifications = results['notifications'] ?? {
+      preferences: {},
+      history: [],
+    };
     const privacySettings = results['privacySettings'] ?? {};
     const consentHistory = results['consentHistory'] ?? [];
 

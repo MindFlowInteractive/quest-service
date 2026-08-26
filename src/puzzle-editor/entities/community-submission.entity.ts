@@ -34,7 +34,15 @@ export class CommunitySubmission {
 
   @Column({
     type: 'enum',
-    enum: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'FEATURED', 'ARCHIVED'],
+    enum: [
+      'DRAFT',
+      'SUBMITTED',
+      'UNDER_REVIEW',
+      'APPROVED',
+      'REJECTED',
+      'FEATURED',
+      'ARCHIVED',
+    ],
     default: 'DRAFT',
   })
   status: string;

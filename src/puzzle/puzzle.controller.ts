@@ -71,17 +71,13 @@ export class PuzzleController {
     }
 
     // mark completion
-    await this.puzzleService.markCompleted(
-      body.puzzleId,
-      body.userAddress,
-    );
+    await this.puzzleService.markCompleted(body.puzzleId, body.userAddress);
 
     // rewards distribution
-    const rewardResult =
-      await this.rewardsService.distributeReward(
-        body.userAddress,
-        100,
-      );
+    const rewardResult = await this.rewardsService.distributeReward(
+      body.userAddress,
+      100,
+    );
 
     // NFT minting
     const nftResult = await this.nftService.mintNFT(

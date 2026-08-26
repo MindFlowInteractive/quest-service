@@ -16,7 +16,7 @@ export function assignToBucket(userId: string, seed: string = ''): number {
     .createHash('md5')
     .update(`${userId}:${seed}`)
     .digest('hex');
-  
+
   return parseInt(hash.substring(0, 8), 16) % 100;
 }
 
@@ -34,7 +34,7 @@ export function shouldIncludeUser(
 ): boolean {
   if (percentage >= 100) return true;
   if (percentage <= 0) return false;
-  
+
   const bucket = assignToBucket(userId, seed);
   return bucket < percentage;
 }
@@ -54,12 +54,12 @@ export function assignToVariant(
   trafficSplitPct: number,
 ): string | null {
   if (trafficSplitPct <= 0) return null;
-  
+
   const bucket = assignToBucket(userId, seed);
-  
+
   // Check if user is outside traffic split
   if (bucket >= trafficSplitPct) return null;
-  
+
   // Assign to variant based on bucket
   const variantIndex = bucket % variants.length;
   return variants[variantIndex];
@@ -80,7 +80,7 @@ export function evaluateFeatureFlag(
 ): boolean {
   if (rolloutPct >= 100) return true;
   if (rolloutPct <= 0) return false;
-  
+
   const bucket = assignToBucket(userId, flagKey);
   return bucket < rolloutPct;
 }

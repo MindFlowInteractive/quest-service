@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { SeasonalEventService } from './services/seasonal-event.service';
 import { EventPuzzleService } from './services/event-puzzle.service';
 import { PlayerEventService } from './services/player-event.service';
@@ -82,7 +86,9 @@ describe('SeasonalEventService', () => {
     eventRepo = mockRepo();
     puzzleRepo = mockRepo();
     rewardRepo = mockRepo();
-    notifService = { createNotificationForUsers: jest.fn().mockResolvedValue(undefined) };
+    notifService = {
+      createNotificationForUsers: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -165,7 +171,11 @@ describe('SeasonalEventService', () => {
         startDate: start,
         endDate: end,
         isRecurring: true,
-        recurrenceConfig: { intervalDays: 7, maxOccurrences: 4, occurrenceCount: 0 },
+        recurrenceConfig: {
+          intervalDays: 7,
+          maxOccurrences: 4,
+          occurrenceCount: 0,
+        },
       });
 
       const arg = eventRepo.create.mock.calls[0][0];
@@ -178,11 +188,15 @@ describe('SeasonalEventService', () => {
 
   describe('handleEventActivation()', () => {
     it('activates published events within their time window', async () => {
-      const event = { ...baseEvent(), isActive: false, isPublished: true } as SeasonalEvent;
+      const event = {
+        ...baseEvent(),
+        isActive: false,
+        isPublished: true,
+      } as SeasonalEvent;
       eventRepo.find
-        .mockResolvedValueOnce([event])   // eventsToActivate
-        .mockResolvedValueOnce([])        // eventsToDeactivate
-        .mockResolvedValueOnce([]);       // eventsToAutoArchive
+        .mockResolvedValueOnce([event]) // eventsToActivate
+        .mockResolvedValueOnce([]) // eventsToDeactivate
+        .mockResolvedValueOnce([]); // eventsToAutoArchive
 
       await service.handleEventActivation();
 
@@ -201,9 +215,9 @@ describe('SeasonalEventService', () => {
     it('deactivates events whose endDate has passed', async () => {
       const event = { ...baseEvent(), isActive: true } as SeasonalEvent;
       eventRepo.find
-        .mockResolvedValueOnce([])      // eventsToActivate
+        .mockResolvedValueOnce([]) // eventsToActivate
         .mockResolvedValueOnce([event]) // eventsToDeactivate
-        .mockResolvedValueOnce([]);     // eventsToAutoArchive
+        .mockResolvedValueOnce([]); // eventsToAutoArchive
 
       await service.handleEventActivation();
 
@@ -212,10 +226,14 @@ describe('SeasonalEventService', () => {
     });
 
     it('auto-archives events ended more than 7 days ago', async () => {
-      const event = { ...baseEvent(), isActive: false, isArchived: false } as SeasonalEvent;
+      const event = {
+        ...baseEvent(),
+        isActive: false,
+        isArchived: false,
+      } as SeasonalEvent;
       eventRepo.find
-        .mockResolvedValueOnce([])      // eventsToActivate
-        .mockResolvedValueOnce([])      // eventsToDeactivate
+        .mockResolvedValueOnce([]) // eventsToActivate
+        .mockResolvedValueOnce([]) // eventsToDeactivate
         .mockResolvedValueOnce([event]); // eventsToAutoArchive
 
       await service.handleEventActivation();
@@ -230,13 +248,17 @@ describe('SeasonalEventService', () => {
   describe('handleRecurringEvents()', () => {
     it('clones a recurring event template when max occurrences not reached and window is in the past', async () => {
       const pastStart = new Date(Date.now() - 14 * 86400000); // 14 days ago
-      const pastEnd   = new Date(Date.now() - 7 * 86400000);  // 7 days ago (ended)
+      const pastEnd = new Date(Date.now() - 7 * 86400000); // 7 days ago (ended)
       const template = {
         ...baseEvent(),
         startDate: pastStart,
         endDate: pastEnd,
         isRecurring: true,
-        recurrenceConfig: { intervalDays: 7, maxOccurrences: 3, occurrenceCount: 1 },
+        recurrenceConfig: {
+          intervalDays: 7,
+          maxOccurrences: 3,
+          occurrenceCount: 1,
+        },
         puzzles: [{ ...basePuzzle(), id: 'p1' }],
         rewards: [],
       } as any;
@@ -246,8 +268,8 @@ describe('SeasonalEventService', () => {
       puzzleRepo.save.mockResolvedValueOnce({ id: 'p2' });
       eventRepo.create.mockImplementationOnce((d) => d);
       eventRepo.save
-        .mockResolvedValueOnce({ id: 'new-event-id' })  // new event
-        .mockResolvedValueOnce(template);                // updated template
+        .mockResolvedValueOnce({ id: 'new-event-id' }) // new event
+        .mockResolvedValueOnce(template); // updated template
 
       await service.handleRecurringEvents();
 
@@ -259,19 +281,25 @@ describe('SeasonalEventService', () => {
       // puzzle cloned
       expect(puzzleRepo.save).toHaveBeenCalledTimes(1);
       // template dates advanced by intervalDays
-      expect(template.startDate.getTime()).toBe(pastStart.getTime() + 7 * 86400000);
+      expect(template.startDate.getTime()).toBe(
+        pastStart.getTime() + 7 * 86400000,
+      );
       expect(template.endDate.getTime()).toBe(pastEnd.getTime() + 7 * 86400000);
     });
 
     it('skips spawning when next window start is still in the future', async () => {
       const futureStart = new Date(Date.now() + 86400000); // starts tomorrow
-      const futureEnd   = new Date(Date.now() + 7 * 86400000);
+      const futureEnd = new Date(Date.now() + 7 * 86400000);
       const template = {
         ...baseEvent(),
         startDate: futureStart,
         endDate: futureEnd,
         isRecurring: true,
-        recurrenceConfig: { intervalDays: 7, maxOccurrences: 3, occurrenceCount: 0 },
+        recurrenceConfig: {
+          intervalDays: 7,
+          maxOccurrences: 3,
+          occurrenceCount: 0,
+        },
         puzzles: [],
         rewards: [],
       } as any;
@@ -290,7 +318,11 @@ describe('SeasonalEventService', () => {
         startDate: new Date(Date.now() - 14 * 86400000),
         endDate: new Date(Date.now() - 7 * 86400000),
         isRecurring: true,
-        recurrenceConfig: { intervalDays: 7, maxOccurrences: 2, occurrenceCount: 2 },
+        recurrenceConfig: {
+          intervalDays: 7,
+          maxOccurrences: 2,
+          occurrenceCount: 2,
+        },
         puzzles: [],
         rewards: [],
       } as any;
@@ -303,7 +335,13 @@ describe('SeasonalEventService', () => {
     });
 
     it('skips event with null/missing recurrenceConfig', async () => {
-      const template = { ...baseEvent(), isRecurring: true, recurrenceConfig: null, puzzles: [], rewards: [] } as any;
+      const template = {
+        ...baseEvent(),
+        isRecurring: true,
+        recurrenceConfig: null,
+        puzzles: [],
+        rewards: [],
+      } as any;
       eventRepo.find.mockResolvedValueOnce([template]);
 
       await service.handleRecurringEvents();
@@ -313,7 +351,7 @@ describe('SeasonalEventService', () => {
 
     it('treats undefined occurrenceCount as 0 (no NaN)', async () => {
       const pastStart = new Date(Date.now() - 14 * 86400000);
-      const pastEnd   = new Date(Date.now() - 7 * 86400000);
+      const pastEnd = new Date(Date.now() - 7 * 86400000);
       const template = {
         ...baseEvent(),
         startDate: pastStart,
@@ -340,7 +378,11 @@ describe('SeasonalEventService', () => {
 
   describe('archiveEvent()', () => {
     it('sets isArchived and archivedAt, deactivates the event', async () => {
-      const event = { ...baseEvent(), isActive: true, isArchived: false } as SeasonalEvent;
+      const event = {
+        ...baseEvent(),
+        isActive: true,
+        isArchived: false,
+      } as SeasonalEvent;
       eventRepo.findOne.mockResolvedValueOnce(event);
       eventRepo.save.mockResolvedValueOnce({ ...event, isArchived: true });
 
@@ -353,7 +395,9 @@ describe('SeasonalEventService', () => {
 
     it('throws NotFoundException when event does not exist', async () => {
       eventRepo.findOne.mockResolvedValueOnce(null);
-      await expect(service.archiveEvent('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.archiveEvent('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -361,7 +405,9 @@ describe('SeasonalEventService', () => {
 
   describe('findArchivedEvents()', () => {
     it('returns only archived events ordered by archivedAt DESC', async () => {
-      const archived = [{ ...baseEvent(), isArchived: true, archivedAt: new Date() }];
+      const archived = [
+        { ...baseEvent(), isArchived: true, archivedAt: new Date() },
+      ];
       eventRepo.find.mockResolvedValueOnce(archived);
 
       const result = await service.findArchivedEvents();
@@ -381,7 +427,9 @@ describe('SeasonalEventService', () => {
       await service.findPastEvents(5);
 
       expect(eventRepo.find).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ isArchived: false }) }),
+        expect.objectContaining({
+          where: expect.objectContaining({ isArchived: false }),
+        }),
       );
     });
   });
@@ -411,7 +459,9 @@ describe('SeasonalEventService', () => {
 
     it('does not throw when notification service fails', async () => {
       const event = baseEvent() as SeasonalEvent;
-      notifService.createNotificationForUsers.mockRejectedValueOnce(new Error('notif error'));
+      notifService.createNotificationForUsers.mockRejectedValueOnce(
+        new Error('notif error'),
+      );
 
       await expect(service.announceEvent(event)).resolves.not.toThrow();
     });
@@ -438,7 +488,13 @@ describe('SeasonalEventService', () => {
     });
 
     it('returns 0 completionRate when no participants', async () => {
-      const event = { ...baseEvent(), participantCount: 0, totalPuzzlesCompleted: 0, puzzles: [], playerEvents: [] } as any;
+      const event = {
+        ...baseEvent(),
+        participantCount: 0,
+        totalPuzzlesCompleted: 0,
+        puzzles: [],
+        playerEvents: [],
+      } as any;
       eventRepo.findOne.mockResolvedValueOnce(event);
 
       const { stats } = await service.getEventStatistics('event-1');
@@ -480,7 +536,9 @@ describe('EventPuzzleService', () => {
       const inactiveEvent = { ...baseEvent(), isActive: false };
       eventRepo.findOne.mockResolvedValueOnce(inactiveEvent);
 
-      await expect(service.findPuzzlesByEvent('event-1')).rejects.toThrow(NotFoundException);
+      await expect(service.findPuzzlesByEvent('event-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns active puzzles for an active event', async () => {
@@ -500,13 +558,17 @@ describe('EventPuzzleService', () => {
       const puzzle = { ...basePuzzle(), event: { isActive: false } };
       puzzleRepo.findOne.mockResolvedValueOnce(puzzle);
 
-      await expect(service.findOne('puzzle-1')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('puzzle-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when puzzle does not exist', async () => {
       puzzleRepo.findOne.mockResolvedValueOnce(null);
 
-      await expect(service.findOne('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns puzzle when event is active', async () => {
@@ -642,11 +704,17 @@ describe('PlayerEventService', () => {
     });
 
     it('throws BadRequestException when puzzle already completed', async () => {
-      const playerEvent = { ...makePlayerEvent(), completedPuzzles: ['puzzle-1'] };
+      const playerEvent = {
+        ...makePlayerEvent(),
+        completedPuzzles: ['puzzle-1'],
+      };
       playerEventRepo.findOne.mockResolvedValueOnce(playerEvent);
 
       await expect(
-        service.submitAnswer('player-1', 'event-1', { puzzleId: 'puzzle-1', answer: '4' }),
+        service.submitAnswer('player-1', 'event-1', {
+          puzzleId: 'puzzle-1',
+          answer: '4',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -697,7 +765,14 @@ describe('PlayerEventService', () => {
 
   describe('getPlayerRank()', () => {
     it('calculates rank and percentile correctly', async () => {
-      const myPlayerEvent = { id: 'pe-2', playerId: 'p2', eventId: 'e1', score: 200, puzzlesCompleted: 2, event: {} };
+      const myPlayerEvent = {
+        id: 'pe-2',
+        playerId: 'p2',
+        eventId: 'e1',
+        score: 200,
+        puzzlesCompleted: 2,
+        event: {},
+      };
       // simulate 3 participants: p1 (300), p2 (200), p3 (100)
       const allPlayerEvents = [
         { id: 'pe-1', score: 300, puzzlesCompleted: 5 },
@@ -748,8 +823,24 @@ describe('LeaderboardService', () => {
   describe('getEventLeaderboard()', () => {
     it('returns entries ranked by score DESC', async () => {
       const entries = [
-        { id: 'pe-1', playerId: 'p1', score: 300, puzzlesCompleted: 5, currentStreak: 3, bestStreak: 5, lastActivityAt: new Date() },
-        { id: 'pe-2', playerId: 'p2', score: 200, puzzlesCompleted: 3, currentStreak: 1, bestStreak: 3, lastActivityAt: new Date() },
+        {
+          id: 'pe-1',
+          playerId: 'p1',
+          score: 300,
+          puzzlesCompleted: 5,
+          currentStreak: 3,
+          bestStreak: 5,
+          lastActivityAt: new Date(),
+        },
+        {
+          id: 'pe-2',
+          playerId: 'p2',
+          score: 200,
+          puzzlesCompleted: 3,
+          currentStreak: 1,
+          bestStreak: 3,
+          lastActivityAt: new Date(),
+        },
       ];
       eventRepo.findOne.mockResolvedValueOnce(baseEvent());
       playerEventRepo.find.mockResolvedValueOnce(entries);
@@ -788,7 +879,9 @@ describe('SeasonalEventService — handleEventEnd()', () => {
     puzzleRepo = mockRepo();
     rewardRepo = mockRepo();
     playerEventRepo = mockRepo();
-    notifService = { createNotificationForUsers: jest.fn().mockResolvedValue(undefined) };
+    notifService = {
+      createNotificationForUsers: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -814,15 +907,49 @@ describe('SeasonalEventService — handleEventEnd()', () => {
   });
 
   it('archives leaderboard snapshot and distributes badge to top-3 winners', async () => {
-    const event = { ...baseEvent(), endRewardsDistributed: false, leaderboardSnapshot: null } as any;
+    const event = {
+      ...baseEvent(),
+      endRewardsDistributed: false,
+      leaderboardSnapshot: null,
+    } as any;
 
     const participants = [
-      { id: 'pe-1', playerId: 'p1', eventId: 'event-1', score: 300, puzzlesCompleted: 5, lastActivityAt: new Date(), rewards: [] },
-      { id: 'pe-2', playerId: 'p2', eventId: 'event-1', score: 200, puzzlesCompleted: 3, lastActivityAt: new Date(), rewards: [] },
-      { id: 'pe-3', playerId: 'p3', eventId: 'event-1', score: 100, puzzlesCompleted: 1, lastActivityAt: new Date(), rewards: [] },
+      {
+        id: 'pe-1',
+        playerId: 'p1',
+        eventId: 'event-1',
+        score: 300,
+        puzzlesCompleted: 5,
+        lastActivityAt: new Date(),
+        rewards: [],
+      },
+      {
+        id: 'pe-2',
+        playerId: 'p2',
+        eventId: 'event-1',
+        score: 200,
+        puzzlesCompleted: 3,
+        lastActivityAt: new Date(),
+        rewards: [],
+      },
+      {
+        id: 'pe-3',
+        playerId: 'p3',
+        eventId: 'event-1',
+        score: 100,
+        puzzlesCompleted: 1,
+        lastActivityAt: new Date(),
+        rewards: [],
+      },
     ];
 
-    const badge = { id: 'badge-1', name: 'Champion', type: 'badge', isActive: true, requiredScore: 0 };
+    const badge = {
+      id: 'badge-1',
+      name: 'Champion',
+      type: 'badge',
+      isActive: true,
+      requiredScore: 0,
+    };
 
     playerEventRepo.find.mockResolvedValueOnce(participants);
     rewardRepo.find.mockResolvedValueOnce([badge]);
@@ -834,7 +961,11 @@ describe('SeasonalEventService — handleEventEnd()', () => {
 
     // Leaderboard snapshot stored
     expect(event.leaderboardSnapshot).toHaveLength(3);
-    expect(event.leaderboardSnapshot[0]).toMatchObject({ rank: 1, playerId: 'p1', score: 300 });
+    expect(event.leaderboardSnapshot[0]).toMatchObject({
+      rank: 1,
+      playerId: 'p1',
+      score: 300,
+    });
 
     // Rewards distributed to all 3 participants
     expect(playerEventRepo.save).toHaveBeenCalledTimes(3);
@@ -857,14 +988,30 @@ describe('SeasonalEventService — handleEventEnd()', () => {
 
   it('does not re-award badge if winner already has it', async () => {
     const event = { ...baseEvent(), endRewardsDistributed: false } as any;
-    const badge = { id: 'badge-1', name: 'Champion', type: 'badge', isActive: true };
+    const badge = {
+      id: 'badge-1',
+      name: 'Champion',
+      type: 'badge',
+      isActive: true,
+    };
 
     const participants = [
       {
-        id: 'pe-1', playerId: 'p1', eventId: 'event-1', score: 300, puzzlesCompleted: 5,
+        id: 'pe-1',
+        playerId: 'p1',
+        eventId: 'event-1',
+        score: 300,
+        puzzlesCompleted: 5,
         lastActivityAt: new Date(),
         // already has the badge
-        rewards: [{ rewardId: 'badge-1', rewardName: 'Champion', rewardType: 'badge', earnedAt: new Date() }],
+        rewards: [
+          {
+            rewardId: 'badge-1',
+            rewardName: 'Champion',
+            rewardType: 'badge',
+            earnedAt: new Date(),
+          },
+        ],
       },
     ];
 
@@ -883,7 +1030,15 @@ describe('SeasonalEventService — handleEventEnd()', () => {
   it('handles events with no cosmetic rewards gracefully (no crash)', async () => {
     const event = { ...baseEvent(), endRewardsDistributed: false } as any;
     const participants = [
-      { id: 'pe-1', playerId: 'p1', eventId: 'event-1', score: 150, puzzlesCompleted: 2, lastActivityAt: new Date(), rewards: [] },
+      {
+        id: 'pe-1',
+        playerId: 'p1',
+        eventId: 'event-1',
+        score: 150,
+        puzzlesCompleted: 2,
+        lastActivityAt: new Date(),
+        rewards: [],
+      },
     ];
 
     playerEventRepo.find.mockResolvedValueOnce(participants);
@@ -939,12 +1094,27 @@ describe('PlayerEventService — EventParticipation badge on first join', () => 
 
   it('grants EventParticipation badge on first join when badge exists', async () => {
     const activeEvent = { ...baseEvent(), isActive: true };
-    const badge = { id: 'badge-ep', name: 'EventParticipation', type: 'badge', isActive: true };
+    const badge = {
+      id: 'badge-ep',
+      name: 'EventParticipation',
+      type: 'badge',
+      isActive: true,
+    };
     const newPlayerEvent: any = {
-      id: 'pe-new', playerId: 'p1', eventId: 'event-1', rewards: [],
-      score: 0, completedPuzzles: [], puzzlesCompleted: 0, totalAttempts: 0,
-      correctAnswers: 0, hintsUsed: 0, currentStreak: 0, bestStreak: 0,
-      averageCompletionTime: 0, statistics: {},
+      id: 'pe-new',
+      playerId: 'p1',
+      eventId: 'event-1',
+      rewards: [],
+      score: 0,
+      completedPuzzles: [],
+      puzzlesCompleted: 0,
+      totalAttempts: 0,
+      correctAnswers: 0,
+      hintsUsed: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      averageCompletionTime: 0,
+      statistics: {},
     };
 
     // first findOne: no existing PlayerEvent → create new
@@ -957,22 +1127,36 @@ describe('PlayerEventService — EventParticipation badge on first join', () => 
     // EventParticipation badge lookup
     rewardRepo.findOne.mockResolvedValueOnce(badge);
     // badge not yet on player rewards (rewards: []) — grant it
-    playerEventRepo.save.mockResolvedValueOnce({ ...newPlayerEvent, rewards: [{ rewardId: badge.id }] });
+    playerEventRepo.save.mockResolvedValueOnce({
+      ...newPlayerEvent,
+      rewards: [{ rewardId: badge.id }],
+    });
     rewardRepo.increment.mockResolvedValue(undefined);
 
     const result = await service.getOrCreatePlayerEvent('p1', 'event-1');
 
     expect(rewardRepo.findOne).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ name: 'EventParticipation' }) }),
+      expect.objectContaining({
+        where: expect.objectContaining({ name: 'EventParticipation' }),
+      }),
     );
     expect(playerEventRepo.save).toHaveBeenCalledTimes(2); // once for create, once for badge
-    expect(rewardRepo.increment).toHaveBeenCalledWith({ id: badge.id }, 'claimedCount', 1);
+    expect(rewardRepo.increment).toHaveBeenCalledWith(
+      { id: badge.id },
+      'claimedCount',
+      1,
+    );
   });
 
   it('does not grant badge on subsequent joins (player already has PlayerEvent record)', async () => {
     const existingPlayerEvent = {
-      id: 'pe-1', playerId: 'p1', eventId: 'event-1', rewards: [],
-      score: 50, completedPuzzles: [], puzzlesCompleted: 1,
+      id: 'pe-1',
+      playerId: 'p1',
+      eventId: 'event-1',
+      rewards: [],
+      score: 50,
+      completedPuzzles: [],
+      puzzlesCompleted: 1,
     };
 
     // Already has a record — skip create path entirely
@@ -1009,15 +1193,22 @@ describe('EventPuzzleService — 404 outside event window', () => {
   });
 
   it('throws NotFoundException (404) — not ForbiddenException — for inactive event puzzles list', async () => {
-    eventRepo.findOne.mockResolvedValueOnce({ ...baseEvent(), isActive: false });
+    eventRepo.findOne.mockResolvedValueOnce({
+      ...baseEvent(),
+      isActive: false,
+    });
 
-    await expect(service.findPuzzlesByEvent('event-1')).rejects.toThrow(NotFoundException);
+    await expect(service.findPuzzlesByEvent('event-1')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it('throws NotFoundException (404) — not ForbiddenException — for individual puzzle in inactive event', async () => {
     const puzzle = { ...basePuzzle(), event: { isActive: false } };
     puzzleRepo.findOne.mockResolvedValueOnce(puzzle);
 
-    await expect(service.findOne('puzzle-1')).rejects.toThrow(NotFoundException);
+    await expect(service.findOne('puzzle-1')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });

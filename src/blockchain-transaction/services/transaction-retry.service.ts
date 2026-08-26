@@ -29,9 +29,14 @@ export class TransactionRetryService {
   ) {
     this.retryConfig = {
       maxRetries: parseInt(process.env.TX_MAX_RETRIES || '3', 10),
-      initialDelayMs: parseInt(process.env.TX_RETRY_INITIAL_DELAY_MS || '5000', 10),
+      initialDelayMs: parseInt(
+        process.env.TX_RETRY_INITIAL_DELAY_MS || '5000',
+        10,
+      ),
       maxDelayMs: parseInt(process.env.TX_RETRY_MAX_DELAY_MS || '300000', 10),
-      backoffMultiplier: parseFloat(process.env.TX_RETRY_BACKOFF_MULTIPLIER || '2'),
+      backoffMultiplier: parseFloat(
+        process.env.TX_RETRY_BACKOFF_MULTIPLIER || '2',
+      ),
     };
   }
 
@@ -44,7 +49,7 @@ export class TransactionRetryService {
 
     try {
       const now = new Date();
-      
+
       // Find failed transactions that are ready for retry
       const failedTxs = await this.transactionRepository.find({
         where: {
@@ -69,7 +74,11 @@ export class TransactionRetryService {
    */
   async retryTransaction(transaction: BlockchainTransaction): Promise<void> {
     try {
-      this.logger.log(`Retrying transaction ${transaction.transactionHash} (attempt ${transaction.retryCount + 1})`);
+      this.logger.log(
+        `Retrying transaction ${transaction.transactionHash} (attempt ${
+          transaction.retryCount + 1
+        })`,
+      );
 
       // Update status to retrying
       transaction.status = TransactionStatus.RETRYING;
@@ -84,7 +93,9 @@ export class TransactionRetryService {
       });
 
       // Check transaction status on the network
-      const horizonTx = await this.horizonApiService.getTransaction(transaction.transactionHash);
+      const horizonTx = await this.horizonApiService.getTransaction(
+        transaction.transactionHash,
+      );
 
       if (horizonTx) {
         // Transaction exists on network - update status accordingly
@@ -93,65 +104,83 @@ export class TransactionRetryService {
           transaction.confirmedAt = new Date(horizonTx.created_at);
           transaction.ledgerSequence = horizonTx.ledger;
           transaction.lastError = null;
-          
-          this.logger.log(`Transaction ${transaction.transactionHash} confirmed on retry`);
+
+          this.logger.log(
+            `Transaction ${transaction.transactionHash} confirmed on retry`,
+          );
         } else {
           // Transaction failed on network
           transaction.retryCount++;
-          
+
           if (transaction.retryCount >= this.retryConfig.maxRetries) {
             transaction.status = TransactionStatus.FAILED;
-            transaction.lastError = 'Transaction failed on network after max retries';
+            transaction.lastError =
+              'Transaction failed on network after max retries';
             transaction.failedAt = new Date();
-            
-            this.logger.warn(`Transaction ${transaction.transactionHash} failed after max retries`);
-            
+
+            this.logger.warn(
+              `Transaction ${transaction.transactionHash} failed after max retries`,
+            );
+
             // Emit failure notification
             this.emitFailureNotification(transaction);
           } else {
             // Schedule next retry
             transaction.status = TransactionStatus.FAILED;
-            transaction.nextRetryAt = this.calculateNextRetryTime(transaction.retryCount);
+            transaction.nextRetryAt = this.calculateNextRetryTime(
+              transaction.retryCount,
+            );
             transaction.lastError = `Transaction failed on network, will retry (${transaction.retryCount}/${this.retryConfig.maxRetries})`;
           }
         }
       } else {
         // Transaction not found on network - might not have been submitted
         transaction.retryCount++;
-        
+
         if (transaction.retryCount >= this.retryConfig.maxRetries) {
           transaction.status = TransactionStatus.FAILED;
-          transaction.lastError = 'Transaction not found on network after max retries';
+          transaction.lastError =
+            'Transaction not found on network after max retries';
           transaction.failedAt = new Date();
-          
-          this.logger.warn(`Transaction ${transaction.transactionHash} not found after max retries`);
-          
+
+          this.logger.warn(
+            `Transaction ${transaction.transactionHash} not found after max retries`,
+          );
+
           this.emitFailureNotification(transaction);
         } else {
           transaction.status = TransactionStatus.FAILED;
-          transaction.nextRetryAt = this.calculateNextRetryTime(transaction.retryCount);
+          transaction.nextRetryAt = this.calculateNextRetryTime(
+            transaction.retryCount,
+          );
           transaction.lastError = `Transaction not found on network, will retry (${transaction.retryCount}/${this.retryConfig.maxRetries})`;
         }
       }
 
       await this.transactionRepository.save(transaction);
-
     } catch (error) {
-      this.logger.error(`Error retrying transaction ${transaction.transactionHash}:`, error);
-      
+      this.logger.error(
+        `Error retrying transaction ${transaction.transactionHash}:`,
+        error,
+      );
+
       // Update transaction with error
       transaction.retryCount++;
-      transaction.lastError = `Retry error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      
+      transaction.lastError = `Retry error: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`;
+
       if (transaction.retryCount >= this.retryConfig.maxRetries) {
         transaction.status = TransactionStatus.FAILED;
         transaction.failedAt = new Date();
         this.emitFailureNotification(transaction);
       } else {
         transaction.status = TransactionStatus.FAILED;
-        transaction.nextRetryAt = this.calculateNextRetryTime(transaction.retryCount);
+        transaction.nextRetryAt = this.calculateNextRetryTime(
+          transaction.retryCount,
+        );
       }
-      
+
       await this.transactionRepository.save(transaction);
     }
   }
@@ -159,19 +188,27 @@ export class TransactionRetryService {
   /**
    * Manually retry a transaction by hash
    */
-  async manualRetry(transactionHash: string): Promise<BlockchainTransaction | null> {
+  async manualRetry(
+    transactionHash: string,
+  ): Promise<BlockchainTransaction | null> {
     const transaction = await this.transactionRepository.findOne({
       where: { transactionHash },
     });
 
     if (!transaction) {
-      this.logger.warn(`Transaction ${transactionHash} not found for manual retry`);
+      this.logger.warn(
+        `Transaction ${transactionHash} not found for manual retry`,
+      );
       return null;
     }
 
-    if (transaction.status !== TransactionStatus.FAILED && 
-        transaction.status !== TransactionStatus.CANCELLED) {
-      this.logger.warn(`Transaction ${transactionHash} cannot be retried (status: ${transaction.status})`);
+    if (
+      transaction.status !== TransactionStatus.FAILED &&
+      transaction.status !== TransactionStatus.CANCELLED
+    ) {
+      this.logger.warn(
+        `Transaction ${transactionHash} cannot be retried (status: ${transaction.status})`,
+      );
       return transaction;
     }
 
@@ -179,39 +216,45 @@ export class TransactionRetryService {
     transaction.retryCount = 0;
     transaction.nextRetryAt = new Date();
     transaction.lastError = null;
-    
+
     await this.transactionRepository.save(transaction);
     await this.retryTransaction(transaction);
-    
+
     return transaction;
   }
 
   /**
    * Cancel a transaction (stop retrying)
    */
-  async cancelTransaction(transactionHash: string): Promise<BlockchainTransaction | null> {
+  async cancelTransaction(
+    transactionHash: string,
+  ): Promise<BlockchainTransaction | null> {
     const transaction = await this.transactionRepository.findOne({
       where: { transactionHash },
     });
 
     if (!transaction) {
-      this.logger.warn(`Transaction ${transactionHash} not found for cancellation`);
+      this.logger.warn(
+        `Transaction ${transactionHash} not found for cancellation`,
+      );
       return null;
     }
 
     if (transaction.status === TransactionStatus.CONFIRMED) {
-      this.logger.warn(`Cannot cancel confirmed transaction ${transactionHash}`);
+      this.logger.warn(
+        `Cannot cancel confirmed transaction ${transactionHash}`,
+      );
       return transaction;
     }
 
     transaction.status = TransactionStatus.CANCELLED;
     transaction.lastError = 'Transaction cancelled by user/system';
     transaction.cancelledAt = new Date();
-    
+
     await this.transactionRepository.save(transaction);
-    
+
     this.logger.log(`Transaction ${transactionHash} cancelled`);
-    
+
     return transaction;
   }
 
@@ -220,14 +263,15 @@ export class TransactionRetryService {
    */
   private calculateNextRetryTime(retryCount: number): Date {
     const delay = Math.min(
-      this.retryConfig.initialDelayMs * Math.pow(this.retryConfig.backoffMultiplier, retryCount),
-      this.retryConfig.maxDelayMs
+      this.retryConfig.initialDelayMs *
+        Math.pow(this.retryConfig.backoffMultiplier, retryCount),
+      this.retryConfig.maxDelayMs,
     );
-    
+
     // Add jitter (±20%)
     const jitter = delay * 0.2 * (Math.random() * 2 - 1);
     const finalDelay = delay + jitter;
-    
+
     return new Date(Date.now() + finalDelay);
   }
 
@@ -259,16 +303,18 @@ export class TransactionRetryService {
     });
 
     const pendingRetry = failedTxs.filter(
-      tx => tx.retryCount < this.retryConfig.maxRetries
+      (tx) => tx.retryCount < this.retryConfig.maxRetries,
     ).length;
 
     const maxRetriesReached = failedTxs.filter(
-      tx => tx.retryCount >= this.retryConfig.maxRetries
+      (tx) => tx.retryCount >= this.retryConfig.maxRetries,
     ).length;
 
-    const averageRetryCount = failedTxs.length > 0
-      ? failedTxs.reduce((sum, tx) => sum + tx.retryCount, 0) / failedTxs.length
-      : 0;
+    const averageRetryCount =
+      failedTxs.length > 0
+        ? failedTxs.reduce((sum, tx) => sum + tx.retryCount, 0) /
+          failedTxs.length
+        : 0;
 
     return {
       totalFailed: failedTxs.length,

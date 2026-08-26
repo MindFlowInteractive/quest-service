@@ -18,27 +18,32 @@ export class PuzzleSessionAnalyticsService {
     const events = await this.eventRepository.find({ where: { sessionId } });
     const players = await this.playerRepository.find({ where: { sessionId } });
 
-    const created = events.find(e => e.type === PuzzleSessionEventType.SESSION_CREATED);
-    const completed = events.find(e => e.type === PuzzleSessionEventType.PUZZLE_COMPLETED);
+    const created = events.find(
+      (e) => e.type === PuzzleSessionEventType.SESSION_CREATED,
+    );
+    const completed = events.find(
+      (e) => e.type === PuzzleSessionEventType.PUZZLE_COMPLETED,
+    );
 
     return {
       sessionId,
       playerCount: players.length,
       peakPlayers: Math.min(
         players.length,
-        events.filter(e => e.type === PuzzleSessionEventType.PLAYER_JOINED).length,
+        events.filter((e) => e.type === PuzzleSessionEventType.PLAYER_JOINED)
+          .length,
       ),
       solutionsSubmitted: events.filter(
-        e => e.type === PuzzleSessionEventType.SOLUTION_SUBMITTED,
+        (e) => e.type === PuzzleSessionEventType.SOLUTION_SUBMITTED,
       ).length,
       partialSolutions: events.filter(
-        e => e.type === PuzzleSessionEventType.PARTIAL_SOLUTION_UPDATED,
+        (e) => e.type === PuzzleSessionEventType.PARTIAL_SOLUTION_UPDATED,
       ).length,
       disconnects: events.filter(
-        e => e.type === PuzzleSessionEventType.PLAYER_DISCONNECTED,
+        (e) => e.type === PuzzleSessionEventType.PLAYER_DISCONNECTED,
       ).length,
       reconnects: events.filter(
-        e => e.type === PuzzleSessionEventType.PLAYER_RECONNECTED,
+        (e) => e.type === PuzzleSessionEventType.PLAYER_RECONNECTED,
       ).length,
       completed: Boolean(completed),
       durationSeconds:
@@ -46,7 +51,8 @@ export class PuzzleSessionAnalyticsService {
           ? Math.max(
               0,
               Math.floor(
-                (completed.createdAt.getTime() - created.createdAt.getTime()) / 1000,
+                (completed.createdAt.getTime() - created.createdAt.getTime()) /
+                  1000,
               ),
             )
           : null,

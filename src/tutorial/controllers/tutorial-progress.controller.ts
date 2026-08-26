@@ -46,7 +46,9 @@ export class TutorialProgressController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Param('tutorialId', ParseUUIDPipe) tutorialId: string,
   ) {
-    this.logger.log(`Fetching progress for user ${userId} on tutorial ${tutorialId}`);
+    this.logger.log(
+      `Fetching progress for user ${userId} on tutorial ${tutorialId}`,
+    );
     return this.progressService.getUserProgress(userId, tutorialId);
   }
 
@@ -96,7 +98,9 @@ export class TutorialProgressController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Body() dto: SaveCheckpointDto,
   ) {
-    this.logger.log(`Saving checkpoint for user ${userId} on tutorial ${dto.tutorialId}`);
+    this.logger.log(
+      `Saving checkpoint for user ${userId} on tutorial ${dto.tutorialId}`,
+    );
     await this.progressService.saveCheckpoint(userId, dto);
     return { message: 'Checkpoint saved successfully' };
   }
@@ -107,7 +111,9 @@ export class TutorialProgressController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Param('tutorialId', ParseUUIDPipe) tutorialId: string,
   ) {
-    this.logger.log(`Getting next step for user ${userId} on tutorial ${tutorialId}`);
+    this.logger.log(
+      `Getting next step for user ${userId} on tutorial ${tutorialId}`,
+    );
     return this.progressService.getNextStep(userId, tutorialId);
   }
 
@@ -117,7 +123,9 @@ export class TutorialProgressController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Param('tutorialId', ParseUUIDPipe) tutorialId: string,
   ) {
-    this.logger.log(`Getting adaptive state for user ${userId} on tutorial ${tutorialId}`);
+    this.logger.log(
+      `Getting adaptive state for user ${userId} on tutorial ${tutorialId}`,
+    );
     return this.progressService.getAdaptiveState(userId, tutorialId);
   }
 

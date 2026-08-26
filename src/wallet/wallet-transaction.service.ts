@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual } from 'typeorm';
-import { WalletTransaction, WalletTransactionType } from './entities/wallet-transaction.entity';
+import {
+  WalletTransaction,
+  WalletTransactionType,
+} from './entities/wallet-transaction.entity';
 
 export interface TransactionFilter {
   type?: WalletTransactionType;
@@ -101,7 +104,7 @@ export class WalletTransactionService {
       if (!summaryMap.has(tx.token)) {
         summaryMap.set(tx.token, { received: 0, spent: 0 });
       }
-      const tokenSummary = summaryMap.get(tx.token)!;
+      const tokenSummary = summaryMap.get(tx.token);
 
       // For rewards, purchases, stakes: received
       // For unstakes, swaps: depends on direction, but simplify
@@ -134,7 +137,9 @@ export class WalletTransactionService {
       if (parsed) {
         try {
           await this.createTransaction(parsed);
-          this.logger.log(`Synced transaction ${txHash} for wallet ${walletAddress}`);
+          this.logger.log(
+            `Synced transaction ${txHash} for wallet ${walletAddress}`,
+          );
         } catch (error) {
           this.logger.error(`Failed to sync transaction ${txHash}:`, error);
         }
@@ -168,10 +173,14 @@ export class WalletTransactionService {
     let token: string;
     let counterparty: string | undefined;
 
-    if (operation.type === 'payment' || operation.type?.startsWith('path_payment')) {
+    if (
+      operation.type === 'payment' ||
+      operation.type?.startsWith('path_payment')
+    ) {
       amount = operation.amount;
       token = operation.asset_type === 'native' ? 'XLM' : operation.asset_code;
-      counterparty = operation.from === walletAddress ? operation.to : operation.from;
+      counterparty =
+        operation.from === walletAddress ? operation.to : operation.from;
 
       // Determine type based on context - this is simplified
       // In reality, you'd need more logic to determine if it's reward, purchase, etc.

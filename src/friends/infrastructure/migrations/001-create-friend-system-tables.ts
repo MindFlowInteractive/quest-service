@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
-export class CreateFriendSystemTables1676500000000 implements MigrationInterface {
+export class CreateFriendSystemTables1676500000000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create friendships table (double-row storage)
     await queryRunner.createTable(

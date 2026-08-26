@@ -6,7 +6,10 @@ import {
   BlockchainTransaction,
   TransactionStatus,
 } from '../entities/blockchain-transaction.entity';
-import { TransactionEvent, TransactionAlert } from '../interfaces/transaction-event.interface';
+import {
+  TransactionEvent,
+  TransactionAlert,
+} from '../interfaces/transaction-event.interface';
 
 @Injectable()
 export class TransactionNotificationService {
@@ -22,7 +25,9 @@ export class TransactionNotificationService {
    */
   @OnEvent('blockchain.transaction')
   async handleTransactionEvent(event: TransactionEvent): Promise<void> {
-    this.logger.log(`Received transaction event: ${event.eventType} for ${event.transactionHash}`);
+    this.logger.log(
+      `Received transaction event: ${event.eventType} for ${event.transactionHash}`,
+    );
 
     switch (event.eventType) {
       case 'transaction_created':
@@ -60,7 +65,9 @@ export class TransactionNotificationService {
   /**
    * Handle transaction created
    */
-  private async handleTransactionCreated(event: TransactionEvent): Promise<void> {
+  private async handleTransactionCreated(
+    event: TransactionEvent,
+  ): Promise<void> {
     if (!event.userId) return;
 
     // Notify user that transaction is being processed
@@ -78,11 +85,15 @@ export class TransactionNotificationService {
   /**
    * Handle transaction confirmed
    */
-  private async handleTransactionConfirmed(event: TransactionEvent): Promise<void> {
+  private async handleTransactionConfirmed(
+    event: TransactionEvent,
+  ): Promise<void> {
     if (!event.userId) return;
 
-    const amount = event.data.amount ? `${event.data.amount} ${event.data.assetCode || 'XLM'}` : '';
-    
+    const amount = event.data.amount
+      ? `${event.data.amount} ${event.data.assetCode || 'XLM'}`
+      : '';
+
     await this.sendNotification({
       userId: event.userId,
       type: 'transaction_confirmed',
@@ -99,18 +110,23 @@ export class TransactionNotificationService {
   /**
    * Handle transaction failed
    */
-  private async handleTransactionFailed(event: TransactionEvent): Promise<void> {
+  private async handleTransactionFailed(
+    event: TransactionEvent,
+  ): Promise<void> {
     if (!event.userId) return;
 
-    const retryMessage = event.data.retryCount && event.data.retryCount > 0
-      ? ` We will retry automatically (${event.data.retryCount} attempts so far).`
-      : '';
+    const retryMessage =
+      event.data.retryCount && event.data.retryCount > 0
+        ? ` We will retry automatically (${event.data.retryCount} attempts so far).`
+        : '';
 
     await this.sendNotification({
       userId: event.userId,
       type: 'transaction_failed',
       title: 'Transaction Failed',
-      message: `Your transaction failed.${retryMessage} Error: ${event.data.errorMessage || 'Unknown error'}`,
+      message: `Your transaction failed.${retryMessage} Error: ${
+        event.data.errorMessage || 'Unknown error'
+      }`,
       transactionHash: event.transactionHash,
       timestamp: new Date(),
       read: false,
@@ -146,7 +162,9 @@ export class TransactionNotificationService {
     error: string;
     timestamp: Date;
   }): Promise<void> {
-    this.logger.error(`Permanent failure for transaction ${event.transactionHash}: ${event.error}`);
+    this.logger.error(
+      `Permanent failure for transaction ${event.transactionHash}: ${event.error}`,
+    );
 
     if (event.userId) {
       await this.sendNotification({
@@ -168,7 +186,10 @@ export class TransactionNotificationService {
    */
   private async sendNotification(notification: {
     userId: string;
-    type: 'transaction_confirmed' | 'transaction_failed' | 'transaction_pending';
+    type:
+      | 'transaction_confirmed'
+      | 'transaction_failed'
+      | 'transaction_pending';
     title: string;
     message: string;
     transactionHash: string;
@@ -182,7 +203,9 @@ export class TransactionNotificationService {
     // - Email notifications
     // - WebSocket events for real-time updates
 
-    this.logger.log(`Notification for user ${notification.userId}: ${notification.title} - ${notification.message}`);
+    this.logger.log(
+      `Notification for user ${notification.userId}: ${notification.title} - ${notification.message}`,
+    );
 
     // Example: Emit WebSocket event for real-time updates
     // this.websocketGateway.sendToUser(notification.userId, 'transaction_notification', notification);
@@ -194,7 +217,10 @@ export class TransactionNotificationService {
   /**
    * Get notifications for a user
    */
-  async getUserNotifications(userId: string, unreadOnly: boolean = false): Promise<any[]> {
+  async getUserNotifications(
+    userId: string,
+    unreadOnly: boolean = false,
+  ): Promise<any[]> {
     // TODO: Implement based on your notification storage
     // This is a placeholder
     return [];
@@ -213,7 +239,7 @@ export class TransactionNotificationService {
   async sendBulkNotification(
     userIds: string[],
     title: string,
-    message: string
+    message: string,
   ): Promise<void> {
     for (const userId of userIds) {
       await this.sendNotification({

@@ -20,6 +20,10 @@ import { User } from '../users/entities/user.entity';
     ReferralLeaderboardService,
     ReferralAnalyticsService,
   ],
-  exports: [ReferralsService, ReferralLeaderboardService, ReferralAnalyticsService],
+  exports: [
+    ReferralsService,
+    ReferralLeaderboardService,
+    ReferralAnalyticsService,
+  ],
 })
 export class ReferralsModule {}

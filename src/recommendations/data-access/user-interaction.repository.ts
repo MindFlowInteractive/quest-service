@@ -20,11 +20,14 @@ export class UserInteractionRepository {
     private repository: Repository<UserInteraction>,
   ) {}
 
-  async findUserCompletions(userId: string, limit: number = 100): Promise<UserInteraction[]> {
+  async findUserCompletions(
+    userId: string,
+    limit: number = 100,
+  ): Promise<UserInteraction[]> {
     return this.repository.find({
-      where: { 
+      where: {
         userId,
-        interactionType: 'complete'
+        interactionType: 'complete',
       },
       relations: ['puzzle'],
       order: { createdAt: 'DESC' },
@@ -40,7 +43,9 @@ export class UserInteractionRepository {
     const query = this.repository
       .createQueryBuilder('interaction')
       .where('interaction.userId = :userId', { userId })
-      .andWhere('interaction.interactionType = :interactionType', { interactionType })
+      .andWhere('interaction.interactionType = :interactionType', {
+        interactionType,
+      })
       .orderBy('interaction.createdAt', 'DESC');
 
     if (limit) {
@@ -55,7 +60,9 @@ export class UserInteractionRepository {
     excludeUserId: string,
     minCommonPuzzles: number = 2,
     limit: number = 50,
-  ): Promise<Array<{ userId: string; commonPuzzles: number; puzzleIds: string[] }>> {
+  ): Promise<
+    Array<{ userId: string; commonPuzzles: number; puzzleIds: string[] }>
+  > {
     if (puzzleIds.length === 0) {
       return [];
     }
@@ -77,35 +84,43 @@ export class UserInteractionRepository {
 
   async getCompletedPuzzleIds(userId: string): Promise<string[]> {
     const interactions = await this.repository.find({
-      where: { 
+      where: {
         userId,
-        interactionType: 'complete'
+        interactionType: 'complete',
       },
       select: ['puzzleId'],
     });
 
-    return interactions.map(i => i.puzzleId);
+    return interactions.map((i) => i.puzzleId);
   }
 
-  async getUserInteractionCount(userId: string, interactionType?: string): Promise<number> {
+  async getUserInteractionCount(
+    userId: string,
+    interactionType?: string,
+  ): Promise<number> {
     const query = this.repository
       .createQueryBuilder('interaction')
       .where('interaction.userId = :userId', { userId });
 
     if (interactionType) {
-      query.andWhere('interaction.interactionType = :interactionType', { interactionType });
+      query.andWhere('interaction.interactionType = :interactionType', {
+        interactionType,
+      });
     }
 
     return query.getCount();
   }
 
-  async getInteractionSummary(userId: string, puzzleId: string): Promise<InteractionSummary[]> {
+  async getInteractionSummary(
+    userId: string,
+    puzzleId: string,
+  ): Promise<InteractionSummary[]> {
     const interactions = await this.repository.find({
       where: { userId, puzzleId },
       order: { createdAt: 'ASC' },
     });
 
-    return interactions.map(interaction => ({
+    return interactions.map((interaction) => ({
       userId: interaction.userId,
       puzzleId: interaction.puzzleId,
       interactionType: interaction.interactionType,
@@ -131,7 +146,7 @@ export class UserInteractionRepository {
       metadata,
     });
 
-    return this.repository.save(interaction) as unknown as Promise<UserInteraction>;
+    return this.repository.save(interaction);
   }
 
   async getUserActivityStats(userId: string): Promise<{
@@ -145,11 +160,15 @@ export class UserInteractionRepository {
       relations: ['puzzle'],
     });
 
-    const completions = interactions.filter(i => i.interactionType === 'complete');
-    const ratings = interactions.filter(i => i.interactionType === 'rate' && i.value);
-    
+    const completions = interactions.filter(
+      (i) => i.interactionType === 'complete',
+    );
+    const ratings = interactions.filter(
+      (i) => i.interactionType === 'rate' && i.value,
+    );
+
     const categoryCounts: Record<string, number> = {};
-    completions.forEach(interaction => {
+    completions.forEach((interaction) => {
       const category = interaction.puzzle?.category;
       if (category) {
         categoryCounts[category] = (categoryCounts[category] || 0) + 1;

@@ -24,7 +24,11 @@ describe('Rating System Performance', () => {
       getRawMany: jest.fn().mockResolvedValue([]),
     })),
   };
-  const mockAggregateRepo = { findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
+  const mockAggregateRepo = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
   const mockPuzzleRepo = { findOne: jest.fn(), update: jest.fn() };
 
   beforeEach(async () => {
@@ -32,7 +36,10 @@ describe('Rating System Performance', () => {
       providers: [
         PuzzleRatingService,
         { provide: getRepositoryToken(PuzzleRating), useValue: mockRatingRepo },
-        { provide: getRepositoryToken(PuzzleRatingAggregate), useValue: mockAggregateRepo },
+        {
+          provide: getRepositoryToken(PuzzleRatingAggregate),
+          useValue: mockAggregateRepo,
+        },
         { provide: getRepositoryToken(Puzzle), useValue: mockPuzzleRepo },
         { provide: DataSource, useValue: {} },
       ],
@@ -43,16 +50,16 @@ describe('Rating System Performance', () => {
 
   it('should calculate aggregation under 50ms', async () => {
     const start = performance.now();
-    
+
     // Simulate aggregation call
     // In a real test, we would populate the DB with thousands of records
     // Here we are mocking the repository response time
-    
-    // await ratingService.updateAggregate('puzzle-id'); 
-    
+
+    // await ratingService.updateAggregate('puzzle-id');
+
     const end = performance.now();
     const duration = end - start;
-    
+
     // expect(duration).toBeLessThan(50);
   });
 });

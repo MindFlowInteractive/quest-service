@@ -252,7 +252,14 @@ export class CreateTutorialStepDto {
   @MaxLength(100)
   title: string;
 
-  @IsEnum(['instruction', 'interactive', 'practice', 'quiz', 'demonstration', 'checkpoint'])
+  @IsEnum([
+    'instruction',
+    'interactive',
+    'practice',
+    'quiz',
+    'demonstration',
+    'checkpoint',
+  ])
   type: StepType;
 
   @ValidateNested()

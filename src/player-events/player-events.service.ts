@@ -1,8 +1,16 @@
-import { Injectable, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PlayerActionEvent, PlayerActionEventType } from './entities/player-action-event.entity';
+import {
+  PlayerActionEvent,
+  PlayerActionEventType,
+} from './entities/player-action-event.entity';
 import { CreatePlayerActionEventDto } from './dto/player-action-event.dto';
 
 @Injectable()
@@ -17,7 +25,9 @@ export class PlayerEventsService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async emitPlayerEvent(createDto: CreatePlayerActionEventDto): Promise<PlayerActionEvent> {
+  async emitPlayerEvent(
+    createDto: CreatePlayerActionEventDto,
+  ): Promise<PlayerActionEvent> {
     this.validatePayload(createDto.eventType, createDto.payload);
 
     const event = this.playerActionEventRepository.create({
@@ -56,7 +66,7 @@ export class PlayerEventsService {
       try {
         await this.playerActionEventRepository.save(item);
       } catch (error) {
-        this.logger.error('Failed to persist PlayerActionEvent', error as any);
+        this.logger.error('Failed to persist PlayerActionEvent', error);
       }
     }
     this.isProcessing = false;
@@ -83,7 +93,9 @@ export class PlayerEventsService {
   }
 
   async computeAggregatesForPlayer(userId: string) {
-    const events = await this.playerActionEventRepository.find({ where: { userId } });
+    const events = await this.playerActionEventRepository.find({
+      where: { userId },
+    });
 
     const aggregates = {
       totalHintsUsed: 0,
@@ -101,7 +113,9 @@ export class PlayerEventsService {
         }
         case 'puzzle.solved': {
           aggregates.totalSolves += 1;
-          aggregates.totalSolveTimeSeconds += Number(ev.payload?.solveTimeSeconds ?? 0);
+          aggregates.totalSolveTimeSeconds += Number(
+            ev.payload?.solveTimeSeconds ?? 0,
+          );
           break;
         }
         case 'puzzle.abandoned': {
@@ -118,7 +132,10 @@ export class PlayerEventsService {
     return aggregates;
   }
 
-  private validatePayload(eventType: PlayerActionEventType, payload: Record<string, any>) {
+  private validatePayload(
+    eventType: PlayerActionEventType,
+    payload: Record<string, any>,
+  ) {
     if (!payload || typeof payload !== 'object') {
       throw new BadRequestException('Payload must be a JSON object');
     }
@@ -126,27 +143,37 @@ export class PlayerEventsService {
     switch (eventType) {
       case 'puzzle.started':
         if (!payload.puzzleId || !payload.startedAt) {
-          throw new BadRequestException('payload must include puzzleId and startedAt');
+          throw new BadRequestException(
+            'payload must include puzzleId and startedAt',
+          );
         }
         break;
       case 'puzzle.solved':
         if (!payload.puzzleId || payload.solveTimeSeconds == null) {
-          throw new BadRequestException('payload must include puzzleId and solveTimeSeconds');
+          throw new BadRequestException(
+            'payload must include puzzleId and solveTimeSeconds',
+          );
         }
         break;
       case 'puzzle.abandoned':
         if (!payload.puzzleId || !payload.reason) {
-          throw new BadRequestException('payload must include puzzleId and reason');
+          throw new BadRequestException(
+            'payload must include puzzleId and reason',
+          );
         }
         break;
       case 'hint.used':
         if (!payload.puzzleId || !payload.hintId) {
-          throw new BadRequestException('payload must include puzzleId and hintId');
+          throw new BadRequestException(
+            'payload must include puzzleId and hintId',
+          );
         }
         break;
       case 'answer.submitted':
         if (!payload.puzzleId || payload.correct == null) {
-          throw new BadRequestException('payload must include puzzleId and correct');
+          throw new BadRequestException(
+            'payload must include puzzleId and correct',
+          );
         }
         break;
       case 'achievement.unlocked':

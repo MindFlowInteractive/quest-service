@@ -14,7 +14,10 @@ import { GameSessionService } from '../services/game-session.service';
 import { SpectatorService } from '../services/spectator.service';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { UpdateSessionDto } from '../dto/update-session.dto';
-import { SpectateSessionDto, ToggleSpectatingDto } from '../dto/spectate-session.dto';
+import {
+  SpectateSessionDto,
+  ToggleSpectatingDto,
+} from '../dto/spectate-session.dto';
 
 @Controller('game-sessions')
 export class GameSessionController {
@@ -115,7 +118,9 @@ export class GameSessionController {
 
   @Get(':id/spectators')
   async getSpectators(@Param('id') sessionId: string) {
-    const spectators = await this.spectatorService.getActiveSpectators(sessionId);
+    const spectators = await this.spectatorService.getActiveSpectators(
+      sessionId,
+    );
     const count = await this.spectatorService.getSpectatorCount(sessionId);
     return {
       message: 'Active spectators retrieved',

@@ -212,7 +212,10 @@ export class SupportTicketService {
       .getRawMany();
 
     const ticketsByCategory = categoryRaw.reduce(
-      (acc: Record<string, number>, row: { category: string; count: string }) => {
+      (
+        acc: Record<string, number>,
+        row: { category: string; count: string },
+      ) => {
         acc[row.category] = parseInt(row.count, 10);
         return acc;
       },

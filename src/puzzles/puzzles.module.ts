@@ -100,4 +100,4 @@ import { TagsController } from './tags.controller';
     TagsService,
   ],
 })
-export class PuzzlesModule { }
+export class PuzzlesModule {}

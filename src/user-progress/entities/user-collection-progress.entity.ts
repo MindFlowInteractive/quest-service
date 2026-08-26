@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity'; // Assuming user entity path
 import { Collection } from '../../puzzles/entities/collection.entity'; // Assuming collection entity path
 import { Puzzle } from '../../puzzles/entities/puzzle.entity'; // Assuming puzzle entity path

@@ -21,7 +21,12 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { PuzzlesService, PuzzleWithStats, SearchResult, PuzzleAnalytics } from './puzzles.service';
+import {
+  PuzzlesService,
+  PuzzleWithStats,
+  SearchResult,
+  PuzzleAnalytics,
+} from './puzzles.service';
 import { SolutionSubmissionService } from './services/solution-submission.service';
 import { PuzzleVersionService } from './services/puzzle-version.service';
 import { TagsService } from './tags.service';
@@ -30,10 +35,13 @@ import {
   UpdatePuzzleDto,
   SearchPuzzleDto,
   BulkUpdateDto,
-  PuzzleStatsDto
+  PuzzleStatsDto,
 } from './dto';
 import { SubmitSolutionDto } from './dto/submit-solution.dto';
-import { SubmissionResultDto, SubmissionHistoryDto } from './dto/submission-result.dto';
+import {
+  SubmissionResultDto,
+  SubmissionHistoryDto,
+} from './dto/submission-result.dto';
 import { AttachTagsDto } from './dto/tag.dto';
 
 @Controller('puzzles')
@@ -46,36 +54,49 @@ export class PuzzlesController {
     private readonly submissionService: SolutionSubmissionService,
     private readonly puzzleVersionService: PuzzleVersionService,
     private readonly tagsService: TagsService,
-  ) { }
+  ) {}
 
   @Post()
   async create(
     @Body() createPuzzleDto: CreatePuzzleDto,
   ): Promise<PuzzleWithStats> {
     const userId = 'temp-user-id'; // TODO: Get from auth
-    this.logger.log(`Creating puzzle: ${createPuzzleDto.title} by user: ${userId}`);
+    this.logger.log(
+      `Creating puzzle: ${createPuzzleDto.title} by user: ${userId}`,
+    );
     return await this.puzzlesService.create(createPuzzleDto, userId);
   }
 
   @Get()
   async findAll(@Query() searchDto: SearchPuzzleDto): Promise<SearchResult> {
-    this.logger.log(`Searching puzzles with filters: ${JSON.stringify(searchDto)}`);
+    this.logger.log(
+      `Searching puzzles with filters: ${JSON.stringify(searchDto)}`,
+    );
     return await this.puzzlesService.findAll(searchDto);
   }
 
   @Get('analytics')
-  async getAnalytics(@Query('period') period?: string): Promise<PuzzleAnalytics> {
+  async getAnalytics(
+    @Query('period') period?: string,
+  ): Promise<PuzzleAnalytics> {
     return await this.puzzlesService.getAnalytics(period);
   }
 
   @Patch('bulk')
   async bulkUpdate(
-    @Body('puzzleIds', new ParseArrayPipe({ items: String })) puzzleIds: string[],
+    @Body('puzzleIds', new ParseArrayPipe({ items: String }))
+    puzzleIds: string[],
     @Body('bulkUpdate') bulkUpdateDto: BulkUpdateDto,
   ) {
     const userId = 'temp-user-id'; // TODO: Get from auth
-    this.logger.log(`Bulk updating ${puzzleIds.length} puzzles with action: ${bulkUpdateDto.action}`);
-    return await this.puzzlesService.bulkUpdate(puzzleIds, bulkUpdateDto, userId);
+    this.logger.log(
+      `Bulk updating ${puzzleIds.length} puzzles with action: ${bulkUpdateDto.action}`,
+    );
+    return await this.puzzlesService.bulkUpdate(
+      puzzleIds,
+      bulkUpdateDto,
+      userId,
+    );
   }
 
   @Get(':id')
@@ -112,9 +133,7 @@ export class PuzzlesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     const userId = 'temp-user-id'; // TODO: Get from auth
     this.logger.log(`Deleting puzzle: ${id} by user: ${userId}`);
     await this.puzzlesService.remove(id, userId);
@@ -156,7 +175,7 @@ export class PuzzlesController {
       basePoints: originalPuzzle.basePoints,
       timeLimit: originalPuzzle.timeLimit,
       maxHints: originalPuzzle.maxHints,
-      content: originalPuzzle.content as any,
+      content: originalPuzzle.content,
       hints: originalPuzzle.hints,
       tags: originalPuzzle.tags,
       scoring: originalPuzzle.scoring,
@@ -239,7 +258,12 @@ export class PuzzlesController {
     @Req() req: any,
   ): Promise<SubmissionHistoryDto> {
     const userId = req.user?.id ?? 'temp-user-id';
-    return this.submissionService.getSubmissionHistory(userId, undefined, page, limit);
+    return this.submissionService.getSubmissionHistory(
+      userId,
+      undefined,
+      page,
+      limit,
+    );
   }
 
   // ──────────────────────────────────────────────────────────────────
@@ -284,9 +308,19 @@ export class PuzzlesController {
     @Req() req: any,
   ) {
     const adminId = req.user?.id ?? 'temp-admin-id'; // TODO: enforce RolesGuard
-    this.logger.log(`Rolling puzzle ${id} back to v${version} by admin ${adminId}`);
-    const restored = await this.puzzleVersionService.rollbackTo(id, version, adminId, changeNote);
-    return { message: `Puzzle restored to version ${version}`, puzzle: restored };
+    this.logger.log(
+      `Rolling puzzle ${id} back to v${version} by admin ${adminId}`,
+    );
+    const restored = await this.puzzleVersionService.rollbackTo(
+      id,
+      version,
+      adminId,
+      changeNote,
+    );
+    return {
+      message: `Puzzle restored to version ${version}`,
+      puzzle: restored,
+    };
   }
 
   /**

@@ -26,7 +26,7 @@ export enum SolutionAttemptStatus {
  * The `nonce` column has a unique constraint to prevent replay attacks.
  */
 @Entity('puzzle_solution_attempts')
-@Unique(['nonce'])                     // Anti-replay: nonce must be globally unique
+@Unique(['nonce']) // Anti-replay: nonce must be globally unique
 @Index(['userId', 'puzzleId'])
 @Index(['userId', 'createdAt'])
 @Index(['puzzleId', 'status'])

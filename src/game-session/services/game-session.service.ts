@@ -1,6 +1,10 @@
 // services/game-session.service.ts
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { GameSession } from '../entities/game-session.entity';
@@ -28,7 +32,9 @@ export class GameSessionService {
     // Resolve the current puzzle version id (if a puzzle is specified)
     let puzzleVersionId: string | undefined;
     if (puzzleId) {
-      puzzleVersionId = (await this.puzzleVersionService.getCurrentVersionId(puzzleId)) ?? undefined;
+      puzzleVersionId =
+        (await this.puzzleVersionService.getCurrentVersionId(puzzleId)) ??
+        undefined;
     }
 
     const session = this.sessionRepo.create({
@@ -130,16 +136,22 @@ export class GameSessionService {
   async resumeById(sessionId: string, userId: string) {
     const session = await this.sessionRepo.findOneBy({ id: sessionId });
     if (!session) throw new NotFoundException('Session not found');
-    if (session.userId !== userId) throw new ForbiddenException('Session does not belong to this user');
-    if (session.status !== 'SUSPENDED') throw new ForbiddenException('Session is not suspended');
+    if (session.userId !== userId)
+      throw new ForbiddenException('Session does not belong to this user');
+    if (session.status !== 'SUSPENDED')
+      throw new ForbiddenException('Session is not suspended');
 
     const cutoff = new Date(Date.now() - graceWindowSecs() * 1000);
     if (session.suspendedAt && session.suspendedAt < cutoff) {
-      throw new ForbiddenException('Grace window has expired — session cannot be resumed');
+      throw new ForbiddenException(
+        'Grace window has expired — session cannot be resumed',
+      );
     }
 
     // Restore state from Redis snapshot (falls back to DB state if cache miss)
-    const snapshot = await this.cacheService.get<Record<string, any>>(SUSPENDED_KEY(sessionId));
+    const snapshot = await this.cacheService.get<Record<string, any>>(
+      SUSPENDED_KEY(sessionId),
+    );
     if (snapshot) {
       session.state = snapshot;
       await this.cacheService.delete(SUSPENDED_KEY(sessionId));

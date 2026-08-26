@@ -1,10 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { BasePuzzle } from './base-puzzle';
 import type { IPuzzle } from '../interfaces/puzzle.interfaces';
-import {
-  PuzzleType,
-  PuzzleStatus,
-} from '../types/puzzle.types';
+import { PuzzleType, PuzzleStatus } from '../types/puzzle.types';
 import type {
   PuzzleMove,
   PuzzleHint,
@@ -525,7 +522,7 @@ export class SpatialPuzzle extends BasePuzzle {
   private calculateSpatialScore(): number {
     if (!this.puzzleState || !this.gameState) return 0;
 
-    let baseScore = this.calculateBaseScore();
+    const baseScore = this.calculateBaseScore();
 
     // Bonus for reaching goals
     const goalsReached = this.countGoalsReached();
@@ -594,7 +591,7 @@ export class SpatialPuzzle extends BasePuzzle {
     const queue = [this.puzzleState.playerPosition];
 
     while (queue.length > 0) {
-      const current = queue.shift()!;
+      const current = queue.shift();
       const key = `${current.x},${current.y}`;
 
       if (visited.has(key)) continue;
@@ -637,18 +634,20 @@ export class SpatialPuzzle extends BasePuzzle {
     if (!solution || !solution.playerPosition) {
       return false;
     }
-    
+
     // Check if all goals are reached
-    return this.puzzleState?.goals.every(goal => 
-      this.puzzleState?.reachedGoals.includes(`${goal.x},${goal.y}`)
-    ) || false;
+    return (
+      this.puzzleState?.goals.every((goal) =>
+        this.puzzleState?.reachedGoals.includes(`${goal.x},${goal.y}`),
+      ) || false
+    );
   }
 
   getSolution(): any {
     return {
       playerPosition: this.puzzleState?.playerPosition || { x: 0, y: 0 },
       goals: this.puzzleState?.goals || [],
-      grid: this.puzzleState?.grid || []
+      grid: this.puzzleState?.grid || [],
     };
   }
 
@@ -658,7 +657,7 @@ export class SpatialPuzzle extends BasePuzzle {
       playerPosition: this.puzzleState?.playerPosition || { x: 0, y: 0 },
       goals: this.puzzleState?.goals || [],
       reachedGoals: this.puzzleState?.reachedGoals || [],
-      completed: this.isComplete()
+      completed: this.isComplete(),
     };
   }
 
@@ -678,7 +677,9 @@ export class SpatialPuzzle extends BasePuzzle {
       case 2:
         const nearestGoal = this.findNearestGoal();
         if (nearestGoal) {
-          content = `Try to reach the goal at position (${nearestGoal.x + 1}, ${nearestGoal.y + 1})`;
+          content = `Try to reach the goal at position (${nearestGoal.x + 1}, ${
+            nearestGoal.y + 1
+          })`;
           targetElements = [`cell-${nearestGoal.x}-${nearestGoal.y}`];
         } else {
           content = 'Look for the goal markers on the grid';

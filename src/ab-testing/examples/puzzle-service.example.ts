@@ -1,6 +1,6 @@
 /**
  * Example: How to use the A/B Testing service in a PuzzleService
- * 
+ *
  * This shows practical integration patterns for experiments and feature flags.
  */
 
@@ -14,15 +14,18 @@ export class PuzzleServiceExample {
   /**
    * Example 1: A/B test for puzzle difficulty algorithm
    */
-  async calculatePuzzleDifficulty(userId: string, puzzleId: string): Promise<number> {
+  async calculatePuzzleDifficulty(
+    userId: string,
+    puzzleId: string,
+  ): Promise<number> {
     // Assign user to experiment variant
     const assignment = await this.experimentsService.assignVariant(userId);
-    
+
     if (assignment?.variantName === 'algorithm_v2') {
       // Use new algorithm for variant A
       return this.calculateDifficultyV2(userId, puzzleId);
     }
-    
+
     // Use default algorithm for control group
     return this.calculateDifficultyV1(userId, puzzleId);
   }
@@ -32,21 +35,21 @@ export class PuzzleServiceExample {
    */
   async getPuzzleUIComponents(userId: string): Promise<UIComponents> {
     const playerContext = await this.getPlayerContext(userId);
-    
+
     // Check multiple feature flags
     const showNewSidebar = await this.experimentsService.evaluateFlag(
       'new_sidebar_ui',
-      playerContext
+      playerContext,
     );
-    
+
     const showDarkMode = await this.experimentsService.evaluateFlag(
       'dark_mode_toggle',
-      playerContext
+      playerContext,
     );
-    
+
     const showSocialFeatures = await this.experimentsService.evaluateFlag(
       'social_features',
-      playerContext
+      playerContext,
     );
 
     return {
@@ -62,7 +65,7 @@ export class PuzzleServiceExample {
   async trackPuzzleCompletion(userId: string, puzzleId: string): Promise<void> {
     // Get experiment assignment
     const assignment = await this.experimentsService.assignVariant(userId);
-    
+
     if (assignment) {
       // Track conversion event
       await this.experimentsService.trackConversion(assignment.experimentId, {
@@ -70,7 +73,7 @@ export class PuzzleServiceExample {
         event_type: 'puzzle_completed',
       });
     }
-    
+
     // Also track as general analytics
     await this.saveCompletionAnalytics(userId, puzzleId);
   }
@@ -78,9 +81,12 @@ export class PuzzleServiceExample {
   /**
    * Example 4: Gradual rollout of new feature
    */
-  async shouldShowNewFeature(userId: string, featureKey: string): Promise<boolean> {
+  async shouldShowNewFeature(
+    userId: string,
+    featureKey: string,
+  ): Promise<boolean> {
     const playerContext = await this.getPlayerContext(userId);
-    
+
     return this.experimentsService.evaluateFlag(featureKey, playerContext);
   }
 
@@ -90,7 +96,7 @@ export class PuzzleServiceExample {
   async getPremiumFeatures(userId: string): Promise<string[]> {
     const playerContext = await this.getPlayerContext(userId);
     const features: string[] = [];
-    
+
     // Check each premium feature flag
     const premiumFlags = [
       'advanced_analytics',
@@ -98,17 +104,17 @@ export class PuzzleServiceExample {
       'priority_support',
       'export_data',
     ];
-    
+
     for (const flag of premiumFlags) {
       const enabled = await this.experimentsService.evaluateFlag(
         flag,
-        playerContext
+        playerContext,
       );
       if (enabled) {
         features.push(flag);
       }
     }
-    
+
     return features;
   }
 
@@ -143,7 +149,10 @@ export class PuzzleServiceExample {
     return 7; // placeholder
   }
 
-  private async saveCompletionAnalytics(userId: string, puzzleId: string): Promise<void> {
+  private async saveCompletionAnalytics(
+    userId: string,
+    puzzleId: string,
+  ): Promise<void> {
     // Save to analytics database
   }
 }

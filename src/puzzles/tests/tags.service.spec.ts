@@ -11,16 +11,15 @@ import { TagSortBy, TagSortOrder } from '../dto/tag.dto';
 // Helpers
 // ---------------------------------------------------------------------------
 
-const mockTag = (overrides: Partial<Tag> = {}): Tag =>
-  ({
-    id: 'tag-uuid-1',
-    name: 'logic',
-    usageCount: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    puzzles: [],
-    ...overrides,
-  } as Tag);
+const mockTag = (overrides: Partial<Tag> = {}): Tag => ({
+  id: 'tag-uuid-1',
+  name: 'logic',
+  usageCount: 0,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  puzzles: [],
+  ...overrides,
+});
 
 const mockPuzzle = (overrides: Partial<Puzzle> = {}): Puzzle =>
   ({
@@ -108,9 +107,11 @@ describe('TagsService', () => {
       tagRepo.create.mockReturnValue(saved);
       tagRepo.save.mockResolvedValue(saved);
 
-      const result = await service.createTag(dto as any);
+      const result = await service.createTag(dto);
 
-      expect(tagRepo.findOne).toHaveBeenCalledWith({ where: { name: 'logic' } });
+      expect(tagRepo.findOne).toHaveBeenCalledWith({
+        where: { name: 'logic' },
+      });
       expect(result.name).toBe('logic');
     });
 
@@ -121,7 +122,7 @@ describe('TagsService', () => {
       tagRepo.create.mockReturnValue(saved);
       tagRepo.save.mockResolvedValue(saved);
 
-      const result = await service.createTag(dto as any);
+      const result = await service.createTag(dto);
 
       expect(result).toEqual(saved);
     });
@@ -174,7 +175,7 @@ describe('TagsService', () => {
     it('creates new tags that do not exist and attaches them to the puzzle', async () => {
       const puzzle = mockPuzzle();
       puzzleRepo.findOne
-        .mockResolvedValueOnce(puzzle)           // first call inside attachTags
+        .mockResolvedValueOnce(puzzle) // first call inside attachTags
         .mockResolvedValueOnce({ ...puzzle, tagEntities: [mockTag()] }); // second call after commit
 
       queryRunner.manager.findOne.mockResolvedValue(null); // tag does not exist
@@ -184,7 +185,10 @@ describe('TagsService', () => {
 
       const result = await service.attachTags('puzzle-uuid-1', ['logic']);
 
-      expect(queryRunner.manager.save).toHaveBeenCalledWith(Tag, expect.objectContaining({ name: 'logic' }));
+      expect(queryRunner.manager.save).toHaveBeenCalledWith(
+        Tag,
+        expect.objectContaining({ name: 'logic' }),
+      );
       expect(queryRunner.manager.increment).toHaveBeenCalledWith(
         Tag,
         { id: newTag.id },
@@ -222,7 +226,9 @@ describe('TagsService', () => {
       puzzleRepo.findOne.mockResolvedValueOnce(puzzle);
       queryRunner.manager.findOne.mockRejectedValue(new Error('DB error'));
 
-      await expect(service.attachTags('puzzle-uuid-1', ['logic'])).rejects.toThrow('DB error');
+      await expect(
+        service.attachTags('puzzle-uuid-1', ['logic']),
+      ).rejects.toThrow('DB error');
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
     });
   });
@@ -265,9 +271,9 @@ describe('TagsService', () => {
       puzzleRepo.findOne.mockResolvedValueOnce(puzzle);
       tagRepo.findOne.mockResolvedValue(tag);
 
-      await expect(
-        service.detachTag('puzzle-uuid-1', 'tag-1'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.detachTag('puzzle-uuid-1', 'tag-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when tag id does not exist', async () => {
@@ -288,9 +294,9 @@ describe('TagsService', () => {
       tagRepo.findOne.mockResolvedValue(tag);
       queryRunner.manager.save.mockRejectedValue(new Error('DB failure'));
 
-      await expect(
-        service.detachTag('puzzle-uuid-1', 'tag-1'),
-      ).rejects.toThrow('DB failure');
+      await expect(service.detachTag('puzzle-uuid-1', 'tag-1')).rejects.toThrow(
+        'DB failure',
+      );
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
     });
   });
@@ -314,8 +320,18 @@ describe('TagsService', () => {
       await service.attachTags('puzzle-uuid-1', ['logic', 'math']);
 
       expect(queryRunner.manager.increment).toHaveBeenCalledTimes(2);
-      expect(queryRunner.manager.increment).toHaveBeenCalledWith(Tag, { id: 't1' }, 'usageCount', 1);
-      expect(queryRunner.manager.increment).toHaveBeenCalledWith(Tag, { id: 't2' }, 'usageCount', 1);
+      expect(queryRunner.manager.increment).toHaveBeenCalledWith(
+        Tag,
+        { id: 't1' },
+        'usageCount',
+        1,
+      );
+      expect(queryRunner.manager.increment).toHaveBeenCalledWith(
+        Tag,
+        { id: 't2' },
+        'usageCount',
+        1,
+      );
     });
 
     it('decrements usageCount exactly once on detach', async () => {

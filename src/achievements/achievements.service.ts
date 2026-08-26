@@ -1,4 +1,3 @@
-
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { CreateAchievementDto } from './dto/create-achievement.dto';
@@ -20,7 +19,7 @@ export class AchievementsService {
     private userAchievementRepository: Repository<UserAchievement>,
     private readonly notificationService: NotificationService,
     private readonly conditionEngine: AchievementConditionEngine,
-  ) { }
+  ) {}
 
   async create(createAchievementDto: CreateAchievementDto) {
     const achievement = this.achievementRepository.create(createAchievementDto);
@@ -46,12 +45,24 @@ export class AchievementsService {
   }
 
   // Unlock achievement for user if conditions met
-  async tryUnlockAchievement(userId: string, achievementId: string, userContext: any) {
-    const achievement = await this.achievementRepository.findOne({ where: { id: achievementId } });
+  async tryUnlockAchievement(
+    userId: string,
+    achievementId: string,
+    userContext: any,
+  ) {
+    const achievement = await this.achievementRepository.findOne({
+      where: { id: achievementId },
+    });
     if (!achievement) return null;
-    const userAchievement = await this.userAchievementRepository.findOne({ where: { userId, achievementId } });
+    const userAchievement = await this.userAchievementRepository.findOne({
+      where: { userId, achievementId },
+    });
     if (userAchievement?.isUnlocked) return userAchievement;
-    const isUnlocked = await this.conditionEngine.evaluate(userId, achievement, userContext);
+    const isUnlocked = await this.conditionEngine.evaluate(
+      userId,
+      achievement,
+      userContext,
+    );
     if (isUnlocked) {
       const unlocked = await this.userAchievementRepository.save({
         userId,
@@ -74,10 +85,19 @@ export class AchievementsService {
   }
 
   // Track progress for incremental achievements
-  async updateProgress(userId: string, achievementId: string, progressDelta: number, context: any = {}) {
-    const achievement = await this.achievementRepository.findOne({ where: { id: achievementId } });
+  async updateProgress(
+    userId: string,
+    achievementId: string,
+    progressDelta: number,
+    context: any = {},
+  ) {
+    const achievement = await this.achievementRepository.findOne({
+      where: { id: achievementId },
+    });
     if (!achievement) return null;
-    let userAchievement = await this.userAchievementRepository.findOne({ where: { userId, achievementId } });
+    let userAchievement = await this.userAchievementRepository.findOne({
+      where: { userId, achievementId },
+    });
     if (!userAchievement) {
       userAchievement = this.userAchievementRepository.create({
         userId,
@@ -104,7 +124,9 @@ export class AchievementsService {
   // Get all achievements and user progress
   async getUserAchievements(userId: string) {
     const achievements = await this.achievementRepository.find();
-    const userAchievements = await this.userAchievementRepository.find({ where: { userId } });
+    const userAchievements = await this.userAchievementRepository.find({
+      where: { userId },
+    });
     return achievements.map((a) => {
       const ua = userAchievements.find((ua) => ua.achievementId === a.id);
       return {
@@ -122,7 +144,9 @@ export class AchievementsService {
     const totalUsers = await this.userAchievementRepository.count();
     const analytics = [];
     for (const achievement of achievements) {
-      const unlockedCount = await this.userAchievementRepository.count({ where: { achievementId: achievement.id, isUnlocked: true } });
+      const unlockedCount = await this.userAchievementRepository.count({
+        where: { achievementId: achievement.id, isUnlocked: true },
+      });
       analytics.push({
         achievementId: achievement.id,
         name: achievement.name,
@@ -138,16 +162,20 @@ export class AchievementsService {
     // Generate shareable link or message
     return {
       url: `https://yourgame.com/user/${userId}/achievement/${achievementId}`,
-      message: 'Check out my achievement!'
+      message: 'Check out my achievement!',
     };
   }
 
   // Content unlocking based on achievements
   async getUnlockedContent(userId: string) {
     // Example: return list of content IDs unlocked by achievements
-    const unlocked = await this.userAchievementRepository.find({ where: { userId, isUnlocked: true } });
+    const unlocked = await this.userAchievementRepository.find({
+      where: { userId, isUnlocked: true },
+    });
     // Map to content IDs (stub)
-    return unlocked.map((ua) => ({ contentId: `content-for-${ua.achievementId}` }));
+    return unlocked.map((ua) => ({
+      contentId: `content-for-${ua.achievementId}`,
+    }));
   }
 
   // Retroactive unlocking
@@ -158,7 +186,7 @@ export class AchievementsService {
   async findLeaderboardAchievements(leaderboardId: number) {
     // In a real app, you would query achievements linked to this leaderboard
     return this.achievementRepository.find({
-      where: { metadata: { leaderboardId } } as any
+      where: { metadata: { leaderboardId } } as any,
     });
   }
 

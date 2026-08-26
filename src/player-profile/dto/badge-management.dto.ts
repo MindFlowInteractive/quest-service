@@ -5,7 +5,7 @@ export enum BadgeCategory {
   SKILL = 'skill',
   EVENT = 'event',
   SPECIAL = 'special',
-  TOURNAMENT = 'tournament'
+  TOURNAMENT = 'tournament',
 }
 
 export class BadgeDto {

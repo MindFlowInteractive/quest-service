@@ -28,7 +28,10 @@ export class WebhooksController {
     @ActiveUser() user: { userId?: string; sub?: string; id?: string },
     @Body() createWebhookDto: CreateWebhookDto,
   ) {
-    const webhook = await this.webhooksService.create(this.getOwnerId(user), createWebhookDto);
+    const webhook = await this.webhooksService.create(
+      this.getOwnerId(user),
+      createWebhookDto,
+    );
     return this.webhooksService.toResponse(webhook);
   }
 
@@ -37,7 +40,10 @@ export class WebhooksController {
     @ActiveUser() user: { userId?: string; sub?: string; id?: string },
     @Query('appId') appId?: string,
   ) {
-    const webhooks = await this.webhooksService.findAll(this.getOwnerId(user), appId);
+    const webhooks = await this.webhooksService.findAll(
+      this.getOwnerId(user),
+      appId,
+    );
     return webhooks.map((webhook) => this.webhooksService.toResponse(webhook));
   }
 
@@ -59,7 +65,11 @@ export class WebhooksController {
     return this.webhooksService.getDeliveries(this.getOwnerId(user), id, limit);
   }
 
-  private getOwnerId(user: { userId?: string; sub?: string; id?: string }): string {
+  private getOwnerId(user: {
+    userId?: string;
+    sub?: string;
+    id?: string;
+  }): string {
     const ownerId = user?.userId ?? user?.sub ?? user?.id;
 
     if (!ownerId) {

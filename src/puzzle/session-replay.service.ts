@@ -28,10 +28,12 @@ export class SessionReplayService {
   }
 
   async getSummary(sessionId: string) {
-    const events = await this.repo.find({ where: { sessionId, softDeleted: false } });
-    const totalMoves = events.filter(e => e.eventType === 'move').length;
-    const hintsUsed = events.filter(e => e.eventType === 'hint').length;
-    const pauses = events.filter(e => e.eventType === 'pause').length;
+    const events = await this.repo.find({
+      where: { sessionId, softDeleted: false },
+    });
+    const totalMoves = events.filter((e) => e.eventType === 'move').length;
+    const hintsUsed = events.filter((e) => e.eventType === 'hint').length;
+    const pauses = events.filter((e) => e.eventType === 'pause').length;
     const totalTime = this.calculateTotalTime(events);
 
     return { totalMoves, hintsUsed, pauses, totalTime };
@@ -45,7 +47,9 @@ export class SessionReplayService {
 
   async flagSuspiciousSessions(difficulty: 'easy' | 'medium' | 'hard') {
     // Aggregate sessions in-memory (safer for type-checking and avoids raw SQL here)
-    const events = await this.repo.find({ select: ['sessionId', 'timestamp'] as any });
+    const events = await this.repo.find({
+      select: ['sessionId', 'timestamp'] as any,
+    });
     const map = new Map<string, { min: Date; max: Date }>();
     for (const e of events as any[]) {
       const sid = e.sessionId;
@@ -58,10 +62,12 @@ export class SessionReplayService {
       }
     }
 
-    const sessions = Array.from(map.entries()).map(([sessionId, { min, max }]) => ({
-      sessionId,
-      totalTime: (max.getTime() - min.getTime()) / 1000,
-    }));
+    const sessions = Array.from(map.entries()).map(
+      ([sessionId, { min, max }]) => ({
+        sessionId,
+        totalTime: (max.getTime() - min.getTime()) / 1000,
+      }),
+    );
 
     return sessions.filter((s) => s.totalTime < MIN_SOLVE_TIME[difficulty]);
   }

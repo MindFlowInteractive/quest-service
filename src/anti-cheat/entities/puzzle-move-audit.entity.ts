@@ -5,9 +5,12 @@ import {
   CreateDateColumn,
   Index,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
 } from 'typeorm';
-import type { PuzzleMove, ValidationResult } from '../../game-engine/types/puzzle.types';
+import type {
+  PuzzleMove,
+  ValidationResult,
+} from '../../game-engine/types/puzzle.types';
 
 /**
  * Entity for detailed audit trail of puzzle moves

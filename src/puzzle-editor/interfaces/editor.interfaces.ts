@@ -3,7 +3,10 @@
  * Defines core types and contracts for the puzzle editor system
  */
 
-import { PuzzleType, DifficultyLevel } from '../../game-engine/types/puzzle.types';
+import {
+  PuzzleType,
+  DifficultyLevel,
+} from '../../game-engine/types/puzzle.types';
 
 // ============================================
 // Component System

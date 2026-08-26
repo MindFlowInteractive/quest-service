@@ -27,7 +27,10 @@ export class TutorialAnalyticsController {
     @Query() dateRange: DateRangeDto,
   ) {
     this.logger.log(`Getting completion rate for tutorial: ${tutorialId}`);
-    const rate = await this.analyticsService.getTutorialCompletionRate(tutorialId, dateRange);
+    const rate = await this.analyticsService.getTutorialCompletionRate(
+      tutorialId,
+      dateRange,
+    );
     return { tutorialId, rate };
   }
 
@@ -42,7 +45,9 @@ export class TutorialAnalyticsController {
   async getStepCompletionRates(
     @Param('tutorialId', ParseUUIDPipe) tutorialId: string,
   ) {
-    this.logger.log(`Getting step completion rates for tutorial: ${tutorialId}`);
+    this.logger.log(
+      `Getting step completion rates for tutorial: ${tutorialId}`,
+    );
     return this.analyticsService.getStepCompletionRates(tutorialId);
   }
 
@@ -68,7 +73,10 @@ export class TutorialAnalyticsController {
     @Query() filters: TutorialEffectivenessFilterDto,
   ) {
     this.logger.log(`Getting effectiveness report for tutorial: ${tutorialId}`);
-    return this.analyticsService.getTutorialEffectivenessReport(tutorialId, filters);
+    return this.analyticsService.getTutorialEffectivenessReport(
+      tutorialId,
+      filters,
+    );
   }
 
   @Get('step-effectiveness/:stepId')
@@ -89,7 +97,9 @@ export class TutorialAnalyticsController {
   async getAverageCompletionTime(
     @Param('tutorialId', ParseUUIDPipe) tutorialId: string,
   ) {
-    this.logger.log(`Getting average completion time for tutorial: ${tutorialId}`);
+    this.logger.log(
+      `Getting average completion time for tutorial: ${tutorialId}`,
+    );
     const time = await this.analyticsService.getOverallCompletionRate();
     return { tutorialId, averageCompletionTimeSeconds: time };
   }
@@ -105,7 +115,9 @@ export class TutorialAnalyticsController {
 
   // Error Patterns
   @Get('error-patterns/:tutorialId')
-  async getErrorPatterns(@Param('tutorialId', ParseUUIDPipe) tutorialId: string) {
+  async getErrorPatterns(
+    @Param('tutorialId', ParseUUIDPipe) tutorialId: string,
+  ) {
     this.logger.log(`Getting error patterns for tutorial: ${tutorialId}`);
     return this.analyticsService.getDropOffAnalysis(tutorialId);
   }

@@ -7,7 +7,11 @@ import * as path from 'path';
 import * as os from 'os';
 
 import { DataExportService } from './data-export.service';
-import { DataExportRequest, ExportStatus, ExportFormat } from '../entities/data-export-request.entity';
+import {
+  DataExportRequest,
+  ExportStatus,
+  ExportFormat,
+} from '../entities/data-export-request.entity';
 import { DataAccessAudit } from '../entities/data-access-audit.entity';
 import { DataExportRequestDto } from '../dto/data-export-request.dto';
 
@@ -60,7 +64,10 @@ describe('DataExportService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DataExportService,
-        { provide: getRepositoryToken(DataExportRequest), useValue: exportRepo },
+        {
+          provide: getRepositoryToken(DataExportRequest),
+          useValue: exportRepo,
+        },
         { provide: getRepositoryToken(DataAccessAudit), useValue: auditRepo },
         { provide: EventEmitter2, useValue: emitter },
         { provide: ConfigService, useValue: makeConfig() },
@@ -75,8 +82,12 @@ describe('DataExportService', () => {
   afterEach(() => {
     // Clean up tmp files
     try {
-      fs.readdirSync(tmpDir).forEach((f) => fs.unlinkSync(path.join(tmpDir, f)));
-    } catch { /* ignore */ }
+      fs.readdirSync(tmpDir).forEach((f) =>
+        fs.unlinkSync(path.join(tmpDir, f)),
+      );
+    } catch {
+      /* ignore */
+    }
   });
 
   // ───────── Export queuing ─────────────────────────────────────────────────
@@ -111,7 +122,10 @@ describe('DataExportService', () => {
     });
 
     it('should reject if a PENDING export already exists', async () => {
-      exportRepo.findOne.mockResolvedValue({ id: 'existing', status: ExportStatus.PENDING });
+      exportRepo.findOne.mockResolvedValue({
+        id: 'existing',
+        status: ExportStatus.PENDING,
+      });
 
       await expect(service.requestExport('user-1', {})).rejects.toThrow(
         'already have a pending export',
@@ -145,25 +159,35 @@ describe('DataExportService', () => {
 
   describe('gatherUserData', () => {
     it('should include all required top-level sections', async () => {
-      emitter.emitAsync.mockImplementation(async (event: string, payload: any) => {
-        if (event === 'privacy.gather.profile') {
-          return [{ email: 'a@b.com', username: 'alice', createdAt: new Date().toISOString() }];
-        }
-        if (event === 'privacy.gather.achievements') return [['ach1']];
-        if (event === 'privacy.gather.sessions') return [['sess1']];
-        if (event === 'privacy.gather.wallet') {
-          return [{ addresses: ['ADDR1'], balanceHistory: [] }];
-        }
-        if (event === 'privacy.gather.friends') {
-          return [{ friends: ['friend1'], friendRequests: [] }];
-        }
-        if (event === 'privacy.gather.notifications') {
-          return [{ preferences: { email: true }, history: [] }];
-        }
-        if (event === 'privacy.gather.privacySettings') return [{ profilePublic: false }];
-        if (event === 'privacy.gather.consentHistory') return [[{ type: 'analytics', granted: true }]];
-        return [null];
-      });
+      emitter.emitAsync.mockImplementation(
+        async (event: string, payload: any) => {
+          if (event === 'privacy.gather.profile') {
+            return [
+              {
+                email: 'a@b.com',
+                username: 'alice',
+                createdAt: new Date().toISOString(),
+              },
+            ];
+          }
+          if (event === 'privacy.gather.achievements') return [['ach1']];
+          if (event === 'privacy.gather.sessions') return [['sess1']];
+          if (event === 'privacy.gather.wallet') {
+            return [{ addresses: ['ADDR1'], balanceHistory: [] }];
+          }
+          if (event === 'privacy.gather.friends') {
+            return [{ friends: ['friend1'], friendRequests: [] }];
+          }
+          if (event === 'privacy.gather.notifications') {
+            return [{ preferences: { email: true }, history: [] }];
+          }
+          if (event === 'privacy.gather.privacySettings')
+            return [{ profilePublic: false }];
+          if (event === 'privacy.gather.consentHistory')
+            return [[{ type: 'analytics', granted: true }]];
+          return [null];
+        },
+      );
 
       const data = await service.gatherUserData('user-archive');
 
@@ -179,11 +203,11 @@ describe('DataExportService', () => {
       // All required sections present
       expect(data.gameData).toBeDefined();
       expect(data.wallet).toBeDefined();
-      expect(data.wallet!.addresses).toContain('ADDR1');
+      expect(data.wallet.addresses).toContain('ADDR1');
       expect(data.socialData).toBeDefined();
-      expect(data.socialData!.friends).toContain('friend1');
+      expect(data.socialData.friends).toContain('friend1');
       expect(data.notifications).toBeDefined();
-      expect(data.notifications!.preferences).toBeDefined();
+      expect(data.notifications.preferences).toBeDefined();
       expect(data.privacySettings).toBeDefined();
       expect(data.consentHistory).toBeDefined();
     });

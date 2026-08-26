@@ -179,7 +179,7 @@ export class DailyChallengesService {
   private getStartOfUTCWeek(date: Date = new Date()): Date {
     const d = new Date(date);
     const dayOfWeek = d.getUTCDay();
-    const daysToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     d.setUTCDate(d.getUTCDate() + daysToMonday);
     d.setUTCHours(0, 0, 0, 0);
     return d;
@@ -197,7 +197,9 @@ export class DailyChallengesService {
     });
 
     if (!challenge) {
-      throw new NotFoundException('No active weekly challenge found for this week.');
+      throw new NotFoundException(
+        'No active weekly challenge found for this week.',
+      );
     }
 
     let userProgress = null;
@@ -205,11 +207,13 @@ export class DailyChallengesService {
       const completion = await this.weeklyCompletionRepo.findOne({
         where: { userId, weeklyChallengeId: challenge.id },
       });
-      userProgress = completion ? {
-        completedPuzzleIds: completion.completedPuzzleIds,
-        allPuzzlesCompleted: completion.allPuzzlesCompleted,
-        bonusXPAwarded: completion.bonusXPAwarded,
-      } : null;
+      userProgress = completion
+        ? {
+            completedPuzzleIds: completion.completedPuzzleIds,
+            allPuzzlesCompleted: completion.allPuzzlesCompleted,
+            bonusXPAwarded: completion.bonusXPAwarded,
+          }
+        : null;
     }
 
     return { challenge, userProgress };
@@ -229,11 +233,15 @@ export class DailyChallengesService {
     });
 
     if (!weeklyChallenge) {
-      throw new NotFoundException('Weekly challenge not found or no longer active.');
+      throw new NotFoundException(
+        'Weekly challenge not found or no longer active.',
+      );
     }
 
     if (!weeklyChallenge.puzzleIds.includes(puzzleId)) {
-      throw new BadRequestException('Puzzle is not part of this weekly challenge.');
+      throw new BadRequestException(
+        'Puzzle is not part of this weekly challenge.',
+      );
     }
 
     let completion = await this.weeklyCompletionRepo.findOne({
@@ -250,18 +258,25 @@ export class DailyChallengesService {
 
     // Check if already completed
     if (completion.completedPuzzleIds.includes(puzzleId)) {
-      throw new BadRequestException('Puzzle already completed in this weekly challenge.');
+      throw new BadRequestException(
+        'Puzzle already completed in this weekly challenge.',
+      );
     }
 
     // Add puzzle to completed list
-    completion.completedPuzzleIds = [...completion.completedPuzzleIds, puzzleId];
+    completion.completedPuzzleIds = [
+      ...completion.completedPuzzleIds,
+      puzzleId,
+    ];
     completion.completedAt = new Date();
 
     // Check if all puzzles are completed
-    if (completion.completedPuzzleIds.length === weeklyChallenge.puzzleIds.length) {
+    if (
+      completion.completedPuzzleIds.length === weeklyChallenge.puzzleIds.length
+    ) {
       completion.allPuzzlesCompleted = true;
       completion.bonusXPAwarded = weeklyChallenge.bonusXP;
-      
+
       // Increment completion count
       await this.weeklyChallengeRepo.increment(
         { id: weeklyChallengeId },
@@ -359,7 +374,9 @@ export class DailyChallengesService {
     }
 
     if (completion.bonusXPClaimed) {
-      throw new BadRequestException('Bonus XP already claimed for this completion.');
+      throw new BadRequestException(
+        'Bonus XP already claimed for this completion.',
+      );
     }
 
     completion.bonusXPClaimed = true;
@@ -374,7 +391,11 @@ export class DailyChallengesService {
   /**
    * Retrieves user's challenge history including both daily and weekly completions
    */
-  async getHistory(userId: string, limit = 30, challengeType?: 'daily' | 'weekly') {
+  async getHistory(
+    userId: string,
+    limit = 30,
+    challengeType?: 'daily' | 'weekly',
+  ) {
     if (!challengeType || challengeType === 'daily') {
       const completions = await this.completionRepo.find({
         where: { userId },
@@ -394,4 +415,3 @@ export class DailyChallengesService {
     }
   }
 }
-

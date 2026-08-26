@@ -96,7 +96,10 @@ export class PostgresFriendRequestRepository
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findInboundByUserId(userId: string, limit: number): Promise<FriendRequest[]> {
+  async findInboundByUserId(
+    userId: string,
+    limit: number,
+  ): Promise<FriendRequest[]> {
     const entities = await this.ormRepository.find({
       where: { to_user_id: userId },
       order: { created_at: 'DESC' },

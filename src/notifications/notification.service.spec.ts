@@ -11,19 +11,39 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 describe('NotificationService', () => {
   let service: NotificationService;
 
-  const mockRepo = () => ({ create: jest.fn((d) => d), save: jest.fn((d) => Promise.resolve({ ...d, id: 'id' })), findOne: jest.fn(), find: jest.fn(), delete: jest.fn() });
+  const mockRepo = () => ({
+    create: jest.fn((d) => d),
+    save: jest.fn((d) => Promise.resolve({ ...d, id: 'id' })),
+    findOne: jest.fn(),
+    find: jest.fn(),
+    delete: jest.fn(),
+  });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationService,
         { provide: getRepositoryToken(Notification), useFactory: mockRepo },
-        { provide: getRepositoryToken(NotificationDelivery), useFactory: mockRepo },
+        {
+          provide: getRepositoryToken(NotificationDelivery),
+          useFactory: mockRepo,
+        },
         { provide: getRepositoryToken(User), useFactory: mockRepo },
         { provide: getRepositoryToken(Device), useFactory: mockRepo },
-        { provide: EmailService, useValue: { sendEmail: jest.fn().mockResolvedValue(true) } },
-        { provide: SchedulerRegistry, useValue: { addTimeout: jest.fn(), deleteTimeout: jest.fn() } },
-        { provide: 'NOTIFICATION_SERVICE', useValue: { emit: jest.fn().mockReturnValue({ subscribe: jest.fn() }) } },
+        {
+          provide: EmailService,
+          useValue: { sendEmail: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: SchedulerRegistry,
+          useValue: { addTimeout: jest.fn(), deleteTimeout: jest.fn() },
+        },
+        {
+          provide: 'NOTIFICATION_SERVICE',
+          useValue: {
+            emit: jest.fn().mockReturnValue({ subscribe: jest.fn() }),
+          },
+        },
       ],
     }).compile();
 

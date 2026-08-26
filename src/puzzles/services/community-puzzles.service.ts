@@ -1,10 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserPuzzleSubmission, PuzzleSubmissionStatus } from '../entities/user-puzzle-submission.entity';
+import {
+  UserPuzzleSubmission,
+  PuzzleSubmissionStatus,
+} from '../entities/user-puzzle-submission.entity';
 import { PuzzleRating } from '../entities/puzzle-rating.entity';
-import { PuzzleComment, PuzzleCommentStatus } from '../entities/puzzle-comment.entity';
-import { CreatePuzzleRatingDto, CreatePuzzleCommentDto, PuzzleCommentVoteDto, SharePuzzleDto } from '../dto/community-puzzles.dto';
+import {
+  PuzzleComment,
+  PuzzleCommentStatus,
+} from '../entities/puzzle-comment.entity';
+import {
+  CreatePuzzleRatingDto,
+  CreatePuzzleCommentDto,
+  PuzzleCommentVoteDto,
+  SharePuzzleDto,
+} from '../dto/community-puzzles.dto';
 
 @Injectable()
 export class CommunityPuzzlesService {
@@ -27,7 +38,11 @@ export class CommunityPuzzlesService {
   ): Promise<PuzzleRating> {
     // Check if puzzle exists and allows ratings
     const submission = await this.submissionRepository.findOne({
-      where: { id: submissionId, status: PuzzleSubmissionStatus.PUBLISHED, allowRatings: true },
+      where: {
+        id: submissionId,
+        status: PuzzleSubmissionStatus.PUBLISHED,
+        allowRatings: true,
+      },
     });
 
     if (!submission) {
@@ -53,18 +68,21 @@ export class CommunityPuzzlesService {
       newRating.userId = userId;
       newRating.rating = ratingDto.rating;
       newRating.review = ratingDto.review;
-      newRating.metadata = ratingDto.metadata || {} as any;
+      newRating.metadata = ratingDto.metadata || ({} as any);
       newRating.isPublic = true;
       newRating.isReported = false;
       newRating.tags = [];
-      
+
       const savedRating = await this.ratingRepository.save(newRating);
       await this.updatePuzzleRatingStats(submissionId);
       return savedRating;
     }
   }
 
-  async getUserRating(submissionId: string, userId: string): Promise<PuzzleRating | null> {
+  async getUserRating(
+    submissionId: string,
+    userId: string,
+  ): Promise<PuzzleRating | null> {
     return await this.ratingRepository.findOne({
       where: { submissionId, userId },
     });
@@ -103,8 +121,9 @@ export class CommunityPuzzlesService {
 
     if (ratings.length === 0) return;
 
-    const averageRating = ratings.reduce((sum, rating) => sum + rating.rating, 0) / ratings.length;
-    
+    const averageRating =
+      ratings.reduce((sum, rating) => sum + rating.rating, 0) / ratings.length;
+
     await this.submissionRepository.update(submissionId, {
       averageRating,
       ratingCount: ratings.length,
@@ -119,7 +138,11 @@ export class CommunityPuzzlesService {
   ): Promise<PuzzleComment> {
     // Check if puzzle exists and allows comments
     const submission = await this.submissionRepository.findOne({
-      where: { id: submissionId, status: PuzzleSubmissionStatus.PUBLISHED, allowComments: true },
+      where: {
+        id: submissionId,
+        status: PuzzleSubmissionStatus.PUBLISHED,
+        allowComments: true,
+      },
     });
 
     if (!submission) {
@@ -132,13 +155,17 @@ export class CommunityPuzzlesService {
       const parentComment = await this.commentRepository.findOne({
         where: { id: commentDto.parentId, submissionId },
       });
-      
+
       if (!parentComment) {
         throw new Error('Parent comment not found');
       }
-      
+
       // Increment parent reply count
-      await this.commentRepository.increment({ id: commentDto.parentId }, 'replyCount', 1);
+      await this.commentRepository.increment(
+        { id: commentDto.parentId },
+        'replyCount',
+        1,
+      );
     } else {
       // Check if commenter is the puzzle creator
       isFromCreator = submission.userId === userId;
@@ -153,7 +180,7 @@ export class CommunityPuzzlesService {
     });
 
     const savedComment = await this.commentRepository.save(comment);
-    
+
     // Update last activity on puzzle
     await this.submissionRepository.update(submissionId, {
       lastActivityAt: new Date(),
@@ -203,7 +230,11 @@ export class CommunityPuzzlesService {
 
     // Update parent reply count if it's a reply
     if (comment.parentId) {
-      await this.commentRepository.decrement({ id: comment.parentId }, 'replyCount', 1);
+      await this.commentRepository.decrement(
+        { id: comment.parentId },
+        'replyCount',
+        1,
+      );
     }
   }
 
@@ -242,8 +273,8 @@ export class CommunityPuzzlesService {
     totalPages: number;
   }> {
     const [comments, total] = await this.commentRepository.findAndCount({
-      where: { 
-        submissionId, 
+      where: {
+        submissionId,
         status: PuzzleCommentStatus.ACTIVE,
         parentId: null, // Only top-level comments
       },
@@ -276,8 +307,8 @@ export class CommunityPuzzlesService {
     socialUrls: Record<string, string>;
   }> {
     const submission = await this.submissionRepository.findOne({
-      where: { 
-        id: submissionId, 
+      where: {
+        id: submissionId,
         status: PuzzleSubmissionStatus.PUBLISHED,
         isPublic: true,
       },
@@ -289,7 +320,7 @@ export class CommunityPuzzlesService {
 
     const baseUrl = process.env.FRONTEND_URL || 'https://quest-game.com';
     const puzzleUrl = `${baseUrl}/puzzles/${submissionId}`;
-    const shareableLink = submission.sharingSettings?.shareableLink 
+    const shareableLink = submission.sharingSettings?.shareableLink
       ? `${baseUrl}/shared/${submission.sharingSettings.shareableLink}`
       : puzzleUrl;
 
@@ -302,7 +333,9 @@ export class CommunityPuzzlesService {
     if (shareDto.shareType === 'social' || !shareDto.shareType) {
       const encodedUrl = encodeURIComponent(shareableLink);
       const encodedTitle = encodeURIComponent(submission.title);
-      const encodedMessage = encodeURIComponent(shareDto.customMessage || `Check out this puzzle: ${submission.title}`);
+      const encodedMessage = encodeURIComponent(
+        shareDto.customMessage || `Check out this puzzle: ${submission.title}`,
+      );
 
       result.socialUrls = {
         twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedMessage}`,
@@ -314,7 +347,10 @@ export class CommunityPuzzlesService {
     }
 
     // Generate embed code if allowed
-    if (submission.sharingSettings?.embeddable && shareDto.shareType === 'embed') {
+    if (
+      submission.sharingSettings?.embeddable &&
+      shareDto.shareType === 'embed'
+    ) {
       result.embedCode = `<iframe src="${baseUrl}/embed/puzzle/${submissionId}" width="800" height="600" frameborder="0"></iframe>`;
     }
 
@@ -324,9 +360,15 @@ export class CommunityPuzzlesService {
     return result;
   }
 
-  private async trackShare(submissionId: string, userId: string, shareDto: SharePuzzleDto): Promise<void> {
+  private async trackShare(
+    submissionId: string,
+    userId: string,
+    shareDto: SharePuzzleDto,
+  ): Promise<void> {
     // In a real implementation, you'd store share analytics
-    this.logger.log(`Puzzle ${submissionId} shared by user ${userId} via ${shareDto.shareType}`);
+    this.logger.log(
+      `Puzzle ${submissionId} shared by user ${userId} via ${shareDto.shareType}`,
+    );
   }
 
   async getShareStats(submissionId: string): Promise<{
@@ -347,14 +389,16 @@ export class CommunityPuzzlesService {
   }
 
   // Community Features
-  async getTopCreators(limit: number = 10): Promise<Array<{
-    userId: string;
-    username: string;
-    totalPuzzles: number;
-    averageRating: number;
-    totalPlays: number;
-    followers: number;
-  }>> {
+  async getTopCreators(limit: number = 10): Promise<
+    Array<{
+      userId: string;
+      username: string;
+      totalPuzzles: number;
+      averageRating: number;
+      totalPlays: number;
+      followers: number;
+    }>
+  > {
     const query = this.submissionRepository
       .createQueryBuilder('submission')
       .select([
@@ -363,7 +407,9 @@ export class CommunityPuzzlesService {
         'AVG(submission.averageRating) as averageRating',
         'SUM(submission.playCount) as totalPlays',
       ])
-      .where('submission.status = :status', { status: PuzzleSubmissionStatus.PUBLISHED })
+      .where('submission.status = :status', {
+        status: PuzzleSubmissionStatus.PUBLISHED,
+      })
       .andWhere('submission.isPublic = :isPublic', { isPublic: true })
       .groupBy('submission.userId')
       .orderBy('totalPlays', 'DESC')
@@ -406,7 +452,9 @@ export class CommunityPuzzlesService {
       await this.submissionRepository.save(submission);
     }
 
-    this.logger.log(`Puzzle ${submissionId} reported by user ${userId}: ${reason}`);
+    this.logger.log(
+      `Puzzle ${submissionId} reported by user ${userId}: ${reason}`,
+    );
   }
 
   async reportComment(
@@ -435,6 +483,8 @@ export class CommunityPuzzlesService {
 
     await this.commentRepository.save(comment);
 
-    this.logger.log(`Comment ${commentId} reported by user ${userId}: ${reason}`);
+    this.logger.log(
+      `Comment ${commentId} reported by user ${userId}: ${reason}`,
+    );
   }
 }

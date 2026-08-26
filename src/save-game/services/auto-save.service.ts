@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { SaveGame } from '../entities/save-game.entity';
-import { SaveType, SyncStatus, SaveGameData } from '../interfaces/save-game.interfaces';
+import {
+  SaveType,
+  SyncStatus,
+  SaveGameData,
+} from '../interfaces/save-game.interfaces';
 import { SaveGameService } from './save-game.service';
 import { CloudSyncService } from './cloud-sync.service';
 
@@ -67,7 +71,10 @@ export class AutoSaveService {
     );
   }
 
-  async disableAutoSave(userId: string, slotId: number = this.AUTO_SAVE_SLOT): Promise<void> {
+  async disableAutoSave(
+    userId: string,
+    slotId: number = this.AUTO_SAVE_SLOT,
+  ): Promise<void> {
     const configKey = this.getConfigKey(userId, slotId);
     const config = this.autoSaveConfigs.get(configKey);
 
@@ -79,7 +86,11 @@ export class AutoSaveService {
     this.logger.log(`Auto-save disabled for user ${userId}, slot ${slotId}`);
   }
 
-  async queueAutoSave(userId: string, data: SaveGameData, slotId?: number): Promise<void> {
+  async queueAutoSave(
+    userId: string,
+    data: SaveGameData,
+    slotId?: number,
+  ): Promise<void> {
     const targetSlot = slotId ?? this.AUTO_SAVE_SLOT;
     const configKey = this.getConfigKey(userId, targetSlot);
     const config = this.autoSaveConfigs.get(configKey);
@@ -105,10 +116,15 @@ export class AutoSaveService {
       timestamp: new Date(),
     });
 
-    this.logger.debug(`Queued auto-save for user ${userId}, slot ${targetSlot}`);
+    this.logger.debug(
+      `Queued auto-save for user ${userId}, slot ${targetSlot}`,
+    );
   }
 
-  async triggerAutoSave(userId: string, data: SaveGameData): Promise<SaveGame | null> {
+  async triggerAutoSave(
+    userId: string,
+    data: SaveGameData,
+  ): Promise<SaveGame | null> {
     const slotId = this.AUTO_SAVE_SLOT;
 
     try {
@@ -144,7 +160,9 @@ export class AutoSaveService {
         });
       }
     } catch (error) {
-      this.logger.error(`Auto-save failed for user ${userId}: ${error.message}`);
+      this.logger.error(
+        `Auto-save failed for user ${userId}: ${error.message}`,
+      );
       return null;
     }
   }
@@ -193,7 +211,9 @@ export class AutoSaveService {
       return;
     }
 
-    this.logger.debug(`Processing ${this.pendingAutoSaves.length} pending auto-saves`);
+    this.logger.debug(
+      `Processing ${this.pendingAutoSaves.length} pending auto-saves`,
+    );
 
     // Group by user and slot, keeping only the latest
     const latestSaves = new Map<string, PendingAutoSave>();
@@ -229,7 +249,10 @@ export class AutoSaveService {
     }
   }
 
-  getAutoSaveConfig(userId: string, slotId: number = this.AUTO_SAVE_SLOT): AutoSaveConfig | null {
+  getAutoSaveConfig(
+    userId: string,
+    slotId: number = this.AUTO_SAVE_SLOT,
+  ): AutoSaveConfig | null {
     const configKey = this.getConfigKey(userId, slotId);
     return this.autoSaveConfigs.get(configKey) || null;
   }

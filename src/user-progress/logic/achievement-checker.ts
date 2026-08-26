@@ -6,18 +6,23 @@ export function checkNewAchievements(
   progress: UserProgress,
   currentAchievements: UserAchievement[],
 ): UserAchievement[] {
-  const unlockedCodes = new Set(currentAchievements.map((a) => a.achievementCode));
+  const unlockedCodes = new Set(
+    currentAchievements.map((a) => a.achievementCode),
+  );
   const newAchievements: UserAchievement[] = [];
 
   for (const achievement of ACHIEVEMENTS) {
-    if (!unlockedCodes.has(achievement.code) && achievement.condition(progress)) {
+    if (
+      !unlockedCodes.has(achievement.code) &&
+      achievement.condition(progress)
+    ) {
       newAchievements.push({
         achievementCode: achievement.code,
         title: achievement.title,
         description: achievement.description,
         userId: progress.userId,
         unlockedAt: new Date(),
-        progress, 
+        progress,
       } as UserAchievement);
     }
   }

@@ -23,7 +23,9 @@ export class DifficultyScalingService {
    * Returns a recommended difficulty range for adaptive puzzle selection.
    * Can be used to query puzzles in this range.
    */
-  async getRecommendedDifficultyRange(playerId: string): Promise<{ min: number; max: number }> {
+  async getRecommendedDifficultyRange(
+    playerId: string,
+  ): Promise<{ min: number; max: number }> {
     const recommended = await this.getRecommendedDifficulty(playerId);
     // Example: +/- 0.5 around recommended, clamped to [1,5]
     return {

@@ -17,7 +17,7 @@ export class BadgeService {
         description: 'Won your first game',
         iconUrl: '/badges/first-win.png',
         category: BadgeCategory.ACHIEVEMENT,
-        rarity: 'common'
+        rarity: 'common',
       },
       {
         id: 'puzzle-master',
@@ -25,7 +25,7 @@ export class BadgeService {
         description: 'Solved 100 puzzles',
         iconUrl: '/badges/puzzle-master.png',
         category: BadgeCategory.SKILL,
-        rarity: 'rare'
+        rarity: 'rare',
       },
       {
         id: 'speed-demon',
@@ -33,7 +33,7 @@ export class BadgeService {
         description: 'Completed a puzzle in under 30 seconds',
         iconUrl: '/badges/speed-demon.png',
         category: BadgeCategory.SKILL,
-        rarity: 'epic'
+        rarity: 'epic',
       },
       {
         id: 'tournament-winner',
@@ -41,7 +41,7 @@ export class BadgeService {
         description: 'Won a tournament',
         iconUrl: '/badges/tournament-winner.png',
         category: BadgeCategory.TOURNAMENT,
-        rarity: 'legendary'
+        rarity: 'legendary',
       },
       {
         id: 'perfect-streak',
@@ -49,7 +49,7 @@ export class BadgeService {
         description: 'Achieved a 10-game win streak',
         iconUrl: '/badges/perfect-streak.png',
         category: BadgeCategory.ACHIEVEMENT,
-        rarity: 'epic'
+        rarity: 'epic',
       },
       {
         id: 'beta-tester',
@@ -57,7 +57,7 @@ export class BadgeService {
         description: 'Participated in the beta program',
         iconUrl: '/badges/beta-tester.png',
         category: BadgeCategory.SPECIAL,
-        rarity: 'rare'
+        rarity: 'rare',
       },
       {
         id: 'community-helper',
@@ -65,7 +65,7 @@ export class BadgeService {
         description: 'Helped other players in the community',
         iconUrl: '/badges/community-helper.png',
         category: BadgeCategory.SPECIAL,
-        rarity: 'rare'
+        rarity: 'rare',
       },
       {
         id: 'daily-player',
@@ -73,11 +73,11 @@ export class BadgeService {
         description: 'Played for 30 consecutive days',
         iconUrl: '/badges/daily-player.png',
         category: BadgeCategory.ACHIEVEMENT,
-        rarity: 'common'
-      }
+        rarity: 'common',
+      },
     ];
 
-    defaultBadges.forEach(badge => {
+    defaultBadges.forEach((badge) => {
       this.badges.set(badge.id, badge);
     });
   }
@@ -95,25 +95,31 @@ export class BadgeService {
   }
 
   getBadgesByIds(ids: string[]): BadgeDto[] {
-    return ids.map(id => {
-      try {
-        return this.getBadgeById(id);
-      } catch {
-        return null;
-      }
-    }).filter(Boolean) as BadgeDto[];
+    return ids
+      .map((id) => {
+        try {
+          return this.getBadgeById(id);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
   }
 
   getBadgesByCategory(category: BadgeCategory): BadgeDto[] {
-    return Array.from(this.badges.values()).filter(badge => badge.category === category);
+    return Array.from(this.badges.values()).filter(
+      (badge) => badge.category === category,
+    );
   }
 
   getBadgesByRarity(rarity: string): BadgeDto[] {
-    return Array.from(this.badges.values()).filter(badge => badge.rarity === rarity);
+    return Array.from(this.badges.values()).filter(
+      (badge) => badge.rarity === rarity,
+    );
   }
 
   validateBadgeIds(ids: string[]): boolean {
-    return ids.every(id => this.badges.has(id));
+    return ids.every((id) => this.badges.has(id));
   }
 
   addBadge(badge: BadgeDto): void {

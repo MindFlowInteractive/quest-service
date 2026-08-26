@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Leaderboard } from './leaderboard.entity';
 
 @Entity('leaderboard_entries')
@@ -32,4 +39,4 @@ export class LeaderboardEntry {
 
   @UpdateDateColumn()
   updatedAt: Date;
-} 
+}

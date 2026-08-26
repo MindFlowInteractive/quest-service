@@ -3,8 +3,15 @@ import { StrategyExplainerService } from './strategy-explainer.service';
 import { HintProgressionService } from './hint-progression.service';
 import { LearningPathService } from './learning-path.service';
 import { EffectivenessTrackerService } from './effectiveness-tracker.service';
-import { PuzzleAnalysis, Hint, LearningPath } from './interfaces/puzzle-analysis.interface';
-import { HintRequestDto, ThinkingProcessRequestDto } from './dto/hint-request.dto';
+import {
+  PuzzleAnalysis,
+  Hint,
+  LearningPath,
+} from './interfaces/puzzle-analysis.interface';
+import {
+  HintRequestDto,
+  ThinkingProcessRequestDto,
+} from './dto/hint-request.dto';
 
 @Injectable()
 export class AiAssistantService {
@@ -15,24 +22,31 @@ export class AiAssistantService {
     private effectivenessTracker: EffectivenessTrackerService,
   ) {}
 
-  async analyzePuzzle(puzzleState: any, userId: string): Promise<PuzzleAnalysis> {
+  async analyzePuzzle(
+    puzzleState: any,
+    userId: string,
+  ): Promise<PuzzleAnalysis> {
     // Analyze puzzle structure and current state
     const patterns = this.identifyPatterns(puzzleState);
     const difficulty = this.assessDifficulty(puzzleState);
     const progress = this.calculateProgress(puzzleState);
-    
+
     // Get player's learning profile
     const playerProfile = await this.learningPath.getPlayerProfile(userId);
-    
+
     // Determine appropriate strategies
-    const strategies = await this.strategyExplainer.identifyApplicableStrategies(
-      puzzleState,
-      patterns,
-      playerProfile
-    );
+    const strategies =
+      await this.strategyExplainer.identifyApplicableStrategies(
+        puzzleState,
+        patterns,
+        playerProfile,
+      );
 
     // Identify common misconceptions based on player history
-    const misconceptions = await this.identifyMisconceptions(userId, puzzleState);
+    const misconceptions = await this.identifyMisconceptions(
+      userId,
+      puzzleState,
+    );
 
     return {
       puzzleType: this.determinePuzzleType(puzzleState),
@@ -45,37 +59,45 @@ export class AiAssistantService {
   }
 
   async getProgressiveHint(request: HintRequestDto): Promise<Hint> {
-    const analysis = await this.analyzePuzzle(request.currentState, request.userId);
-    
+    const analysis = await this.analyzePuzzle(
+      request.currentState,
+      request.userId,
+    );
+
     // Get player's current hint level
     const playerProgress = await this.hintProgression.getPlayerHintLevel(
       request.userId,
-      request.puzzleId
+      request.puzzleId,
     );
 
     // Generate appropriate hint that doesn't solve
     const hint = await this.hintProgression.generateHint(
       analysis,
       playerProgress,
-      request.previousAttempts || 0
+      request.previousAttempts || 0,
     );
 
     // Track hint effectiveness
     await this.effectivenessTracker.recordHintGiven(
       request.userId,
       request.puzzleId,
-      hint
+      hint,
     );
 
     return hint;
   }
 
-  async explainThinkingProcess(request: ThinkingProcessRequestDto): Promise<any> {
-    const analysis = await this.analyzePuzzle(request.currentState, request.userId);
-    
+  async explainThinkingProcess(
+    request: ThinkingProcessRequestDto,
+  ): Promise<any> {
+    const analysis = await this.analyzePuzzle(
+      request.currentState,
+      request.userId,
+    );
+
     return this.strategyExplainer.explainThinkingProcess(
       analysis,
-      request.specificStep
+      request.specificStep,
     );
   }
 
@@ -86,7 +108,7 @@ export class AiAssistantService {
   private identifyPatterns(puzzleState: any): string[] {
     // Pattern recognition logic
     const patterns: string[] = [];
-    
+
     // Example pattern detection
     if (this.hasSymmetry(puzzleState)) {
       patterns.push('symmetry');
@@ -97,18 +119,18 @@ export class AiAssistantService {
     if (this.hasConstraintChain(puzzleState)) {
       patterns.push('constraint_chain');
     }
-    
+
     return patterns;
   }
 
   private assessDifficulty(puzzleState: any): number {
     // Multi-factor difficulty assessment
     let difficulty = 0;
-    
+
     difficulty += this.countConstraints(puzzleState) * 0.3;
     difficulty += this.measureComplexity(puzzleState) * 0.4;
     difficulty += this.countSolutionPaths(puzzleState) * 0.3;
-    
+
     return Math.min(difficulty, 10);
   }
 
@@ -126,7 +148,10 @@ export class AiAssistantService {
     return 'general';
   }
 
-  private async identifyMisconceptions(userId: string, puzzleState: any): Promise<string[]> {
+  private async identifyMisconceptions(
+    userId: string,
+    puzzleState: any,
+  ): Promise<string[]> {
     // Analyze player's past mistakes
     const history = await this.effectivenessTracker.getPlayerHistory(userId);
     return this.analyzeCommonErrors(history, puzzleState);

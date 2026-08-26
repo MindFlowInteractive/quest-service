@@ -2,7 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SkillRatingService } from './skill-rating.service';
 import { SkillRatingController } from './skill-rating.controller';
-import { PlayerRatingController, RatingsController } from './controllers/rating.controller';
+import {
+  PlayerRatingController,
+  RatingsController,
+} from './controllers/rating.controller';
 import { PlayerRating } from './entities/player-rating.entity';
 import { RatingHistory } from './entities/rating-history.entity';
 import { Season } from './entities/season.entity';
@@ -13,10 +16,20 @@ import { ELOService } from './elo.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PlayerRating, RatingHistory, Season, User, Puzzle]),
+    TypeOrmModule.forFeature([
+      PlayerRating,
+      RatingHistory,
+      Season,
+      User,
+      Puzzle,
+    ]),
     ScheduleModule.forRoot(),
   ],
-  controllers: [SkillRatingController, PlayerRatingController, RatingsController],
+  controllers: [
+    SkillRatingController,
+    PlayerRatingController,
+    RatingsController,
+  ],
   providers: [SkillRatingService, ELOService],
   exports: [SkillRatingService],
 })

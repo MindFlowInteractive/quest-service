@@ -16,7 +16,7 @@ describe('PlayerProfile Integration Tests', () => {
     id: 'test-user-id',
     username: 'testuser',
     email: 'test@example.com',
-    password: 'hashedpassword'
+    password: 'hashedpassword',
   };
 
   beforeAll(async () => {
@@ -46,7 +46,10 @@ describe('PlayerProfile Integration Tests', () => {
     let authToken: string;
 
     beforeEach(() => {
-      authToken = jwtService.sign({ sub: testUser.id, username: testUser.username });
+      authToken = jwtService.sign({
+        sub: testUser.id,
+        username: testUser.username,
+      });
     });
 
     it('should get profile for user', async () => {
@@ -57,7 +60,7 @@ describe('PlayerProfile Integration Tests', () => {
       expect(response.body).toMatchObject({
         userId: testUser.id,
         username: testUser.username,
-        isProfilePublic: true
+        isProfilePublic: true,
       });
     });
 
@@ -68,8 +71,8 @@ describe('PlayerProfile Integration Tests', () => {
         location: 'New York',
         socialLinks: {
           twitter: '@testuser',
-          discord: 'testuser#1234'
-        }
+          discord: 'testuser#1234',
+        },
       };
 
       const response = await request(app.getHttpServer())
@@ -88,8 +91,8 @@ describe('PlayerProfile Integration Tests', () => {
         privacySettings: {
           isProfilePublic: false,
           showBio: false,
-          showStats: true
-        }
+          showStats: true,
+        },
       };
 
       await request(app.getHttpServer())
@@ -108,7 +111,7 @@ describe('PlayerProfile Integration Tests', () => {
 
     it('should update displayed badges', async () => {
       const badgeUpdate = {
-        displayedBadges: ['first-win', 'puzzle-master', 'speed-demon']
+        displayedBadges: ['first-win', 'puzzle-master', 'speed-demon'],
       };
 
       const response = await request(app.getHttpServer())
@@ -117,7 +120,11 @@ describe('PlayerProfile Integration Tests', () => {
         .send(badgeUpdate)
         .expect(200);
 
-      expect(response.body.badges).toEqual(['first-win', 'puzzle-master', 'speed-demon']);
+      expect(response.body.badges).toEqual([
+        'first-win',
+        'puzzle-master',
+        'speed-demon',
+      ]);
     });
 
     it('should update profile statistics', async () => {
@@ -126,7 +133,7 @@ describe('PlayerProfile Integration Tests', () => {
         totalWins: 120,
         winRate: 0.8,
         averageScore: 850,
-        bestScore: 1000
+        bestScore: 1000,
       };
 
       const response = await request(app.getHttpServer())
@@ -202,7 +209,9 @@ describe('PlayerProfile Integration Tests', () => {
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.every(badge => badge.category === 'achievement')).toBe(true);
+      expect(
+        response.body.every((badge) => badge.category === 'achievement'),
+      ).toBe(true);
     });
 
     it('should get badges by rarity', async () => {
@@ -211,7 +220,9 @@ describe('PlayerProfile Integration Tests', () => {
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.every(badge => badge.rarity === 'rare')).toBe(true);
+      expect(response.body.every((badge) => badge.rarity === 'rare')).toBe(
+        true,
+      );
     });
 
     it('should get all banner themes', async () => {
@@ -232,7 +243,7 @@ describe('PlayerProfile Integration Tests', () => {
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.every(theme => theme.isUnlockable)).toBe(true);
+      expect(response.body.every((theme) => theme.isUnlockable)).toBe(true);
     });
 
     it('should get specific theme details', async () => {
@@ -250,7 +261,10 @@ describe('PlayerProfile Integration Tests', () => {
     let authToken: string;
 
     beforeEach(() => {
-      authToken = jwtService.sign({ sub: testUser.id, username: testUser.username });
+      authToken = jwtService.sign({
+        sub: testUser.id,
+        username: testUser.username,
+      });
     });
 
     it('should reject invalid file types for avatar', async () => {
@@ -265,7 +279,7 @@ describe('PlayerProfile Integration Tests', () => {
 
     it('should reject oversized files for avatar', async () => {
       const largeBuffer = Buffer.alloc(6 * 1024 * 1024); // 6MB
-      
+
       const response = await request(app.getHttpServer())
         .post('/profile/avatar')
         .set('Authorization', `Bearer ${authToken}`)
@@ -291,8 +305,14 @@ describe('PlayerProfile Integration Tests', () => {
     let otherUserToken: string;
 
     beforeEach(() => {
-      authToken = jwtService.sign({ sub: testUser.id, username: testUser.username });
-      otherUserToken = jwtService.sign({ sub: 'other-user', username: 'otheruser' });
+      authToken = jwtService.sign({
+        sub: testUser.id,
+        username: testUser.username,
+      });
+      otherUserToken = jwtService.sign({
+        sub: 'other-user',
+        username: 'otheruser',
+      });
     });
 
     it('should allow owner to view statistics', async () => {

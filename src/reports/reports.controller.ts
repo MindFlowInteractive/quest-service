@@ -1,5 +1,21 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -18,9 +34,15 @@ export class ReportsController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Submit a new report' })
   @ApiResponse({ status: 201, description: 'Report successfully created' })
-  @ApiResponse({ status: 400, description: 'Bad request - duplicate report or invalid data' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - duplicate report or invalid data',
+  })
   async createReport(@Request() req, @Body() createReportDto: CreateReportDto) {
-    const report = await this.reportsService.createReport(req.user.id, createReportDto);
+    const report = await this.reportsService.createReport(
+      req.user.id,
+      createReportDto,
+    );
     return {
       message: 'Report submitted successfully',
       report,
@@ -31,18 +53,31 @@ export class ReportsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MODERATOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get paginated moderator queue sorted by priority' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20)',
+  })
   @ApiResponse({ status: 200, description: 'Reports retrieved successfully' })
   async getReports(
     @Query('page') page?: number,
-    @Query('limit') limit?: number
+    @Query('limit') limit?: number,
   ) {
     const pageNum = page ? parseInt(page.toString()) : 1;
     const limitNum = limit ? parseInt(limit.toString()) : 20;
-    
-    const { reports, total } = await this.reportsService.getReports(pageNum, limitNum);
-    
+
+    const { reports, total } = await this.reportsService.getReports(
+      pageNum,
+      limitNum,
+    );
+
     return {
       reports,
       pagination: {
@@ -64,9 +99,13 @@ export class ReportsController {
   async updateReport(
     @Param('id') id: string,
     @Body() updateReportDto: UpdateReportDto,
-    @Request() req
+    @Request() req,
   ) {
-    const report = await this.reportsService.updateReport(id, updateReportDto, req.user.id);
+    const report = await this.reportsService.updateReport(
+      id,
+      updateReportDto,
+      req.user.id,
+    );
     return {
       message: 'Report updated successfully',
       report,
@@ -77,7 +116,10 @@ export class ReportsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get admin dashboard statistics' })
-  @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully',
+  })
   async getStats(): Promise<ReportStatsDto> {
     return this.reportsService.getReportStats();
   }

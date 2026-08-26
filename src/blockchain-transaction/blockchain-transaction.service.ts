@@ -24,7 +24,9 @@ export class BlockchainTransactionService {
   /**
    * Create a new transaction record
    */
-  async create(createDto: CreateTransactionDto): Promise<BlockchainTransaction> {
+  async create(
+    createDto: CreateTransactionDto,
+  ): Promise<BlockchainTransaction> {
     const transaction = this.transactionRepository.create({
       ...createDto,
       status: TransactionStatus.PENDING,
@@ -49,11 +51,15 @@ export class BlockchainTransactionService {
     if (query.category) where.category = query.category;
     if (query.userId) where.userId = query.userId;
     if (query.sourceAccount) where.sourceAccount = query.sourceAccount;
-    if (query.destinationAccount) where.destinationAccount = query.destinationAccount;
+    if (query.destinationAccount)
+      where.destinationAccount = query.destinationAccount;
     if (query.transactionHash) where.transactionHash = query.transactionHash;
 
     if (query.startDate && query.endDate) {
-      where.createdAt = Between(new Date(query.startDate), new Date(query.endDate));
+      where.createdAt = Between(
+        new Date(query.startDate),
+        new Date(query.endDate),
+      );
     }
 
     const [data, total] = await this.transactionRepository.findAndCount({
@@ -91,7 +97,7 @@ export class BlockchainTransactionService {
    */
   async findByUser(
     userId: string,
-    query: TransactionQueryDto
+    query: TransactionQueryDto,
   ): Promise<{
     data: BlockchainTransaction[];
     total: number;
@@ -105,7 +111,10 @@ export class BlockchainTransactionService {
     if (query.category) where.category = query.category;
 
     if (query.startDate && query.endDate) {
-      where.createdAt = Between(new Date(query.startDate), new Date(query.endDate));
+      where.createdAt = Between(
+        new Date(query.startDate),
+        new Date(query.endDate),
+      );
     }
 
     const [data, total] = await this.transactionRepository.findAndCount({
@@ -129,12 +138,12 @@ export class BlockchainTransactionService {
   async updateStatus(
     hash: string,
     status: TransactionStatus,
-    updates?: Partial<BlockchainTransaction>
+    updates?: Partial<BlockchainTransaction>,
   ): Promise<BlockchainTransaction> {
     const transaction = await this.findByHash(hash);
-    
+
     transaction.status = status;
-    
+
     if (updates) {
       Object.assign(transaction, updates);
     }
@@ -158,13 +167,17 @@ export class BlockchainTransactionService {
     let hasMore = true;
     let totalSynced = 0;
 
-    while (hasMore && totalSynced < 200) { // Limit to prevent infinite loops
+    while (hasMore && totalSynced < 200) {
+      // Limit to prevent infinite loops
       try {
-        const response = await this.horizonApiService.getAccountTransactions(accountId, {
-          cursor,
-          limit: 50,
-          order: 'desc',
-        });
+        const response = await this.horizonApiService.getAccountTransactions(
+          accountId,
+          {
+            cursor,
+            limit: 50,
+            order: 'desc',
+          },
+        );
 
         const transactions = response._embedded.records;
 
@@ -184,7 +197,7 @@ export class BlockchainTransactionService {
             const newStatus = horizonTx.successful
               ? TransactionStatus.CONFIRMED
               : TransactionStatus.FAILED;
-            
+
             if (existing.status !== newStatus) {
               await this.updateStatus(horizonTx.hash, newStatus, {
                 ledgerSequence: horizonTx.ledger,
@@ -194,19 +207,26 @@ export class BlockchainTransactionService {
           }
 
           // Fetch operations for the transaction
-          const operationsResponse = await this.horizonApiService.getTransactionOperations(
-            horizonTx.hash
-          );
+          const operationsResponse =
+            await this.horizonApiService.getTransactionOperations(
+              horizonTx.hash,
+            );
           const operations = operationsResponse._embedded.records;
 
           // Parse and save transaction
-          let transaction = this.transactionParserService.parseTransaction(horizonTx);
-          transaction = this.transactionParserService.parseOperations(operations, transaction);
-          transaction.category = this.transactionParserService.categorizeTransaction(
+          let transaction =
+            this.transactionParserService.parseTransaction(horizonTx);
+          transaction = this.transactionParserService.parseOperations(
+            operations,
             transaction,
-            operations
           );
-          transaction.userId = this.transactionParserService.extractUserId(transaction);
+          transaction.category =
+            this.transactionParserService.categorizeTransaction(
+              transaction,
+              operations,
+            );
+          transaction.userId =
+            this.transactionParserService.extractUserId(transaction);
 
           await this.transactionRepository.save(transaction);
           totalSynced++;
@@ -221,12 +241,17 @@ export class BlockchainTransactionService {
           hasMore = false;
         }
       } catch (error) {
-        this.logger.error(`Error syncing transactions for account ${accountId}:`, error);
+        this.logger.error(
+          `Error syncing transactions for account ${accountId}:`,
+          error,
+        );
         break;
       }
     }
 
-    this.logger.log(`Synced ${totalSynced} transactions for account ${accountId}`);
+    this.logger.log(
+      `Synced ${totalSynced} transactions for account ${accountId}`,
+    );
     return { count: totalSynced };
   }
 

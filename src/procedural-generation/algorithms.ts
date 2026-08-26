@@ -74,16 +74,35 @@ export class ProcedularGenerationAlgorithms {
     const parameters = config.parameters || {};
 
     // Base puzzle structure based on difficulty
-    const gridSize = this.getDifficultyValue(difficulty, { easy: 3, medium: 4, hard: 5, expert: 6 });
-    const numVariables = this.getDifficultyValue(difficulty, { easy: 3, medium: 4, hard: 5, expert: 6 });
-    const constraints = this.getDifficultyValue(difficulty, { easy: 3, medium: 5, hard: 8, expert: 12 });
+    const gridSize = this.getDifficultyValue(difficulty, {
+      easy: 3,
+      medium: 4,
+      hard: 5,
+      expert: 6,
+    });
+    const numVariables = this.getDifficultyValue(difficulty, {
+      easy: 3,
+      medium: 4,
+      hard: 5,
+      expert: 6,
+    });
+    const constraints = this.getDifficultyValue(difficulty, {
+      easy: 3,
+      medium: 5,
+      hard: 8,
+      expert: 12,
+    });
 
     // Generate variable sets
     const variables = this.generateVariables(numVariables, gridSize);
     const values = this.generateValues(numVariables, gridSize);
 
     // Generate constraints
-    const constraintSet = this.generateConstraints(numVariables, gridSize, constraints);
+    const constraintSet = this.generateConstraints(
+      numVariables,
+      gridSize,
+      constraints,
+    );
 
     // Solve to verify solvability
     const solution = this.solveLogicPuzzle(variables, values, constraintSet);
@@ -142,10 +161,12 @@ export class ProcedularGenerationAlgorithms {
         parameterSignature: this.hashParameters(config.parameters),
         qualityMetrics: metrics,
         solvabilityScore: 1.0,
-        engagementScore: (metrics.complexity + metrics.clarity + metrics.engagementPotential) / 3,
+        engagementScore:
+          (metrics.complexity + metrics.clarity + metrics.engagementPotential) /
+          3,
       },
       validationScore: 0.9,
-      estimatedSolveTime: 300 + (constraints * 20),
+      estimatedSolveTime: 300 + constraints * 20,
       createdAt: new Date(),
     };
   }
@@ -159,21 +180,45 @@ export class ProcedularGenerationAlgorithms {
     seed: number,
   ): Promise<GeneratedPuzzle> {
     const difficulty = config.difficulty;
-    const sequenceLength = this.getDifficultyValue(difficulty, { easy: 5, medium: 7, hard: 10, expert: 15 });
-    const patternComplexity = this.getDifficultyValue(difficulty, { easy: 1, medium: 2, hard: 3, expert: 4 });
+    const sequenceLength = this.getDifficultyValue(difficulty, {
+      easy: 5,
+      medium: 7,
+      hard: 10,
+      expert: 15,
+    });
+    const patternComplexity = this.getDifficultyValue(difficulty, {
+      easy: 1,
+      medium: 2,
+      hard: 3,
+      expert: 4,
+    });
 
     // Generate pattern
     const pattern = this.generatePattern(patternComplexity, sequenceLength);
     const sequence = this.generateSequence(pattern, sequenceLength);
 
     // Create missing elements challenge
-    const revealCount = Math.floor(sequenceLength * (difficulty === 'easy' ? 0.7 : difficulty === 'medium' ? 0.6 : difficulty === 'hard' ? 0.5 : 0.4));
-    const missingIndices = this.selectRandomIndices(sequenceLength, sequenceLength - revealCount);
+    const revealCount = Math.floor(
+      sequenceLength *
+        (difficulty === 'easy'
+          ? 0.7
+          : difficulty === 'medium'
+          ? 0.6
+          : difficulty === 'hard'
+          ? 0.5
+          : 0.4),
+    );
+    const missingIndices = this.selectRandomIndices(
+      sequenceLength,
+      sequenceLength - revealCount,
+    );
     const solution = sequence[missingIndices[missingIndices.length - 1]];
 
     const content: PuzzleContent = {
       puzzle: {
-        sequence: sequence.map((item, idx) => (missingIndices.includes(idx) ? '?' : item)),
+        sequence: sequence.map((item, idx) =>
+          missingIndices.includes(idx) ? '?' : item,
+        ),
         patternDescription: pattern.description,
         sequenceLength,
       },
@@ -202,7 +247,11 @@ export class ProcedularGenerationAlgorithms {
       solution: {
         answer: solution,
         explanation: `The sequence follows the pattern: ${pattern.description}`,
-        steps: [`Identify the pattern rule`, `Apply it to find the missing element`, `Verify against the sequence`],
+        steps: [
+          `Identify the pattern rule`,
+          `Apply it to find the missing element`,
+          `Verify against the sequence`,
+        ],
       },
       hints: this.generatePatternHints(pattern, sequence, missingIndices),
       timeLimit: this.getTimeLimit(difficulty),
@@ -214,7 +263,9 @@ export class ProcedularGenerationAlgorithms {
         parameterSignature: this.hashParameters(config.parameters),
         qualityMetrics: metrics,
         solvabilityScore: 0.95,
-        engagementScore: (metrics.complexity + metrics.clarity + metrics.engagementPotential) / 3,
+        engagementScore:
+          (metrics.complexity + metrics.clarity + metrics.engagementPotential) /
+          3,
       },
       validationScore: 0.88,
       estimatedSolveTime: 120 + patternComplexity * 40,
@@ -231,8 +282,18 @@ export class ProcedularGenerationAlgorithms {
     seed: number,
   ): Promise<GeneratedPuzzle> {
     const difficulty = config.difficulty;
-    const operationCount = this.getDifficultyValue(difficulty, { easy: 1, medium: 2, hard: 3, expert: 4 });
-    const numberRange = this.getDifficultyValue(difficulty, { easy: 10, medium: 100, hard: 1000, expert: 10000 });
+    const operationCount = this.getDifficultyValue(difficulty, {
+      easy: 1,
+      medium: 2,
+      hard: 3,
+      expert: 4,
+    });
+    const numberRange = this.getDifficultyValue(difficulty, {
+      easy: 10,
+      medium: 100,
+      hard: 1000,
+      expert: 10000,
+    });
 
     // Generate math problem
     const operations = this.generateOperations(operationCount, numberRange);
@@ -285,7 +346,9 @@ export class ProcedularGenerationAlgorithms {
         parameterSignature: this.hashParameters(config.parameters),
         qualityMetrics: metrics,
         solvabilityScore: 1.0,
-        engagementScore: (metrics.complexity + metrics.clarity + metrics.engagementPotential) / 3,
+        engagementScore:
+          (metrics.complexity + metrics.clarity + metrics.engagementPotential) /
+          3,
       },
       validationScore: 0.92,
       estimatedSolveTime: 60 + operationCount * 30,
@@ -302,8 +365,18 @@ export class ProcedularGenerationAlgorithms {
     seed: number,
   ): Promise<GeneratedPuzzle> {
     const difficulty = config.difficulty;
-    const wordCount = this.getDifficultyValue(difficulty, { easy: 4, medium: 6, hard: 8, expert: 12 });
-    const wordLength = this.getDifficultyValue(difficulty, { easy: 5, medium: 7, hard: 9, expert: 11 });
+    const wordCount = this.getDifficultyValue(difficulty, {
+      easy: 4,
+      medium: 6,
+      hard: 8,
+      expert: 12,
+    });
+    const wordLength = this.getDifficultyValue(difficulty, {
+      easy: 5,
+      medium: 7,
+      hard: 9,
+      expert: 11,
+    });
 
     // Generate word puzzle
     const words = this.generateWords(wordCount, wordLength);
@@ -353,7 +426,9 @@ export class ProcedularGenerationAlgorithms {
         parameterSignature: this.hashParameters(config.parameters),
         qualityMetrics: metrics,
         solvabilityScore: 0.9,
-        engagementScore: (metrics.complexity + metrics.clarity + metrics.engagementPotential) / 3,
+        engagementScore:
+          (metrics.complexity + metrics.clarity + metrics.engagementPotential) /
+          3,
       },
       validationScore: 0.85,
       estimatedSolveTime: 180 + wordCount * 20,
@@ -370,8 +445,18 @@ export class ProcedularGenerationAlgorithms {
     seed: number,
   ): Promise<GeneratedPuzzle> {
     const difficulty = config.difficulty;
-    const gridSize = this.getDifficultyValue(difficulty, { easy: 3, medium: 4, hard: 5, expert: 6 });
-    const complexity = this.getDifficultyValue(difficulty, { easy: 2, medium: 3, hard: 4, expert: 5 });
+    const gridSize = this.getDifficultyValue(difficulty, {
+      easy: 3,
+      medium: 4,
+      hard: 5,
+      expert: 6,
+    });
+    const complexity = this.getDifficultyValue(difficulty, {
+      easy: 2,
+      medium: 3,
+      hard: 4,
+      expert: 5,
+    });
 
     // Generate visual puzzle
     const grid = this.generateVisualGrid(gridSize, complexity);
@@ -421,7 +506,9 @@ export class ProcedularGenerationAlgorithms {
         parameterSignature: this.hashParameters(config.parameters),
         qualityMetrics: metrics,
         solvabilityScore: 0.85,
-        engagementScore: (metrics.complexity + metrics.clarity + metrics.engagementPotential) / 3,
+        engagementScore:
+          (metrics.complexity + metrics.clarity + metrics.engagementPotential) /
+          3,
       },
       validationScore: 0.83,
       estimatedSolveTime: 120 + complexity * 50,
@@ -471,12 +558,24 @@ export class ProcedularGenerationAlgorithms {
 
   private hashParameters(params?: Record<string, any>): string {
     const str = JSON.stringify(params || {});
-    return crypto.createHash('sha256').update(str).digest('hex').substring(0, 16);
+    return crypto
+      .createHash('sha256')
+      .update(str)
+      .digest('hex')
+      .substring(0, 16);
   }
 
-  private calculateQualityMetrics(metrics: QualityMetrics, difficulty: DifficultyLevel): QualityMetrics {
+  private calculateQualityMetrics(
+    metrics: QualityMetrics,
+    difficulty: DifficultyLevel,
+  ): QualityMetrics {
     // Adjust metrics based on difficulty
-    const difficultyFactor = { easy: 1.0, medium: 0.95, hard: 0.9, expert: 0.85 }[difficulty];
+    const difficultyFactor = {
+      easy: 1.0,
+      medium: 0.95,
+      hard: 0.9,
+      expert: 0.85,
+    }[difficulty];
     return {
       complexity: Math.min(metrics.complexity, difficultyFactor),
       uniqueness: metrics.uniqueness,
@@ -509,7 +608,11 @@ export class ProcedularGenerationAlgorithms {
     return values;
   }
 
-  private generateConstraints(numVars: number, gridSize: number, count: number) {
+  private generateConstraints(
+    numVars: number,
+    gridSize: number,
+    count: number,
+  ) {
     const constraints = [];
     for (let i = 0; i < count; i++) {
       constraints.push({
@@ -520,21 +623,35 @@ export class ProcedularGenerationAlgorithms {
     return constraints;
   }
 
-  private solveLogicPuzzle(variables: string[], values: string[][], constraints: any[]): any {
+  private solveLogicPuzzle(
+    variables: string[],
+    values: string[][],
+    constraints: any[],
+  ): any {
     // Simplified solver - returns valid solution
     return { solution: 'Variable assignments follow all constraints' };
   }
 
   private generateLogicTitle(): string {
-    const titles = ['Detective\'s Deduction', 'Logic Grid Challenge', 'Constraint Puzzle', 'Reasoning Test'];
+    const titles = [
+      "Detective's Deduction",
+      'Logic Grid Challenge',
+      'Constraint Puzzle',
+      'Reasoning Test',
+    ];
     return titles[Math.floor(Math.random() * titles.length)];
   }
 
   private generateSolutionSteps(solution: any, constraints: any[]): string[] {
-    return constraints.slice(0, 3).map((c, i) => `Step ${i + 1}: Apply ${c.description}`);
+    return constraints
+      .slice(0, 3)
+      .map((c, i) => `Step ${i + 1}: Apply ${c.description}`);
   }
 
-  private generateLogicHints(constraints: any[], variables: string[]): string[] {
+  private generateLogicHints(
+    constraints: any[],
+    variables: string[],
+  ): string[] {
     return [
       `There are ${variables.length} variables to match`,
       `Use the constraints systematically`,
@@ -543,12 +660,27 @@ export class ProcedularGenerationAlgorithms {
   }
 
   // Pattern puzzle helpers
-  private generatePattern(complexity: number, length: number): { description: string; name: string } {
+  private generatePattern(
+    complexity: number,
+    length: number,
+  ): { description: string; name: string } {
     const patterns = [
-      { name: 'Arithmetic', description: 'Each number increases by a fixed amount' },
-      { name: 'Fibonacci', description: 'Each number is the sum of the previous two' },
-      { name: 'Geometric', description: 'Each number is multiplied by a fixed ratio' },
-      { name: 'Alternating', description: 'Pattern alternates between two sequences' },
+      {
+        name: 'Arithmetic',
+        description: 'Each number increases by a fixed amount',
+      },
+      {
+        name: 'Fibonacci',
+        description: 'Each number is the sum of the previous two',
+      },
+      {
+        name: 'Geometric',
+        description: 'Each number is multiplied by a fixed ratio',
+      },
+      {
+        name: 'Alternating',
+        description: 'Pattern alternates between two sequences',
+      },
     ];
     return patterns[complexity % patterns.length];
   }
@@ -573,17 +705,25 @@ export class ProcedularGenerationAlgorithms {
     return indices.sort();
   }
 
-  private generatePatternHints(pattern: any, sequence: any[], missingIndices: number[]): string[] {
+  private generatePatternHints(
+    pattern: any,
+    sequence: any[],
+    missingIndices: number[],
+  ): string[] {
     return [
       `The pattern rule: ${pattern.description}`,
       `Look at the differences between consecutive numbers`,
-      `The missing element appears at position ${missingIndices[missingIndices.length - 1]}`,
+      `The missing element appears at position ${
+        missingIndices[missingIndices.length - 1]
+      }`,
     ];
   }
 
   // Math puzzle helpers
   private generateOperations(count: number, range: number): string[] {
-    return Array(count).fill('+').map(() => ['+', '-', '*', '/'][Math.floor(Math.random() * 4)]);
+    return Array(count)
+      .fill('+')
+      .map(() => ['+', '-', '*', '/'][Math.floor(Math.random() * 4)]);
   }
 
   private generateNumbers(count: number, range: number): number[] {
@@ -598,7 +738,8 @@ export class ProcedularGenerationAlgorithms {
       if (operations[i] === '+') result += numbers[i + 1];
       else if (operations[i] === '-') result -= numbers[i + 1];
       else if (operations[i] === '*') result *= numbers[i + 1];
-      else if (operations[i] === '/') result = Math.floor(result / numbers[i + 1]);
+      else if (operations[i] === '/')
+        result = Math.floor(result / numbers[i + 1]);
     }
     return result;
   }
@@ -612,7 +753,9 @@ export class ProcedularGenerationAlgorithms {
   }
 
   private generateMathSteps(numbers: number[], operations: string[]): string[] {
-    return operations.map((op, i) => `Step ${i + 1}: ${numbers[i]} ${op} ${numbers[i + 1]}`);
+    return operations.map(
+      (op, i) => `Step ${i + 1}: ${numbers[i]} ${op} ${numbers[i + 1]}`,
+    );
   }
 
   private generateMathHints(expression: string, opCount: number): string[] {
@@ -642,7 +785,10 @@ export class ProcedularGenerationAlgorithms {
     return wordList.slice(0, count);
   }
 
-  private generateWordPuzzleContent(words: string[], difficulty: DifficultyLevel) {
+  private generateWordPuzzleContent(
+    words: string[],
+    difficulty: DifficultyLevel,
+  ) {
     return {
       clues: words.map((w) => `A word related to puzzles: ${w.length} letters`),
       gridSize: words.length,
@@ -667,7 +813,11 @@ export class ProcedularGenerationAlgorithms {
     return {
       answer: '●',
       explanation: 'The pattern follows a diagonal rule',
-      steps: ['Analyze rows and columns', 'Identify the pattern rule', 'Apply to find the missing element'],
+      steps: [
+        'Analyze rows and columns',
+        'Identify the pattern rule',
+        'Apply to find the missing element',
+      ],
       hints: ['Look for symmetry', 'Check diagonals', 'Count the symbols'],
     };
   }

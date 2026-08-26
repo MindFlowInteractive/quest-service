@@ -1,7 +1,10 @@
 import { IsEnum, IsOptional, IsUUID, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { TicketCategory, TicketStatus } from '../entities/support-ticket.entity';
+import {
+  TicketCategory,
+  TicketStatus,
+} from '../entities/support-ticket.entity';
 
 export class TicketQueryDto {
   @ApiPropertyOptional({ enum: TicketStatus, description: 'Filter by status' })
@@ -9,7 +12,10 @@ export class TicketQueryDto {
   @IsEnum(TicketStatus)
   status?: TicketStatus;
 
-  @ApiPropertyOptional({ enum: TicketCategory, description: 'Filter by category' })
+  @ApiPropertyOptional({
+    enum: TicketCategory,
+    description: 'Filter by category',
+  })
   @IsOptional()
   @IsEnum(TicketCategory)
   category?: TicketCategory;

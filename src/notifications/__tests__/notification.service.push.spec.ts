@@ -23,7 +23,9 @@ describe('NotificationService - Push Emission', () => {
   });
 
   beforeEach(async () => {
-    mockNotificationClient = { emit: jest.fn().mockReturnValue({ subscribe: jest.fn() }) };
+    mockNotificationClient = {
+      emit: jest.fn().mockReturnValue({ subscribe: jest.fn() }),
+    };
     mockUserRepo = mockRepo();
     mockDeviceRepo = mockRepo();
 
@@ -31,11 +33,20 @@ describe('NotificationService - Push Emission', () => {
       providers: [
         NotificationService,
         { provide: getRepositoryToken(Notification), useFactory: mockRepo },
-        { provide: getRepositoryToken(NotificationDelivery), useFactory: mockRepo },
+        {
+          provide: getRepositoryToken(NotificationDelivery),
+          useFactory: mockRepo,
+        },
         { provide: getRepositoryToken(User), useValue: mockUserRepo },
         { provide: getRepositoryToken(Device), useValue: mockDeviceRepo },
-        { provide: EmailService, useValue: { sendEmail: jest.fn().mockResolvedValue(true) } },
-        { provide: SchedulerRegistry, useValue: { addTimeout: jest.fn(), deleteTimeout: jest.fn() } },
+        {
+          provide: EmailService,
+          useValue: { sendEmail: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: SchedulerRegistry,
+          useValue: { addTimeout: jest.fn(), deleteTimeout: jest.fn() },
+        },
         { provide: 'NOTIFICATION_SERVICE', useValue: mockNotificationClient },
       ],
     }).compile();
@@ -116,7 +127,9 @@ describe('NotificationService - Push Emission', () => {
         id: 'user-1',
         preferences: { notifications: { push: true } },
       });
-      mockDeviceRepo.find.mockResolvedValue([{ token: 'tok-1', platform: 'web' }]);
+      mockDeviceRepo.find.mockResolvedValue([
+        { token: 'tok-1', platform: 'web' },
+      ]);
 
       await service.emitPushEvent('user-1', 'dailyChallenge', {
         title: 'Daily Challenge!',

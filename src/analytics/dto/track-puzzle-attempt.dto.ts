@@ -1,4 +1,11 @@
-import { IsUUID, IsString, IsEnum, IsBoolean, IsInt, IsOptional } from 'class-validator';
+import {
+  IsUUID,
+  IsString,
+  IsEnum,
+  IsBoolean,
+  IsInt,
+  IsOptional,
+} from 'class-validator';
 import { PuzzleDifficulty } from './filter-puzzle-performance.dto';
 
 export class TrackPuzzleAttemptDto {

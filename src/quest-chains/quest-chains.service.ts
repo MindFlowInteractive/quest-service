@@ -109,11 +109,7 @@ export class QuestChainsService {
     return false;
   }
 
-  async markEntryCompleted(
-    userId: string,
-    chainId: string,
-    entryId: string,
-  ) {
+  async markEntryCompleted(userId: string, chainId: string, entryId: string) {
     const progress = await this.prisma.userQuestChainProgress.upsert({
       where: {
         userId_chainId: {

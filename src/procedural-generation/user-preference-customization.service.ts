@@ -29,12 +29,19 @@ export class UserPreferenceCustomizationService {
   /**
    * Creates or updates user preferences
    */
-  setUserPreferences(userId: string, preferences: Partial<UserPreferences>): UserPreferences {
+  setUserPreferences(
+    userId: string,
+    preferences: Partial<UserPreferences>,
+  ): UserPreferences {
     const existing = this.userPreferences.get(userId);
 
     const updated: UserPreferences = {
       userId,
-      preferredCategories: preferences.preferredCategories || ['logic', 'pattern', 'math'],
+      preferredCategories: preferences.preferredCategories || [
+        'logic',
+        'pattern',
+        'math',
+      ],
       difficultyRange: preferences.difficultyRange || ['easy', 'hard'],
       avoidPatterns: preferences.avoidPatterns || [],
       preferredThemes: preferences.preferredThemes || [],
@@ -78,7 +85,12 @@ export class UserPreferenceCustomizationService {
     const difficulty = this.determineDifficulty(preferences, context);
 
     // Generate custom parameters
-    const parameters = this.generateCustomParameters(preferences, context, puzzleType, difficulty);
+    const parameters = this.generateCustomParameters(
+      preferences,
+      context,
+      puzzleType,
+      difficulty,
+    );
 
     return {
       puzzleType,
@@ -103,7 +115,13 @@ export class UserPreferenceCustomizationService {
 
     // If diversity preference is high, sometimes pick from non-preferred
     if (preferences.diversityPreference > 0.7 && Math.random() < 0.3) {
-      const allTypes: PuzzleType[] = ['logic', 'pattern', 'math', 'word', 'visual'];
+      const allTypes: PuzzleType[] = [
+        'logic',
+        'pattern',
+        'math',
+        'word',
+        'visual',
+      ];
       const nonPreferred = allTypes.filter((t) => !preferredTypes.includes(t));
       if (nonPreferred.length > 0) {
         return nonPreferred[Math.floor(Math.random() * nonPreferred.length)];
@@ -122,7 +140,12 @@ export class UserPreferenceCustomizationService {
     context: PersonalizationContext,
   ): DifficultyLevel {
     const [minDiff, maxDiff] = preferences.difficultyRange;
-    const difficultyLevels: DifficultyLevel[] = ['easy', 'medium', 'hard', 'expert'];
+    const difficultyLevels: DifficultyLevel[] = [
+      'easy',
+      'medium',
+      'hard',
+      'expert',
+    ];
 
     // Map to difficulty indices
     const minIdx = difficultyLevels.indexOf(minDiff);
@@ -149,8 +172,18 @@ export class UserPreferenceCustomizationService {
 
     // Static difficulty progression
     if (preferences.difficultyProgression === 'ascending') {
-      const progression = [minIdx, minIdx, minIdx + 1, minIdx + 1, minIdx + 2, maxIdx];
-      const idx = Math.min(Math.floor(context.skillLevel), progression.length - 1);
+      const progression = [
+        minIdx,
+        minIdx,
+        minIdx + 1,
+        minIdx + 1,
+        minIdx + 2,
+        maxIdx,
+      ];
+      const idx = Math.min(
+        Math.floor(context.skillLevel),
+        progression.length - 1,
+      );
       return difficultyLevels[progression[idx]];
     }
 
@@ -271,14 +304,16 @@ export class UserPreferenceCustomizationService {
   /**
    * Recommends next difficulty based on performance
    */
-  private recommendNextDifficulty(context: PersonalizationContext): DifficultyLevel {
+  private recommendNextDifficulty(
+    context: PersonalizationContext,
+  ): DifficultyLevel {
     const successRate = context.recentPerformance.successRate;
 
     if (successRate > 0.85) {
       return 'hard';
-    } else if (successRate > 0.70) {
+    } else if (successRate > 0.7) {
       return 'medium';
-    } else if (successRate < 0.40) {
+    } else if (successRate < 0.4) {
       return 'easy';
     } else {
       return 'medium';
@@ -321,18 +356,26 @@ export class UserPreferenceCustomizationService {
       // Boost novelty preference if quick solve
       if (engagement.timeToCompletion < 120000) {
         // < 2 minutes
-        preferences.noveltyPreference = Math.min(1, preferences.noveltyPreference + 0.05);
+        preferences.noveltyPreference = Math.min(
+          1,
+          preferences.noveltyPreference + 0.05,
+        );
       }
     } else {
       // Decrease preference for failed types
-      const idx = preferences.preferredCategories.indexOf(engagement.puzzleType);
+      const idx = preferences.preferredCategories.indexOf(
+        engagement.puzzleType,
+      );
       if (idx > -1 && preferences.preferredCategories.length > 1) {
         preferences.preferredCategories.splice(idx, 1);
       }
 
       // Reduce novelty preference if struggling
       if (engagement.hintsUsed > 3) {
-        preferences.noveltyPreference = Math.max(0, preferences.noveltyPreference - 0.05);
+        preferences.noveltyPreference = Math.max(
+          0,
+          preferences.noveltyPreference - 0.05,
+        );
       }
     }
 
@@ -350,7 +393,9 @@ export class UserPreferenceCustomizationService {
     const recommendations: string[] = [];
 
     if (!preferences) {
-      recommendations.push('Create user profile to enable personalized generation');
+      recommendations.push(
+        'Create user profile to enable personalized generation',
+      );
       return { currentPreferences: null, recommendations };
     }
 
@@ -371,7 +416,9 @@ export class UserPreferenceCustomizationService {
 
     // Analyze progression
     if (preferences.difficultyProgression === 'static') {
-      recommendations.push('Switch to adaptive difficulty for better challenge');
+      recommendations.push(
+        'Switch to adaptive difficulty for better challenge',
+      );
     }
 
     // Analyze preferences
@@ -380,7 +427,9 @@ export class UserPreferenceCustomizationService {
     }
 
     if (preferences.diversityPreference < 0.5) {
-      recommendations.push('Increase diversity to explore different puzzle types');
+      recommendations.push(
+        'Increase diversity to explore different puzzle types',
+      );
     }
 
     return { currentPreferences: preferences, recommendations };

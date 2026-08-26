@@ -10,7 +10,10 @@ import {
 import { SUPPORTED_WEBHOOK_EVENTS, WebhookEvent } from '../webhook.constants';
 
 export class CreateWebhookDto {
-  @IsUrl({ protocols: ['https'], require_protocol: true }, { message: 'URL must be a valid HTTPS URL' })
+  @IsUrl(
+    { protocols: ['https'], require_protocol: true },
+    { message: 'URL must be a valid HTTPS URL' },
+  )
   url: string;
 
   @IsString()

@@ -25,9 +25,9 @@ export class PreferenceTrackingService {
     try {
       // Get recent user interactions (last 50 completions)
       const recentInteractions = await this.userInteractionRepository.find({
-        where: { 
+        where: {
           userId,
-          interactionType: 'complete'
+          interactionType: 'complete',
         },
         relations: ['puzzle'],
         order: { createdAt: 'DESC' },
@@ -39,32 +39,43 @@ export class PreferenceTrackingService {
       }
 
       // Analyze interactions by category
-      const categoryAnalysis = this.analyzeCategoryPreferences(recentInteractions);
-      
+      const categoryAnalysis =
+        this.analyzeCategoryPreferences(recentInteractions);
+
       // Update or create preferences for each category
       for (const [category, analysis] of categoryAnalysis) {
         await this.updateCategoryPreference(userId, category, analysis);
       }
 
-      this.logger.log(`Updated preferences for user ${userId} based on ${recentInteractions.length} interactions`);
+      this.logger.log(
+        `Updated preferences for user ${userId} based on ${recentInteractions.length} interactions`,
+      );
     } catch (error) {
-      this.logger.error(`Error updating preferences for user ${userId}:`, error);
+      this.logger.error(
+        `Error updating preferences for user ${userId}:`,
+        error,
+      );
     }
   }
 
-  private analyzeCategoryPreferences(interactions: UserInteraction[]): Map<string, any> {
-    const categoryMap = new Map<string, {
-      interactions: UserInteraction[];
-      totalRating: number;
-      totalTime: number;
-      difficulties: Map<string, number>;
-      tags: Map<string, number>;
-    }>();
+  private analyzeCategoryPreferences(
+    interactions: UserInteraction[],
+  ): Map<string, any> {
+    const categoryMap = new Map<
+      string,
+      {
+        interactions: UserInteraction[];
+        totalRating: number;
+        totalTime: number;
+        difficulties: Map<string, number>;
+        tags: Map<string, number>;
+      }
+    >();
 
     // Group interactions by category
     for (const interaction of interactions) {
       const category = interaction.puzzle.category;
-      
+
       if (!categoryMap.has(category)) {
         categoryMap.set(category, {
           interactions: [],
@@ -75,21 +86,24 @@ export class PreferenceTrackingService {
         });
       }
 
-      const categoryData = categoryMap.get(category)!;
+      const categoryData = categoryMap.get(category);
       categoryData.interactions.push(interaction);
-      
+
       // Accumulate ratings (use default if not provided)
       const rating = interaction.value || 3.5;
       categoryData.totalRating += rating;
-      
+
       // Accumulate completion times
       const completionTime = interaction.metadata?.completionTime || 0;
       categoryData.totalTime += completionTime;
-      
+
       // Track difficulty preferences
       const difficulty = interaction.puzzle.difficulty;
-      categoryData.difficulties.set(difficulty, (categoryData.difficulties.get(difficulty) || 0) + 1);
-      
+      categoryData.difficulties.set(
+        difficulty,
+        (categoryData.difficulties.get(difficulty) || 0) + 1,
+      );
+
       // Track tag preferences
       for (const tag of interaction.puzzle.tags) {
         categoryData.tags.set(tag, (categoryData.tags.get(tag) || 0) + rating);
@@ -98,17 +112,17 @@ export class PreferenceTrackingService {
 
     // Calculate preference scores for each category
     const analysisMap = new Map();
-    
+
     for (const [category, data] of categoryMap) {
       const count = data.interactions.length;
       const avgRating = data.totalRating / count;
       const avgTime = data.totalTime / count;
-      
+
       // Calculate preference score based on rating and frequency
       const frequencyScore = Math.min(count / interactions.length, 1.0);
       const ratingScore = avgRating / 5.0;
-      const preferenceScore = (frequencyScore * 0.6) + (ratingScore * 0.4);
-      
+      const preferenceScore = frequencyScore * 0.6 + ratingScore * 0.4;
+
       // Find preferred difficulty
       let preferredDifficulty = 'medium';
       let maxDifficultyCount = 0;
@@ -118,20 +132,25 @@ export class PreferenceTrackingService {
           preferredDifficulty = difficulty;
         }
       }
-      
+
       // Calculate difficulty score
-      const difficultyScore = this.calculateDifficultyScore(data.difficulties, count);
-      
+      const difficultyScore = this.calculateDifficultyScore(
+        data.difficulties,
+        count,
+      );
+
       // Normalize tag preferences
       const tagPreferences: Record<string, number> = {};
       for (const [tag, totalRating] of data.tags) {
-        const tagCount = data.interactions.filter(i => i.puzzle.tags.includes(tag)).length;
-        tagPreferences[tag] = (totalRating / tagCount) / 5.0; // Normalize to 0-1
+        const tagCount = data.interactions.filter((i) =>
+          i.puzzle.tags.includes(tag),
+        ).length;
+        tagPreferences[tag] = totalRating / tagCount / 5.0; // Normalize to 0-1
       }
-      
+
       // Calculate success rate (all interactions are completions, so this is always 1.0)
       const successRate = 1.0;
-      
+
       analysisMap.set(category, {
         preferenceScore,
         preferredDifficulty,
@@ -146,7 +165,10 @@ export class PreferenceTrackingService {
     return analysisMap;
   }
 
-  private calculateDifficultyScore(difficulties: Map<string, number>, totalCount: number): number {
+  private calculateDifficultyScore(
+    difficulties: Map<string, number>,
+    totalCount: number,
+  ): number {
     const difficultyOrder = ['easy', 'medium', 'hard', 'expert'];
     let weightedSum = 0;
     let totalWeight = 0;
@@ -155,7 +177,8 @@ export class PreferenceTrackingService {
       const difficultyIndex = difficultyOrder.indexOf(difficulty);
       if (difficultyIndex !== -1) {
         const weight = count / totalCount;
-        weightedSum += (difficultyIndex / (difficultyOrder.length - 1)) * weight;
+        weightedSum +=
+          (difficultyIndex / (difficultyOrder.length - 1)) * weight;
         totalWeight += weight;
       }
     }
@@ -175,10 +198,18 @@ export class PreferenceTrackingService {
     if (preference) {
       // Update existing preference with exponential moving average
       const alpha = 0.3; // Learning rate
-      preference.preferenceScore = (1 - alpha) * preference.preferenceScore + alpha * analysis.preferenceScore;
+      preference.preferenceScore =
+        (1 - alpha) * preference.preferenceScore +
+        alpha * analysis.preferenceScore;
       preference.difficulty = analysis.preferredDifficulty;
-      preference.difficultyScore = (1 - alpha) * preference.difficultyScore + alpha * analysis.difficultyScore;
-      preference.tagPreferences = this.mergeTagPreferences(preference.tagPreferences, analysis.tagPreferences, alpha);
+      preference.difficultyScore =
+        (1 - alpha) * preference.difficultyScore +
+        alpha * analysis.difficultyScore;
+      preference.tagPreferences = this.mergeTagPreferences(
+        preference.tagPreferences,
+        analysis.tagPreferences,
+        alpha,
+      );
       preference.interactionCount = analysis.interactionCount;
       preference.averageCompletionTime = analysis.averageCompletionTime;
       preference.successRate = analysis.successRate;
@@ -245,8 +276,11 @@ export class PreferenceTrackingService {
 
     // Update preferences asynchronously
     setImmediate(() => {
-      this.updateUserPreferences(userId).catch(error => {
-        this.logger.error(`Failed to update preferences after puzzle completion:`, error);
+      this.updateUserPreferences(userId).catch((error) => {
+        this.logger.error(
+          `Failed to update preferences after puzzle completion:`,
+          error,
+        );
       });
     });
   }
@@ -273,7 +307,7 @@ export class PreferenceTrackingService {
 
     // Update preferences to reflect the explicit rating
     setImmediate(() => {
-      this.updateUserPreferences(userId).catch(error => {
+      this.updateUserPreferences(userId).catch((error) => {
         this.logger.error(`Failed to update preferences after rating:`, error);
       });
     });
@@ -293,12 +327,12 @@ export class PreferenceTrackingService {
       take: limit,
     });
 
-    return preferences.map(p => p.category);
+    return preferences.map((p) => p.category);
   }
 
   async getPreferenceInsights(userId: string): Promise<any> {
     const preferences = await this.getUserPreferences(userId);
-    
+
     if (preferences.length === 0) {
       return {
         topCategories: [],
@@ -309,9 +343,15 @@ export class PreferenceTrackingService {
       };
     }
 
-    const totalInteractions = preferences.reduce((sum, p) => sum + p.interactionCount, 0);
-    const weightedAvgTime = preferences.reduce((sum, p) => 
-      sum + (p.averageCompletionTime * p.interactionCount), 0) / totalInteractions;
+    const totalInteractions = preferences.reduce(
+      (sum, p) => sum + p.interactionCount,
+      0,
+    );
+    const weightedAvgTime =
+      preferences.reduce(
+        (sum, p) => sum + p.averageCompletionTime * p.interactionCount,
+        0,
+      ) / totalInteractions;
 
     // Find most preferred difficulty across all categories
     const difficultyVotes = new Map<string, number>();
@@ -344,7 +384,7 @@ export class PreferenceTrackingService {
       .map(([tag]) => tag);
 
     return {
-      topCategories: preferences.slice(0, 5).map(p => ({
+      topCategories: preferences.slice(0, 5).map((p) => ({
         category: p.category,
         score: p.preferenceScore,
         interactions: p.interactionCount,

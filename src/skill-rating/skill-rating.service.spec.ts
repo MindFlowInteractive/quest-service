@@ -3,8 +3,15 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { SkillRatingService } from './skill-rating.service';
 import { ELOService } from './elo.service';
-import { PlayerRating, SkillTier, SeasonStatus } from './entities/player-rating.entity';
-import { RatingHistory, RatingChangeReason } from './entities/rating-history.entity';
+import {
+  PlayerRating,
+  SkillTier,
+  SeasonStatus,
+} from './entities/player-rating.entity';
+import {
+  RatingHistory,
+  RatingChangeReason,
+} from './entities/rating-history.entity';
 import { Season } from './entities/season.entity';
 import { User } from '../users/entities/user.entity';
 import { Puzzle } from '../puzzles/entities/puzzle.entity';
@@ -41,9 +48,9 @@ function makeRating(overrides: Partial<PlayerRating> = {}): PlayerRating {
     createdAt: new Date(),
     updatedAt: new Date(),
     ratingHistory: [],
-    user: null as any,
+    user: null,
     ...overrides,
-  } as PlayerRating;
+  };
 }
 
 function makePuzzle(overrides: Partial<Puzzle> = {}): Puzzle {
@@ -99,8 +106,14 @@ describe('SkillRatingService', () => {
       providers: [
         SkillRatingService,
         ELOService,
-        { provide: getRepositoryToken(PlayerRating), useValue: playerRatingRepo },
-        { provide: getRepositoryToken(RatingHistory), useValue: ratingHistoryRepo },
+        {
+          provide: getRepositoryToken(PlayerRating),
+          useValue: playerRatingRepo,
+        },
+        {
+          provide: getRepositoryToken(RatingHistory),
+          useValue: ratingHistoryRepo,
+        },
         { provide: getRepositoryToken(Season), useValue: seasonRepo },
         { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: getRepositoryToken(Puzzle), useValue: puzzleRepo },
@@ -120,7 +133,11 @@ describe('SkillRatingService', () => {
   describe('rating gain on puzzle solve', () => {
     it('increases the player rating when a puzzle is completed', async () => {
       const rating = makeRating({ rating: 1200, gamesPlayed: 30 });
-      const puzzle = makePuzzle({ difficultyRating: 5, difficulty: 'medium', timeLimit: 300 });
+      const puzzle = makePuzzle({
+        difficultyRating: 5,
+        difficulty: 'medium',
+        timeLimit: 300,
+      });
 
       playerRatingRepo.findOne.mockResolvedValue(rating);
       puzzleRepo.findOne.mockResolvedValue(puzzle);
@@ -165,7 +182,9 @@ describe('SkillRatingService', () => {
       });
 
       expect(ratingHistoryRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ reason: RatingChangeReason.PUZZLE_COMPLETED }),
+        expect.objectContaining({
+          reason: RatingChangeReason.PUZZLE_COMPLETED,
+        }),
       );
     });
   });
@@ -176,7 +195,11 @@ describe('SkillRatingService', () => {
   describe('triggerAbandonRatingUpdate()', () => {
     it('deducts rating when player abandons after ≥ 80 % of the time limit', async () => {
       const rating = makeRating({ rating: 1400, gamesPlayed: 40 });
-      const puzzle = makePuzzle({ timeLimit: 300, difficultyRating: 6, difficulty: 'hard' });
+      const puzzle = makePuzzle({
+        timeLimit: 300,
+        difficultyRating: 6,
+        difficulty: 'hard',
+      });
 
       playerRatingRepo.findOne.mockResolvedValue(rating);
       puzzleRepo.findOne.mockResolvedValue(puzzle);
@@ -193,8 +216,8 @@ describe('SkillRatingService', () => {
       });
 
       expect(result).not.toBeNull();
-      expect(result!.rating).toBeLessThan(1400);
-      expect(result!.losses).toBe(rating.losses + 1);
+      expect(result.rating).toBeLessThan(1400);
+      expect(result.losses).toBe(rating.losses + 1);
     });
 
     it('returns null and skips rating update when player abandons before 80 % threshold', async () => {
@@ -252,9 +275,16 @@ describe('SkillRatingService', () => {
   // 3. K-factor switching
   // -------------------------------------------------------------------------
   describe('K-factor switching via ELOService', () => {
-    async function deltaFor(gamesPlayed: number, rating: number): Promise<number> {
+    async function deltaFor(
+      gamesPlayed: number,
+      rating: number,
+    ): Promise<number> {
       const pr = makeRating({ gamesPlayed, rating });
-      const puzzle = makePuzzle({ difficultyRating: 5, timeLimit: 300, difficulty: 'medium' });
+      const puzzle = makePuzzle({
+        difficultyRating: 5,
+        timeLimit: 300,
+        difficulty: 'medium',
+      });
       const result = await eloService.calculateRatingChange(pr, puzzle, {
         userId: 'u',
         puzzleId: 'p',
@@ -301,7 +331,7 @@ describe('SkillRatingService', () => {
 
     it('returns 50 when exactly half the players have a lower rating', async () => {
       playerRatingRepo.count
-        .mockResolvedValueOnce(50)  // players with rating < 1400
+        .mockResolvedValueOnce(50) // players with rating < 1400
         .mockResolvedValueOnce(100); // total players
 
       const percentile = await service.getPercentile('user-1');
@@ -318,18 +348,14 @@ describe('SkillRatingService', () => {
     });
 
     it('returns 100 when the player is alone in the season', async () => {
-      playerRatingRepo.count
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(0); // totalCount = 0
+      playerRatingRepo.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0); // totalCount = 0
 
       const percentile = await service.getPercentile('user-1');
       expect(percentile).toBe(100);
     });
 
     it('rounds the percentile to the nearest integer', async () => {
-      playerRatingRepo.count
-        .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(3); // 1/3 ≈ 33.33 → rounds to 33
+      playerRatingRepo.count.mockResolvedValueOnce(1).mockResolvedValueOnce(3); // 1/3 ≈ 33.33 → rounds to 33
 
       const percentile = await service.getPercentile('user-1');
       expect(percentile).toBe(33);
@@ -341,9 +367,14 @@ describe('SkillRatingService', () => {
   // -------------------------------------------------------------------------
   describe('getPublicPlayerRating()', () => {
     it('returns rating details when the target user has public stats', async () => {
-      const user = { id: 'user-2', preferences: { privacy: { showStats: true } } };
+      const user = {
+        id: 'user-2',
+        preferences: { privacy: { showStats: true } },
+      };
       userRepo.findOne.mockResolvedValue(user);
-      playerRatingRepo.findOne.mockResolvedValue(makeRating({ userId: 'user-2' }));
+      playerRatingRepo.findOne.mockResolvedValue(
+        makeRating({ userId: 'user-2' }),
+      );
       playerRatingRepo.count.mockResolvedValue(0);
 
       const result = await service.getPublicPlayerRating('user-2', 'user-1');
@@ -352,7 +383,10 @@ describe('SkillRatingService', () => {
     });
 
     it('throws ForbiddenException when target user has showStats = false', async () => {
-      const user = { id: 'user-2', preferences: { privacy: { showStats: false } } };
+      const user = {
+        id: 'user-2',
+        preferences: { privacy: { showStats: false } },
+      };
       userRepo.findOne.mockResolvedValue(user);
 
       await expect(
@@ -362,7 +396,9 @@ describe('SkillRatingService', () => {
 
     it('allows access when the requesting user is the target (self-view)', async () => {
       // No userRepo call should happen for self-view
-      playerRatingRepo.findOne.mockResolvedValue(makeRating({ userId: 'user-1' }));
+      playerRatingRepo.findOne.mockResolvedValue(
+        makeRating({ userId: 'user-1' }),
+      );
       playerRatingRepo.count.mockResolvedValue(0);
 
       const result = await service.getPublicPlayerRating('user-1', 'user-1');

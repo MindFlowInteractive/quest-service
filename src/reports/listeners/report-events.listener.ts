@@ -1,4 +1,3 @@
-
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
@@ -30,13 +29,19 @@ export class ReportEventsListener {
   }
 
   @OnEvent('report.escalated')
-  async handleReportEscalated(payload: { targetType: string; targetId: string; reportCount: number }) {
+  async handleReportEscalated(payload: {
+    targetType: string;
+    targetId: string;
+    reportCount: number;
+  }) {
     const { targetType, targetId, reportCount } = payload;
 
     // Send notification to moderators about escalated content
     // This would typically be sent to all moderators/admins
-    console.log(`ESCALATION: ${reportCount} reports received for ${targetType}:${targetId} - Priority escalated to CRITICAL`);
-    
+    console.log(
+      `ESCALATION: ${reportCount} reports received for ${targetType}:${targetId} - Priority escalated to CRITICAL`,
+    );
+
     // In a real implementation, you might send a webhook, email, or in-app notification
     // to all moderators about the escalation
   }

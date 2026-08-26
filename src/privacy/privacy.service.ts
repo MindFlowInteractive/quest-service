@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PrivacySettings } from './entities/privacy-settings.entity';
-import { ConsentLog, ConsentAction, ConsentType } from './entities/consent-log.entity';
+import {
+  ConsentLog,
+  ConsentAction,
+  ConsentType,
+} from './entities/consent-log.entity';
 import { DataAccessAudit } from './entities/data-access-audit.entity';
 import { DataExportRequest } from './entities/data-export-request.entity';
 import { DataDeletionRequest } from './entities/data-deletion-request.entity';
@@ -117,7 +121,7 @@ export class PrivacyService {
     lastConsentUpdate: Date | null;
   }> {
     const issues: string[] = [];
-    
+
     const settings = await this.privacySettingsRepository.findOne({
       where: { userId },
     });
@@ -136,7 +140,10 @@ export class PrivacyService {
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-    if (settings.marketingConsentDate && settings.marketingConsentDate < oneYearAgo) {
+    if (
+      settings.marketingConsentDate &&
+      settings.marketingConsentDate < oneYearAgo
+    ) {
       issues.push('Marketing consent may need renewal');
     }
 
@@ -178,13 +185,17 @@ export class PrivacyService {
 
     return {
       totalUsers: allSettings.length,
-      marketingOptIn: allSettings.filter(s => s.marketingConsent).length,
-      analyticsOptIn: allSettings.filter(s => s.analyticsConsent).length,
-      personalizationOptIn: allSettings.filter(s => s.personalizationConsent).length,
-      thirdPartySharingOptIn: allSettings.filter(s => s.thirdPartySharingConsent).length,
-      blockchainOptIn: allSettings.filter(s => s.blockchainConsent).length,
-      deletionRequests: allSettings.filter(s => s.deletionRequestedAt).length,
-      completedDeletions: allSettings.filter(s => s.deletionCompletedAt).length,
+      marketingOptIn: allSettings.filter((s) => s.marketingConsent).length,
+      analyticsOptIn: allSettings.filter((s) => s.analyticsConsent).length,
+      personalizationOptIn: allSettings.filter((s) => s.personalizationConsent)
+        .length,
+      thirdPartySharingOptIn: allSettings.filter(
+        (s) => s.thirdPartySharingConsent,
+      ).length,
+      blockchainOptIn: allSettings.filter((s) => s.blockchainConsent).length,
+      deletionRequests: allSettings.filter((s) => s.deletionRequestedAt).length,
+      completedDeletions: allSettings.filter((s) => s.deletionCompletedAt)
+        .length,
     };
   }
 }

@@ -1,16 +1,8 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class MfaGuard
-  implements CanActivate
-{
-  canActivate(
-    _context: ExecutionContext,
-  ): boolean {
+export class MfaGuard implements CanActivate {
+  canActivate(_context: ExecutionContext): boolean {
     return true;
   }
 }

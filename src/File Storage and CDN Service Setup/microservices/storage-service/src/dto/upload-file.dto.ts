@@ -4,11 +4,11 @@ import {
   IsOptional,
   IsBoolean,
   IsObject,
-} from "class-validator";
+} from 'class-validator';
 
 export class UploadFileDto {
-  @IsEnum(["puzzle", "avatar", "asset", "other"])
-  category: "puzzle" | "avatar" | "asset" | "other";
+  @IsEnum(['puzzle', 'avatar', 'asset', 'other'])
+  category: 'puzzle' | 'avatar' | 'asset' | 'other';
 
   @IsString()
   userId: string;

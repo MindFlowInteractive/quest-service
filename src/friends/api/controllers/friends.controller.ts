@@ -58,7 +58,10 @@ import {
 } from '../../domain/exceptions/domain-exceptions';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RateLimitGuard } from '../guards/rate-limit.guard';
-import { IUserService, ILeaderboardService } from '../../domain/repositories/repository-interfaces';
+import {
+  IUserService,
+  ILeaderboardService,
+} from '../../domain/repositories/repository-interfaces';
 
 /**
  * Friends Controller
@@ -241,9 +244,17 @@ export class FriendsController {
     const items: FriendshipResponseDto[] = [];
     for (let i = 0; i < Math.min(friendships.length, limit); i++) {
       const friendship = friendships[i];
-      const user = await this.userService.getUserById(friendship.friendId.value);
+      const user = await this.userService.getUserById(
+        friendship.friendId.value,
+      );
 
-      if (user && (await this.privacyService.isProfileVisible(friendship.friendId.value, userId))) {
+      if (
+        user &&
+        (await this.privacyService.isProfileVisible(
+          friendship.friendId.value,
+          userId,
+        ))
+      ) {
         items.push({
           id: friendship.id,
           userId: friendship.friendId.value,
@@ -257,7 +268,12 @@ export class FriendsController {
 
     return {
       items,
-      nextCursor: friendships.length > limit ? Buffer.from(JSON.stringify({ offset: offset + limit })).toString('base64') : null,
+      nextCursor:
+        friendships.length > limit
+          ? Buffer.from(JSON.stringify({ offset: offset + limit })).toString(
+              'base64',
+            )
+          : null,
       hasMore: friendships.length > limit,
     };
   }
@@ -309,12 +325,20 @@ export class FriendsController {
     let requests: any[] = [];
 
     if (filter === 'inbound' || filter === 'all') {
-      const inbound = await this.friendRequestService.getInboundRequests(userId, limit, offset);
+      const inbound = await this.friendRequestService.getInboundRequests(
+        userId,
+        limit,
+        offset,
+      );
       requests = requests.concat(inbound);
     }
 
     if (filter === 'outbound' || filter === 'all') {
-      const outbound = await this.friendRequestService.getOutboundRequests(userId, limit, offset);
+      const outbound = await this.friendRequestService.getOutboundRequests(
+        userId,
+        limit,
+        offset,
+      );
       requests = requests.concat(outbound);
     }
 
@@ -331,7 +355,12 @@ export class FriendsController {
 
     return {
       items,
-      nextCursor: requests.length > limit ? Buffer.from(JSON.stringify({ offset: offset + limit })).toString('base64') : null,
+      nextCursor:
+        requests.length > limit
+          ? Buffer.from(JSON.stringify({ offset: offset + limit })).toString(
+              'base64',
+            )
+          : null,
       hasMore: requests.length > limit,
     };
   }
@@ -353,7 +382,11 @@ export class FriendsController {
     const limit = query.limit || 50;
     const cursor = query.cursor;
 
-    const result = await this.activityFeedService.getActivityFeed(userId, limit, cursor);
+    const result = await this.activityFeedService.getActivityFeed(
+      userId,
+      limit,
+      cursor,
+    );
 
     const events = result.events.map((e) => ({
       id: e.id,
@@ -391,7 +424,10 @@ export class FriendsController {
     const metric = query.metric || 'elo';
 
     // Get top global scores
-    const topScores = await this.leaderboardService.getTopScores(metric, limit * 2);
+    const topScores = await this.leaderboardService.getTopScores(
+      metric,
+      limit * 2,
+    );
 
     // Get user's friends
     const friendships = await this.friendshipService.getFriends(userId, 10000);
@@ -412,7 +448,10 @@ export class FriendsController {
     return {
       metric,
       entries,
-      nextCursor: entries.length >= limit ? Buffer.from(JSON.stringify({ offset: limit })).toString('base64') : null,
+      nextCursor:
+        entries.length >= limit
+          ? Buffer.from(JSON.stringify({ offset: limit })).toString('base64')
+          : null,
       hasMore: entries.length >= limit,
     };
   }
@@ -447,13 +486,16 @@ export class FriendsController {
         userId: u.id,
         displayName: u.displayName,
         avatar: u.avatar,
-        friendshipStatus: (friendshipStatus.get(u.id) ? 'friend' : 'none') as 'friend' | 'pending_sent' | 'pending_received' | 'none',
+        friendshipStatus: friendshipStatus.get(u.id) ? 'friend' : 'none',
         mutualFriendsCount: 0, // Would compute from friend graph
       }));
 
     return {
       results,
-      nextCursor: users.length > limit ? Buffer.from(JSON.stringify({ cursor: limit })).toString('base64') : null,
+      nextCursor:
+        users.length > limit
+          ? Buffer.from(JSON.stringify({ cursor: limit })).toString('base64')
+          : null,
       hasMore: users.length > limit,
     };
   }
@@ -463,7 +505,9 @@ export class FriendsController {
    * Get privacy settings
    */
   @Get('privacy')
-  async getPrivacySettings(@Req() req: Request): Promise<PrivacySettingsResponseDto> {
+  async getPrivacySettings(
+    @Req() req: Request,
+  ): Promise<PrivacySettingsResponseDto> {
     const userId = req.user?.['sub'];
     if (!userId) {
       throw new UnauthorizedAccessException();
@@ -494,7 +538,10 @@ export class FriendsController {
       throw new UnauthorizedAccessException();
     }
 
-    const settings = await this.privacyService.updatePrivacySettings(userId, dto);
+    const settings = await this.privacyService.updatePrivacySettings(
+      userId,
+      dto,
+    );
 
     return {
       userId: settings.userId.value,
@@ -520,10 +567,8 @@ export class FriendsController {
     }
 
     const limit = query.limit || 10;
-    const recommendations = await this.recommendationService.generateRecommendations(
-      userId,
-      limit,
-    );
+    const recommendations =
+      await this.recommendationService.generateRecommendations(userId, limit);
 
     return {
       recommendations: recommendations.map((r) => ({

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventPuzzle } from '../entities/event-puzzle.entity';
@@ -24,7 +28,9 @@ export class EventPuzzleService {
     });
 
     if (!event) {
-      throw new NotFoundException(`Event with ID ${createPuzzleDto.eventId} not found`);
+      throw new NotFoundException(
+        `Event with ID ${createPuzzleDto.eventId} not found`,
+      );
     }
 
     const puzzle = this.puzzleRepository.create({
@@ -41,7 +47,10 @@ export class EventPuzzleService {
   /**
    * Get all puzzles for an event (only if event is active)
    */
-  async findPuzzlesByEvent(eventId: string, includeInactive: boolean = false): Promise<EventPuzzle[]> {
+  async findPuzzlesByEvent(
+    eventId: string,
+    includeInactive: boolean = false,
+  ): Promise<EventPuzzle[]> {
     const event = await this.eventRepository.findOne({
       where: { id: eventId },
     });
@@ -52,11 +61,13 @@ export class EventPuzzleService {
 
     // Check if event is active — exclusive puzzles return 404 outside the event window
     if (!event.isActive && !includeInactive) {
-      throw new NotFoundException('Event puzzles are not available outside the event window');
+      throw new NotFoundException(
+        'Event puzzles are not available outside the event window',
+      );
     }
 
     const where: any = { eventId };
-    
+
     if (!includeInactive) {
       where.isActive = true;
     }
@@ -70,7 +81,10 @@ export class EventPuzzleService {
   /**
    * Get puzzles by category for an active event
    */
-  async findPuzzlesByCategory(eventId: string, category: string): Promise<EventPuzzle[]> {
+  async findPuzzlesByCategory(
+    eventId: string,
+    category: string,
+  ): Promise<EventPuzzle[]> {
     const event = await this.eventRepository.findOne({
       where: { id: eventId },
     });
@@ -80,7 +94,9 @@ export class EventPuzzleService {
     }
 
     if (!event.isActive) {
-      throw new NotFoundException('Event puzzles are not available outside the event window');
+      throw new NotFoundException(
+        'Event puzzles are not available outside the event window',
+      );
     }
 
     return await this.puzzleRepository.find({
@@ -107,7 +123,9 @@ export class EventPuzzleService {
     }
 
     if (!puzzle.event.isActive) {
-      throw new NotFoundException('This puzzle is not available outside the event window');
+      throw new NotFoundException(
+        'This puzzle is not available outside the event window',
+      );
     }
 
     return puzzle;
@@ -116,7 +134,10 @@ export class EventPuzzleService {
   /**
    * Verify puzzle answer
    */
-  async verifyAnswer(puzzleId: string, userAnswer: any): Promise<{
+  async verifyAnswer(
+    puzzleId: string,
+    userAnswer: any,
+  ): Promise<{
     isCorrect: boolean;
     correctAnswer?: any;
     explanation?: string;
@@ -131,16 +152,24 @@ export class EventPuzzleService {
 
     // Compare answers based on type
     if (Array.isArray(correctAnswer)) {
-      isCorrect = JSON.stringify(correctAnswer.sort()) === JSON.stringify(userAnswer.sort());
+      isCorrect =
+        JSON.stringify(correctAnswer.sort()) ===
+        JSON.stringify(userAnswer.sort());
     } else if (typeof correctAnswer === 'string') {
-      isCorrect = correctAnswer.toLowerCase().trim() === String(userAnswer).toLowerCase().trim();
+      isCorrect =
+        correctAnswer.toLowerCase().trim() ===
+        String(userAnswer).toLowerCase().trim();
     } else {
       isCorrect = correctAnswer === userAnswer;
     }
 
     // Increment completion count if correct
     if (isCorrect) {
-      await this.puzzleRepository.increment({ id: puzzleId }, 'completionCount', 1);
+      await this.puzzleRepository.increment(
+        { id: puzzleId },
+        'completionCount',
+        1,
+      );
     }
 
     return {
@@ -153,7 +182,10 @@ export class EventPuzzleService {
   /**
    * Update a puzzle
    */
-  async updatePuzzle(puzzleId: string, updateData: Partial<CreatePuzzleDto>): Promise<EventPuzzle> {
+  async updatePuzzle(
+    puzzleId: string,
+    updateData: Partial<CreatePuzzleDto>,
+  ): Promise<EventPuzzle> {
     const puzzle = await this.puzzleRepository.findOne({
       where: { id: puzzleId },
     });

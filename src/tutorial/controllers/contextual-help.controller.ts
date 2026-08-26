@@ -40,7 +40,9 @@ export class ContextualHelpController {
 
   @Get()
   async findAll(@Query() filters: ContextualHelpFilterDto) {
-    this.logger.log(`Fetching contextual help with filters: ${JSON.stringify(filters)}`);
+    this.logger.log(
+      `Fetching contextual help with filters: ${JSON.stringify(filters)}`,
+    );
     return this.helpService.findAll(filters);
   }
 
@@ -82,7 +84,9 @@ export class ContextualHelpController {
     @Body() dto: TriggerContextualHelpDto,
     @Query('locale') locale?: string,
   ) {
-    this.logger.log(`Triggering help for user ${userId} in context: ${dto.context}`);
+    this.logger.log(
+      `Triggering help for user ${userId} in context: ${dto.context}`,
+    );
     const help = await this.helpService.triggerHelp(userId, dto);
 
     if (help && locale) {
@@ -97,7 +101,9 @@ export class ContextualHelpController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Body() dto: RecordHelpInteractionDto,
   ) {
-    this.logger.log(`Recording interaction for user ${userId} on help ${dto.helpId}`);
+    this.logger.log(
+      `Recording interaction for user ${userId} on help ${dto.helpId}`,
+    );
     await this.helpService.recordInteraction(userId, dto);
     return { message: 'Interaction recorded successfully' };
   }
@@ -118,8 +124,13 @@ export class ContextualHelpController {
     @Param('puzzleType') puzzleType: string,
     @Query('locale') locale?: string,
   ) {
-    this.logger.log(`Getting puzzle start help for user ${userId}, type: ${puzzleType}`);
-    const help = await this.helpService.getHelpForPuzzleStart(userId, puzzleType);
+    this.logger.log(
+      `Getting puzzle start help for user ${userId}, type: ${puzzleType}`,
+    );
+    const help = await this.helpService.getHelpForPuzzleStart(
+      userId,
+      puzzleType,
+    );
 
     if (help && locale) {
       return this.localizationService.localizeHelp(help, locale);
@@ -135,8 +146,14 @@ export class ContextualHelpController {
     @Query('attempts') attempts: number,
     @Query('locale') locale?: string,
   ) {
-    this.logger.log(`Getting failure help for user ${userId}, puzzle: ${puzzleId}`);
-    const help = await this.helpService.getHelpForRepeatedFailure(userId, puzzleId, attempts);
+    this.logger.log(
+      `Getting failure help for user ${userId}, puzzle: ${puzzleId}`,
+    );
+    const help = await this.helpService.getHelpForRepeatedFailure(
+      userId,
+      puzzleId,
+      attempts,
+    );
 
     if (help && locale) {
       return this.localizationService.localizeHelp(help, locale);
@@ -151,7 +168,9 @@ export class ContextualHelpController {
     @Param('feature') feature: string,
     @Query('locale') locale?: string,
   ) {
-    this.logger.log(`Getting feature help for user ${userId}, feature: ${feature}`);
+    this.logger.log(
+      `Getting feature help for user ${userId}, feature: ${feature}`,
+    );
     const help = await this.helpService.getHelpForFeature(userId, feature);
 
     if (help && locale) {

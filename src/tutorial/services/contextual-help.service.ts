@@ -63,14 +63,19 @@ export class ContextualHelpService {
       });
     }
     if (filters?.isActive !== undefined) {
-      query.andWhere('help.isActive = :isActive', { isActive: filters.isActive });
+      query.andWhere('help.isActive = :isActive', {
+        isActive: filters.isActive,
+      });
     }
 
     query.orderBy('help.priority', 'DESC');
     return query.getMany();
   }
 
-  async update(id: string, dto: UpdateContextualHelpDto): Promise<ContextualHelp> {
+  async update(
+    id: string,
+    dto: UpdateContextualHelpDto,
+  ): Promise<ContextualHelp> {
     const help = await this.findById(id);
     Object.assign(help, dto);
     const updated = await this.helpRepo.save(help);
@@ -127,15 +132,21 @@ export class ContextualHelpService {
       .andWhere('help.triggerContext = :context', { context: dto.context });
 
     if (dto.feature) {
-      query.andWhere('(help.targetFeature IS NULL OR help.targetFeature = :feature)', {
-        feature: dto.feature,
-      });
+      query.andWhere(
+        '(help.targetFeature IS NULL OR help.targetFeature = :feature)',
+        {
+          feature: dto.feature,
+        },
+      );
     }
 
     if (dto.puzzleType) {
-      query.andWhere('(help.targetPuzzleType IS NULL OR help.targetPuzzleType = :puzzleType)', {
-        puzzleType: dto.puzzleType,
-      });
+      query.andWhere(
+        '(help.targetPuzzleType IS NULL OR help.targetPuzzleType = :puzzleType)',
+        {
+          puzzleType: dto.puzzleType,
+        },
+      );
     }
 
     const candidates = await query.orderBy('help.priority', 'DESC').getMany();
@@ -170,7 +181,9 @@ export class ContextualHelpService {
     if (rules.cooldownSeconds) {
       const lastShown = await this.getLastShownTime(userId, helpId);
       if (lastShown) {
-        const cooldownEnd = new Date(lastShown.getTime() + rules.cooldownSeconds * 1000);
+        const cooldownEnd = new Date(
+          lastShown.getTime() + rules.cooldownSeconds * 1000,
+        );
         if (new Date() < cooldownEnd) return false;
       }
     }
@@ -197,17 +210,23 @@ export class ContextualHelpService {
     }
 
     if (conditions.userLevel && dto.userLevel !== undefined) {
-      if (conditions.userLevel.min !== undefined && dto.userLevel < conditions.userLevel.min) {
+      if (
+        conditions.userLevel.min !== undefined &&
+        dto.userLevel < conditions.userLevel.min
+      ) {
         return false;
       }
-      if (conditions.userLevel.max !== undefined && dto.userLevel > conditions.userLevel.max) {
+      if (
+        conditions.userLevel.max !== undefined &&
+        dto.userLevel > conditions.userLevel.max
+      ) {
         return false;
       }
     }
 
     if (conditions.errorPatterns && dto.recentErrors) {
       const hasMatchingError = conditions.errorPatterns.some((pattern) =>
-        dto.recentErrors!.some((error) => error.includes(pattern)),
+        dto.recentErrors.some((error) => error.includes(pattern)),
       );
       if (!hasMatchingError) return false;
     }
@@ -216,7 +235,10 @@ export class ContextualHelpService {
   }
 
   // Interaction Tracking
-  async recordInteraction(userId: string, dto: RecordHelpInteractionDto): Promise<void> {
+  async recordInteraction(
+    userId: string,
+    dto: RecordHelpInteractionDto,
+  ): Promise<void> {
     const help = await this.findById(dto.helpId);
 
     const interaction = this.interactionRepo.create({
@@ -235,7 +257,10 @@ export class ContextualHelpService {
     await this.updateHelpAnalytics(dto.helpId, dto.action);
   }
 
-  async getUserHelpHistory(userId: string, helpId?: string): Promise<ContextualHelpInteraction[]> {
+  async getUserHelpHistory(
+    userId: string,
+    helpId?: string,
+  ): Promise<ContextualHelpInteraction[]> {
     const where: any = { userId };
     if (helpId) {
       where.helpId = helpId;
@@ -285,7 +310,10 @@ export class ContextualHelpService {
     });
   }
 
-  async getHelpForFeature(userId: string, feature: string): Promise<ContextualHelp | null> {
+  async getHelpForFeature(
+    userId: string,
+    feature: string,
+  ): Promise<ContextualHelp | null> {
     return this.triggerHelp(userId, {
       context: 'feature_discovery',
       feature,
@@ -293,7 +321,10 @@ export class ContextualHelpService {
   }
 
   // Analytics Updates
-  private async updateHelpAnalytics(helpId: string, action: string): Promise<void> {
+  private async updateHelpAnalytics(
+    helpId: string,
+    action: string,
+  ): Promise<void> {
     const help = await this.findById(helpId);
     const analytics = help.analytics || {};
 

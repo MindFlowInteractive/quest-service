@@ -36,35 +36,55 @@ export class PrivacySettings {
   @Column({ name: 'marketing_consent', default: false })
   marketingConsent: boolean;
 
-  @Column({ name: 'marketing_consent_date', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'marketing_consent_date',
+    type: 'timestamptz',
+    nullable: true,
+  })
   marketingConsentDate: Date;
 
   // Analytics consent
   @Column({ name: 'analytics_consent', default: true })
   analyticsConsent: boolean;
 
-  @Column({ name: 'analytics_consent_date', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'analytics_consent_date',
+    type: 'timestamptz',
+    nullable: true,
+  })
   analyticsConsentDate: Date;
 
   // Personalization consent
   @Column({ name: 'personalization_consent', default: true })
   personalizationConsent: boolean;
 
-  @Column({ name: 'personalization_consent_date', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'personalization_consent_date',
+    type: 'timestamptz',
+    nullable: true,
+  })
   personalizationConsentDate: Date;
 
   // Third party sharing consent
   @Column({ name: 'third_party_sharing_consent', default: false })
   thirdPartySharingConsent: boolean;
 
-  @Column({ name: 'third_party_sharing_date', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'third_party_sharing_date',
+    type: 'timestamptz',
+    nullable: true,
+  })
   thirdPartySharingDate: Date;
 
   // Blockchain/On-chain data consent
   @Column({ name: 'blockchain_consent', default: true })
   blockchainConsent: boolean;
 
-  @Column({ name: 'blockchain_consent_date', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'blockchain_consent_date',
+    type: 'timestamptz',
+    nullable: true,
+  })
   blockchainConsentDate: Date;
 
   // Data retention preferences
@@ -91,10 +111,18 @@ export class PrivacySettings {
   @Column({ name: 'last_export_date', type: 'timestamptz', nullable: true })
   lastExportDate: Date;
 
-  @Column({ name: 'deletion_requested_at', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'deletion_requested_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
   deletionRequestedAt: Date;
 
-  @Column({ name: 'deletion_completed_at', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'deletion_completed_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
   deletionCompletedAt: Date;
 
   @Column({ name: 'anonymized', default: false })

@@ -18,10 +18,7 @@ export interface IFriendRequestRepository {
     toUserId: string,
   ): Promise<FriendRequest | null>;
   findInboundByUserId(userId: string, limit: number): Promise<FriendRequest[]>;
-  findOutboundByUserId(
-    userId: string,
-    limit: number,
-  ): Promise<FriendRequest[]>;
+  findOutboundByUserId(userId: string, limit: number): Promise<FriendRequest[]>;
   findByIds(ids: string[]): Promise<FriendRequest[]>;
   deletePermanently(id: string): Promise<void>;
 }
@@ -34,18 +31,25 @@ export interface IFriendshipRepository {
   save(friendship: Friendship): Promise<void>;
   saveBatch(friendships: Friendship[]): Promise<void>;
   findById(id: string): Promise<Friendship | null>;
-  findBothDirections(
+  findBothDirections(userId: string, friendId: string): Promise<Friendship[]>;
+  findFriendsOfUser(
     userId: string,
-    friendId: string,
+    limit: number,
+    offset?: number,
   ): Promise<Friendship[]>;
-  findFriendsOfUser(userId: string, limit: number, offset?: number): Promise<Friendship[]>;
   findFriendCountByUserId(userId: string): Promise<number>;
   delete(userId: string, friendId: string): Promise<void>;
-  deleteBatch(pairs: Array<{ userId: string; friendId: string }>): Promise<void>;
+  deleteBatch(
+    pairs: Array<{ userId: string; friendId: string }>,
+  ): Promise<void>;
   exists(userId: string, friendId: string): Promise<boolean>;
   isFriend(userId: string, friendId: string): Promise<boolean>;
   getMutualFriendsCount(userId1: string, userId2: string): Promise<number>;
-  getMutualFriendsIds(userId1: string, userId2: string, limit?: number): Promise<string[]>;
+  getMutualFriendsIds(
+    userId1: string,
+    userId2: string,
+    limit?: number,
+  ): Promise<string[]>;
 }
 
 /**
@@ -105,7 +109,9 @@ export interface ICacheService {
   set<T>(key: string, value: T, ttl?: number): Promise<void>;
   del(key: string): Promise<void>;
   mget<T>(keys: string[]): Promise<(T | null)[]>;
-  mset(records: Array<{ key: string; value: any; ttl?: number }>): Promise<void>;
+  mset(
+    records: Array<{ key: string; value: any; ttl?: number }>,
+  ): Promise<void>;
   sadd(key: string, members: string[]): Promise<number>;
   srem(key: string, members: string[]): Promise<number>;
   smembers(key: string): Promise<string[]>;
@@ -131,10 +137,7 @@ export interface ICacheService {
   zcount(key: string, min: number, max: number): Promise<number>;
   expire(key: string, seconds: number): Promise<void>;
   ttl(key: string): Promise<number>;
-  zinterstore(
-    destination: string,
-    keys: string[],
-  ): Promise<number>;
+  zinterstore(destination: string, keys: string[]): Promise<number>;
   zrangebyscore(
     key: string,
     min: number,
@@ -148,8 +151,15 @@ export interface ICacheService {
  * For publishing domain events.
  */
 export interface IMessageBroker {
-  publish(topic: string, message: any, options?: { key?: string }): Promise<void>;
-  subscribe(topic: string, handler: (message: any) => Promise<void>): Promise<void>;
+  publish(
+    topic: string,
+    message: any,
+    options?: { key?: string },
+  ): Promise<void>;
+  subscribe(
+    topic: string,
+    handler: (message: any) => Promise<void>,
+  ): Promise<void>;
 }
 
 /**
@@ -181,7 +191,10 @@ export interface INotificationService {
  */
 export interface IEventPublisher {
   publishEvent(event: any): Promise<void>;
-  subscribeToEvent(eventType: string, handler: (event: any) => Promise<void>): void;
+  subscribeToEvent(
+    eventType: string,
+    handler: (event: any) => Promise<void>,
+  ): void;
 }
 
 /**
@@ -202,7 +215,10 @@ export interface IUserService {
     }>
   >;
   checkUserExists(userId: string): Promise<boolean>;
-  searchUsers(query: string, limit: number): Promise<
+  searchUsers(
+    query: string,
+    limit: number,
+  ): Promise<
     Array<{
       id: string;
       displayName: string;
@@ -216,14 +232,20 @@ export interface IUserService {
  * For getting leaderboard data.
  */
 export interface ILeaderboardService {
-  getTopScores(metric: string, limit: number): Promise<
+  getTopScores(
+    metric: string,
+    limit: number,
+  ): Promise<
     Array<{
       userId: string;
       score: number;
       rank: number;
     }>
   >;
-  getUserScore(userId: string, metric: string): Promise<{
+  getUserScore(
+    userId: string,
+    metric: string,
+  ): Promise<{
     score: number;
     rank: number;
   } | null>;

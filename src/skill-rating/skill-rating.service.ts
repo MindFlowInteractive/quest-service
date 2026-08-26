@@ -1,10 +1,25 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, MoreThan, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PlayerRating, SkillTier, SeasonStatus } from './entities/player-rating.entity';
-import { RatingHistory, RatingChangeReason } from './entities/rating-history.entity';
-import { Season, SeasonStatus as SeasonEntityStatus } from './entities/season.entity';
+import {
+  PlayerRating,
+  SkillTier,
+  SeasonStatus,
+} from './entities/player-rating.entity';
+import {
+  RatingHistory,
+  RatingChangeReason,
+} from './entities/rating-history.entity';
+import {
+  Season,
+  SeasonStatus as SeasonEntityStatus,
+} from './entities/season.entity';
 import { ELOService, PuzzleCompletionData } from './elo.service';
 import { User } from '../users/entities/user.entity';
 import { Puzzle } from '../puzzles/entities/puzzle.entity';
@@ -49,14 +64,14 @@ export class SkillRatingService {
    */
   async getPlayerRating(userId: string): Promise<PlayerRating> {
     const currentSeason = await this.eloService.getCurrentSeason();
-    
+
     let playerRating = await this.playerRatingRepository.findOne({
       where: {
         userId,
         seasonId: currentSeason.seasonId,
       },
     });
-    
+
     if (!playerRating) {
       // Create new rating for player
       playerRating = this.playerRatingRepository.create({
@@ -67,7 +82,7 @@ export class SkillRatingService {
       });
       playerRating = await this.playerRatingRepository.save(playerRating);
     }
-    
+
     return playerRating;
   }
 
@@ -79,44 +94,46 @@ export class SkillRatingService {
   ): Promise<PlayerRating> {
     // Get player rating
     let playerRating = await this.getPlayerRating(completionData.userId);
-    
+
     // Get puzzle
     const puzzle = await this.puzzleRepository.findOne({
       where: { id: completionData.puzzleId },
     });
-    
+
     if (!puzzle) {
       throw new Error(`Puzzle not found: ${completionData.puzzleId}`);
     }
-    
+
     // Calculate rating change
     const calculationResult = await this.eloService.calculateRatingChange(
       playerRating,
       puzzle,
       completionData,
     );
-    
+
     // Update player rating
     const oldRating = playerRating.rating;
     playerRating.rating = calculationResult.newRating;
-    playerRating.tier = this.eloService.getSkillTier(calculationResult.newRating);
+    playerRating.tier = this.eloService.getSkillTier(
+      calculationResult.newRating,
+    );
     playerRating.gamesPlayed += 1;
     playerRating.lastPlayedAt = new Date();
     playerRating.lastRatingUpdate = new Date();
-    
+
     if (completionData.wasCompleted) {
       playerRating.wins += 1;
       playerRating.streak += 1;
       if (playerRating.streak > playerRating.bestStreak) {
         playerRating.bestStreak = playerRating.streak;
       }
-      
+
       // Update statistics
       if (!playerRating.statistics.puzzlesSolved) {
         playerRating.statistics.puzzlesSolved = 0;
       }
       playerRating.statistics.puzzlesSolved += 1;
-      
+
       // Update rating history in statistics
       if (!playerRating.statistics.ratingHistory) {
         playerRating.statistics.ratingHistory = [];
@@ -128,27 +145,33 @@ export class SkillRatingService {
         puzzleId: completionData.puzzleId,
         difficulty: completionData.puzzleDifficulty,
       });
-      
+
       // Track highest/lowest ratings
-      if (!playerRating.statistics.highestRating || calculationResult.newRating > playerRating.statistics.highestRating) {
+      if (
+        !playerRating.statistics.highestRating ||
+        calculationResult.newRating > playerRating.statistics.highestRating
+      ) {
         playerRating.statistics.highestRating = calculationResult.newRating;
       }
-      if (!playerRating.statistics.lowestRating || calculationResult.newRating < playerRating.statistics.lowestRating) {
+      if (
+        !playerRating.statistics.lowestRating ||
+        calculationResult.newRating < playerRating.statistics.lowestRating
+      ) {
         playerRating.statistics.lowestRating = calculationResult.newRating;
       }
     } else {
       playerRating.losses += 1;
       playerRating.streak = 0;
     }
-    
+
     // Update win rate
     playerRating.winRate = Number(
       (playerRating.wins / playerRating.gamesPlayed).toFixed(2),
     );
-    
+
     // Save updated rating
     playerRating = await this.playerRatingRepository.save(playerRating);
-    
+
     // Create rating history record
     const ratingHistory = this.ratingHistoryRepository.create({
       playerRatingId: playerRating.id,
@@ -171,13 +194,17 @@ export class SkillRatingService {
         bonusFactors: calculationResult.bonusFactors,
       },
     });
-    
+
     await this.ratingHistoryRepository.save(ratingHistory);
-    
+
     this.logger.log(
-      `Updated rating for user ${completionData.userId}: ${oldRating} -> ${calculationResult.newRating} (${calculationResult.ratingChange >= 0 ? '+' : ''}${calculationResult.ratingChange})`,
+      `Updated rating for user ${completionData.userId}: ${oldRating} -> ${
+        calculationResult.newRating
+      } (${calculationResult.ratingChange >= 0 ? '+' : ''}${
+        calculationResult.ratingChange
+      })`,
     );
-    
+
     return playerRating;
   }
 
@@ -189,7 +216,7 @@ export class SkillRatingService {
     limit: number = 50,
   ): Promise<RatingHistory[]> {
     const playerRating = await this.getPlayerRating(userId);
-    
+
     return this.ratingHistoryRepository.find({
       where: { playerRatingId: playerRating.id },
       order: { createdAt: 'DESC' },
@@ -205,7 +232,7 @@ export class SkillRatingService {
     offset: number = 0,
   ): Promise<PlayerRating[]> {
     const currentSeason = await this.eloService.getCurrentSeason();
-    
+
     return this.playerRatingRepository.find({
       where: {
         seasonId: currentSeason.seasonId,
@@ -224,7 +251,7 @@ export class SkillRatingService {
   async getPlayerRank(userId: string): Promise<number> {
     const playerRating = await this.getPlayerRating(userId);
     const currentSeason = await this.eloService.getCurrentSeason();
-    
+
     const higherRatedCount = await this.playerRatingRepository.count({
       where: {
         seasonId: currentSeason.seasonId,
@@ -232,7 +259,7 @@ export class SkillRatingService {
         rating: MoreThan(playerRating.rating),
       },
     });
-    
+
     return higherRatedCount + 1;
   }
 
@@ -242,37 +269,40 @@ export class SkillRatingService {
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async applyInactivityDecay(): Promise<void> {
     this.logger.log('Applying inactivity decay...');
-    
+
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     // Find players who haven't played in 30+ days
     const inactivePlayers = await this.playerRatingRepository
       .createQueryBuilder('rating')
       .where('rating.lastPlayedAt < :thirtyDaysAgo', { thirtyDaysAgo })
-      .andWhere('rating.seasonStatus = :active', { active: SeasonStatus.ACTIVE })
+      .andWhere('rating.seasonStatus = :active', {
+        active: SeasonStatus.ACTIVE,
+      })
       .getMany();
-    
+
     let decayCount = 0;
-    
+
     for (const playerRating of inactivePlayers) {
       const daysInactive = Math.floor(
-        (Date.now() - playerRating.lastPlayedAt.getTime()) / (1000 * 60 * 60 * 24),
+        (Date.now() - playerRating.lastPlayedAt.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
-      
+
       const decay = this.eloService.calculateInactivityDecay(
         playerRating.rating,
         daysInactive,
       );
-      
+
       if (decay < 0) {
         const oldRating = playerRating.rating;
         playerRating.rating += decay;
         playerRating.tier = this.eloService.getSkillTier(playerRating.rating);
         playerRating.lastRatingUpdate = new Date();
-        
+
         await this.playerRatingRepository.save(playerRating);
-        
+
         // Create rating history record
         const ratingHistory = this.ratingHistoryRepository.create({
           playerRatingId: playerRating.id,
@@ -284,16 +314,16 @@ export class SkillRatingService {
             daysInactive,
           },
         });
-        
+
         await this.ratingHistoryRepository.save(ratingHistory);
-        
+
         decayCount++;
         this.logger.log(
           `Applied decay to user ${playerRating.userId}: ${oldRating} -> ${playerRating.rating} (${decay})`,
         );
       }
     }
-    
+
     this.logger.log(`Applied inactivity decay to ${decayCount} players`);
   }
 
@@ -304,15 +334,15 @@ export class SkillRatingService {
     const season = await this.seasonRepository.findOne({
       where: { seasonId },
     });
-    
+
     if (!season) {
       throw new Error(`Season not found: ${seasonId}`);
     }
-    
+
     // Update season status
     season.status = SeasonEntityStatus.ENDED;
     await this.seasonRepository.save(season);
-    
+
     // If reset is required, create new ratings for next season
     if (season.requiresReset) {
       const currentRatings = await this.playerRatingRepository.find({
@@ -321,14 +351,14 @@ export class SkillRatingService {
           seasonStatus: SeasonStatus.ACTIVE,
         },
       });
-      
+
       const nextSeasonId = this.generateNextSeasonId(seasonId);
-      
+
       for (const rating of currentRatings) {
         // Mark current rating as reset
         rating.seasonStatus = SeasonStatus.RESET;
         await this.playerRatingRepository.save(rating);
-        
+
         // Create new rating for next season
         const newRating = this.playerRatingRepository.create({
           userId: rating.userId,
@@ -342,10 +372,10 @@ export class SkillRatingService {
             ratingHistory: [],
           },
         });
-        
+
         await this.playerRatingRepository.save(newRating);
       }
-      
+
       // Create new season
       const newSeason = this.seasonRepository.create({
         name: `Season ${this.extractSeasonNumber(seasonId) + 1}`,
@@ -357,10 +387,10 @@ export class SkillRatingService {
         requiresReset: season.requiresReset,
         config: season.config,
       });
-      
+
       await this.seasonRepository.save(newSeason);
     }
-    
+
     this.logger.log(`Ended season ${seasonId}`);
   }
 
@@ -435,7 +465,9 @@ export class SkillRatingService {
   /**
    * Return a player's own rating augmented with rank and percentile.
    */
-  async getPlayerRatingWithDetails(userId: string): Promise<PlayerRatingDetails> {
+  async getPlayerRatingWithDetails(
+    userId: string,
+  ): Promise<PlayerRatingDetails> {
     const [playerRating, rank, percentile] = await Promise.all([
       this.getPlayerRating(userId),
       this.getPlayerRank(userId),
@@ -454,12 +486,16 @@ export class SkillRatingService {
   ): Promise<PlayerRatingDetails> {
     // Always allow self-access
     if (requestingUserId !== targetUserId) {
-      const user = await this.userRepository.findOne({ where: { id: targetUserId } });
+      const user = await this.userRepository.findOne({
+        where: { id: targetUserId },
+      });
       if (!user) throw new NotFoundException('User not found');
 
       const showStats = user.preferences?.privacy?.showStats !== false; // default: visible
       if (!showStats) {
-        throw new ForbiddenException('This player has set their rating to private');
+        throw new ForbiddenException(
+          'This player has set their rating to private',
+        );
       }
     }
 
@@ -477,7 +513,8 @@ export class SkillRatingService {
     const puzzle = await this.puzzleRepository.findOne({
       where: { id: input.puzzleId },
     });
-    if (!puzzle) throw new NotFoundException(`Puzzle not found: ${input.puzzleId}`);
+    if (!puzzle)
+      throw new NotFoundException(`Puzzle not found: ${input.puzzleId}`);
 
     const timeLimit = puzzle.timeLimit || 300;
     if (input.timeTaken < ABANDON_TIME_THRESHOLD * timeLimit) {

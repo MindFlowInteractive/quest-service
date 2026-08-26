@@ -10,9 +10,19 @@ import {
 } from 'typeorm';
 import { Tutorial } from './tutorial.entity';
 
-export type ProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped' | 'abandoned';
+export type ProgressStatus =
+  | 'not_started'
+  | 'in_progress'
+  | 'completed'
+  | 'skipped'
+  | 'abandoned';
 export type LearningSpeed = 'slow' | 'normal' | 'fast';
-export type StepProgressStatus = 'pending' | 'in_progress' | 'completed' | 'skipped' | 'failed';
+export type StepProgressStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'skipped'
+  | 'failed';
 
 export interface StepProgress {
   stepId: string;
@@ -109,7 +119,10 @@ export class UserTutorialProgress {
   @Column({ type: 'jsonb', default: [] })
   stepProgress: StepProgress[];
 
-  @Column({ type: 'jsonb', default: { learningSpeed: 'normal', proficiencyLevel: 0 } })
+  @Column({
+    type: 'jsonb',
+    default: { learningSpeed: 'normal', proficiencyLevel: 0 },
+  })
   adaptiveState: AdaptiveState;
 
   @Column({ type: 'jsonb', default: {} })
@@ -125,7 +138,9 @@ export class UserTutorialProgress {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => Tutorial, (tutorial) => tutorial.userProgress, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Tutorial, (tutorial) => tutorial.userProgress, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'tutorialId' })
   tutorial: Tutorial;
 }

@@ -1,11 +1,20 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, MoreThanOrEqual } from 'typeorm';
 import { PlayerEventsService } from '../player-events/player-events.service';
 import { Hint } from './entities/hint.entity';
 import { HintUsage } from './entities/hint-usage.entity';
 import { HintTemplate } from './entities/hint-template.entity';
-import { CreateHintDto, RequestHintDto, HintUsageDto, HintType } from './dto/create-hint.dto';
+import {
+  CreateHintDto,
+  RequestHintDto,
+  HintUsageDto,
+  HintType,
+} from './dto/create-hint.dto';
 import { generateAlgorithmicHints } from './algorithms/engine';
 
 type Nullable<T> = T | null;
@@ -43,7 +52,7 @@ export class HintsService {
     const where: FindOptionsWhere<Hint> = {
       puzzleId: dto.puzzleId,
       isActive: true,
-    } as any;
+    };
 
     const candidates = await this.hintRepo.find({
       where,
@@ -65,10 +74,16 @@ export class HintsService {
     });
 
     // Progressive selection: pick the first candidate with order > priorCount
-    const progressive = candidates.find((h) => h.order > priorCount) ?? candidates[candidates.length - 1];
+    const progressive =
+      candidates.find((h) => h.order > priorCount) ??
+      candidates[candidates.length - 1];
 
     // Contextual adjustment without spoiling: prefer contextual/strategic before specific
-    const filtered = this.rankByContextAndPersonalization(candidates, dto, progressive.order);
+    const filtered = this.rankByContextAndPersonalization(
+      candidates,
+      dto,
+      progressive.order,
+    );
 
     // Final pick is the first ranked candidate
     const selected = filtered[0];
@@ -119,10 +134,14 @@ export class HintsService {
     // Update effectiveness based on completion and satisfaction
     const hint = await this.hintRepo.findOne({ where: { id: dto.hintId } });
     if (hint) {
-      const successCount = (hint.successCount ?? 0) + (dto.ledToCompletion ? 1 : 0);
+      const successCount =
+        (hint.successCount ?? 0) + (dto.ledToCompletion ? 1 : 0);
       const usageCount = (hint.usageCount ?? 0) + 1;
       const completionRate = successCount > 0 ? successCount / usageCount : 0;
-      const effectiveness = Math.min(1, Math.max(0, 0.6 * completionRate + 0.4 * (dto.satisfactionRating / 5)));
+      const effectiveness = Math.min(
+        1,
+        Math.max(0, 0.6 * completionRate + 0.4 * (dto.satisfactionRating / 5)),
+      );
       await this.hintRepo.update(hint.id, {
         successCount,
         usageCount,
@@ -138,10 +157,15 @@ export class HintsService {
   }
 
   // Templates management
-  async listTemplates(params?: { puzzleType?: string; difficulty?: string; activeOnly?: boolean }): Promise<HintTemplate[]> {
-    const where: FindOptionsWhere<HintTemplate> = {} as any;
+  async listTemplates(params?: {
+    puzzleType?: string;
+    difficulty?: string;
+    activeOnly?: boolean;
+  }): Promise<HintTemplate[]> {
+    const where: FindOptionsWhere<HintTemplate> = {};
     if (params?.puzzleType) (where as any).puzzleType = params.puzzleType;
-    if (params?.difficulty) (where as any).difficulty = params.difficulty as any;
+    if (params?.difficulty)
+      (where as any).difficulty = params.difficulty as any;
     if (params?.activeOnly) (where as any).isActive = true;
     return this.templateRepo.find({ where, order: { order: 'ASC' } });
   }
@@ -157,10 +181,13 @@ export class HintsService {
     return this.templateRepo.save(template);
   }
 
-  async updateTemplate(id: string, input: Partial<HintTemplate>): Promise<HintTemplate> {
+  async updateTemplate(
+    id: string,
+    input: Partial<HintTemplate>,
+  ): Promise<HintTemplate> {
     const existing = await this.templateRepo.findOne({ where: { id } });
     if (!existing) throw new BadRequestException('Template not found');
-    const updated = { ...existing, ...input, id: existing.id } as HintTemplate;
+    const updated = { ...existing, ...input, id: existing.id };
     await this.templateRepo.save(updated);
     return updated;
   }
@@ -182,7 +209,8 @@ export class HintsService {
         difficulty: 'medium',
         order: 1,
         type: 'general',
-        template: 'Eliminate obviously wrong options and compare remaining choices.',
+        template:
+          'Eliminate obviously wrong options and compare remaining choices.',
         variables: {},
         conditions: {},
         cost: 0,
@@ -197,8 +225,15 @@ export class HintsService {
         difficulty: 'medium',
         order: 2,
         type: 'contextual',
-        template: 'Look again at the constraint linking {{currentStep}}; resolve contradictions first.',
-        variables: { currentStep: { type: 'string', description: 'Current solving focus', required: false } as any },
+        template:
+          'Look again at the constraint linking {{currentStep}}; resolve contradictions first.',
+        variables: {
+          currentStep: {
+            type: 'string',
+            description: 'Current solving focus',
+            required: false,
+          } as any,
+        },
         conditions: {},
         cost: 0,
         pointsPenalty: 0,
@@ -212,8 +247,15 @@ export class HintsService {
         difficulty: 'hard',
         order: 3,
         type: 'strategic',
-        template: 'Create a minimal repro for the failing case and add an assertion around {{progress}}.',
-        variables: { progress: { type: 'number', description: 'Progress percent', required: false } as any },
+        template:
+          'Create a minimal repro for the failing case and add an assertion around {{progress}}.',
+        variables: {
+          progress: {
+            type: 'number',
+            description: 'Progress percent',
+            required: false,
+          } as any,
+        },
         conditions: { minSkillLevel: 2 },
         cost: 1,
         pointsPenalty: 0,
@@ -227,7 +269,8 @@ export class HintsService {
         difficulty: 'easy',
         order: 4,
         type: 'specific',
-        template: 'Focus on the outer boundary; check repeated shapes before moving inward.',
+        template:
+          'Focus on the outer boundary; check repeated shapes before moving inward.',
         variables: {},
         conditions: {},
         cost: 2,
@@ -238,7 +281,9 @@ export class HintsService {
 
     let created = 0;
     for (const d of defaults) {
-      const exists = await this.templateRepo.findOne({ where: { name: d.name as string } });
+      const exists = await this.templateRepo.findOne({
+        where: { name: d.name },
+      });
       if (!exists) {
         const t = this.templateRepo.create(d);
         await this.templateRepo.save(t);
@@ -249,11 +294,17 @@ export class HintsService {
   }
 
   // Internals
-  private async generateFromTemplates(dto: RequestHintDto): Promise<Nullable<Hint>> {
+  private async generateFromTemplates(
+    dto: RequestHintDto,
+  ): Promise<Nullable<Hint>> {
     // Basic generation by puzzle type/difficulty inferred from puzzle state
     const puzzleType = (dto.puzzleState as any)?.type ?? 'logic-grid';
     const difficulty = (dto.puzzleState as any)?.difficulty ?? 'medium';
-    const templates = await this.listTemplates({ puzzleType, difficulty, activeOnly: true });
+    const templates = await this.listTemplates({
+      puzzleType,
+      difficulty,
+      activeOnly: true,
+    });
     if (templates.length === 0) {
       // Fall back to algorithmic generation when no templates exist
       const alg = generateAlgorithmicHints({
@@ -267,7 +318,7 @@ export class HintsService {
       const hint = this.hintRepo.create({
         puzzleId: dto.puzzleId,
         order: chosen.order,
-        type: chosen.type as any,
+        type: chosen.type,
         content: chosen.content,
         cost: 0,
         pointsPenalty: 0,
@@ -278,8 +329,12 @@ export class HintsService {
     }
 
     // Pick first progressive template not used yet by order
-    const priorCount = await this.usageRepo.count({ where: { userId: dto.userId, puzzleId: dto.puzzleId } });
-    const selectedTemplate = templates.find((t) => t.order > priorCount) ?? templates[templates.length - 1];
+    const priorCount = await this.usageRepo.count({
+      where: { userId: dto.userId, puzzleId: dto.puzzleId },
+    });
+    const selectedTemplate =
+      templates.find((t) => t.order > priorCount) ??
+      templates[templates.length - 1];
 
     const content = this.fillTemplate(selectedTemplate.template, {
       progress: (dto.puzzleState as any)?.progress ?? 0,
@@ -290,13 +345,16 @@ export class HintsService {
     const hint = this.hintRepo.create({
       puzzleId: dto.puzzleId,
       order: selectedTemplate.order,
-      type: selectedTemplate.type as any,
+      type: selectedTemplate.type,
       content,
       cost: selectedTemplate.cost ?? 0,
       pointsPenalty: selectedTemplate.pointsPenalty ?? 0,
       isActive: true,
       skillLevelTarget: selectedTemplate.conditions
-        ? { minLevel: selectedTemplate.conditions.minSkillLevel, maxLevel: selectedTemplate.conditions.maxSkillLevel }
+        ? {
+            minLevel: selectedTemplate.conditions.minSkillLevel,
+            maxLevel: selectedTemplate.conditions.maxSkillLevel,
+          }
         : {},
     });
     return this.hintRepo.save(hint);
@@ -311,7 +369,11 @@ export class HintsService {
     });
   }
 
-  private rankByContextAndPersonalization(candidates: Hint[], dto: RequestHintDto, minOrder: number): Hint[] {
+  private rankByContextAndPersonalization(
+    candidates: Hint[],
+    dto: RequestHintDto,
+    minOrder: number,
+  ): Hint[] {
     const skill = dto.playerState?.skillLevel ?? 0;
     const prevHints = dto.playerState?.previousHintsUsed ?? 0;
     const time = dto.timeSpent ?? 0;
@@ -342,7 +404,7 @@ export class HintsService {
     const scored = candidates
       .filter((h) => h.order >= minOrder)
       .map((h: Hint) => {
-        const typeScore = typeBaseScore(h.type as any);
+        const typeScore = typeBaseScore(h.type);
         const inRange = this.isSkillInRange(skill, h.skillLevelTarget);
         const personalizationScore = inRange ? 1 : 0;
         const effScore = Number(h.effectiveness ?? 0);
@@ -362,14 +424,20 @@ export class HintsService {
     return scored.length > 0 ? scored : candidates;
   }
 
-  private isSkillInRange(skill: number, target?: { minLevel?: number; maxLevel?: number; preferredLevel?: number }): boolean {
+  private isSkillInRange(
+    skill: number,
+    target?: { minLevel?: number; maxLevel?: number; preferredLevel?: number },
+  ): boolean {
     if (!target) return true;
     const min = target.minLevel ?? -Infinity;
     const max = target.maxLevel ?? Infinity;
     return skill >= min && skill <= max;
   }
 
-  private async enforceHintLimits(userId: string, puzzleId: string): Promise<void> {
+  private async enforceHintLimits(
+    userId: string,
+    puzzleId: string,
+  ): Promise<void> {
     // Simple limits: max 3 hints per puzzle per user, cooldown 15s after each request
     const now = new Date();
     const since = new Date(now.getTime() - 15 * 1000);
@@ -384,12 +452,14 @@ export class HintsService {
         userId,
         puzzleId,
         createdAt: MoreThanOrEqual(since as any),
-      } as any,
+      },
       order: { createdAt: 'DESC' },
       take: 1,
     });
     if (recent.length > 0) {
-      throw new ForbiddenException('Please wait before requesting another hint');
+      throw new ForbiddenException(
+        'Please wait before requesting another hint',
+      );
     }
   }
 
@@ -408,5 +478,3 @@ export class HintsService {
     return this.usageRepo.save(usage);
   }
 }
-
-

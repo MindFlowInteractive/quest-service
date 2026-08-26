@@ -78,7 +78,13 @@ export class UserPuzzleSubmission {
 
   @Column({ type: 'jsonb' })
   content: {
-    type: 'multiple-choice' | 'fill-blank' | 'drag-drop' | 'code' | 'visual' | 'logic-grid';
+    type:
+      | 'multiple-choice'
+      | 'fill-blank'
+      | 'drag-drop'
+      | 'code'
+      | 'visual'
+      | 'logic-grid';
     question?: string;
     options?: string[];
     correctAnswer?: any;
@@ -107,7 +113,11 @@ export class UserPuzzleSubmission {
   @Index()
   tags: string[];
 
-  @Column({ type: 'enum', enum: PuzzleSubmissionStatus, default: PuzzleSubmissionStatus.DRAFT })
+  @Column({
+    type: 'enum',
+    enum: PuzzleSubmissionStatus,
+    default: PuzzleSubmissionStatus.DRAFT,
+  })
   @Index()
   status: PuzzleSubmissionStatus;
 

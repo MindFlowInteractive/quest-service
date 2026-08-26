@@ -6,7 +6,11 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
-import { OnChainEvent, OnChainEventType, EventProcessingStatus } from './entities/onchain-event.entity';
+import {
+  OnChainEvent,
+  OnChainEventType,
+  EventProcessingStatus,
+} from './entities/onchain-event.entity';
 import { DeadLetterEvent } from './entities/dead-letter-event.entity';
 import { EventHandlersService } from './event-handlers.service';
 
@@ -51,15 +55,25 @@ export class BlockchainEventsService {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.horizonBaseUrl = this.configService.get<string>('STELLAR_HORIZON_URL') || 'https://horizon-testnet.stellar.org';
+    this.horizonBaseUrl =
+      this.configService.get<string>('STELLAR_HORIZON_URL') ||
+      'https://horizon-testnet.stellar.org';
     this.loadRegisteredContracts();
     this.initializeLastProcessedLedger();
   }
 
   private loadRegisteredContracts(): void {
-    const contracts = this.configService.get<string>('QUEST_CONTRACT_ADDRESSES', '');
-    this.registeredContracts = contracts.split(',').map(addr => addr.trim()).filter(addr => addr.length > 0);
-    this.logger.log(`Loaded ${this.registeredContracts.length} registered contract addresses`);
+    const contracts = this.configService.get<string>(
+      'QUEST_CONTRACT_ADDRESSES',
+      '',
+    );
+    this.registeredContracts = contracts
+      .split(',')
+      .map((addr) => addr.trim())
+      .filter((addr) => addr.length > 0);
+    this.logger.log(
+      `Loaded ${this.registeredContracts.length} registered contract addresses`,
+    );
   }
 
   private async initializeLastProcessedLedger(): Promise<void> {
@@ -69,7 +83,9 @@ export class BlockchainEventsService {
         order: { ledger: 'DESC' },
       });
       this.lastProcessedLedger = lastEvent?.ledger || 0;
-      this.logger.log(`Initialized last processed ledger: ${this.lastProcessedLedger}`);
+      this.logger.log(
+        `Initialized last processed ledger: ${this.lastProcessedLedger}`,
+      );
     } catch (error) {
       this.logger.error('Failed to initialize last processed ledger:', error);
       this.lastProcessedLedger = 0;
@@ -79,7 +95,7 @@ export class BlockchainEventsService {
   @Cron(CronExpression.EVERY_30_SECONDS)
   async pollForEvents(): Promise<void> {
     this.logger.debug('Starting event polling cycle');
-    
+
     try {
       for (const contractAddress of this.registeredContracts) {
         await this.pollContractEvents(contractAddress);
@@ -102,40 +118,54 @@ export class BlockchainEventsService {
       }
 
       const response = await firstValueFrom(
-        this.httpService.get<HorizonEventsResponse>(url, { params })
+        this.httpService.get<HorizonEventsResponse>(url, { params }),
       );
 
       const events = response.data._embedded.records;
-      this.logger.debug(`Found ${events.length} events for contract ${contractAddress}`);
+      this.logger.debug(
+        `Found ${events.length} events for contract ${contractAddress}`,
+      );
 
       for (const event of events) {
         await this.processEvent(event, contractAddress);
       }
 
       if (events.length > 0) {
-        const maxLedger = Math.max(...events.map(e => e.ledger));
+        const maxLedger = Math.max(...events.map((e) => e.ledger));
         this.lastProcessedLedger = maxLedger;
-        this.logger.debug(`Updated last processed ledger to ${this.lastProcessedLedger}`);
+        this.logger.debug(
+          `Updated last processed ledger to ${this.lastProcessedLedger}`,
+        );
       }
     } catch (error) {
-      this.logger.error(`Error polling events for contract ${contractAddress}:`, error);
+      this.logger.error(
+        `Error polling events for contract ${contractAddress}:`,
+        error,
+      );
     }
   }
 
-  private async processEvent(horizonEvent: HorizonEvent, contractAddress: string): Promise<void> {
+  private async processEvent(
+    horizonEvent: HorizonEvent,
+    contractAddress: string,
+  ): Promise<void> {
     try {
       const existingEvent = await this.onChainEventRepository.findOne({
         where: { txHash: horizonEvent.transaction_hash },
       });
 
       if (existingEvent) {
-        this.logger.debug(`Event ${horizonEvent.transaction_hash} already processed, skipping`);
+        this.logger.debug(
+          `Event ${horizonEvent.transaction_hash} already processed, skipping`,
+        );
         return;
       }
 
       const eventType = this.mapTopicToEventType(horizonEvent.topic);
       if (!eventType) {
-        this.logger.debug(`Skipping unregistered event type: ${horizonEvent.topic.join(', ')}`);
+        this.logger.debug(
+          `Skipping unregistered event type: ${horizonEvent.topic.join(', ')}`,
+        );
         return;
       }
 
@@ -159,21 +189,30 @@ export class BlockchainEventsService {
       savedEvent.processedAt = new Date();
       await this.onChainEventRepository.save(savedEvent);
 
-      this.logger.log(`Successfully processed event ${horizonEvent.transaction_hash} of type ${eventType}`);
+      this.logger.log(
+        `Successfully processed event ${horizonEvent.transaction_hash} of type ${eventType}`,
+      );
     } catch (error) {
-      this.logger.error(`Error processing event ${horizonEvent.transaction_hash}:`, error);
-      await this.handleEventProcessingError(horizonEvent, contractAddress, error);
+      this.logger.error(
+        `Error processing event ${horizonEvent.transaction_hash}:`,
+        error,
+      );
+      await this.handleEventProcessingError(
+        horizonEvent,
+        contractAddress,
+        error,
+      );
     }
   }
 
   private mapTopicToEventType(topic: string[]): OnChainEventType | null {
     const topicString = topic.join(',');
     const topicMap: Record<string, OnChainEventType> = {
-      'RewardClaimed': OnChainEventType.REWARD_CLAIMED,
-      'AchievementUnlocked': OnChainEventType.ACHIEVEMENT_UNLOCKED,
-      'NFTMinted': OnChainEventType.NFT_MINTED,
-      'TournamentCompleted': OnChainEventType.TOURNAMENT_COMPLETED,
-      'StakeDeposited': OnChainEventType.STAKE_DEPOSITED,
+      RewardClaimed: OnChainEventType.REWARD_CLAIMED,
+      AchievementUnlocked: OnChainEventType.ACHIEVEMENT_UNLOCKED,
+      NFTMinted: OnChainEventType.NFT_MINTED,
+      TournamentCompleted: OnChainEventType.TOURNAMENT_COMPLETED,
+      StakeDeposited: OnChainEventType.STAKE_DEPOSITED,
     };
 
     return topicMap[topicString] || null;
@@ -198,10 +237,10 @@ export class BlockchainEventsService {
   private async handleEventProcessingError(
     horizonEvent: HorizonEvent,
     contractAddress: string,
-    error: any
+    error: any,
   ): Promise<void> {
     const eventType = this.mapTopicToEventType(horizonEvent.topic);
-    
+
     const deadLetterEvent = this.deadLetterEventRepository.create({
       originalEventId: horizonEvent.id,
       contractAddress,
@@ -215,7 +254,9 @@ export class BlockchainEventsService {
     });
 
     await this.deadLetterEventRepository.save(deadLetterEvent);
-    this.logger.error(`Event ${horizonEvent.transaction_hash} moved to dead-letter queue`);
+    this.logger.error(
+      `Event ${horizonEvent.transaction_hash} moved to dead-letter queue`,
+    );
   }
 
   async getSyncStatus(): Promise<{
@@ -227,23 +268,24 @@ export class BlockchainEventsService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [eventsProcessedToday, errorCount, lastSyncedEvent] = await Promise.all([
-      this.onChainEventRepository.count({
-        where: {
-          status: EventProcessingStatus.PROCESSED,
-          processedAt: MoreThanOrEqual(today),
-        },
-      }),
-      this.deadLetterEventRepository.count({
-        where: {
-          createdAt: MoreThanOrEqual(today),
-        },
-      }),
-      this.onChainEventRepository.findOne({
-        where: { status: EventProcessingStatus.PROCESSED },
-        order: { ledger: 'DESC' },
-      }),
-    ]);
+    const [eventsProcessedToday, errorCount, lastSyncedEvent] =
+      await Promise.all([
+        this.onChainEventRepository.count({
+          where: {
+            status: EventProcessingStatus.PROCESSED,
+            processedAt: MoreThanOrEqual(today),
+          },
+        }),
+        this.deadLetterEventRepository.count({
+          where: {
+            createdAt: MoreThanOrEqual(today),
+          },
+        }),
+        this.onChainEventRepository.findOne({
+          where: { status: EventProcessingStatus.PROCESSED },
+          order: { ledger: 'DESC' },
+        }),
+      ]);
 
     return {
       lastSyncedLedger: lastSyncedEvent?.ledger || 0,
@@ -253,12 +295,19 @@ export class BlockchainEventsService {
     };
   }
 
-  async replayEvents(fromLedger: number, toLedger?: number): Promise<{
+  async replayEvents(
+    fromLedger: number,
+    toLedger?: number,
+  ): Promise<{
     replayed: number;
     errors: number;
   }> {
-    this.logger.log(`Starting replay from ledger ${fromLedger}${toLedger ? ` to ${toLedger}` : ''}`);
-    
+    this.logger.log(
+      `Starting replay from ledger ${fromLedger}${
+        toLedger ? ` to ${toLedger}` : ''
+      }`,
+    );
+
     let replayed = 0;
     let errors = 0;
 
@@ -289,7 +338,9 @@ export class BlockchainEventsService {
         }
       }
 
-      this.logger.log(`Replay completed: ${replayed} events replayed, ${errors} errors`);
+      this.logger.log(
+        `Replay completed: ${replayed} events replayed, ${errors} errors`,
+      );
     } catch (error) {
       this.logger.error('Error during event replay:', error);
       errors++;

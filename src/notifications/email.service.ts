@@ -14,12 +14,22 @@ export class EmailService {
     const user = this.config.get('EMAIL_USER') || '';
     const pass = this.config.get('EMAIL_PASS') || '';
 
-    this.transporter = nodemailer.createTransport({ host, port, auth: user ? { user, pass } : undefined });
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      auth: user ? { user, pass } : undefined,
+    });
   }
 
   async sendEmail(to: string, subject: string, text: string, html?: string) {
     const from = this.config.get('EMAIL_FROM') || 'no-reply@example.com';
-    const info = await this.transporter.sendMail({ from, to, subject, text, html });
+    const info = await this.transporter.sendMail({
+      from,
+      to,
+      subject,
+      text,
+      html,
+    });
     this.logger.log(`Email sent to ${to}: ${info.messageId}`);
     return info;
   }

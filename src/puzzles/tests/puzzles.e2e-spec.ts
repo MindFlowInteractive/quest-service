@@ -18,7 +18,7 @@ describe('Puzzles E2E', () => {
     // Mock login to get JWT token
     // In a real E2E test, we would hit the auth endpoint
     // For now, assuming we can get a valid token or mock the guard
-    jwtToken = 'mock-jwt-token'; 
+    jwtToken = 'mock-jwt-token';
   });
 
   afterAll(async () => {

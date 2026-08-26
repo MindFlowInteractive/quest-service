@@ -1,23 +1,31 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 
 export enum ReportTargetType {
   PUZZLE = 'puzzle',
   PLAYER = 'player',
-  CHAT_MESSAGE = 'chat_message'
+  CHAT_MESSAGE = 'chat_message',
 }
 
 export enum ReportStatus {
   OPEN = 'open',
   REVIEWING = 'reviewing',
-  RESOLVED = 'resolved'
+  RESOLVED = 'resolved',
 }
 
 export enum ReportPriority {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 @Entity('content_reports')
@@ -37,7 +45,7 @@ export class ContentReport {
 
   @Column({
     type: 'enum',
-    enum: ReportTargetType
+    enum: ReportTargetType,
   })
   targetType: ReportTargetType;
 
@@ -50,14 +58,14 @@ export class ContentReport {
   @Column({
     type: 'enum',
     enum: ReportPriority,
-    default: ReportPriority.LOW
+    default: ReportPriority.LOW,
   })
   priority: ReportPriority;
 
   @Column({
     type: 'enum',
     enum: ReportStatus,
-    default: ReportStatus.OPEN
+    default: ReportStatus.OPEN,
   })
   status: ReportStatus;
 

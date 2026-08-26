@@ -127,4 +127,3 @@ export class DataDeletionRequest {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

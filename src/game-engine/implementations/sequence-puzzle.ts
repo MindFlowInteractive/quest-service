@@ -1,10 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { BasePuzzle } from './base-puzzle';
 import type { IPuzzle } from '../interfaces/puzzle.interfaces';
-import {
-  PuzzleType,
-  PuzzleStatus,
-} from '../types/puzzle.types';
+import { PuzzleType, PuzzleStatus } from '../types/puzzle.types';
 import type {
   PuzzleMove,
   PuzzleHint,
@@ -403,35 +400,37 @@ export class SequencePuzzle extends BasePuzzle {
     if (!solution || !Array.isArray(solution.values)) {
       return false;
     }
-    
+
     if (!this.puzzleState) return false;
-    
+
     // For simplicity, just check if values match the expected hidden values
-    const hiddenElements = this.puzzleState.sequence.filter(elem => !elem.isVisible);
+    const hiddenElements = this.puzzleState.sequence.filter(
+      (elem) => !elem.isVisible,
+    );
     if (solution.values.length !== hiddenElements.length) {
       return false;
     }
-    
+
     // Check if each provided value matches the expected value
     for (let i = 0; i < solution.values.length; i++) {
       if (solution.values[i] !== hiddenElements[i].value) {
         return false;
       }
     }
-    
+
     return true;
   }
 
   getSolution(): any {
     if (!this.puzzleState) return null;
-    
+
     const hiddenValues = this.puzzleState.sequence
-      .filter(elem => !elem.isVisible)
-      .map(elem => elem.value);
-      
+      .filter((elem) => !elem.isVisible)
+      .map((elem) => elem.value);
+
     return {
       values: hiddenValues,
-      pattern: this.puzzleState.pattern
+      pattern: this.puzzleState.pattern,
     };
   }
 
@@ -439,7 +438,7 @@ export class SequencePuzzle extends BasePuzzle {
     return {
       sequence: this.puzzleState?.sequence || [],
       pattern: this.puzzleState?.pattern || 'unknown',
-      completed: this.isComplete()
+      completed: this.isComplete(),
     };
   }
 
@@ -467,7 +466,9 @@ export class SequencePuzzle extends BasePuzzle {
             this.puzzleState.pattern,
             nextPosition,
           );
-          content = `The next value at position ${nextPosition + 1} should be ${expectedValue}`;
+          content = `The next value at position ${
+            nextPosition + 1
+          } should be ${expectedValue}`;
           targetElements = [`position-${nextPosition}`];
         } else {
           content = 'Check your answers - some might be incorrect';

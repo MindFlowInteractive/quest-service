@@ -8,7 +8,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Tag } from './entities/tag.entity';
 import { Puzzle } from './entities/puzzle.entity';
-import { CreateTagDto, ListTagsDto, TagSortBy, TagSortOrder } from './dto/tag.dto';
+import {
+  CreateTagDto,
+  ListTagsDto,
+  TagSortBy,
+  TagSortOrder,
+} from './dto/tag.dto';
 
 @Injectable()
 export class TagsService {
@@ -106,7 +111,12 @@ export class TagsService {
 
       // Increment usageCount for newly attached tags
       for (const tag of newTags) {
-        await queryRunner.manager.increment(Tag, { id: tag.id }, 'usageCount', 1);
+        await queryRunner.manager.increment(
+          Tag,
+          { id: tag.id },
+          'usageCount',
+          1,
+        );
       }
 
       await queryRunner.commitTransaction();
@@ -161,12 +171,7 @@ export class TagsService {
 
     try {
       await queryRunner.manager.save(Puzzle, puzzle);
-      await queryRunner.manager.decrement(
-        Tag,
-        { id: tagId },
-        'usageCount',
-        1,
-      );
+      await queryRunner.manager.decrement(Tag, { id: tagId }, 'usageCount', 1);
       await queryRunner.commitTransaction();
       this.logger.log(`Detached tag ${tagId} from puzzle ${puzzleId}`);
 

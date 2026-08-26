@@ -1,4 +1,11 @@
-import { IsUUID, IsInt, IsOptional, IsBoolean, ValidateNested, IsString } from 'class-validator';
+import {
+  IsUUID,
+  IsInt,
+  IsOptional,
+  IsBoolean,
+  ValidateNested,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class UnlockConditionsDto {

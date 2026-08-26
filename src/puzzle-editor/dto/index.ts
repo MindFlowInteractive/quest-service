@@ -64,7 +64,13 @@ export class UpdatePuzzleEditorDto {
   description?: string;
 
   @IsOptional()
-  @IsEnum(['DRAFT', 'IN_PROGRESS', 'TESTING', 'READY_FOR_PUBLICATION', 'PUBLISHED'])
+  @IsEnum([
+    'DRAFT',
+    'IN_PROGRESS',
+    'TESTING',
+    'READY_FOR_PUBLICATION',
+    'PUBLISHED',
+  ])
   status?: string;
 
   @IsOptional()
@@ -406,7 +412,15 @@ export class RestoreVersionDto {
 // ============================================
 
 export class BatchOperationDto {
-  @IsEnum(['BULK_UPDATE', 'BULK_PUBLISH', 'BULK_DELETE', 'BULK_TAG', 'BULK_VALIDATE', 'BULK_TEST', 'BULK_EXPORT'])
+  @IsEnum([
+    'BULK_UPDATE',
+    'BULK_PUBLISH',
+    'BULK_DELETE',
+    'BULK_TAG',
+    'BULK_VALIDATE',
+    'BULK_TEST',
+    'BULK_EXPORT',
+  ])
   operationType: string;
 
   @IsArray()

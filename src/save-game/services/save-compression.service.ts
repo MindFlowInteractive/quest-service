@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as zlib from 'zlib';
 import { promisify } from 'util';
-import { CompressionInfo, SaveGameData } from '../interfaces/save-game.interfaces';
+import {
+  CompressionInfo,
+  SaveGameData,
+} from '../interfaces/save-game.interfaces';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { Buffer: NodeBuffer } = require('buffer');
@@ -37,7 +40,10 @@ export class SaveCompressionService {
         };
       }
 
-      const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
+      const compressionRatio = (
+        (1 - compressedSize / originalSize) *
+        100
+      ).toFixed(2);
       this.logger.debug(
         `Compressed save data: ${originalSize} -> ${compressedSize} bytes (${compressionRatio}% reduction)`,
       );
@@ -71,12 +77,18 @@ export class SaveCompressionService {
       let jsonString: string;
 
       if (compressionInfo.algorithm === 'none') {
-        jsonString = (compressedData as unknown as { toString(encoding: string): string }).toString('utf8');
+        jsonString = (
+          compressedData as unknown as { toString(encoding: string): string }
+        ).toString('utf8');
       } else if (compressionInfo.algorithm === 'gzip') {
         const decompressed = await gunzip(compressedData);
-        jsonString = (decompressed as unknown as { toString(encoding: string): string }).toString('utf8');
+        jsonString = (
+          decompressed as unknown as { toString(encoding: string): string }
+        ).toString('utf8');
       } else {
-        throw new Error(`Unsupported compression algorithm: ${compressionInfo.algorithm}`);
+        throw new Error(
+          `Unsupported compression algorithm: ${compressionInfo.algorithm}`,
+        );
       }
 
       return JSON.parse(jsonString) as SaveGameData;

@@ -3,7 +3,12 @@
  * Manages puzzle templates for quick creation
  */
 
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { PuzzleTemplate } from '../entities/puzzle-template.entity';
@@ -22,7 +27,10 @@ export class PuzzleTemplateService {
   /**
    * Create new template
    */
-  async createTemplate(dto: CreateTemplateDto, userId: string): Promise<PuzzleTemplate> {
+  async createTemplate(
+    dto: CreateTemplateDto,
+    userId: string,
+  ): Promise<PuzzleTemplate> {
     const template = this.templateRepository.create({
       ...dto,
       createdBy: userId,
@@ -72,15 +80,21 @@ export class PuzzleTemplateService {
     let query = this.templateRepository.createQueryBuilder('template');
 
     if (filters?.puzzleType) {
-      query = query.where('template.puzzleType = :puzzleType', { puzzleType: filters.puzzleType });
+      query = query.where('template.puzzleType = :puzzleType', {
+        puzzleType: filters.puzzleType,
+      });
     }
 
     if (filters?.difficulty) {
-      query = query.andWhere('template.difficulty = :difficulty', { difficulty: filters.difficulty });
+      query = query.andWhere('template.difficulty = :difficulty', {
+        difficulty: filters.difficulty,
+      });
     }
 
     if (filters?.category) {
-      query = query.andWhere('template.category = :category', { category: filters.category });
+      query = query.andWhere('template.category = :category', {
+        category: filters.category,
+      });
     }
 
     if (filters?.search) {
@@ -90,7 +104,9 @@ export class PuzzleTemplateService {
       );
     }
 
-    query = query.orderBy('template.usageCount', 'DESC').addOrderBy('template.rating', 'DESC');
+    query = query
+      .orderBy('template.usageCount', 'DESC')
+      .addOrderBy('template.rating', 'DESC');
 
     const [templates, total] = await query
       .skip(skip)
@@ -113,7 +129,10 @@ export class PuzzleTemplateService {
   /**
    * Get templates by puzzle type
    */
-  async getTemplatesByType(puzzleType: string, limit: number = 10): Promise<PuzzleTemplate[]> {
+  async getTemplatesByType(
+    puzzleType: string,
+    limit: number = 10,
+  ): Promise<PuzzleTemplate[]> {
     return this.templateRepository.find({
       where: { puzzleType },
       order: { rating: 'DESC', usageCount: 'DESC' },
@@ -124,7 +143,10 @@ export class PuzzleTemplateService {
   /**
    * Rate template
    */
-  async rateTemplate(templateId: string, rating: number): Promise<PuzzleTemplate> {
+  async rateTemplate(
+    templateId: string,
+    rating: number,
+  ): Promise<PuzzleTemplate> {
     if (rating < 1 || rating > 5) {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
@@ -150,7 +172,9 @@ export class PuzzleTemplateService {
 
     // Check permissions
     if (template.createdBy !== userId) {
-      throw new BadRequestException('You can only update templates you created');
+      throw new BadRequestException(
+        'You can only update templates you created',
+      );
     }
 
     Object.assign(template, updates);
@@ -165,7 +189,9 @@ export class PuzzleTemplateService {
 
     // Check permissions
     if (template.createdBy !== userId) {
-      throw new BadRequestException('You can only delete templates you created');
+      throw new BadRequestException(
+        'You can only delete templates you created',
+      );
     }
 
     await this.templateRepository.remove(template);
@@ -201,7 +227,8 @@ export class PuzzleTemplateService {
 
     templates.forEach((t) => {
       templatesByType[t.puzzleType] = (templatesByType[t.puzzleType] || 0) + 1;
-      templatesByDifficulty[t.difficulty] = (templatesByDifficulty[t.difficulty] || 0) + 1;
+      templatesByDifficulty[t.difficulty] =
+        (templatesByDifficulty[t.difficulty] || 0) + 1;
     });
 
     const mostUsed = await this.templateRepository.find({

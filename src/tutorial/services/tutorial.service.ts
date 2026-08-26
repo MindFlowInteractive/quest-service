@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Tutorial } from '../entities/tutorial.entity';
@@ -58,7 +63,9 @@ export class TutorialService {
       query.andWhere('tutorial.type = :type', { type: filters.type });
     }
     if (filters?.category) {
-      query.andWhere('tutorial.category = :category', { category: filters.category });
+      query.andWhere('tutorial.category = :category', {
+        category: filters.category,
+      });
     }
     if (filters?.difficultyLevel) {
       query.andWhere('tutorial.difficultyLevel = :difficultyLevel', {
@@ -66,7 +73,9 @@ export class TutorialService {
       });
     }
     if (filters?.isActive !== undefined) {
-      query.andWhere('tutorial.isActive = :isActive', { isActive: filters.isActive });
+      query.andWhere('tutorial.isActive = :isActive', {
+        isActive: filters.isActive,
+      });
     }
     if (filters?.targetMechanic) {
       query.andWhere(':mechanic = ANY(tutorial.targetMechanics)', {
@@ -143,7 +152,9 @@ export class TutorialService {
     });
 
     // Prioritize in-progress tutorials
-    const inProgressTutorials = inProgress.map((p) => p.tutorial).filter(Boolean);
+    const inProgressTutorials = inProgress
+      .map((p) => p.tutorial)
+      .filter(Boolean);
     const notStarted = recommended.filter(
       (t) => !inProgressTutorials.some((ip) => ip?.id === t.id),
     );
@@ -170,7 +181,9 @@ export class TutorialService {
     });
 
     const completedIds = new Set(completedProgress.map((p) => p.tutorialId));
-    const missing = tutorial.prerequisites.filter((prereq) => !completedIds.has(prereq));
+    const missing = tutorial.prerequisites.filter(
+      (prereq) => !completedIds.has(prereq),
+    );
 
     return {
       valid: missing.length === 0,
@@ -192,8 +205,10 @@ export class TutorialService {
       localization: {},
     } as any);
 
-    const saved = await this.stepRepo.save(step) as unknown as TutorialStep;
-    this.logger.log(`Created step: ${saved.id} for tutorial: ${dto.tutorialId}`);
+    const saved = (await this.stepRepo.save(step)) as unknown as TutorialStep;
+    this.logger.log(
+      `Created step: ${saved.id} for tutorial: ${dto.tutorialId}`,
+    );
     return saved;
   }
 
@@ -212,7 +227,10 @@ export class TutorialService {
     return step;
   }
 
-  async updateStep(stepId: string, dto: UpdateTutorialStepDto): Promise<TutorialStep> {
+  async updateStep(
+    stepId: string,
+    dto: UpdateTutorialStepDto,
+  ): Promise<TutorialStep> {
     const step = await this.getStepById(stepId);
     Object.assign(step, dto);
     const updated = await this.stepRepo.save(step);
@@ -226,7 +244,10 @@ export class TutorialService {
     this.logger.log(`Deleted step: ${stepId}`);
   }
 
-  async reorderSteps(tutorialId: string, orders: StepOrderDto[]): Promise<void> {
+  async reorderSteps(
+    tutorialId: string,
+    orders: StepOrderDto[],
+  ): Promise<void> {
     await this.findById(tutorialId);
 
     const updates = orders.map((order) =>
@@ -234,7 +255,9 @@ export class TutorialService {
     );
 
     await Promise.all(updates);
-    this.logger.log(`Reordered ${orders.length} steps for tutorial: ${tutorialId}`);
+    this.logger.log(
+      `Reordered ${orders.length} steps for tutorial: ${tutorialId}`,
+    );
   }
 
   // Analytics Helpers
@@ -253,7 +276,8 @@ export class TutorialService {
       completionTimes.length > 0
         ? completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length
         : 0;
-    const dropOffRate = totalStarted > 0 ? (totalStarted - totalCompleted) / totalStarted : 0;
+    const dropOffRate =
+      totalStarted > 0 ? (totalStarted - totalCompleted) / totalStarted : 0;
 
     await this.tutorialRepo.update(tutorialId, {
       analytics: {

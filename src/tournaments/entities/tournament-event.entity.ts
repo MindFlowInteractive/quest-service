@@ -78,6 +78,9 @@ export class TournamentEvent {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => TournamentEventParticipant, participant => participant.tournamentEvent)
+  @OneToMany(
+    () => TournamentEventParticipant,
+    (participant) => participant.tournamentEvent,
+  )
   participants: TournamentEventParticipant[];
 }

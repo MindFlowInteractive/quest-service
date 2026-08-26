@@ -16,18 +16,20 @@ export class HorizonApiService {
   constructor(private configService: ConfigService) {
     this.baseUrl = this.configService.get<string>(
       'STELLAR_HORIZON_URL',
-      'https://horizon-testnet.stellar.org'
+      'https://horizon-testnet.stellar.org',
     );
     this.requestTimeout = this.configService.get<number>(
       'HORIZON_REQUEST_TIMEOUT',
-      30000
+      30000,
     );
   }
 
   /**
    * Fetch a single transaction by hash
    */
-  async getTransaction(hash: string): Promise<HorizonTransactionResponse | null> {
+  async getTransaction(
+    hash: string,
+  ): Promise<HorizonTransactionResponse | null> {
     try {
       const url = `${this.baseUrl}/transactions/${hash}`;
       const response = await fetch(url, {
@@ -40,10 +42,12 @@ export class HorizonApiService {
       }
 
       if (!response.ok) {
-        throw new Error(`Horizon API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Horizon API error: ${response.status} ${response.statusText}`,
+        );
       }
 
-      return await response.json() as HorizonTransactionResponse;
+      return (await response.json()) as HorizonTransactionResponse;
     } catch (error) {
       this.logger.error(`Error fetching transaction ${hash}:`, error);
       throw error;
@@ -60,18 +64,25 @@ export class HorizonApiService {
       limit?: number;
       order?: 'asc' | 'desc';
       includeFailed?: boolean;
-    } = {}
+    } = {},
   ): Promise<HorizonCollectionResponse<HorizonTransactionResponse>> {
-    const { cursor, limit = 20, order = 'desc', includeFailed = true } = options;
-    
+    const {
+      cursor,
+      limit = 20,
+      order = 'desc',
+      includeFailed = true,
+    } = options;
+
     const params = new URLSearchParams();
     params.set('limit', limit.toString());
     params.set('order', order);
     params.set('include_failed', includeFailed.toString());
     if (cursor) params.set('cursor', cursor);
 
-    const url = `${this.baseUrl}/accounts/${accountId}/transactions?${params.toString()}`;
-    
+    const url = `${
+      this.baseUrl
+    }/accounts/${accountId}/transactions?${params.toString()}`;
+
     try {
       const response = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -79,12 +90,17 @@ export class HorizonApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Horizon API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Horizon API error: ${response.status} ${response.statusText}`,
+        );
       }
 
-      return await response.json() as HorizonCollectionResponse<HorizonTransactionResponse>;
+      return (await response.json()) as HorizonCollectionResponse<HorizonTransactionResponse>;
     } catch (error) {
-      this.logger.error(`Error fetching transactions for account ${accountId}:`, error);
+      this.logger.error(
+        `Error fetching transactions for account ${accountId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -93,10 +109,10 @@ export class HorizonApiService {
    * Fetch operations for a transaction
    */
   async getTransactionOperations(
-    transactionHash: string
+    transactionHash: string,
   ): Promise<HorizonCollectionResponse<HorizonOperationResponse>> {
     const url = `${this.baseUrl}/transactions/${transactionHash}/operations`;
-    
+
     try {
       const response = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -104,12 +120,17 @@ export class HorizonApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Horizon API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Horizon API error: ${response.status} ${response.statusText}`,
+        );
       }
 
-      return await response.json() as HorizonCollectionResponse<HorizonOperationResponse>;
+      return (await response.json()) as HorizonCollectionResponse<HorizonOperationResponse>;
     } catch (error) {
-      this.logger.error(`Error fetching operations for transaction ${transactionHash}:`, error);
+      this.logger.error(
+        `Error fetching operations for transaction ${transactionHash}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -123,10 +144,15 @@ export class HorizonApiService {
       limit?: number;
       order?: 'asc' | 'desc';
       includeFailed?: boolean;
-    } = {}
+    } = {},
   ): Promise<HorizonCollectionResponse<HorizonTransactionResponse>> {
-    const { cursor, limit = 20, order = 'desc', includeFailed = true } = options;
-    
+    const {
+      cursor,
+      limit = 20,
+      order = 'desc',
+      includeFailed = true,
+    } = options;
+
     const params = new URLSearchParams();
     params.set('limit', limit.toString());
     params.set('order', order);
@@ -134,7 +160,7 @@ export class HorizonApiService {
     if (cursor) params.set('cursor', cursor);
 
     const url = `${this.baseUrl}/transactions?${params.toString()}`;
-    
+
     try {
       const response = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -142,10 +168,12 @@ export class HorizonApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Horizon API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Horizon API error: ${response.status} ${response.statusText}`,
+        );
       }
 
-      return await response.json() as HorizonCollectionResponse<HorizonTransactionResponse>;
+      return (await response.json()) as HorizonCollectionResponse<HorizonTransactionResponse>;
     } catch (error) {
       this.logger.error('Error fetching all transactions:', error);
       throw error;
@@ -157,7 +185,7 @@ export class HorizonApiService {
    */
   async getLatestLedger(): Promise<HorizonLedgerResponse> {
     const url = `${this.baseUrl}/ledgers?order=desc&limit=1`;
-    
+
     try {
       const response = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -165,10 +193,13 @@ export class HorizonApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Horizon API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Horizon API error: ${response.status} ${response.statusText}`,
+        );
       }
 
-      const data = await response.json() as HorizonCollectionResponse<HorizonLedgerResponse>;
+      const data =
+        (await response.json()) as HorizonCollectionResponse<HorizonLedgerResponse>;
       return data._embedded.records[0];
     } catch (error) {
       this.logger.error('Error fetching latest ledger:', error);
@@ -180,26 +211,29 @@ export class HorizonApiService {
    * Stream transactions using SSE (Server-Sent Events)
    * Returns a callback-based interface for real-time transaction monitoring
    */
-  streamTransactions(
-    options: {
-      cursor?: string;
-      onTransaction: (tx: HorizonTransactionResponse) => void;
-      onError?: (error: Error) => void;
-    }
-  ): { stop: () => void } {
+  streamTransactions(options: {
+    cursor?: string;
+    onTransaction: (tx: HorizonTransactionResponse) => void;
+    onError?: (error: Error) => void;
+  }): { stop: () => void } {
     const { cursor, onTransaction, onError } = options;
-    
+
     const params = new URLSearchParams();
     params.set('include_failed', 'true');
     if (cursor) params.set('cursor', cursor);
 
     const url = `${this.baseUrl}/transactions?${params.toString()}`;
-    
+
     const abortController = new AbortController();
-    
+
     // Start streaming in background
-    this.startStreaming(url, onTransaction, onError || (() => {}), abortController);
-    
+    this.startStreaming(
+      url,
+      onTransaction,
+      onError || (() => {}),
+      abortController,
+    );
+
     return {
       stop: () => abortController.abort(),
     };
@@ -212,7 +246,7 @@ export class HorizonApiService {
     url: string,
     onTransaction: (tx: HorizonTransactionResponse) => void,
     onError: (error: Error) => void,
-    abortController: AbortController
+    abortController: AbortController,
   ): Promise<void> {
     try {
       const response = await fetch(url, {
@@ -247,7 +281,9 @@ export class HorizonApiService {
             const data = line.slice(6);
             if (data !== '"hello"' && data !== '"bye"') {
               try {
-                const transaction = JSON.parse(data) as HorizonTransactionResponse;
+                const transaction = JSON.parse(
+                  data,
+                ) as HorizonTransactionResponse;
                 onTransaction(transaction);
               } catch (e) {
                 this.logger.warn('Failed to parse SSE data:', data);
@@ -259,7 +295,7 @@ export class HorizonApiService {
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
         this.logger.error('SSE streaming error:', error);
-        onError(error as Error);
+        onError(error);
       }
     }
   }
@@ -267,9 +303,13 @@ export class HorizonApiService {
   /**
    * Check if Horizon API is reachable
    */
-  async healthCheck(): Promise<{ healthy: boolean; latency: number; version?: string }> {
+  async healthCheck(): Promise<{
+    healthy: boolean;
+    latency: number;
+    version?: string;
+  }> {
     const startTime = Date.now();
-    
+
     try {
       const response = await fetch(this.baseUrl, {
         headers: { Accept: 'application/json' },
@@ -277,12 +317,14 @@ export class HorizonApiService {
       });
 
       const latency = Date.now() - startTime;
-      
+
       if (!response.ok) {
         return { healthy: false, latency };
       }
 
-      const data = (await response.json()) as { protocol_version?: string | number };
+      const data = (await response.json()) as {
+        protocol_version?: string | number;
+      };
       return {
         healthy: true,
         latency,

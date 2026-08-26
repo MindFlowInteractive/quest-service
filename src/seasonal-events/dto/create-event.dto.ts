@@ -1,4 +1,13 @@
-import { IsString, IsNotEmpty, IsDate, IsOptional, IsBoolean, IsObject, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDate,
+  IsOptional,
+  IsBoolean,
+  IsObject,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateEventDto {

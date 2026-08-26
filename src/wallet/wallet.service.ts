@@ -55,12 +55,24 @@ export class WalletService {
 
   private readonly challenges = new Map<string, WalletChallenge>();
   private readonly sessions = new Map<string, WalletSession>();
-  private readonly recordedTransactions = new Map<string, WalletTransaction[]>();
+  private readonly recordedTransactions = new Map<
+    string,
+    WalletTransaction[]
+  >();
 
   constructor(private readonly configService: ConfigService) {
-    this.challengeTtlMs = this.readNumber('WALLET_CHALLENGE_TTL_MS', 5 * 60 * 1000);
-    this.sessionTtlMs = this.readNumber('WALLET_SESSION_TTL_MS', 24 * 60 * 60 * 1000);
-    this.maxRecordedTransactions = this.readNumber('WALLET_MAX_RECORDED_TRANSACTIONS', 1000);
+    this.challengeTtlMs = this.readNumber(
+      'WALLET_CHALLENGE_TTL_MS',
+      5 * 60 * 1000,
+    );
+    this.sessionTtlMs = this.readNumber(
+      'WALLET_SESSION_TTL_MS',
+      24 * 60 * 60 * 1000,
+    );
+    this.maxRecordedTransactions = this.readNumber(
+      'WALLET_MAX_RECORDED_TRANSACTIONS',
+      1000,
+    );
     this.allowedNetworks = this.parseAllowedNetworks();
     this.tokenMetadata = this.loadTokenMetadata();
   }
@@ -70,7 +82,7 @@ export class WalletService {
     const normalizedNetwork = this.normalizeNetwork(network);
     this.ensureAllowedNetwork(normalizedNetwork);
 
-    const nonce = randomBytes(16).toString('hex' as any);
+    const nonce = randomBytes(16).toString('hex');
     const issuedAt = new Date();
     const message = [
       'LogiQuest Wallet Authentication',
@@ -112,7 +124,10 @@ export class WalletService {
       throw new UnauthorizedException('Challenge not found or already used');
     }
 
-    if (challenge.publicKey !== publicKey || challenge.network !== normalizedNetwork) {
+    if (
+      challenge.publicKey !== publicKey ||
+      challenge.network !== normalizedNetwork
+    ) {
       throw new UnauthorizedException('Challenge does not match wallet');
     }
 
@@ -121,7 +136,11 @@ export class WalletService {
       throw new UnauthorizedException('Challenge expired');
     }
 
-    const isValid = verifyEd25519Signature(publicKey, challenge.message, signature);
+    const isValid = verifyEd25519Signature(
+      publicKey,
+      challenge.message,
+      signature,
+    );
     if (!isValid) {
       throw new UnauthorizedException('Invalid wallet signature');
     }
@@ -208,7 +227,11 @@ export class WalletService {
     return { balances: mappedBalances };
   }
 
-  async getTransactionHistory(session: WalletSession, limit = 20, cursor?: string) {
+  async getTransactionHistory(
+    session: WalletSession,
+    limit = 20,
+    cursor?: string,
+  ) {
     const safeLimit = Math.min(Math.max(limit, 1), 100);
     const onChain = await this.fetchOnChainOperations(
       session.publicKey,
@@ -240,24 +263,51 @@ export class WalletService {
     return { transactions: combined };
   }
 
-  async recordPurchase(session: WalletSession, payload: { assetCode: string; issuer?: string; amount: string; transactionHash: string }) {
+  async recordPurchase(
+    session: WalletSession,
+    payload: {
+      assetCode: string;
+      issuer?: string;
+      amount: string;
+      transactionHash: string;
+    },
+  ) {
     return this.recordTransaction(session, payload, 'purchase');
   }
 
-  async recordSpend(session: WalletSession, payload: { assetCode: string; issuer?: string; amount: string; transactionHash: string }) {
+  async recordSpend(
+    session: WalletSession,
+    payload: {
+      assetCode: string;
+      issuer?: string;
+      amount: string;
+      transactionHash: string;
+    },
+  ) {
     return this.recordTransaction(session, payload, 'spend');
   }
 
   private async recordTransaction(
     session: WalletSession,
-    payload: { assetCode: string; issuer?: string; amount: string; transactionHash: string },
+    payload: {
+      assetCode: string;
+      issuer?: string;
+      amount: string;
+      transactionHash: string;
+    },
     type: WalletTransactionType,
   ) {
     const asset = this.ensureValidAsset(payload.assetCode, payload.issuer);
     const amountInt = this.ensureValidAmount(payload.amount);
-    const transactionHash = this.ensureValidTransactionHash(payload.transactionHash);
+    const transactionHash = this.ensureValidTransactionHash(
+      payload.transactionHash,
+    );
 
-    const existing = this.findRecordedTransaction(session.publicKey, transactionHash, type);
+    const existing = this.findRecordedTransaction(
+      session.publicKey,
+      transactionHash,
+      type,
+    );
     if (existing) {
       return existing;
     }
@@ -272,7 +322,9 @@ export class WalletService {
     );
 
     if (!matches) {
-      throw new BadRequestException('Transaction does not match requested transfer');
+      throw new BadRequestException(
+        'Transaction does not match requested transfer',
+      );
     }
 
     const transaction: WalletTransaction = {
@@ -346,7 +398,9 @@ export class WalletService {
   }
 
   private parseAllowedNetworks(): string[] {
-    const raw = this.configService.get('STELLAR_ALLOWED_NETWORKS') || process.env.STELLAR_ALLOWED_NETWORKS;
+    const raw =
+      this.configService.get('STELLAR_ALLOWED_NETWORKS') ||
+      process.env.STELLAR_ALLOWED_NETWORKS;
     const value = typeof raw === 'string' && raw.trim() ? raw : 'testnet';
     return value
       .split(',')
@@ -355,7 +409,9 @@ export class WalletService {
   }
 
   private loadTokenMetadata(): Map<string, TokenMetadata> {
-    const raw = this.configService.get('STELLAR_TOKEN_LIST') || process.env.STELLAR_TOKEN_LIST;
+    const raw =
+      this.configService.get('STELLAR_TOKEN_LIST') ||
+      process.env.STELLAR_TOKEN_LIST;
     if (typeof raw !== 'string' || !raw.trim()) {
       return new Map();
     }
@@ -372,9 +428,10 @@ export class WalletService {
           continue;
         }
 
-        const asset = entry.code.toUpperCase() === 'XLM'
-          ? { type: 'native', code: 'XLM' } as StellarAsset
-          : normalizeAsset(entry.code, entry.issuer);
+        const asset =
+          entry.code.toUpperCase() === 'XLM'
+            ? ({ type: 'native', code: 'XLM' } as StellarAsset)
+            : normalizeAsset(entry.code, entry.issuer);
         map.set(getAssetKey(asset), {
           code: entry.code,
           issuer: entry.issuer,
@@ -390,9 +447,14 @@ export class WalletService {
     }
   }
 
-  private async fetchAccount(publicKey: string, network: string): Promise<HorizonAccountResponse | null> {
+  private async fetchAccount(
+    publicKey: string,
+    network: string,
+  ): Promise<HorizonAccountResponse | null> {
     const url = `${this.getHorizonUrl(network)}/accounts/${publicKey}`;
-    const response = await fetch(url, { headers: { Accept: 'application/json' } });
+    const response = await fetch(url, {
+      headers: { Accept: 'application/json' },
+    });
 
     if (response.status === 404) {
       return null;
@@ -405,7 +467,11 @@ export class WalletService {
     return response.json();
   }
 
-  private mapBalanceToAsset(balance: { asset_type: string; asset_code?: string; asset_issuer?: string }): StellarAsset {
+  private mapBalanceToAsset(balance: {
+    asset_type: string;
+    asset_code?: string;
+    asset_issuer?: string;
+  }): StellarAsset {
     if (balance.asset_type === 'native') {
       return { type: 'native', code: 'XLM' };
     }
@@ -432,8 +498,12 @@ export class WalletService {
       params.set('cursor', cursor);
     }
 
-    const url = `${this.getHorizonUrl(network)}/accounts/${publicKey}/operations?${params.toString()}`;
-    const response = await fetch(url, { headers: { Accept: 'application/json' } });
+    const url = `${this.getHorizonUrl(
+      network,
+    )}/accounts/${publicKey}/operations?${params.toString()}`;
+    const response = await fetch(url, {
+      headers: { Accept: 'application/json' },
+    });
     if (!response.ok) {
       throw new BadRequestException('Failed to fetch transaction history');
     }
@@ -451,13 +521,14 @@ export class WalletService {
     const createdAt = record.created_at || new Date().toISOString();
 
     if (type === 'payment' || type?.startsWith('path_payment')) {
-      const asset = record.asset_type === 'native'
-        ? ({ type: 'native', code: 'XLM' } as StellarAsset)
-        : ({
-            type: record.asset_type,
-            code: record.asset_code,
-            issuer: record.asset_issuer,
-          } as StellarAsset);
+      const asset =
+        record.asset_type === 'native'
+          ? ({ type: 'native', code: 'XLM' } as StellarAsset)
+          : ({
+              type: record.asset_type,
+              code: record.asset_code,
+              issuer: record.asset_issuer,
+            } as StellarAsset);
 
       return {
         id: record.id,
@@ -527,11 +598,15 @@ export class WalletService {
       throw new BadRequestException('Failed to load transaction operations');
     }
 
-    const operations = (await operationsResponse.json()) as HorizonOperationsResponse;
+    const operations =
+      (await operationsResponse.json()) as HorizonOperationsResponse;
     const records = operations._embedded?.records ?? [];
 
     for (const record of records) {
-      if (record.type !== 'payment' && !record.type?.startsWith('path_payment')) {
+      if (
+        record.type !== 'payment' &&
+        !record.type?.startsWith('path_payment')
+      ) {
         continue;
       }
 
@@ -588,12 +663,15 @@ export class WalletService {
     const transactions = this.getRecordedTransactions(publicKey);
     return transactions.find(
       (transaction) =>
-        transaction.transactionHash === transactionHash && transaction.type === type,
+        transaction.transactionHash === transactionHash &&
+        transaction.type === type,
     );
   }
 
   private getHorizonUrl(network: string): string {
-    const override = this.configService.get('STELLAR_HORIZON_URL') || process.env.STELLAR_HORIZON_URL;
+    const override =
+      this.configService.get('STELLAR_HORIZON_URL') ||
+      process.env.STELLAR_HORIZON_URL;
     if (override) {
       return override;
     }
@@ -614,7 +692,9 @@ export class WalletService {
       );
     }
 
-    const custom = this.configService.get(`STELLAR_HORIZON_URL_${network.toUpperCase()}`);
+    const custom = this.configService.get(
+      `STELLAR_HORIZON_URL_${network.toUpperCase()}`,
+    );
     if (custom) {
       return custom;
     }

@@ -1,22 +1,22 @@
-import { Controller, Get } from "@nestjs/common"
-import type { AnalyticsService } from "../services/analytics.service"
+import { Controller, Get } from '@nestjs/common';
+import type { AnalyticsService } from '../services/analytics.service';
 
-@Controller("analytics")
+@Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-  @Get("player/:playerId")
+  @Get('player/:playerId')
   async getPlayerAnalytics(playerId: string) {
-    return this.analyticsService.getPlayerAnalytics(playerId)
+    return this.analyticsService.getPlayerAnalytics(playerId);
   }
 
-  @Get("puzzle/:puzzleId")
+  @Get('puzzle/:puzzleId')
   async getPuzzleAnalytics(puzzleId: string) {
-    return this.analyticsService.getPuzzleAnalytics(puzzleId)
+    return this.analyticsService.getPuzzleAnalytics(puzzleId);
   }
 
-  @Get("system")
+  @Get('system')
   async getSystemAnalytics() {
-    return this.analyticsService.getSystemAnalytics()
+    return this.analyticsService.getSystemAnalytics();
   }
 }

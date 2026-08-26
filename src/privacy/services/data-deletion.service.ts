@@ -23,7 +23,10 @@ import {
   DataAccessEntity,
   AccessReason,
 } from '../entities/data-access-audit.entity';
-import { DataDeletionRequestDto, ConfirmDeletionDto } from '../dto/data-deletion-request.dto';
+import {
+  DataDeletionRequestDto,
+  ConfirmDeletionDto,
+} from '../dto/data-deletion-request.dto';
 import { AnonymizationResult } from '../interfaces';
 
 /** Number of days before a confirmed deletion is permanently executed */
@@ -55,7 +58,11 @@ export class DataDeletionService {
   async requestDeletion(
     userId: string,
     dto: DataDeletionRequestDto,
-    metadata?: { ipAddress?: string; userAgent?: string; hashedPassword?: string },
+    metadata?: {
+      ipAddress?: string;
+      userAgent?: string;
+      hashedPassword?: string;
+    },
   ): Promise<DataDeletionRequest> {
     // Guard: no duplicate active request
     const existing = await this.getActiveDeletionRequest(userId);
@@ -143,10 +150,15 @@ export class DataDeletionService {
   ): Promise<DataDeletionRequest> {
     const request = await this.getActiveDeletionRequest(userId);
     if (!request) {
-      throw new NotFoundException('No active deletion request found for this account.');
+      throw new NotFoundException(
+        'No active deletion request found for this account.',
+      );
     }
 
-    if (request.status === DeletionStatus.PROCESSING || request.status === DeletionStatus.COMPLETED) {
+    if (
+      request.status === DeletionStatus.PROCESSING ||
+      request.status === DeletionStatus.COMPLETED
+    ) {
       throw new BadRequestException(
         'Deletion is already in progress or completed — it cannot be cancelled.',
       );
@@ -155,7 +167,8 @@ export class DataDeletionService {
     request.status = DeletionStatus.CANCELLED;
     request.cancelledAt = new Date();
     request.cancelledBy = userId;
-    request.cancellationReason = reason ?? 'User restored account via POST /account/restore';
+    request.cancellationReason =
+      reason ?? 'User restored account via POST /account/restore';
 
     const saved = await this.deletionRequestRepository.save(request);
 
@@ -203,7 +216,9 @@ export class DataDeletionService {
       deletionRequest.status !== DeletionStatus.CONFIRMATION_REQUIRED &&
       deletionRequest.status !== DeletionStatus.PENDING
     ) {
-      throw new BadRequestException('Deletion request is not awaiting confirmation');
+      throw new BadRequestException(
+        'Deletion request is not awaiting confirmation',
+      );
     }
 
     deletionRequest.status = DeletionStatus.PENDING;
@@ -222,7 +237,10 @@ export class DataDeletionService {
   /**
    * Cancel pending deletion (legacy endpoint).
    */
-  async cancelDeletion(userId: string, reason?: string): Promise<DataDeletionRequest> {
+  async cancelDeletion(
+    userId: string,
+    reason?: string,
+  ): Promise<DataDeletionRequest> {
     return this.restoreAccount(userId, reason);
   }
 
@@ -246,12 +264,14 @@ export class DataDeletionService {
     status?: DeletionStatus;
   }): Promise<{ requests: DataDeletionRequest[]; total: number }> {
     const status = options?.status ?? DeletionStatus.PENDING;
-    const [requests, total] = await this.deletionRequestRepository.findAndCount({
-      where: { status },
-      order: { scheduledFor: 'ASC' },
-      take: options?.limit ?? 50,
-      skip: options?.offset ?? 0,
-    });
+    const [requests, total] = await this.deletionRequestRepository.findAndCount(
+      {
+        where: { status },
+        order: { scheduledFor: 'ASC' },
+        take: options?.limit ?? 50,
+        skip: options?.offset ?? 0,
+      },
+    );
     return { requests, total };
   }
 
@@ -294,7 +314,10 @@ export class DataDeletionService {
         startedAt: new Date(),
       });
 
-      const result = await this.anonymizeUserData(request.userId, request.entitiesToDelete);
+      const result = await this.anonymizeUserData(
+        request.userId,
+        request.entitiesToDelete,
+      );
 
       await this.deletionRequestRepository.update(request.id, {
         status: DeletionStatus.COMPLETED,
@@ -324,7 +347,10 @@ export class DataDeletionService {
 
       this.logger.log(`Deletion completed for user ${request.userId}`);
     } catch (error) {
-      this.logger.error(`Error executing deletion for ${request.userId}:`, error);
+      this.logger.error(
+        `Error executing deletion for ${request.userId}:`,
+        error,
+      );
       await this.deletionRequestRepository.update(request.id, {
         status: DeletionStatus.FAILED,
         deletionLog: {
@@ -404,7 +430,11 @@ export class DataDeletionService {
       where: {
         userId,
         status: Not(
-          In([DeletionStatus.COMPLETED, DeletionStatus.FAILED, DeletionStatus.CANCELLED]),
+          In([
+            DeletionStatus.COMPLETED,
+            DeletionStatus.FAILED,
+            DeletionStatus.CANCELLED,
+          ]),
         ),
       },
       order: { createdAt: 'DESC' },
@@ -428,4 +458,3 @@ export class DataDeletionService {
     await this.auditRepository.save(audit);
   }
 }
-

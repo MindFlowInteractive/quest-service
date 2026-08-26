@@ -4,7 +4,10 @@ import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { Tutorial } from '../entities/tutorial.entity';
 import { TutorialStep } from '../entities/tutorial-step.entity';
 import { UserTutorialProgress } from '../entities/user-tutorial-progress.entity';
-import { TutorialAnalyticsEvent, TutorialEventType } from '../entities/tutorial-analytics-event.entity';
+import {
+  TutorialAnalyticsEvent,
+  TutorialEventType,
+} from '../entities/tutorial-analytics-event.entity';
 import {
   TutorialAnalyticsFilterDto,
   TutorialEffectivenessFilterDto,
@@ -77,7 +80,9 @@ export class TutorialAnalyticsService {
     return total > 0 ? (completed / total) * 100 : 0;
   }
 
-  async getStepCompletionRates(tutorialId: string): Promise<StepEffectiveness[]> {
+  async getStepCompletionRates(
+    tutorialId: string,
+  ): Promise<StepEffectiveness[]> {
     const steps = await this.stepRepo.find({
       where: { tutorialId, isActive: true },
       order: { order: 'ASC' },
@@ -92,9 +97,13 @@ export class TutorialAnalyticsService {
         p.stepProgress.filter((sp) => sp.stepId === step.id),
       );
 
-      const completed = stepProgressData.filter((sp) => sp.status === 'completed').length;
+      const completed = stepProgressData.filter(
+        (sp) => sp.status === 'completed',
+      ).length;
       const total = stepProgressData.length || 1;
-      const skipped = stepProgressData.filter((sp) => sp.status === 'skipped').length;
+      const skipped = stepProgressData.filter(
+        (sp) => sp.status === 'skipped',
+      ).length;
 
       const attempts = stepProgressData.map((sp) => sp.attempts);
       const times = stepProgressData.map((sp) => sp.timeSpent);
@@ -111,9 +120,18 @@ export class TutorialAnalyticsService {
         stepId: step.id,
         stepTitle: step.title,
         completionRate: (completed / total) * 100,
-        averageAttempts: attempts.length > 0 ? attempts.reduce((a, b) => a + b, 0) / attempts.length : 0,
-        averageTimeSpent: times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0,
-        hintUsageRate: hints.length > 0 ? hints.filter((h) => h > 0).length / hints.length : 0,
+        averageAttempts:
+          attempts.length > 0
+            ? attempts.reduce((a, b) => a + b, 0) / attempts.length
+            : 0,
+        averageTimeSpent:
+          times.length > 0
+            ? times.reduce((a, b) => a + b, 0) / times.length
+            : 0,
+        hintUsageRate:
+          hints.length > 0
+            ? hints.filter((h) => h > 0).length / hints.length
+            : 0,
         commonErrors: Object.entries(errors)
           .map(([error, count]) => ({ error, count }))
           .sort((a, b) => b.count - a.count)
@@ -140,7 +158,9 @@ export class TutorialAnalyticsService {
 
   // Drop-off Analysis
   async getDropOffAnalysis(tutorialId: string): Promise<DropOffAnalysis> {
-    const tutorial = await this.tutorialRepo.findOne({ where: { id: tutorialId } });
+    const tutorial = await this.tutorialRepo.findOne({
+      where: { id: tutorialId },
+    });
     const steps = await this.stepRepo.find({
       where: { tutorialId, isActive: true },
       order: { order: 'ASC' },
@@ -157,7 +177,9 @@ export class TutorialAnalyticsService {
       ).length;
 
       const usersCompleted = progress.filter((p) =>
-        p.stepProgress.some((sp) => sp.stepId === step.id && sp.status === 'completed'),
+        p.stepProgress.some(
+          (sp) => sp.stepId === step.id && sp.status === 'completed',
+        ),
       ).length;
 
       const usersDropped = usersReached - usersCompleted;
@@ -170,7 +192,10 @@ export class TutorialAnalyticsService {
               (sp) => sp.stepId === step.id && sp.status !== 'completed',
             ),
         )
-        .map((p) => p.stepProgress.find((sp) => sp.stepId === step.id)?.timeSpent || 0);
+        .map(
+          (p) =>
+            p.stepProgress.find((sp) => sp.stepId === step.id)?.timeSpent || 0,
+        );
 
       return {
         stepId: step.id,
@@ -181,13 +206,19 @@ export class TutorialAnalyticsService {
         dropOffRate: usersReached > 0 ? (usersDropped / usersReached) * 100 : 0,
         averageTimeBeforeDropOff:
           timesBeforeDrop.length > 0
-            ? timesBeforeDrop.reduce((a, b) => a + b, 0) / timesBeforeDrop.length
+            ? timesBeforeDrop.reduce((a, b) => a + b, 0) /
+              timesBeforeDrop.length
             : 0,
       };
     });
 
-    const totalCompleted = progress.filter((p) => p.status === 'completed').length;
-    const overallDropOffRate = totalStarted > 0 ? ((totalStarted - totalCompleted) / totalStarted) * 100 : 0;
+    const totalCompleted = progress.filter(
+      (p) => p.status === 'completed',
+    ).length;
+    const overallDropOffRate =
+      totalStarted > 0
+        ? ((totalStarted - totalCompleted) / totalStarted) * 100
+        : 0;
 
     return {
       tutorialId,
@@ -198,9 +229,17 @@ export class TutorialAnalyticsService {
     };
   }
 
-  async getCommonDropOffPoints(): Promise<{ stepId: string; tutorialId: string; dropOffRate: number }[]> {
-    const tutorials = await this.tutorialRepo.find({ where: { isActive: true } });
-    const allDropOffs: { stepId: string; tutorialId: string; dropOffRate: number }[] = [];
+  async getCommonDropOffPoints(): Promise<
+    { stepId: string; tutorialId: string; dropOffRate: number }[]
+  > {
+    const tutorials = await this.tutorialRepo.find({
+      where: { isActive: true },
+    });
+    const allDropOffs: {
+      stepId: string;
+      tutorialId: string;
+      dropOffRate: number;
+    }[] = [];
 
     for (const tutorial of tutorials) {
       const analysis = await this.getDropOffAnalysis(tutorial.id);
@@ -215,7 +254,9 @@ export class TutorialAnalyticsService {
       });
     }
 
-    return allDropOffs.sort((a, b) => b.dropOffRate - a.dropOffRate).slice(0, 10);
+    return allDropOffs
+      .sort((a, b) => b.dropOffRate - a.dropOffRate)
+      .slice(0, 10);
   }
 
   // Effectiveness Measurement
@@ -223,7 +264,9 @@ export class TutorialAnalyticsService {
     tutorialId: string,
     filters?: TutorialEffectivenessFilterDto,
   ): Promise<EffectivenessReport> {
-    const tutorial = await this.tutorialRepo.findOne({ where: { id: tutorialId } });
+    const tutorial = await this.tutorialRepo.findOne({
+      where: { id: tutorialId },
+    });
     if (!tutorial) {
       throw new Error(`Tutorial not found: ${tutorialId}`);
     }
@@ -236,16 +279,28 @@ export class TutorialAnalyticsService {
     const progress = await this.progressRepo.find({ where: whereClause });
     const completed = progress.filter((p) => p.status === 'completed');
 
-    const scores = completed.filter((p) => p.overallScore).map((p) => Number(p.overallScore));
-    const times = completed.filter((p) => p.totalTimeSpent > 0).map((p) => p.totalTimeSpent);
+    const scores = completed
+      .filter((p) => p.overallScore)
+      .map((p) => Number(p.overallScore));
+    const times = completed
+      .filter((p) => p.totalTimeSpent > 0)
+      .map((p) => p.totalTimeSpent);
 
     const metrics = {
-      completionRate: progress.length > 0 ? (completed.length / progress.length) * 100 : 0,
-      averageScore: scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0,
-      averageCompletionTime: times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0,
+      completionRate:
+        progress.length > 0 ? (completed.length / progress.length) * 100 : 0,
+      averageScore:
+        scores.length > 0
+          ? scores.reduce((a, b) => a + b, 0) / scores.length
+          : 0,
+      averageCompletionTime:
+        times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0,
       totalUsers: progress.length,
       activeUsers: progress.filter(
-        (p) => p.lastActivityAt && new Date().getTime() - p.lastActivityAt.getTime() < 7 * 24 * 60 * 60 * 1000,
+        (p) =>
+          p.lastActivityAt &&
+          new Date().getTime() - p.lastActivityAt.getTime() <
+            7 * 24 * 60 * 60 * 1000,
       ).length,
     };
 
@@ -253,7 +308,8 @@ export class TutorialAnalyticsService {
       tutorialId,
       tutorialName: tutorial.name,
       period: {
-        startDate: filters?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        startDate:
+          filters?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         endDate: filters?.endDate || new Date(),
       },
       metrics,
@@ -282,33 +338,44 @@ export class TutorialAnalyticsService {
     const speeds = progress.map((p) => p.adaptiveState.learningSpeed);
     const speedCounts = { slow: 0, normal: 0, fast: 0 };
     speeds.forEach((s) => (speedCounts[s] = (speedCounts[s] || 0) + 1));
-    const averageSpeed = Object.entries(speedCounts).sort((a, b) => b[1] - a[1])[0]?.[0] as
-      | 'slow'
-      | 'normal'
-      | 'fast';
+    const averageSpeed = Object.entries(speedCounts).sort(
+      (a, b) => b[1] - a[1],
+    )[0]?.[0] as 'slow' | 'normal' | 'fast';
 
     const strongAreas = new Set<string>();
     const improvementAreas = new Set<string>();
 
     progress.forEach((p) => {
-      (p.adaptiveState.strongAreas || []).forEach((area) => strongAreas.add(area));
-      (p.adaptiveState.strugglingAreas || []).forEach((area) => improvementAreas.add(area));
+      (p.adaptiveState.strongAreas || []).forEach((area) =>
+        strongAreas.add(area),
+      );
+      (p.adaptiveState.strugglingAreas || []).forEach((area) =>
+        improvementAreas.add(area),
+      );
     });
 
-    const totalTimeSpent = progress.reduce((sum, p) => sum + p.totalTimeSpent, 0);
+    const totalTimeSpent = progress.reduce(
+      (sum, p) => sum + p.totalTimeSpent,
+      0,
+    );
 
     return {
       userId,
       totalTutorialsStarted: progress.length,
       totalTutorialsCompleted: completed.length,
-      overallCompletionRate: progress.length > 0 ? (completed.length / progress.length) * 100 : 0,
+      overallCompletionRate:
+        progress.length > 0 ? (completed.length / progress.length) * 100 : 0,
       averageLearningSpeed: averageSpeed || 'normal',
       strongAreas: Array.from(strongAreas),
       improvementAreas: Array.from(improvementAreas),
       preferredContentTypes: [],
       totalTimeSpent,
       recentActivity: progress
-        .sort((a, b) => (b.lastActivityAt?.getTime() || 0) - (a.lastActivityAt?.getTime() || 0))
+        .sort(
+          (a, b) =>
+            (b.lastActivityAt?.getTime() || 0) -
+            (a.lastActivityAt?.getTime() || 0),
+        )
         .slice(0, 5)
         .map((p) => ({
           tutorialId: p.tutorialId,
@@ -320,11 +387,16 @@ export class TutorialAnalyticsService {
   }
 
   // Dashboard Report
-  async generateDashboardReport(dateRange?: DateRange): Promise<TutorialDashboardReport> {
-    const startDate = dateRange?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  async generateDashboardReport(
+    dateRange?: DateRange,
+  ): Promise<TutorialDashboardReport> {
+    const startDate =
+      dateRange?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = dateRange?.endDate || new Date();
 
-    const tutorials = await this.tutorialRepo.find({ where: { isActive: true } });
+    const tutorials = await this.tutorialRepo.find({
+      where: { isActive: true },
+    });
     const progress = await this.progressRepo.find({
       where: { createdAt: Between(startDate, endDate) },
       relations: ['tutorial'],
@@ -373,10 +445,15 @@ export class TutorialAnalyticsService {
         averageCompletionRate: await this.getOverallCompletionRate(dateRange),
         activeUsersToday: activeToday,
       },
-      topTutorials: tutorialStats.sort((a, b) => b.completionRate - a.completionRate).slice(0, 5),
+      topTutorials: tutorialStats
+        .sort((a, b) => b.completionRate - a.completionRate)
+        .slice(0, 5),
       needsAttention,
       recentCompletions: completed
-        .sort((a, b) => (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0))
+        .sort(
+          (a, b) =>
+            (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0),
+        )
         .slice(0, 10)
         .map((p) => ({
           userId: p.userId,

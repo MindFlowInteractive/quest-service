@@ -62,7 +62,11 @@ export class CommunitySubmissionService {
       where: { puzzleEditorId: editorId },
     });
 
-    if (existingSubmission && existingSubmission.status !== 'REJECTED' && existingSubmission.status !== 'ARCHIVED') {
+    if (
+      existingSubmission &&
+      existingSubmission.status !== 'REJECTED' &&
+      existingSubmission.status !== 'ARCHIVED'
+    ) {
       throw new ConflictException('This puzzle has already been submitted');
     }
 
@@ -92,7 +96,9 @@ export class CommunitySubmissionService {
     editor.status = 'PUBLISHED';
     await this.editorRepository.save(editor);
 
-    this.logger.log(`Submitted puzzle ${editorId} to community by user ${userId}`);
+    this.logger.log(
+      `Submitted puzzle ${editorId} to community by user ${userId}`,
+    );
 
     return saved;
   }
@@ -139,15 +145,21 @@ export class CommunitySubmissionService {
     let query = this.submissionRepository.createQueryBuilder('submission');
 
     if (filters?.status) {
-      query = query.where('submission.status = :status', { status: filters.status });
+      query = query.where('submission.status = :status', {
+        status: filters.status,
+      });
     }
 
     if (filters?.category) {
-      query = query.andWhere('submission.category = :category', { category: filters.category });
+      query = query.andWhere('submission.category = :category', {
+        category: filters.category,
+      });
     }
 
     if (filters?.tags && filters.tags.length > 0) {
-      query = query.andWhere('submission.tags && :tags', { tags: filters.tags });
+      query = query.andWhere('submission.tags && :tags', {
+        tags: filters.tags,
+      });
     }
 
     if (filters?.search) {
@@ -187,7 +199,9 @@ export class CommunitySubmissionService {
     const limit = Math.min(filters?.limit || 20, 100);
     const skip = (page - 1) * limit;
 
-    const statuses = filters?.status ? [filters.status] : ['SUBMITTED', 'UNDER_REVIEW'];
+    const statuses = filters?.status
+      ? [filters.status]
+      : ['SUBMITTED', 'UNDER_REVIEW'];
 
     const [submissions, total] = await this.submissionRepository.findAndCount({
       where: { status: In(statuses) },
@@ -230,14 +244,17 @@ export class CommunitySubmissionService {
       submission.status = 'APPROVED';
     } else if (dto.status === 'REJECTED') {
       submission.status = 'REJECTED';
-      submission.rejectionReason = dto.requestedChanges || 'Rejected by moderator';
+      submission.rejectionReason =
+        dto.requestedChanges || 'Rejected by moderator';
     } else if (dto.status === 'REQUESTED_CHANGES') {
       submission.status = 'UNDER_REVIEW';
     }
 
     await this.submissionRepository.save(submission);
 
-    this.logger.log(`Review created for submission ${submissionId} by ${reviewerId}`);
+    this.logger.log(
+      `Review created for submission ${submissionId} by ${reviewerId}`,
+    );
 
     return saved;
   }
@@ -317,11 +334,16 @@ export class CommunitySubmissionService {
   /**
    * Feature submission
    */
-  async featureSubmission(submissionId: string, approverId: string): Promise<CommunitySubmission> {
+  async featureSubmission(
+    submissionId: string,
+    approverId: string,
+  ): Promise<CommunitySubmission> {
     const submission = await this.getSubmission(submissionId);
 
     if (submission.status !== 'APPROVED') {
-      throw new BadRequestException('Only approved submissions can be featured');
+      throw new BadRequestException(
+        'Only approved submissions can be featured',
+      );
     }
 
     submission.status = 'FEATURED';
@@ -331,7 +353,10 @@ export class CommunitySubmissionService {
   /**
    * Upvote submission
    */
-  async upvoteSubmission(submissionId: string, userId: string): Promise<CommunitySubmission> {
+  async upvoteSubmission(
+    submissionId: string,
+    userId: string,
+  ): Promise<CommunitySubmission> {
     const submission = await this.getSubmission(submissionId);
 
     submission.upvotes++;
@@ -343,7 +368,10 @@ export class CommunitySubmissionService {
   /**
    * Downvote submission
    */
-  async downvoteSubmission(submissionId: string, userId: string): Promise<CommunitySubmission> {
+  async downvoteSubmission(
+    submissionId: string,
+    userId: string,
+  ): Promise<CommunitySubmission> {
     const submission = await this.getSubmission(submissionId);
 
     submission.downvotes++;
@@ -370,12 +398,15 @@ export class CommunitySubmissionService {
     const featured = submissions.filter((s) => s.status === 'FEATURED').length;
 
     const avgRating =
-      reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+      reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 0;
 
     // Get top contributors
     const submissionsByUser: Record<string, number> = {};
     submissions.forEach((s) => {
-      submissionsByUser[s.submittedBy] = (submissionsByUser[s.submittedBy] || 0) + 1;
+      submissionsByUser[s.submittedBy] =
+        (submissionsByUser[s.submittedBy] || 0) + 1;
     });
 
     const topContributors = Object.entries(submissionsByUser)

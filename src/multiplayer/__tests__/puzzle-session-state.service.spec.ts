@@ -21,16 +21,22 @@ describe('PuzzleSessionStateService', () => {
   });
 
   it('rejects a stale client version', async () => {
-    jest.spyOn(redis, 'get').mockResolvedValue(JSON.stringify({
-      sessionId: 'session-1',
-      puzzleId: 'puzzle-1',
-      version: 4,
-      status: PuzzleSessionStatus.ACTIVE,
-      players: {},
-      sharedProgress: { completedSteps: [], discoveredHints: [], solvedSteps: [] },
-      partialSolutions: {},
-      updatedAt: new Date().toISOString(),
-    }));
+    jest.spyOn(redis, 'get').mockResolvedValue(
+      JSON.stringify({
+        sessionId: 'session-1',
+        puzzleId: 'puzzle-1',
+        version: 4,
+        status: PuzzleSessionStatus.ACTIVE,
+        players: {},
+        sharedProgress: {
+          completedSteps: [],
+          discoveredHints: [],
+          solvedSteps: [],
+        },
+        partialSolutions: {},
+        updatedAt: new Date().toISOString(),
+      }),
+    );
 
     await expect(
       service.mutate('session-1', 3, () => undefined),

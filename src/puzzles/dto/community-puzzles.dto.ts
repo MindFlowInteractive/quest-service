@@ -1,16 +1,16 @@
-import { 
-  IsString, 
-  IsNotEmpty, 
-  IsOptional, 
-  IsEnum, 
-  IsInt, 
-  IsBoolean, 
-  IsArray, 
-  IsObject, 
-  Min, 
-  Max, 
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsBoolean,
+  IsArray,
+  IsObject,
+  Min,
+  Max,
   Length,
-  ValidateNested
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -136,7 +136,14 @@ export class ReportPuzzleDto {
   reason: string;
 
   @IsOptional()
-  @IsEnum(['inappropriate', 'copyright', 'spam', 'low_quality', 'duplicate', 'other'])
+  @IsEnum([
+    'inappropriate',
+    'copyright',
+    'spam',
+    'low_quality',
+    'duplicate',
+    'other',
+  ])
   category?: string;
 
   @IsOptional()
@@ -167,11 +174,26 @@ export class SearchPuzzlesDto {
   tags?: string[];
 
   @IsOptional()
-  @IsEnum(['newest', 'oldest', 'popular', 'highest_rated', 'most_played', 'trending'])
+  @IsEnum([
+    'newest',
+    'oldest',
+    'popular',
+    'highest_rated',
+    'most_played',
+    'trending',
+  ])
   sortBy?: string;
 
   @IsOptional()
-  @IsEnum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'published', 'featured'])
+  @IsEnum([
+    'draft',
+    'submitted',
+    'under_review',
+    'approved',
+    'rejected',
+    'published',
+    'featured',
+  ])
   status?: string;
 
   @IsOptional()

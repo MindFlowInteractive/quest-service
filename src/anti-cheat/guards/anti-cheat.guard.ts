@@ -3,7 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   BadRequestException,
-  Logger
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AntiCheatService } from '../services/anti-cheat.service';
@@ -22,9 +22,9 @@ export class AntiCheatGuard implements CanActivate {
 
   constructor(
     private readonly antiCheatService: AntiCheatService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
-    const config = this.configService.get<AntiCheatConfig>('antiCheat')!;
+    const config = this.configService.get<AntiCheatConfig>('antiCheat');
     this.shadowMode = config.shadowMode.enabled;
     this.blockMoves = config.shadowMode.blockMoves;
   }
@@ -45,28 +45,30 @@ export class AntiCheatGuard implements CanActivate {
       const checks = await Promise.all([
         this.antiCheatService.checkRateLimit(playerId, puzzleId),
         Promise.resolve(this.antiCheatService.validateMoveTimestamp(move)),
-        this.antiCheatService.checkSessionIntegrity(request.headers)
+        this.antiCheatService.checkSessionIntegrity(request.headers),
       ]);
 
-      const failedChecks = checks.filter(check => !check.passed);
+      const failedChecks = checks.filter((check) => !check.passed);
 
       if (failedChecks.length > 0) {
         this.logger.warn('Anti-cheat checks failed', {
           playerId,
           puzzleId,
-          failures: failedChecks.map(c => c.reason)
+          failures: failedChecks.map((c) => c.reason),
         });
 
         // In shadow mode, log but don't block unless explicitly configured
         if (this.shadowMode && !this.blockMoves) {
-          this.logger.warn('[SHADOW MODE] Would have blocked move but allowing due to shadow mode');
+          this.logger.warn(
+            '[SHADOW MODE] Would have blocked move but allowing due to shadow mode',
+          );
           return true;
         }
 
         // Block the move
         throw new BadRequestException({
           message: 'Move rejected due to suspicious activity',
-          details: failedChecks.map(c => c.reason)
+          details: failedChecks.map((c) => c.reason),
         });
       }
 
@@ -78,7 +80,10 @@ export class AntiCheatGuard implements CanActivate {
       }
 
       // Log unexpected errors but allow the request through
-      this.logger.error(`Anti-cheat guard error: ${error.message}`, error.stack);
+      this.logger.error(
+        `Anti-cheat guard error: ${error.message}`,
+        error.stack,
+      );
       return true;
     }
   }

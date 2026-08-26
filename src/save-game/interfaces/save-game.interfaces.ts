@@ -6,33 +6,33 @@
  */
 
 export enum SyncStatus {
-  LOCAL_ONLY = 'LOCAL_ONLY',           // Save exists only locally
-  CLOUD_ONLY = 'CLOUD_ONLY',           // Save exists only in cloud
-  SYNCED = 'SYNCED',                   // Local and cloud are in sync
-  LOCAL_NEWER = 'LOCAL_NEWER',         // Local save is more recent
-  CLOUD_NEWER = 'CLOUD_NEWER',         // Cloud save is more recent
-  CONFLICT = 'CONFLICT',               // Conflicting changes detected
+  LOCAL_ONLY = 'LOCAL_ONLY', // Save exists only locally
+  CLOUD_ONLY = 'CLOUD_ONLY', // Save exists only in cloud
+  SYNCED = 'SYNCED', // Local and cloud are in sync
+  LOCAL_NEWER = 'LOCAL_NEWER', // Local save is more recent
+  CLOUD_NEWER = 'CLOUD_NEWER', // Cloud save is more recent
+  CONFLICT = 'CONFLICT', // Conflicting changes detected
 }
 
 export enum SaveType {
-  AUTO = 'AUTO',         // Automatic checkpoint save
-  MANUAL = 'MANUAL',     // Player-initiated save
+  AUTO = 'AUTO', // Automatic checkpoint save
+  MANUAL = 'MANUAL', // Player-initiated save
   QUICKSAVE = 'QUICKSAVE', // Quick save slot
 }
 
 export enum ConflictResolution {
-  USE_LOCAL = 'USE_LOCAL',       // Keep local version
-  USE_CLOUD = 'USE_CLOUD',       // Keep cloud version
-  USE_NEWEST = 'USE_NEWEST',     // Automatically use newest
-  MERGE = 'MERGE',               // Attempt to merge (if supported)
-  KEEP_BOTH = 'KEEP_BOTH',       // Create a new slot with cloud version
+  USE_LOCAL = 'USE_LOCAL', // Keep local version
+  USE_CLOUD = 'USE_CLOUD', // Keep cloud version
+  USE_NEWEST = 'USE_NEWEST', // Automatically use newest
+  MERGE = 'MERGE', // Attempt to merge (if supported)
+  KEEP_BOTH = 'KEEP_BOTH', // Create a new slot with cloud version
 }
 
 export interface SaveGameMetadata {
   slotId: number;
   slotName: string;
   saveType: SaveType;
-  playtime: number;          // Total playtime in seconds
+  playtime: number; // Total playtime in seconds
   level?: number;
   chapter?: string;
   thumbnailUrl?: string;
@@ -40,7 +40,7 @@ export interface SaveGameMetadata {
 }
 
 export interface SaveGameData {
-  version: number;              // Schema version for backward compatibility
+  version: number; // Schema version for backward compatibility
   gameState: Record<string, unknown>;
   playerState: {
     position?: { x: number; y: number; z?: number };
@@ -71,7 +71,7 @@ export interface CompressionInfo {
 
 export interface EncryptionInfo {
   algorithm: 'aes-256-gcm';
-  iv: string;  // Initialization vector (base64)
+  iv: string; // Initialization vector (base64)
   tag: string; // Auth tag (base64)
 }
 

@@ -1,4 +1,12 @@
-import { IsUUID, IsOptional, IsNumber, IsString, IsEnum, Min, Max } from 'class-validator';
+import {
+  IsUUID,
+  IsOptional,
+  IsNumber,
+  IsString,
+  IsEnum,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetRecommendationsDto {
@@ -54,7 +62,14 @@ export class TrackInteractionDto {
   puzzleId: string;
 
   @IsEnum(['view', 'click', 'start', 'complete', 'abandon', 'rate', 'share'])
-  interactionType: 'view' | 'click' | 'start' | 'complete' | 'abandon' | 'rate' | 'share';
+  interactionType:
+    | 'view'
+    | 'click'
+    | 'start'
+    | 'complete'
+    | 'abandon'
+    | 'rate'
+    | 'share';
 
   @IsOptional()
   @IsNumber()

@@ -32,7 +32,8 @@ export class DifficultyAccessibilityService {
    */
   applyToPuzzle(puzzle: any, options: AccessibilityOptions): any {
     const modified = { ...puzzle };
-    if (options.extraTime) modified.timeLimit = Math.round((puzzle.timeLimit || 300) * 1.5);
+    if (options.extraTime)
+      modified.timeLimit = Math.round((puzzle.timeLimit || 300) * 1.5);
     if (options.unlimitedHints) modified.maxHints = Infinity;
     if (options.simplifiedPuzzles) modified.simplified = true;
     // UI options (highContrastMode, textToSpeech) would be handled on frontend

@@ -8,7 +8,8 @@ export function calculatePlayerSkill(stats: UserStats | null): number {
   // Example algorithm: weighted average of accuracy, completion, and time
   if (!stats) return 1;
   const accuracy = Number(stats.overallAccuracy) || 0;
-  const completionRate = stats.totalPuzzlesCompleted / Math.max(1, stats.totalPuzzlesAttempted);
+  const completionRate =
+    stats.totalPuzzlesCompleted / Math.max(1, stats.totalPuzzlesAttempted);
   const avgTime = Number(stats.averageCompletionTime) || 0;
 
   // Normalize metrics
@@ -18,6 +19,7 @@ export function calculatePlayerSkill(stats: UserStats | null): number {
   const normTime = 1 - Math.min(Math.max((avgTime - 60) / 540, 0), 1);
 
   // Weighted sum (tune weights as needed)
-  const skill = 1 + 4 * (0.5 * normAccuracy + 0.3 * normCompletion + 0.2 * normTime);
+  const skill =
+    1 + 4 * (0.5 * normAccuracy + 0.3 * normCompletion + 0.2 * normTime);
   return Math.round(skill * 10) / 10;
 }

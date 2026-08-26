@@ -41,7 +41,11 @@ describe('CloudSyncService', () => {
     },
     compressedData: Buffer.from('test'),
     checksum: { algorithm: 'sha256', value: 'abc123' },
-    compressionInfo: { algorithm: 'gzip', originalSize: 100, compressedSize: 50 },
+    compressionInfo: {
+      algorithm: 'gzip',
+      originalSize: 100,
+      compressedSize: 50,
+    },
     encryptionInfo: { algorithm: 'aes-256-gcm', iv: 'iv', tag: 'tag' },
     syncStatus: SyncStatus.SYNCED,
     lastModifiedAt: new Date(),
@@ -246,7 +250,11 @@ describe('CloudSyncService', () => {
       });
       compressionService.compress.mockResolvedValue({
         compressedData: Buffer.from('merged'),
-        compressionInfo: { algorithm: 'gzip', originalSize: 100, compressedSize: 50 },
+        compressionInfo: {
+          algorithm: 'gzip',
+          originalSize: 100,
+          compressedSize: 50,
+        },
       });
       encryptionService.encrypt.mockResolvedValue({
         encryptedData: Buffer.from('encrypted'),
@@ -298,11 +306,18 @@ describe('CloudSyncService', () => {
     };
 
     beforeEach(() => {
-      versioningService.validateDataStructure.mockReturnValue({ valid: true, errors: [] });
+      versioningService.validateDataStructure.mockReturnValue({
+        valid: true,
+        errors: [],
+      });
       versioningService.mergeWithDefaults.mockReturnValue(saveData);
       compressionService.compress.mockResolvedValue({
         compressedData: Buffer.from('compressed'),
-        compressionInfo: { algorithm: 'gzip', originalSize: 100, compressedSize: 50 },
+        compressionInfo: {
+          algorithm: 'gzip',
+          originalSize: 100,
+          compressedSize: 50,
+        },
       });
       encryptionService.encrypt.mockResolvedValue({
         encryptedData: Buffer.from('encrypted'),
@@ -338,9 +353,9 @@ describe('CloudSyncService', () => {
         errors: ['Invalid'],
       });
 
-      await expect(service.uploadToCloud(mockUserId, 0, saveData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.uploadToCloud(mockUserId, 0, saveData),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

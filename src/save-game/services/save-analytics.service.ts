@@ -128,8 +128,14 @@ export class SaveAnalyticsService {
       .select('COUNT(DISTINCT analytics.userId)', 'totalUsers')
       .addSelect('SUM(analytics.totalSaves)', 'totalSaves')
       .addSelect('SUM(analytics.cloudSyncs)', 'totalSyncs')
-      .addSelect('AVG(CASE WHEN analytics.cloudSyncs > 0 THEN analytics.syncConflicts::float / analytics.cloudSyncs ELSE 0 END)', 'avgConflictRate')
-      .addSelect('AVG(CASE WHEN analytics.totalSaves > 0 THEN analytics.corruptionEvents::float / analytics.totalSaves ELSE 0 END)', 'avgCorruptionRate')
+      .addSelect(
+        'AVG(CASE WHEN analytics.cloudSyncs > 0 THEN analytics.syncConflicts::float / analytics.cloudSyncs ELSE 0 END)',
+        'avgConflictRate',
+      )
+      .addSelect(
+        'AVG(CASE WHEN analytics.totalSaves > 0 THEN analytics.corruptionEvents::float / analytics.totalSaves ELSE 0 END)',
+        'avgCorruptionRate',
+      )
       .getRawOne();
 
     return {

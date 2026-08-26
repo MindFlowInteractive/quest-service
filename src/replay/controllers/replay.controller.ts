@@ -70,7 +70,9 @@ export class ReplayController {
     // Verify ownership
     const replay = await this.replayService.getReplay(replayId);
     if (replay.userId !== userId) {
-      throw new ForbiddenException('You can only record actions on your own replays');
+      throw new ForbiddenException(
+        'You can only record actions on your own replays',
+      );
     }
 
     return this.replayService.recordAction(replayId, actionDto);
@@ -161,7 +163,8 @@ export class ReplayController {
 
     const filters = {
       puzzleId,
-      isCompleted: isCompleted !== undefined ? isCompleted === 'true' : undefined,
+      isCompleted:
+        isCompleted !== undefined ? isCompleted === 'true' : undefined,
       isSolved: isSolved !== undefined ? isSolved === 'true' : undefined,
     };
 
@@ -264,7 +267,10 @@ export class ReplayController {
       throw new ForbiddenException('You can only compare your own replays');
     }
 
-    return this.comparisonService.getComparisonSummary(originalReplayId, newReplayId);
+    return this.comparisonService.getComparisonSummary(
+      originalReplayId,
+      newReplayId,
+    );
   }
 
   /**
@@ -318,10 +324,7 @@ export class ReplayController {
    * DELETE /replays/:replayId
    */
   @Delete(':replayId')
-  async deleteReplay(
-    @Param('replayId') replayId: string,
-    @Req() req: Request,
-  ) {
+  async deleteReplay(@Param('replayId') replayId: string, @Req() req: Request) {
     const userId = (req.user as any)?.id || (req.user as any)?.userId;
     if (!userId) {
       throw new ForbiddenException('User ID required');
@@ -371,7 +374,10 @@ export class ReplayController {
     const replay = await this.replayService.getReplay(replayId);
 
     // Allow owner or users learning from this replay
-    if (replay.permission !== 'public' && replay.userId !== (req.user as any)?.id) {
+    if (
+      replay.permission !== 'public' &&
+      replay.userId !== (req.user as any)?.id
+    ) {
       throw new ForbiddenException('You cannot rate this replay');
     }
 
@@ -395,10 +401,16 @@ export class ReplayController {
     }
 
     if (beforeScore === undefined || afterScore === undefined) {
-      throw new BadRequestException('Both beforeScore and afterScore are required');
+      throw new BadRequestException(
+        'Both beforeScore and afterScore are required',
+      );
     }
 
-    return this.analyticsService.recordLearningEffectiveness(replayId, beforeScore, afterScore);
+    return this.analyticsService.recordLearningEffectiveness(
+      replayId,
+      beforeScore,
+      afterScore,
+    );
   }
 
   /**

@@ -5,13 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-} from "typeorm";
+} from 'typeorm';
 
-@Entity("file_metadata")
-@Index(["fileId"])
-@Index(["fileId", "key"])
+@Entity('file_metadata')
+@Index(['fileId'])
+@Index(['fileId', 'key'])
 export class Metadata {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
@@ -20,7 +20,7 @@ export class Metadata {
   @Column()
   key: string;
 
-  @Column({ type: "text" })
+  @Column({ type: 'text' })
   value: string;
 
   @CreateDateColumn()

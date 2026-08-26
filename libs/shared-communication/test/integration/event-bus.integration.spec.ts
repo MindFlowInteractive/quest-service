@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { EventPublisher, EventSubscriber, EventBusModule, BaseEvent } from '../../src';
+import {
+  EventPublisher,
+  EventSubscriber,
+  EventBusModule,
+  BaseEvent,
+} from '../../src';
 
 describe('Event Bus Integration Tests', () => {
   let app: INestApplication;
@@ -208,7 +213,7 @@ describe('Event Bus Integration Tests', () => {
       // Event should not be in receivedEvents (all attempts failed)
       expect(receivedEvents.length).toBe(0);
       expect(attemptCount).toBeGreaterThanOrEqual(2);
-      
+
       // Note: In a real test, you would verify the message is in the DLQ
       // by consuming from the DLQ queue
     }, 20000);
@@ -238,7 +243,7 @@ describe('Event Bus Integration Tests', () => {
 
       expect(receivedEvents.length).toBe(1);
       const event = receivedEvents[0];
-      
+
       expect(event.metadata).toBeDefined();
       expect(event.metadata.timestamp).toBeInstanceOf(Date);
       expect(event.metadata.traceId).toBeDefined();

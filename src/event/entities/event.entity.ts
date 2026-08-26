@@ -1,6 +1,5 @@
-import { Puzzle } from "../../puzzles/entities/puzzle.entity";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-
+import { Puzzle } from '../../puzzles/entities/puzzle.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Events {
@@ -23,6 +22,6 @@ export class Events {
   isActive: boolean;
 
   // An Event can have multiple Puzzles
-  @OneToMany(() => Puzzle, puzzle => puzzle.event, { cascade: true })
+  @OneToMany(() => Puzzle, (puzzle) => puzzle.event, { cascade: true })
   puzzles: Puzzle[];
 }

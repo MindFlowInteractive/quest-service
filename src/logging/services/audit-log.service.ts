@@ -40,7 +40,11 @@ export class AuditLogService {
       occurredAt: new Date(),
     };
     this.entries.push(entry);
-    this.logger.log(`[audit] ${action} | actor=${actorId}${targetId ? ` target=${targetId}` : ''}`);
+    this.logger.log(
+      `[audit] ${action} | actor=${actorId}${
+        targetId ? ` target=${targetId}` : ''
+      }`,
+    );
     return entry;
   }
 

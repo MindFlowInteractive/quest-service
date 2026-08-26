@@ -3,12 +3,12 @@ import { Content } from './contents.entity';
 
 @Entity('categories')
 export class Category {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column({ unique: true })
-    name: string;
+  @Column({ unique: true })
+  name: string;
 
-    @OneToMany(() => Content, (content) => content.category)
-    contents: Content[];
+  @OneToMany(() => Content, (content) => content.category)
+  contents: Content[];
 }

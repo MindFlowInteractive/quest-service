@@ -31,7 +31,11 @@ export class PuzzleReview {
   @Column({ type: 'text' })
   reviewText: string;
 
-  @Column({ type: 'enum', enum: ['pending', 'approved', 'rejected', 'flagged'], default: 'pending' })
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'approved', 'rejected', 'flagged'],
+    default: 'pending',
+  })
   @Index()
   moderationStatus: 'pending' | 'approved' | 'rejected' | 'flagged';
 

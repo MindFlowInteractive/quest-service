@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlayerRating, SkillTier } from './entities/player-rating.entity';
-import { RatingHistory, RatingChangeReason } from './entities/rating-history.entity';
+import {
+  RatingHistory,
+  RatingChangeReason,
+} from './entities/rating-history.entity';
 import { Puzzle } from '../puzzles/entities/puzzle.entity';
 import { Season, SeasonStatus } from './entities/season.entity';
 
@@ -50,31 +53,31 @@ export class ELOService {
   ): Promise<ELOCalculationResult> {
     // Get current active season
     const currentSeason = await this.getCurrentSeason();
-    
+
     // Get puzzle difficulty rating (1-10 scale)
     const puzzleDifficultyRating = puzzle.difficultyRating || 5;
-    
+
     // Calculate expected win probability using ELO formula
     const expectedWinProbability = this.calculateExpectedWinProbability(
       playerRating.rating,
       puzzleDifficultyRating,
     );
-    
+
     // Calculate performance score (0-1)
     const performanceScore = this.calculatePerformanceScore(completionData);
-    
+
     // Determine actual outcome (1 = win, 0 = loss, 0.5 = draw)
     const actualOutcome = completionData.wasCompleted ? 1 : 0;
-    
+
     // Calculate K-factor based on player experience and rating
     const kFactor = this.calculateKFactor(playerRating);
-    
+
     // Calculate base rating change
     let ratingChange = kFactor * (actualOutcome - expectedWinProbability);
-    
+
     // Apply performance multipliers
     const bonusFactors: string[] = [];
-    
+
     // Time-based bonus/penalty
     if (completionData.wasCompleted) {
       const timeBonus = this.calculateTimeBonus(
@@ -87,30 +90,35 @@ export class ELOService {
         bonusFactors.push(`time_${timeBonus > 0 ? 'bonus' : 'penalty'}`);
       }
     }
-    
+
     // Hint penalty
     if (completionData.hintsUsed > 0) {
       const hintPenalty = completionData.hintsUsed * -5;
       ratingChange += hintPenalty;
       bonusFactors.push(`hint_penalty_${completionData.hintsUsed}`);
     }
-    
+
     // Attempt penalty
     if (completionData.attempts > 1) {
       const attemptPenalty = (completionData.attempts - 1) * -3;
       ratingChange += attemptPenalty;
       bonusFactors.push(`attempt_penalty_${completionData.attempts}`);
     }
-    
+
     // Difficulty weighting
-    const difficultyMultiplier = this.getDifficultyMultiplier(puzzleDifficultyRating);
+    const difficultyMultiplier = this.getDifficultyMultiplier(
+      puzzleDifficultyRating,
+    );
     ratingChange = ratingChange * difficultyMultiplier;
     bonusFactors.push(`difficulty_${puzzle.difficulty}`);
-    
+
     // Ensure rating doesn't go below minimum
-    const newRating = Math.max(100, Math.round(playerRating.rating + ratingChange));
+    const newRating = Math.max(
+      100,
+      Math.round(playerRating.rating + ratingChange),
+    );
     ratingChange = newRating - playerRating.rating;
-    
+
     return {
       ratingChange,
       newRating,
@@ -131,7 +139,7 @@ export class ELOService {
     // Convert puzzle difficulty (1-10) to ELO-like rating
     // Difficulty 1 = 800, Difficulty 10 = 2000
     const puzzleEloRating = 800 + (puzzleDifficulty - 1) * 133.33;
-    
+
     // Standard ELO formula
     return 1 / (1 + Math.pow(10, (puzzleEloRating - playerRating) / 400));
   }
@@ -141,23 +149,23 @@ export class ELOService {
    */
   private calculatePerformanceScore(data: PuzzleCompletionData): number {
     if (!data.wasCompleted) return 0;
-    
+
     let score = 0.5; // Base score for completion
-    
+
     // Time performance (0-0.3)
     const timeRatio = data.timeTaken / data.basePoints; // Assuming basePoints relates to expected time
     if (timeRatio <= 0.5) score += 0.3; // Very fast
     else if (timeRatio <= 0.8) score += 0.2; // Fast
     else if (timeRatio <= 1.2) score += 0.1; // Average
-    
+
     // Hint efficiency (0-0.1)
     if (data.hintsUsed === 0) score += 0.1;
     else if (data.hintsUsed === 1) score += 0.05;
-    
+
     // Attempt efficiency (0-0.1)
     if (data.attempts === 1) score += 0.1;
     else if (data.attempts === 2) score += 0.05;
-    
+
     return Math.min(1, score);
   }
 
@@ -167,13 +175,13 @@ export class ELOService {
   private calculateKFactor(playerRating: PlayerRating): number {
     // New players get higher K-factor for faster rating adjustment
     if (playerRating.gamesPlayed < 30) return 40;
-    
+
     // Established players
     if (playerRating.rating < 2000) return 20;
-    
+
     // High-rated players
     if (playerRating.rating < 2400) return 15;
-    
+
     // Masters get lower K-factor
     return 10;
   }
@@ -187,10 +195,10 @@ export class ELOService {
     difficulty: number,
   ): number {
     const ratio = timeTaken / timeLimit;
-    
+
     if (ratio <= 0.3) return 15; // Very fast
     if (ratio <= 0.6) return 10; // Fast
-    if (ratio <= 1.0) return 5;  // On time
+    if (ratio <= 1.0) return 5; // On time
     if (ratio <= 1.5) return -5; // Slow
     return -10; // Very slow
   }
@@ -227,11 +235,11 @@ export class ELOService {
       where: { status: SeasonStatus.ACTIVE },
       order: { startDate: 'DESC' },
     });
-    
+
     if (!season) {
       throw new Error('No active season found');
     }
-    
+
     return season;
   }
 
@@ -240,11 +248,11 @@ export class ELOService {
    */
   calculateInactivityDecay(rating: number, daysInactive: number): number {
     if (daysInactive < 30) return 0;
-    
+
     // Decay starts after 30 days
     const decayDays = daysInactive - 30;
     const decayPoints = Math.floor(decayDays / 7) * 2; // 2 points per week
-    
+
     return Math.max(0, rating - decayPoints) - rating;
   }
 }

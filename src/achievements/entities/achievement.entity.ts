@@ -115,6 +115,9 @@ export class Achievement {
   deletedAt?: Date;
 
   // Relationships
-  @OneToMany(() => UserAchievement, (userAchievement) => userAchievement.achievement)
+  @OneToMany(
+    () => UserAchievement,
+    (userAchievement) => userAchievement.achievement,
+  )
   userAchievements: UserAchievement[];
 }

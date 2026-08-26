@@ -36,8 +36,12 @@ describe('ReplayComparisonService', () => {
     }).compile();
 
     service = module.get<ReplayComparisonService>(ReplayComparisonService);
-    replayRepo = module.get<Repository<PuzzleReplay>>(getRepositoryToken(PuzzleReplay));
-    actionRepo = module.get<Repository<ReplayAction>>(getRepositoryToken(ReplayAction));
+    replayRepo = module.get<Repository<PuzzleReplay>>(
+      getRepositoryToken(PuzzleReplay),
+    );
+    actionRepo = module.get<Repository<ReplayAction>>(
+      getRepositoryToken(ReplayAction),
+    );
   });
 
   describe('compareReplays', () => {
@@ -67,14 +71,39 @@ describe('ReplayComparisonService', () => {
       };
 
       const originalActions = [
-        { sequenceNumber: 0, actionType: 'MOVE', timestamp: 100, actionData: { x: 1 } },
-        { sequenceNumber: 1, actionType: 'MOVE', timestamp: 200, actionData: { x: 2 } },
-        { sequenceNumber: 2, actionType: 'HINT_USED', timestamp: 300, actionData: {} },
+        {
+          sequenceNumber: 0,
+          actionType: 'MOVE',
+          timestamp: 100,
+          actionData: { x: 1 },
+        },
+        {
+          sequenceNumber: 1,
+          actionType: 'MOVE',
+          timestamp: 200,
+          actionData: { x: 2 },
+        },
+        {
+          sequenceNumber: 2,
+          actionType: 'HINT_USED',
+          timestamp: 300,
+          actionData: {},
+        },
       ];
 
       const newActions = [
-        { sequenceNumber: 0, actionType: 'MOVE', timestamp: 100, actionData: { x: 1 } },
-        { sequenceNumber: 1, actionType: 'MOVE', timestamp: 150, actionData: { x: 2 } },
+        {
+          sequenceNumber: 0,
+          actionType: 'MOVE',
+          timestamp: 100,
+          actionData: { x: 1 },
+        },
+        {
+          sequenceNumber: 1,
+          actionType: 'MOVE',
+          timestamp: 150,
+          actionData: { x: 2 },
+        },
       ];
 
       jest
@@ -87,7 +116,10 @@ describe('ReplayComparisonService', () => {
         .mockResolvedValueOnce(originalActions as any)
         .mockResolvedValueOnce(newActions as any);
 
-      const result = await service.compareReplays(mockOriginalReplayId, mockNewReplayId);
+      const result = await service.compareReplays(
+        mockOriginalReplayId,
+        mockNewReplayId,
+      );
 
       expect(result.originalReplayId).toBe(mockOriginalReplayId);
       expect(result.newReplayId).toBe(mockNewReplayId);
@@ -110,7 +142,9 @@ describe('ReplayComparisonService', () => {
         userId: mockUserId,
       };
 
-      jest.spyOn(replayRepo, 'findOne').mockResolvedValueOnce(mockReplay as any);
+      jest
+        .spyOn(replayRepo, 'findOne')
+        .mockResolvedValueOnce(mockReplay as any);
       jest.spyOn(replayRepo, 'findOne').mockResolvedValueOnce(null);
 
       await expect(
@@ -153,7 +187,10 @@ describe('ReplayComparisonService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      const summary = await service.getComparisonSummary(mockOriginalReplayId, mockNewReplayId);
+      const summary = await service.getComparisonSummary(
+        mockOriginalReplayId,
+        mockNewReplayId,
+      );
 
       expect(summary.improved).toBe(true);
       expect(summary.improvementAreas).toContain('Score increased');
@@ -194,7 +231,10 @@ describe('ReplayComparisonService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      const summary = await service.getComparisonSummary(mockOriginalReplayId, mockNewReplayId);
+      const summary = await service.getComparisonSummary(
+        mockOriginalReplayId,
+        mockNewReplayId,
+      );
 
       expect(summary.areasForImprovement).toContain('Took longer to solve');
     });
@@ -243,7 +283,10 @@ describe('ReplayComparisonService', () => {
         .mockResolvedValueOnce(originalActions as any)
         .mockResolvedValueOnce(newActions as any);
 
-      const result = await service.compareReplays(mockOriginalReplayId, mockNewReplayId);
+      const result = await service.compareReplays(
+        mockOriginalReplayId,
+        mockNewReplayId,
+      );
 
       expect(result.actionDifferences.totalDifferenceCount).toBeGreaterThan(0);
     });
@@ -279,7 +322,10 @@ describe('ReplayComparisonService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      const result = await service.compareReplays(mockOriginalReplayId, mockNewReplayId);
+      const result = await service.compareReplays(
+        mockOriginalReplayId,
+        mockNewReplayId,
+      );
 
       expect(result.timingComparison.timeSavings).toBe(4000);
       expect(result.timingComparison.timeSavingsPercentage).toBe(40);
@@ -316,7 +362,10 @@ describe('ReplayComparisonService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      const result = await service.compareReplays(mockOriginalReplayId, mockNewReplayId);
+      const result = await service.compareReplays(
+        mockOriginalReplayId,
+        mockNewReplayId,
+      );
 
       expect(result.performanceComparison.scoreImprovement).toBe(30);
       expect(result.performanceComparison.hintsReduction).toBe(2);
@@ -359,7 +408,10 @@ describe('ReplayComparisonService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      const result = await service.compareReplays(mockOriginalReplayId, mockNewReplayId);
+      const result = await service.compareReplays(
+        mockOriginalReplayId,
+        mockNewReplayId,
+      );
 
       expect(result.learningMetrics.optimizationLevel).toBeGreaterThan(0);
       expect(result.learningMetrics.mistakesReduced).toBe(true);

@@ -40,8 +40,7 @@ export class CrashRecoveryJob {
       try {
         const timePlayed = session.duration;
         const hintsUsed = session.hintsUsed;
-        const progressPercent =
-          (session.state?.progressPercent as number) ?? 0;
+        const progressPercent = (session.state?.progressPercent as number) ?? 0;
 
         session.status = 'ABANDONED';
         session.lastActiveAt = new Date();

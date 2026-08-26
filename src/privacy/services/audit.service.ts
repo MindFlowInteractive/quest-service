@@ -161,9 +161,13 @@ export class AuditService {
     const recentLogs = await this.auditRepository.find({ where });
 
     // Check for high volume of exports
-    const exports = recentLogs.filter(log => log.accessType === DataAccessType.EXPORT);
+    const exports = recentLogs.filter(
+      (log) => log.accessType === DataAccessType.EXPORT,
+    );
     if (exports.length > 10) {
-      alerts.push(`High number of data exports (${exports.length}) in last 24 hours`);
+      alerts.push(
+        `High number of data exports (${exports.length}) in last 24 hours`,
+      );
     }
 
     // Check for multiple failed access attempts
@@ -175,7 +179,9 @@ export class AuditService {
 
     for (const [accessor, count] of uniqueAccessors) {
       if (count > 100) {
-        alerts.push(`User ${accessor} has unusually high access count (${count})`);
+        alerts.push(
+          `User ${accessor} has unusually high access count (${count})`,
+        );
       }
     }
 
@@ -188,7 +194,10 @@ export class AuditService {
   /**
    * Generate compliance report
    */
-  async generateComplianceReport(startDate: Date, endDate: Date): Promise<{
+  async generateComplianceReport(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<{
     period: string;
     totalAccesses: number;
     dataExports: number;
@@ -204,7 +213,7 @@ export class AuditService {
       },
     });
 
-    const uniqueUsers = new Set(logs.map(log => log.userId));
+    const uniqueUsers = new Set(logs.map((log) => log.userId));
     const accessorCounts = new Map<string, number>();
 
     for (const log of logs) {
@@ -220,10 +229,16 @@ export class AuditService {
     return {
       period: `${startDate.toISOString()} to ${endDate.toISOString()}`,
       totalAccesses: logs.length,
-      dataExports: logs.filter(l => l.accessType === DataAccessType.EXPORT).length,
-      dataDeletions: logs.filter(l => l.accessType === DataAccessType.DELETE).length,
-      anonymizations: logs.filter(l => l.accessType === DataAccessType.ANONYMIZE).length,
-      consentChanges: logs.filter(l => l.accessReason === AccessReason.DATA_DELETION).length,
+      dataExports: logs.filter((l) => l.accessType === DataAccessType.EXPORT)
+        .length,
+      dataDeletions: logs.filter((l) => l.accessType === DataAccessType.DELETE)
+        .length,
+      anonymizations: logs.filter(
+        (l) => l.accessType === DataAccessType.ANONYMIZE,
+      ).length,
+      consentChanges: logs.filter(
+        (l) => l.accessReason === AccessReason.DATA_DELETION,
+      ).length,
       uniqueUsers: uniqueUsers.size,
       topAccessors,
     };

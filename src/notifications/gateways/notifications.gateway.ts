@@ -79,10 +79,9 @@ export class NotificationsGateway
       return false;
     }
 
-    this.server.to(this.userRoom(userId)).emit(
-      'notification',
-      this.serialize(notification),
-    );
+    this.server
+      .to(this.userRoom(userId))
+      .emit('notification', this.serialize(notification));
 
     return true;
   }
@@ -94,10 +93,7 @@ export class NotificationsGateway
   ) {
     const userId = client.data.userId as string;
 
-    return this.deliveryService.acknowledge(
-      payload.notificationId,
-      userId,
-    );
+    return this.deliveryService.acknowledge(payload.notificationId, userId);
   }
 
   private userRoom(userId: string): string {

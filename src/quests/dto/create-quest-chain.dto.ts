@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsEnum, IsInt, IsDateString, ValidateNested, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  IsDateString,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class StoryChapterDto {

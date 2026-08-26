@@ -26,7 +26,10 @@ describe('WebhookDeliveryProcessor', () => {
     });
 
     await expect(
-      processor.process({ data: { deliveryId: 'delivery-1' }, attemptsMade: 0 } as any),
+      processor.process({
+        data: { deliveryId: 'delivery-1' },
+        attemptsMade: 0,
+      } as any),
     ).rejects.toMatchObject({ message: 'timeout' });
 
     expect(deliveryRepository.save).toHaveBeenCalledWith(
@@ -59,7 +62,10 @@ describe('WebhookDeliveryProcessor', () => {
     });
 
     await expect(
-      processor.process({ data: { deliveryId: 'delivery-2' }, attemptsMade: 3 } as any),
+      processor.process({
+        data: { deliveryId: 'delivery-2' },
+        attemptsMade: 3,
+      } as any),
     ).rejects.toMatchObject({ message: 'permanent failure' });
 
     expect(deliveryRepository.save).toHaveBeenCalledWith(

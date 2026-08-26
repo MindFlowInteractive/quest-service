@@ -43,7 +43,13 @@ describe('Puzzle Engine Integration', () => {
         { provide: ValidationService, useValue: mockService },
         { provide: CauseEffectEngineService, useValue: mockService },
         { provide: AnalyticsService, useValue: mockService },
-        { provide: 'gameEngine', useValue: { analytics: { sessionTimeout: 1000 }, progression: { perfectSolutionBonus: 1.5 } } },
+        {
+          provide: 'gameEngine',
+          useValue: {
+            analytics: { sessionTimeout: 1000 },
+            progression: { perfectSolutionBonus: 1.5 },
+          },
+        },
       ],
     }).compile();
 

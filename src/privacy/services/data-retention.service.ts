@@ -47,7 +47,10 @@ export class DataRetentionService {
       try {
         await this.applyRetentionPolicy(policy);
       } catch (error) {
-        this.logger.error(`Error applying retention policy for ${policy.entityType}:`, error);
+        this.logger.error(
+          `Error applying retention policy for ${policy.entityType}:`,
+          error,
+        );
       }
     }
 
@@ -58,13 +61,17 @@ export class DataRetentionService {
   /**
    * Apply retention policy to an entity type
    */
-  private async applyRetentionPolicy(policy: DataRetentionPolicy): Promise<void> {
+  private async applyRetentionPolicy(
+    policy: DataRetentionPolicy,
+  ): Promise<void> {
     const now = new Date();
 
     // Handle anonymization
     if (policy.anonymizeAfterDays) {
       const anonymizeBefore = new Date(now);
-      anonymizeBefore.setDate(anonymizeBefore.getDate() - policy.anonymizeAfterDays);
+      anonymizeBefore.setDate(
+        anonymizeBefore.getDate() - policy.anonymizeAfterDays,
+      );
 
       await this.anonymizeOldData(policy.entityType, anonymizeBefore);
     }
@@ -81,10 +88,15 @@ export class DataRetentionService {
   /**
    * Anonymize old data
    */
-  private async anonymizeOldData(entityType: string, beforeDate: Date): Promise<number> {
-    this.logger.log(`Anonymizing ${entityType} data before ${beforeDate.toISOString()}`);
+  private async anonymizeOldData(
+    entityType: string,
+    beforeDate: Date,
+  ): Promise<number> {
+    this.logger.log(
+      `Anonymizing ${entityType} data before ${beforeDate.toISOString()}`,
+    );
 
-    let count = 0;
+    const count = 0;
 
     switch (entityType) {
       case 'game_session':
@@ -99,8 +111,13 @@ export class DataRetentionService {
   /**
    * Delete old data
    */
-  private async deleteOldData(entityType: string, beforeDate: Date): Promise<number> {
-    this.logger.log(`Deleting ${entityType} data before ${beforeDate.toISOString()}`);
+  private async deleteOldData(
+    entityType: string,
+    beforeDate: Date,
+  ): Promise<number> {
+    this.logger.log(
+      `Deleting ${entityType} data before ${beforeDate.toISOString()}`,
+    );
 
     let count = 0;
 
@@ -111,7 +128,7 @@ export class DataRetentionService {
             createdAt: LessThan(beforeDate),
           },
         });
-        
+
         for (const exportRequest of oldExports) {
           await this.exportRequestRepository.delete(exportRequest.id);
           count++;
@@ -136,7 +153,9 @@ export class DataRetentionService {
       if (!settings.autoDeleteAfterDays) continue;
 
       const deleteBefore = new Date();
-      deleteBefore.setDate(deleteBefore.getDate() - settings.autoDeleteAfterDays);
+      deleteBefore.setDate(
+        deleteBefore.getDate() - settings.autoDeleteAfterDays,
+      );
 
       // Check if user has been inactive
       // TODO: Implement inactive user detection and deletion
@@ -148,14 +167,16 @@ export class DataRetentionService {
    * Get retention policy for an entity type
    */
   getRetentionPolicy(entityType: string): DataRetentionPolicy | undefined {
-    return this.defaultPolicies.find(p => p.entityType === entityType);
+    return this.defaultPolicies.find((p) => p.entityType === entityType);
   }
 
   /**
    * Update retention policy (admin only)
    */
   updateRetentionPolicy(policy: DataRetentionPolicy): void {
-    const index = this.defaultPolicies.findIndex(p => p.entityType === policy.entityType);
+    const index = this.defaultPolicies.findIndex(
+      (p) => p.entityType === policy.entityType,
+    );
     if (index >= 0) {
       this.defaultPolicies[index] = policy;
     } else {
@@ -211,7 +232,9 @@ export class DataRetentionService {
     if (settings.autoDeleteEnabled && settings.autoDeleteAfterDays) {
       // TODO: Get user's last activity date and calculate
       autoDeleteDate = new Date();
-      autoDeleteDate.setDate(autoDeleteDate.getDate() + settings.autoDeleteAfterDays);
+      autoDeleteDate.setDate(
+        autoDeleteDate.getDate() + settings.autoDeleteAfterDays,
+      );
     }
 
     return {

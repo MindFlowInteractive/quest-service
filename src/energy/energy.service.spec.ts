@@ -115,7 +115,9 @@ describe('EnergyService', () => {
 
       const result = await service.initializeUserEnergy(userId);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { userId } });
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { userId },
+      });
       expect(mockRepository.create).toHaveBeenCalled();
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result).toEqual(mockUserEnergy);
@@ -129,7 +131,9 @@ describe('EnergyService', () => {
 
       const result = await service.initializeUserEnergy(userId);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { userId } });
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { userId },
+      });
       expect(mockRepository.create).not.toHaveBeenCalled();
       expect(result).toEqual(existingUserEnergy);
     });

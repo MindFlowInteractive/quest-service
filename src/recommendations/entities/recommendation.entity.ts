@@ -29,7 +29,12 @@ export class Recommendation {
 
   @Column({ type: 'varchar', length: 50 })
   @Index()
-  algorithm: 'collaborative' | 'content-based' | 'hybrid' | 'popular' | 'fallback';
+  algorithm:
+    | 'collaborative'
+    | 'content-based'
+    | 'hybrid'
+    | 'popular'
+    | 'fallback';
 
   @Column({ type: 'decimal', precision: 5, scale: 4 })
   @Index()

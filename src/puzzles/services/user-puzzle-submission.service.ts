@@ -1,8 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between } from 'typeorm';
-import { UserPuzzleSubmission, PuzzleSubmissionStatus } from '../entities/user-puzzle-submission.entity';
-import { CreatePuzzleSubmissionDto, UpdatePuzzleSubmissionDto, SubmitForReviewDto } from '../dto/user-puzzle-submission.dto';
+import {
+  UserPuzzleSubmission,
+  PuzzleSubmissionStatus,
+} from '../entities/user-puzzle-submission.entity';
+import {
+  CreatePuzzleSubmissionDto,
+  UpdatePuzzleSubmissionDto,
+  SubmitForReviewDto,
+} from '../dto/user-puzzle-submission.dto';
 import { SearchPuzzlesDto } from '../dto/community-puzzles.dto';
 import { PuzzleValidationService } from './puzzle-validation.service';
 import { PuzzleModerationService } from './puzzle-moderation.service';
@@ -37,12 +44,15 @@ export class UserPuzzleSubmissionService {
 
     // Generate shareable link if public
     if (createDto.isPublic) {
-      submission.sharingSettings.shareableLink = await this.generateShareableLink();
+      submission.sharingSettings.shareableLink =
+        await this.generateShareableLink();
     }
 
     const savedSubmission = await this.submissionRepository.save(submission);
-    
-    this.logger.log(`Created puzzle submission ${savedSubmission.id} for user ${userId}`);
+
+    this.logger.log(
+      `Created puzzle submission ${savedSubmission.id} for user ${userId}`,
+    );
     return savedSubmission;
   }
 
@@ -58,7 +68,7 @@ export class UserPuzzleSubmissionService {
     totalPages: number;
   }> {
     const where = status ? { userId, status } : { userId };
-    
+
     const [submissions, total] = await this.submissionRepository.findAndCount({
       where,
       order: { createdAt: 'DESC' },
@@ -86,8 +96,15 @@ export class UserPuzzleSubmissionService {
     }
 
     // Increment view count for public puzzles
-    if (submission.isPublic && submission.status === PuzzleSubmissionStatus.PUBLISHED) {
-      await this.submissionRepository.increment({ id: submissionId }, 'views', 1);
+    if (
+      submission.isPublic &&
+      submission.status === PuzzleSubmissionStatus.PUBLISHED
+    ) {
+      await this.submissionRepository.increment(
+        { id: submissionId },
+        'views',
+        1,
+      );
     }
 
     return submission;
@@ -114,8 +131,10 @@ export class UserPuzzleSubmissionService {
     submission.updatedAt = new Date();
 
     const savedSubmission = await this.submissionRepository.save(submission);
-    
-    this.logger.log(`Updated puzzle submission ${submissionId} by user ${userId}`);
+
+    this.logger.log(
+      `Updated puzzle submission ${submissionId} by user ${userId}`,
+    );
     return savedSubmission;
   }
 
@@ -133,8 +152,10 @@ export class UserPuzzleSubmissionService {
     }
 
     await this.submissionRepository.remove(submission);
-    
-    this.logger.log(`Deleted puzzle submission ${submissionId} by user ${userId}`);
+
+    this.logger.log(
+      `Deleted puzzle submission ${submissionId} by user ${userId}`,
+    );
   }
 
   async submitForReview(
@@ -142,16 +163,21 @@ export class UserPuzzleSubmissionService {
     userId: string,
     reviewData?: SubmitForReviewDto,
   ): Promise<UserPuzzleSubmission> {
-    return await this.moderationService.submitForReview(submissionId, userId, reviewData);
+    return await this.moderationService.submitForReview(
+      submissionId,
+      userId,
+      reviewData,
+    );
   }
 
-  async publishPuzzle(submissionId: string, userId: string): Promise<UserPuzzleSubmission> {
+  async publishPuzzle(
+    submissionId: string,
+    userId: string,
+  ): Promise<UserPuzzleSubmission> {
     return await this.moderationService.publishPuzzle(submissionId, userId);
   }
 
-  async searchCommunityPuzzles(
-    searchDto: SearchPuzzlesDto,
-  ): Promise<{
+  async searchCommunityPuzzles(searchDto: SearchPuzzlesDto): Promise<{
     submissions: UserPuzzleSubmission[];
     total: number;
     page: number;
@@ -171,7 +197,9 @@ export class UserPuzzleSubmissionService {
     const queryBuilder = this.submissionRepository
       .createQueryBuilder('submission')
       .where('submission.isPublic = :isPublic', { isPublic })
-      .andWhere('submission.status = :status', { status: PuzzleSubmissionStatus.PUBLISHED });
+      .andWhere('submission.status = :status', {
+        status: PuzzleSubmissionStatus.PUBLISHED,
+      });
 
     // Text search
     if (query) {
@@ -183,12 +211,16 @@ export class UserPuzzleSubmissionService {
 
     // Category filter
     if (categories && categories.length > 0) {
-      queryBuilder.andWhere('submission.category IN (:...categories)', { categories });
+      queryBuilder.andWhere('submission.category IN (:...categories)', {
+        categories,
+      });
     }
 
     // Difficulty filter
     if (difficulties && difficulties.length > 0) {
-      queryBuilder.andWhere('submission.difficulty IN (:...difficulties)', { difficulties });
+      queryBuilder.andWhere('submission.difficulty IN (:...difficulties)', {
+        difficulties,
+      });
     }
 
     // Tags filter
@@ -219,7 +251,9 @@ export class UserPuzzleSubmissionService {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         queryBuilder
           .orderBy('submission.lastActivityAt', 'DESC')
-          .andWhere('submission.lastActivityAt >= :sevenDaysAgo', { sevenDaysAgo });
+          .andWhere('submission.lastActivityAt >= :sevenDaysAgo', {
+            sevenDaysAgo,
+          });
         break;
     }
 
@@ -236,7 +270,9 @@ export class UserPuzzleSubmissionService {
     };
   }
 
-  async getFeaturedPuzzles(limit: number = 10): Promise<UserPuzzleSubmission[]> {
+  async getFeaturedPuzzles(
+    limit: number = 10,
+  ): Promise<UserPuzzleSubmission[]> {
     return await this.submissionRepository.find({
       where: {
         status: PuzzleSubmissionStatus.FEATURED,
@@ -247,14 +283,18 @@ export class UserPuzzleSubmissionService {
     });
   }
 
-  async getTrendingPuzzles(limit: number = 10): Promise<UserPuzzleSubmission[]> {
+  async getTrendingPuzzles(
+    limit: number = 10,
+  ): Promise<UserPuzzleSubmission[]> {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     return await this.submissionRepository
       .createQueryBuilder('submission')
       .where('submission.isPublic = :isPublic', { isPublic: true })
-      .andWhere('submission.status = :status', { status: PuzzleSubmissionStatus.PUBLISHED })
+      .andWhere('submission.status = :status', {
+        status: PuzzleSubmissionStatus.PUBLISHED,
+      })
       .andWhere('submission.lastActivityAt >= :sevenDaysAgo', { sevenDaysAgo })
       .orderBy('submission.playCount', 'DESC')
       .addOrderBy('submission.averageRating', 'DESC')
@@ -268,11 +308,13 @@ export class UserPuzzleSubmissionService {
   ): Promise<UserPuzzleSubmission[]> {
     // Simple recommendation based on user's play history and preferences
     // In a real implementation, this would use a more sophisticated algorithm
-    
+
     return await this.submissionRepository
       .createQueryBuilder('submission')
       .where('submission.isPublic = :isPublic', { isPublic: true })
-      .andWhere('submission.status = :status', { status: PuzzleSubmissionStatus.PUBLISHED })
+      .andWhere('submission.status = :status', {
+        status: PuzzleSubmissionStatus.PUBLISHED,
+      })
       .andWhere('submission.userId != :userId', { userId })
       .orderBy('submission.communityScore', 'DESC')
       .addOrderBy('submission.averageRating', 'DESC')
@@ -281,7 +323,11 @@ export class UserPuzzleSubmissionService {
   }
 
   async incrementPlayCount(submissionId: string): Promise<void> {
-    await this.submissionRepository.increment({ id: submissionId }, 'playCount', 1);
+    await this.submissionRepository.increment(
+      { id: submissionId },
+      'playCount',
+      1,
+    );
     await this.submissionRepository.update(
       { id: submissionId },
       { lastActivityAt: new Date() },
@@ -289,20 +335,29 @@ export class UserPuzzleSubmissionService {
   }
 
   async generateShareableLink(): Promise<string> {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
     for (let i = 0; i < 12; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
+      result += characters.charAt(
+        Math.floor(Math.random() * characters.length),
+      );
     }
     return result;
   }
 
-  async getSubmissionByShareableLink(shareableLink: string): Promise<UserPuzzleSubmission> {
+  async getSubmissionByShareableLink(
+    shareableLink: string,
+  ): Promise<UserPuzzleSubmission> {
     const submission = await this.submissionRepository
       .createQueryBuilder('submission')
-      .where("submission.sharingSettings->>'shareableLink' = :shareableLink", { shareableLink })
+      .where("submission.sharingSettings->>'shareableLink' = :shareableLink", {
+        shareableLink,
+      })
       .andWhere('submission.isPublic = :isPublic', { isPublic: true })
-      .andWhere('submission.status = :status', { status: PuzzleSubmissionStatus.PUBLISHED })
+      .andWhere('submission.status = :status', {
+        status: PuzzleSubmissionStatus.PUBLISHED,
+      })
       .getOne();
 
     if (!submission) {
@@ -310,7 +365,11 @@ export class UserPuzzleSubmissionService {
     }
 
     // Increment view count
-    await this.submissionRepository.increment({ id: submission.id }, 'views', 1);
+    await this.submissionRepository.increment(
+      { id: submission.id },
+      'views',
+      1,
+    );
 
     return submission;
   }

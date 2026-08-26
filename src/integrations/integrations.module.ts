@@ -9,11 +9,15 @@ import { TwitterService } from './services/twitter.service';
 import { IntegrationNotificationService } from './services/integration-notification.service';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([SocialAccount, IntegrationSettings, WebhookEvent]),
-    ],
-    controllers: [IntegrationsController],
-    providers: [DiscordService, TwitterService, IntegrationNotificationService],
-    exports: [DiscordService, TwitterService, IntegrationNotificationService],
+  imports: [
+    TypeOrmModule.forFeature([
+      SocialAccount,
+      IntegrationSettings,
+      WebhookEvent,
+    ]),
+  ],
+  controllers: [IntegrationsController],
+  providers: [DiscordService, TwitterService, IntegrationNotificationService],
+  exports: [DiscordService, TwitterService, IntegrationNotificationService],
 })
-export class IntegrationsModule { }
+export class IntegrationsModule {}

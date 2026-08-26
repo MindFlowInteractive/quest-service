@@ -142,8 +142,9 @@ export class TournamentsController {
   @Get(':id/spectators')
   async getSpectators(@Param('id') id: string) {
     try {
-      const spectators =
-        await this.tournamentsService.getTournamentSpectators(id);
+      const spectators = await this.tournamentsService.getTournamentSpectators(
+        id,
+      );
       return {
         success: true,
         data: spectators,

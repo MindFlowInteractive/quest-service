@@ -5,7 +5,7 @@ export const EVENT_HANDLER_METADATA = 'EVENT_HANDLER_METADATA';
 
 /**
  * Decorator to mark a method as an event handler
- * 
+ *
  * @example
  * ```typescript
  * @EventHandler({

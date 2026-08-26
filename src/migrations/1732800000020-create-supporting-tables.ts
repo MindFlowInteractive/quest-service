@@ -1,4 +1,9 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableForeignKey,
+} from 'typeorm';
 
 export class CreateSupportingTables1732800000020 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -135,13 +140,35 @@ export class CreateSupportingTables1732800000020 implements MigrationInterface {
           },
         ],
         indices: [
-          { name: 'IDX_user_stats_userId', columnNames: ['userId'], isUnique: true },
-          { name: 'IDX_user_stats_totalPuzzlesAttempted', columnNames: ['totalPuzzlesAttempted'] },
-          { name: 'IDX_user_stats_totalPuzzlesCompleted', columnNames: ['totalPuzzlesCompleted'] },
-          { name: 'IDX_user_stats_longestStreak', columnNames: ['longestStreak'] },
-          { name: 'IDX_user_stats_overallAccuracy', columnNames: ['overallAccuracy'] },
-          { name: 'IDX_user_stats_lastActivityAt', columnNames: ['lastActivityAt'] },
-          { name: 'IDX_user_stats_lastCalculatedAt', columnNames: ['lastCalculatedAt'] },
+          {
+            name: 'IDX_user_stats_userId',
+            columnNames: ['userId'],
+            isUnique: true,
+          },
+          {
+            name: 'IDX_user_stats_totalPuzzlesAttempted',
+            columnNames: ['totalPuzzlesAttempted'],
+          },
+          {
+            name: 'IDX_user_stats_totalPuzzlesCompleted',
+            columnNames: ['totalPuzzlesCompleted'],
+          },
+          {
+            name: 'IDX_user_stats_longestStreak',
+            columnNames: ['longestStreak'],
+          },
+          {
+            name: 'IDX_user_stats_overallAccuracy',
+            columnNames: ['overallAccuracy'],
+          },
+          {
+            name: 'IDX_user_stats_lastActivityAt',
+            columnNames: ['lastActivityAt'],
+          },
+          {
+            name: 'IDX_user_stats_lastCalculatedAt',
+            columnNames: ['lastCalculatedAt'],
+          },
           { name: 'IDX_user_stats_createdAt', columnNames: ['createdAt'] },
           { name: 'IDX_user_stats_updatedAt', columnNames: ['updatedAt'] },
         ],
@@ -218,10 +245,20 @@ export class CreateSupportingTables1732800000020 implements MigrationInterface {
           },
         ],
         indices: [
-          { name: 'IDX_puzzle_ratings_userId_puzzleId', columnNames: ['userId', 'puzzleId'], isUnique: true },
-          { name: 'IDX_puzzle_ratings_puzzleId_rating', columnNames: ['puzzleId', 'rating'] },
+          {
+            name: 'IDX_puzzle_ratings_userId_puzzleId',
+            columnNames: ['userId', 'puzzleId'],
+            isUnique: true,
+          },
+          {
+            name: 'IDX_puzzle_ratings_puzzleId_rating',
+            columnNames: ['puzzleId', 'rating'],
+          },
           { name: 'IDX_puzzle_ratings_userId', columnNames: ['userId'] },
-          { name: 'IDX_puzzle_ratings_isReported', columnNames: ['isReported'] },
+          {
+            name: 'IDX_puzzle_ratings_isReported',
+            columnNames: ['isReported'],
+          },
           { name: 'IDX_puzzle_ratings_isPublic', columnNames: ['isPublic'] },
           { name: 'IDX_puzzle_ratings_createdAt', columnNames: ['createdAt'] },
         ],
@@ -289,11 +326,21 @@ export class CreateSupportingTables1732800000020 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop performance indexes
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS idx_game_sessions_analytics;');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS idx_achievements_unlock_rate;');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS idx_puzzle_progress_performance;');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS idx_puzzles_search;');
-    await queryRunner.query('DROP INDEX CONCURRENTLY IF EXISTS idx_users_performance_lookup;');
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS idx_game_sessions_analytics;',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS idx_achievements_unlock_rate;',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS idx_puzzle_progress_performance;',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS idx_puzzles_search;',
+    );
+    await queryRunner.query(
+      'DROP INDEX CONCURRENTLY IF EXISTS idx_users_performance_lookup;',
+    );
 
     await queryRunner.dropTable('puzzle_ratings');
     await queryRunner.dropTable('user_stats');

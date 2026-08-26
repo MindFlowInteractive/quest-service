@@ -1,11 +1,24 @@
-import { IsUUID, IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import {
+  IsUUID,
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+} from 'class-validator';
 
 /**
  * DTO for recording an action during gameplay
  */
 export class RecordActionDto {
   @IsString()
-  actionType: 'MOVE' | 'HINT_USED' | 'STATE_CHANGE' | 'UNDO' | 'SUBMISSION' | 'PAUSE' | 'RESUME';
+  actionType:
+    | 'MOVE'
+    | 'HINT_USED'
+    | 'STATE_CHANGE'
+    | 'UNDO'
+    | 'SUBMISSION'
+    | 'PAUSE'
+    | 'RESUME';
 
   @IsNumber()
   timestamp: number; // Milliseconds from replay start
