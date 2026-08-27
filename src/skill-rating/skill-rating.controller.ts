@@ -106,4 +106,25 @@ export class SkillRatingController {
     await this.skillRatingService.endSeason(seasonId);
     return { message: `Season ${seasonId} ended successfully` };
   }
+
+  /**
+   * Get past season details
+   */
+  @Get('season/past/:seasonId')
+  async getPastSeasonDetails(
+    @Param('seasonId') seasonId: string,
+  ): Promise<any> {
+    return this.skillRatingService.getPastSeasonDetails(seasonId);
+  }
+
+  /**
+   * Get player's season performance
+   */
+  @Get('player/:userId/season/:seasonId')
+  async getPlayerSeasonPerformance(
+    @Param('userId') userId: string,
+    @Param('seasonId') seasonId: string,
+  ): Promise<any> {
+    return this.skillRatingService.getPlayerSeasonPerformance(userId, seasonId);
+  }
 }
