@@ -58,6 +58,7 @@ export class SkillRatingService {
     @InjectRepository(Puzzle)
     private puzzleRepository: Repository<Puzzle>,
     private eloService: ELOService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -326,6 +327,36 @@ export class SkillRatingService {
     }
 
     this.logger.log(`Applied inactivity decay to ${decayCount} players`);
+  }
+
+  /**
+   * Cron job to automatically end expired seasons
+   * Runs every hour
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async checkAndEndExpiredSeasons(): Promise<void> {
+    this.logger.log('Checking for expired seasons...');
+
+    const now = new Date();
+
+    try {
+      // Find all active seasons that have passed their end date
+      const expiredSeasons = await this.seasonRepository.find({
+        where: {
+          status: SeasonEntityStatus.ACTIVE,
+          endDate: LessThan(now),
+        },
+      });
+
+      for (const season of expiredSeasons) {
+        this.logger.log(`Ending expired season: ${season.name} (${season.seasonId})`);
+        await this.endSeason(season.seasonId);
+      }
+
+      this.logger.log(`Processed ${expiredSeasons.length} expired seasons`);
+    } catch (error) {
+      this.logger.error('Error in expired seasons check', error);
+    }
   }
 
   /**
