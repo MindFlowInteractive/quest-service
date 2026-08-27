@@ -71,6 +71,8 @@ export class Season {
     theme?: string;
     specialRewards?: any[];
     achievements?: string[];
+    leaderboardSnapshot?: any[];
+    finalStatistics?: any;
   };
 
   @CreateDateColumn()
