@@ -8,12 +8,17 @@ import { AdminUsersController } from './controllers/admin-users.controller';
 import { AdminAnalyticsController } from './controllers/admin-analytics.controller';
 import { AdminModerationController } from './controllers/admin-moderation.controller';
 import { AdminMonitoringController } from './controllers/admin-monitoring.controller';
+import { AdminAuditController } from './controllers/admin-audit.controller';
+import { AdminNotificationsController } from './controllers/admin-notifications.controller';
+import { AdminCdnController } from './controllers/admin-cdn.controller';
 import { PuzzlesModule } from '../puzzles/puzzles.module';
 import { AuthModule } from '../auth/auth.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { User } from '../auth/entities/user.entity';
 import { Role } from '../auth/entities/role.entity';
 import { PrivacyModule } from '../privacy/privacy.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { CdnModule } from '../cdn/cdn.module';
 
 @Module({
   imports: [
@@ -22,6 +27,8 @@ import { PrivacyModule } from '../privacy/privacy.module';
     AuthModule,
     AnalyticsModule,
     PrivacyModule,
+    NotificationsModule,
+    CdnModule,
   ],
   controllers: [
     AdminPuzzlesController,
@@ -29,6 +36,9 @@ import { PrivacyModule } from '../privacy/privacy.module';
     AdminAnalyticsController,
     AdminModerationController,
     AdminMonitoringController,
+    AdminAuditController,
+    AdminNotificationsController,
+    AdminCdnController,
   ],
   providers: [AdminAuditLogService, AdminUsersService],
   exports: [AdminAuditLogService, AdminUsersService],
