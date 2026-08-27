@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, MoreThan, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { NotificationService } from '../notifications/notification.service';
 import {
   PlayerRating,
   SkillTier,
