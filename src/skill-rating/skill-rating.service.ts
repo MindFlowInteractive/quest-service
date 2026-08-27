@@ -701,6 +701,72 @@ export class SkillRatingService {
   }
 
   /**
+   * Get past season details including leaderboard snapshot and statistics
+   */
+  async getPastSeasonDetails(seasonId: string): Promise<any> {
+    const season = await this.seasonRepository.findOne({
+      where: { seasonId },
+    });
+
+    if (!season) {
+      throw new NotFoundException(`Season not found: ${seasonId}`);
+    }
+
+    if (season.status !== SeasonEntityStatus.ENDED) {
+      throw new BadRequestException('Can only retrieve details for ended seasons');
+    }
+
+    return {
+      id: season.id,
+      seasonId: season.seasonId,
+      name: season.name,
+      startDate: season.startDate,
+      endDate: season.endDate,
+      metadata: season.metadata,
+      leaderboardSnapshot: season.metadata.leaderboardSnapshot || [],
+      statistics: season.metadata.finalStatistics || {},
+    };
+  }
+
+  /**
+   * Get player's performance in a specific past season
+   */
+  async getPlayerSeasonPerformance(userId: string, seasonId: string): Promise<any> {
+    const playerRating = await this.playerRatingRepository.findOne({
+      where: { userId, seasonId },
+    });
+
+    if (!playerRating) {
+      throw new NotFoundException(`No rating found for user ${userId} in season ${seasonId}`);
+    }
+
+    const season = await this.seasonRepository.findOne({
+      where: { seasonId },
+    });
+
+    if (!season) {
+      throw new NotFoundException(`Season not found: ${seasonId}`);
+    }
+
+    // Find player's rank in the season snapshot
+    const snapshot = season.metadata.leaderboardSnapshot || [];
+    const playerEntry = snapshot.find((entry: any) => entry.userId === userId);
+
+    return {
+      seasonName: season.name,
+      seasonId: season.seasonId,
+      finalRank: playerEntry?.rank || null,
+      finalRating: playerRating.rating,
+      finalTier: playerRating.tier,
+      gamesPlayed: playerRating.gamesPlayed,
+      winRate: playerRating.winRate,
+      bestStreak: playerRating.bestStreak,
+      highestRating: playerRating.statistics.highestRating,
+      rewards: playerRating.statistics.seasonRewards || [],
+    };
+  }
+
+  /**
    * Trigger a rating loss for an abandoned puzzle, but only when the player
    * has consumed at least 80 % of the time limit (they were genuinely engaged).
    * Returns null when the threshold is not met (no rating change).
