@@ -12,6 +12,8 @@ import { Event } from './events/event.entity';
 import { EventsModule } from './events/events.module';
 import { JobsModule } from './jobs/jobs.module';
 import { Job } from './jobs/job.entity';
+import { CdnModule } from './cdn/cdn.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -39,6 +41,7 @@ import { Job } from './jobs/job.entity';
         password: configService.get<string>('DB_PASSWORD', 'password'),
         database: configService.get<string>('DB_NAME', 'cache_warming_db'),
         entities: [CacheJob, PreloadData, Metric, Event, DeadLetterEvent, Job],
+        autoLoadEntities: true,
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: configService.get<string>('NODE_ENV') === 'development',
       }),
@@ -48,6 +51,8 @@ import { Job } from './jobs/job.entity';
     CacheWarmingModule,
     EventsModule,
     JobsModule,
+    CdnModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

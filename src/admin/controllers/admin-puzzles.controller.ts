@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
+  Query,
   HttpStatus,
   HttpCode,
   Req,
@@ -35,7 +36,7 @@ export class AdminPuzzlesController {
   ) {}
 
   @Get()
-  async findAll(@Body() searchDto: SearchPuzzleDto) {
+  async findAll(@Query() searchDto: SearchPuzzleDto) {
     return await this.puzzlesService.findAll(searchDto);
   }
 
