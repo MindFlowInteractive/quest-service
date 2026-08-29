@@ -13,6 +13,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { User } from '../users/entities/user.entity';
 import { Puzzle } from '../puzzles/entities/puzzle.entity';
 import { ELOService } from './elo.service';
+import { NotificationService } from '../notifications/notification.service';
+import { Notification } from '../notifications/entities/notification.entity';
+import { NotificationDelivery } from '../notifications/entities/notification-delivery.entity';
+import { Device } from '../notifications/entities/device.entity';
 
 @Module({
   imports: [
@@ -22,6 +26,9 @@ import { ELOService } from './elo.service';
       Season,
       User,
       Puzzle,
+      Notification,
+      NotificationDelivery,
+      Device,
     ]),
     ScheduleModule.forRoot(),
   ],
@@ -30,7 +37,7 @@ import { ELOService } from './elo.service';
     PlayerRatingController,
     RatingsController,
   ],
-  providers: [SkillRatingService, ELOService],
+  providers: [SkillRatingService, ELOService, NotificationService],
   exports: [SkillRatingService],
 })
 export class SkillRatingModule {}

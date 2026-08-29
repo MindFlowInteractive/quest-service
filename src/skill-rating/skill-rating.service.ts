@@ -3,10 +3,12 @@ import {
   Logger,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, MoreThan, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { NotificationService } from '../notifications/notification.service';
 import {
   PlayerRating,
   SkillTier,
@@ -57,6 +59,7 @@ export class SkillRatingService {
     @InjectRepository(Puzzle)
     private puzzleRepository: Repository<Puzzle>,
     private eloService: ELOService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -328,6 +331,36 @@ export class SkillRatingService {
   }
 
   /**
+   * Cron job to automatically end expired seasons
+   * Runs every hour
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async checkAndEndExpiredSeasons(): Promise<void> {
+    this.logger.log('Checking for expired seasons...');
+
+    const now = new Date();
+
+    try {
+      // Find all active seasons that have passed their end date
+      const expiredSeasons = await this.seasonRepository.find({
+        where: {
+          status: SeasonEntityStatus.ACTIVE,
+          endDate: LessThan(now),
+        },
+      });
+
+      for (const season of expiredSeasons) {
+        this.logger.log(`Ending expired season: ${season.name} (${season.seasonId})`);
+        await this.endSeason(season.seasonId);
+      }
+
+      this.logger.log(`Processed ${expiredSeasons.length} expired seasons`);
+    } catch (error) {
+      this.logger.error('Error in expired seasons check', error);
+    }
+  }
+
+  /**
    * End current season and reset ratings
    */
   async endSeason(seasonId: string): Promise<void> {
@@ -339,22 +372,57 @@ export class SkillRatingService {
       throw new Error(`Season not found: ${seasonId}`);
     }
 
-    // Update season status
+    if (season.status === SeasonEntityStatus.ENDED) {
+      this.logger.log(`Season ${seasonId} already ended`);
+      return;
+    }
+
+    // 1. Create comprehensive leaderboard snapshot
+    const allRatings = await this.playerRatingRepository.find({
+      where: {
+        seasonId,
+        seasonStatus: SeasonStatus.ACTIVE,
+      },
+      order: {
+        rating: 'DESC',
+        lastPlayedAt: 'ASC',
+      },
+      relations: ['user'],
+    });
+
+    const snapshot = allRatings.map((rating, index) => ({
+      rank: index + 1,
+      userId: rating.userId,
+      username: rating.user?.username,
+      rating: rating.rating,
+      tier: rating.tier,
+      gamesPlayed: rating.gamesPlayed,
+      winRate: rating.winRate,
+      bestStreak: rating.bestStreak,
+      highestRating: rating.statistics.highestRating,
+    }));
+
+    // 2. Store snapshot in season metadata
+    season.metadata = {
+      ...season.metadata,
+      leaderboardSnapshot: snapshot,
+      endedAt: new Date(),
+      totalParticipants: allRatings.length,
+      finalStatistics: this.calculateSeasonStatistics(allRatings),
+    };
+
+    // 3. Calculate and distribute rewards
+    await this.distributeSeasonRewards(season, allRatings);
+
+    // 4. Update season status
     season.status = SeasonEntityStatus.ENDED;
     await this.seasonRepository.save(season);
 
-    // If reset is required, create new ratings for next season
+    // 5. If reset is required, create new ratings for next season
     if (season.requiresReset) {
-      const currentRatings = await this.playerRatingRepository.find({
-        where: {
-          seasonId,
-          seasonStatus: SeasonStatus.ACTIVE,
-        },
-      });
-
       const nextSeasonId = this.generateNextSeasonId(seasonId);
 
-      for (const rating of currentRatings) {
+      for (const rating of allRatings) {
         // Mark current rating as reset
         rating.seasonStatus = SeasonStatus.RESET;
         await this.playerRatingRepository.save(rating);
@@ -389,9 +457,140 @@ export class SkillRatingService {
       });
 
       await this.seasonRepository.save(newSeason);
+
+      // Notify all users about new season
+      await this.notifyNewSeasonStarted(newSeason);
     }
 
-    this.logger.log(`Ended season ${seasonId}`);
+    this.logger.log(`Ended season ${seasonId} with ${snapshot.length} participants in snapshot`);
+  }
+
+  /**
+   * Calculate comprehensive season statistics
+   */
+  private calculateSeasonStatistics(ratings: any[]) {
+    if (ratings.length === 0) {
+      return {
+        totalParticipants: 0,
+        averageRating: 0,
+        averageGamesPlayed: 0,
+        averageWinRate: 0,
+        tierDistribution: {},
+        top10PercentileRating: 0,
+      };
+    }
+
+    const totalRating = ratings.reduce((sum, r) => sum + r.rating, 0);
+    const totalGames = ratings.reduce((sum, r) => sum + r.gamesPlayed, 0);
+    const totalWinRate = ratings.reduce((sum, r) => sum + r.winRate, 0);
+
+    // Calculate tier distribution
+    const tierDistribution: Record<string, number> = {};
+    ratings.forEach(r => {
+      tierDistribution[r.tier] = (tierDistribution[r.tier] || 0) + 1;
+    });
+
+    // Calculate 90th percentile rating
+    const sortedRatings = [...ratings].sort((a, b) => b.rating - a.rating);
+    const top10Index = Math.floor(ratings.length * 0.1);
+    const top10PercentileRating = sortedRatings[top10Index]?.rating || 0;
+
+    return {
+      totalParticipants: ratings.length,
+      averageRating: Math.round(totalRating / ratings.length),
+      averageGamesPlayed: Math.round(totalGames / ratings.length),
+      averageWinRate: Math.round((totalWinRate / ratings.length) * 100) / 100,
+      tierDistribution,
+      top10PercentileRating,
+    };
+  }
+
+  /**
+   * Calculate and distribute season rewards
+   */
+  private async distributeSeasonRewards(season: any, allRatings: any[]) {
+    if (allRatings.length === 0) return;
+
+    const rewardTiers = season.metadata.specialRewards || [
+      { rank: 1, rewards: ['Exclusive Grandmaster Title', '10000 In-Game Currency', 'Rare NFT Badge'] },
+      { rank: 2, rewards: ['Master Title', '7500 In-Game Currency', 'Epic NFT Badge'] },
+      { rank: 3, rewards: ['Diamond Title', '5000 In-Game Currency', 'Rare Badge'] },
+      { rank: 10, rewards: ['Platinum Title', '2500 In-Game Currency'] },
+      { rank: 100, rewards: ['Gold Title', '1000 In-Game Currency'] },
+      { rank: 1000, rewards: ['Silver Badge', '500 In-Game Currency'] },
+    ];
+
+    // Distribute rewards to top players
+    const topPlayers = allRatings.slice(0, Math.min(1000, allRatings.length));
+    
+    for (let i = 0; i < topPlayers.length; i++) {
+      const player = topPlayers[i];
+      const rank = i + 1;
+      
+      // Find all applicable rewards for this rank
+      const applicableRewards = rewardTiers
+        .filter(tier => rank <= tier.rank)
+        .flatMap(tier => tier.rewards);
+
+      if (applicableRewards.length > 0) {
+        // Update player's rating record with earned rewards
+        player.statistics = {
+          ...player.statistics,
+          seasonRewards: applicableRewards,
+          finalRank: rank,
+        };
+        await this.playerRatingRepository.save(player);
+
+        // Notify player about their rewards
+        await this.notifyPlayerAboutRewards(player, season, rank, applicableRewards);
+      }
+    }
+
+    this.logger.log(`Distributed rewards to ${topPlayers.length} players for season ${season.seasonId}`);
+  }
+
+  /**
+   * Notify a player about their season rewards
+   */
+  private async notifyPlayerAboutRewards(player: any, season: any, rank: number, rewards: string[]) {
+    try {
+      await this.notificationService.createNotificationForUsers({
+        userIds: [player.userId],
+        type: 'season_rewards',
+        title: `Season ${season.name} Rewards Available!`,
+        body: `You finished ranked #${rank} and earned: ${rewards.join(', ')}`,
+        meta: {
+          seasonId: season.seasonId,
+          rank,
+          rewards,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to notify player ${player.userId} about rewards`, error);
+    }
+  }
+
+  /**
+   * Notify all users about a new season starting
+   */
+  private async notifyNewSeasonStarted(newSeason: any) {
+    try {
+      await this.notificationService.createNotificationForUsers({
+        segment: { key: 'status', value: 'active' },
+        type: 'new_season',
+        title: `${newSeason.name} has started!`,
+        body: 'A new competitive season has begun. Climb the leaderboards and earn exclusive rewards!',
+        meta: {
+          seasonId: newSeason.seasonId,
+          seasonName: newSeason.name,
+          startDate: newSeason.startDate,
+          endDate: newSeason.endDate,
+        },
+      });
+      this.logger.log(`Notified all active users about new season: ${newSeason.name}`);
+    } catch (error) {
+      this.logger.error(`Failed to notify users about new season`, error);
+    }
   }
 
   /**
@@ -500,6 +699,72 @@ export class SkillRatingService {
     }
 
     return this.getPlayerRatingWithDetails(targetUserId);
+  }
+
+  /**
+   * Get past season details including leaderboard snapshot and statistics
+   */
+  async getPastSeasonDetails(seasonId: string): Promise<any> {
+    const season = await this.seasonRepository.findOne({
+      where: { seasonId },
+    });
+
+    if (!season) {
+      throw new NotFoundException(`Season not found: ${seasonId}`);
+    }
+
+    if (season.status !== SeasonEntityStatus.ENDED) {
+      throw new BadRequestException('Can only retrieve details for ended seasons');
+    }
+
+    return {
+      id: season.id,
+      seasonId: season.seasonId,
+      name: season.name,
+      startDate: season.startDate,
+      endDate: season.endDate,
+      metadata: season.metadata,
+      leaderboardSnapshot: season.metadata.leaderboardSnapshot || [],
+      statistics: season.metadata.finalStatistics || {},
+    };
+  }
+
+  /**
+   * Get player's performance in a specific past season
+   */
+  async getPlayerSeasonPerformance(userId: string, seasonId: string): Promise<any> {
+    const playerRating = await this.playerRatingRepository.findOne({
+      where: { userId, seasonId },
+    });
+
+    if (!playerRating) {
+      throw new NotFoundException(`No rating found for user ${userId} in season ${seasonId}`);
+    }
+
+    const season = await this.seasonRepository.findOne({
+      where: { seasonId },
+    });
+
+    if (!season) {
+      throw new NotFoundException(`Season not found: ${seasonId}`);
+    }
+
+    // Find player's rank in the season snapshot
+    const snapshot = season.metadata.leaderboardSnapshot || [];
+    const playerEntry = snapshot.find((entry: any) => entry.userId === userId);
+
+    return {
+      seasonName: season.name,
+      seasonId: season.seasonId,
+      finalRank: playerEntry?.rank || null,
+      finalRating: playerRating.rating,
+      finalTier: playerRating.tier,
+      gamesPlayed: playerRating.gamesPlayed,
+      winRate: playerRating.winRate,
+      bestStreak: playerRating.bestStreak,
+      highestRating: playerRating.statistics.highestRating,
+      rewards: playerRating.statistics.seasonRewards || [],
+    };
   }
 
   /**
