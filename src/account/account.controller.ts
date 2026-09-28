@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Delete,
+  Get,
   Body,
   Req,
   Res,
@@ -10,6 +11,9 @@ import {
   HttpStatus,
   UseGuards,
   Logger,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -36,6 +40,12 @@ import {
   AccessReason,
 } from '../privacy/entities/data-access-audit.entity';
 import { User } from '../users/entities/user.entity';
+import { AccountManagementService } from './account-management.service';
+import {
+  RequestResetDto,
+  ConfirmResetDto,
+  LinkAccountDto,
+} from './dto/account-management.dto';
 
 @ApiTags('Account (GDPR)')
 @ApiBearerAuth()
@@ -50,6 +60,7 @@ export class AccountController {
     private readonly exportService: DataExportService,
     private readonly deletionService: DataDeletionService,
     private readonly auditService: AuditService,
+    private readonly managementService: AccountManagementService,
   ) {}
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -183,5 +194,113 @@ export class AccountController {
       deletionId: request.id,
       cancelledAt: request.cancelledAt,
     };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Progression Reset  (#454)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Post('reset')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({
+    summary: 'Request a progression reset (creates backup first)',
+    description:
+      'Initiates a progression reset. A confirmation token is returned. ' +
+      'The reset is not applied until POST /account/reset/confirm is called ' +
+      'with that token (after a 5-minute safety delay).',
+  })
+  @ApiResponse({ status: 202, description: 'Reset request accepted' })
+  async requestReset(
+    @ActiveUser() user: any,
+    @Body() dto: RequestResetDto,
+    @Req() req: Request,
+  ) {
+    const reset = await this.managementService.requestReset(
+      user.id ?? user.sub,
+      dto,
+      req.ip,
+    );
+
+    return {
+      message:
+        'Reset request accepted. Confirm it using the token after 5 minutes.',
+      resetId: reset.id,
+      confirmationToken: reset.confirmationToken,
+      resetType: reset.resetType,
+    };
+  }
+
+  @Post('reset/confirm')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm a pending progression reset' })
+  @ApiResponse({ status: 200, description: 'Reset applied' })
+  async confirmReset(
+    @ActiveUser() user: any,
+    @Body() dto: ConfirmResetDto,
+  ) {
+    return this.managementService.confirmReset(user.id ?? user.sub, dto);
+  }
+
+  @Post('reset/cancel')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cancel a pending progression reset' })
+  async cancelReset(@ActiveUser() user: any) {
+    return this.managementService.cancelReset(user.id ?? user.sub);
+  }
+
+  @Get('reset/backup')
+  @ApiOperation({ summary: 'Retrieve the backup snapshot from the last reset' })
+  async getLastBackup(@ActiveUser() user: any) {
+    const backup = await this.managementService.getLastBackup(
+      user.id ?? user.sub,
+    );
+    return { backup };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Account Linking  (#454)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Post('link')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Link an external provider account' })
+  async linkAccount(
+    @ActiveUser() user: any,
+    @Body() dto: LinkAccountDto,
+    @Req() req: Request,
+  ) {
+    return this.managementService.linkAccount(
+      user.id ?? user.sub,
+      dto,
+      req.ip,
+    );
+  }
+
+  @Delete('link/:provider')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Unlink an external provider account' })
+  async unlinkAccount(
+    @ActiveUser() user: any,
+    @Param('provider') provider: string,
+    @Req() req: Request,
+  ) {
+    return this.managementService.unlinkAccount(
+      user.id ?? user.sub,
+      provider,
+      req.ip,
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Audit Trail  (#454)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Get('audit')
+  @ApiOperation({ summary: 'Get the account audit trail' })
+  async getAuditTrail(
+    @ActiveUser() user: any,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ) {
+    return this.managementService.getAuditTrail(user.id ?? user.sub, limit);
   }
 }
