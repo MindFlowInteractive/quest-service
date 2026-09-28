@@ -9,6 +9,8 @@ import { ModerationAction } from './entities/moderation-action.entity.js';
 import { ModerationQueue } from './entities/moderation-queue.entity.js';
 import { FeaturedContent } from './entities/featured-content.entity.js';
 import { ContentFile } from './entities/content-file.entity.js';
+import { ContentRevision } from './entities/content-revision.entity.js';
+import { ContentDeliveryEvent } from './entities/content-delivery-event.entity.js';
 
 import { ContentModule } from './content/content.module.js';
 import { SubmissionModule } from './submission/submission.module.js';
@@ -43,6 +45,8 @@ import databaseConfig from './config/database.config.js';
           ModerationQueue,
           FeaturedContent,
           ContentFile,
+          ContentRevision,
+          ContentDeliveryEvent,
         ],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
         logging: configService.get<string>('NODE_ENV') === 'development',

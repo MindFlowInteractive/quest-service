@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nest
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Content, ContentStatus } from '../entities/content.entity.js';
+import { ContentRevision } from '../entities/content-revision.entity.js';
 import { CreateContentDto } from './dto/create-content.dto.js';
 import { UpdateContentDto } from './dto/update-content.dto.js';
 import { ContentFilterDto } from './dto/content-filter.dto.js';
@@ -13,15 +14,19 @@ export class ContentService {
   constructor(
     @InjectRepository(Content)
     private readonly contentRepository: Repository<Content>,
+    @InjectRepository(ContentRevision)
+    private readonly revisionRepository: Repository<ContentRevision>,
   ) {}
 
   async create(createContentDto: CreateContentDto): Promise<Content> {
     const content = this.contentRepository.create({
       ...createContentDto,
+      metadata: { ...createContentDto.metadata, version: 1 },
       status: ContentStatus.DRAFT,
     });
 
     const savedContent = await this.contentRepository.save(content);
+    await this.saveRevision(savedContent);
     this.logger.log(`Content created: ${savedContent.id} by user ${savedContent.userId}`);
     return savedContent;
   }
@@ -92,8 +97,11 @@ export class ContentService {
       }
     }
 
+    const nextVersion = this.getVersion(content) + 1;
     Object.assign(content, updateContentDto);
+    content.metadata = { ...content.metadata, version: nextVersion };
     const savedContent = await this.contentRepository.save(content);
+    await this.saveRevision(savedContent);
     this.logger.log(`Content updated: ${id}`);
     return savedContent;
   }
@@ -124,6 +132,7 @@ export class ContentService {
 
   async updateStatus(id: string, status: ContentStatus): Promise<Content> {
     const content = await this.findOne(id);
+    content.metadata = { ...content.metadata, version: this.getVersion(content) + 1 };
     content.status = status;
 
     if (status === ContentStatus.SUBMITTED) {
@@ -135,7 +144,9 @@ export class ContentService {
       content.featuredAt = new Date();
     }
 
-    return this.contentRepository.save(content);
+    const savedContent = await this.contentRepository.save(content);
+    await this.saveRevision(savedContent);
+    return savedContent;
   }
 
   async incrementViews(id: string): Promise<void> {
@@ -231,5 +242,29 @@ export class ContentService {
     }
 
     return queryBuilder;
+  }
+
+  private getVersion(content: Content): number {
+    const version = content.metadata?.version;
+    return typeof version === 'number' && Number.isInteger(version) && version > 0 ? version : 1;
+  }
+
+  private async saveRevision(content: Content): Promise<void> {
+    const version = this.getVersion(content);
+    const snapshot = {
+      id: content.id,
+      title: content.title,
+      contentType: content.contentType,
+      category: content.category,
+      tags: content.tags,
+      content: content.content,
+      metadata: content.metadata,
+      version,
+      updatedAt: content.updatedAt,
+    };
+
+    await this.revisionRepository.save(
+      this.revisionRepository.create({ contentId: content.id, version, snapshot }),
+    );
   }
 }
