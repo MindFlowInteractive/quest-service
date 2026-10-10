@@ -21,12 +21,37 @@ export class TagsController {
 
   /**
    * POST /tags
-   * Create a new tag (admin/editor only — guard can be added when auth is wired up).
+   * Create a new tag.
    */
   @Post()
   async create(@Body() dto: CreateTagDto): Promise<Tag> {
     this.logger.log(`Creating tag: ${dto.name}`);
     return this.tagsService.createTag(dto);
+  }
+
+  /**
+   * GET /tags/trending
+   * List trending tags ordered by usageCount DESC.
+   */
+  @Get('trending')
+  async getTrending(@Query('limit') limit?: number): Promise<Tag[]> {
+    return this.tagsService.getTrendingTags(limit ? Number(limit) : 10);
+  }
+
+  /**
+   * GET /tags/recommendations
+   * Recommend related tags given seed tags.
+   */
+  @Get('recommendations')
+  async getRecommendations(
+    @Query('seeds') seeds?: string,
+    @Query('limit') limit?: number,
+  ): Promise<Tag[]> {
+    const seedArray = seeds ? seeds.split(',').map((s) => s.trim()) : [];
+    return this.tagsService.getRecommendedTags(
+      seedArray,
+      limit ? Number(limit) : 5,
+    );
   }
 
   /**

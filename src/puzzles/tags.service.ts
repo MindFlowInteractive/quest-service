@@ -190,4 +190,64 @@ export class TagsService {
       await queryRunner.release();
     }
   }
+
+  /**
+   * Get trending tags ordered by usageCount DESC.
+   */
+  async getTrendingTags(limit = 10): Promise<Tag[]> {
+    return this.tagRepository.find({
+      order: { usageCount: 'DESC', name: 'ASC' },
+      take: limit,
+    });
+  }
+
+  /**
+   * Recommend related tags based on provided seed tags.
+   */
+  async getRecommendedTags(
+    seedTagNames: string[],
+    limit = 5,
+  ): Promise<Tag[]> {
+    const normalised = seedTagNames.map((t) => t.trim().toLowerCase());
+    const qb = this.tagRepository.createQueryBuilder('tag');
+
+    if (normalised.length > 0) {
+      qb.where('tag.name NOT IN (:...normalised)', { normalised });
+    }
+
+    return qb
+      .orderBy('tag.usageCount', 'DESC')
+      .addOrderBy('tag.name', 'ASC')
+      .take(limit)
+      .getMany();
+  }
+
+  /**
+   * Filter puzzles matching multiple tags (supporting ANY or ALL semantics).
+   */
+  async filterPuzzlesByMultiTags(
+    tagNames: string[],
+    matchAll = false,
+  ): Promise<Puzzle[]> {
+    if (!tagNames || tagNames.length === 0) {
+      return [];
+    }
+
+    const normalised = tagNames.map((t) => t.trim().toLowerCase());
+
+    const qb = this.puzzleRepository
+      .createQueryBuilder('puzzle')
+      .innerJoinAndSelect('puzzle.tagEntities', 'tag')
+      .where('tag.name IN (:...tags)', { tags: normalised });
+
+    if (matchAll && normalised.length > 1) {
+      qb.groupBy('puzzle.id')
+        .having('COUNT(DISTINCT tag.id) >= :count', {
+          count: normalised.length,
+        });
+    }
+
+    return qb.getMany();
+  }
 }
+
