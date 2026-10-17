@@ -15,6 +15,7 @@ import { Job } from './jobs/job.entity';
 import { CdnModule } from './cdn/cdn.module';
 import { AdminModule } from './admin/admin.module';
 import { LiveStreamingModule } from './live-streaming/live-streaming.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { LiveStreamingModule } from './live-streaming/live-streaming.module';
     CdnModule,
     AdminModule,
     LiveStreamingModule,
+    SubscriptionsModule,
   ],
 })
 export class AppModule {}
