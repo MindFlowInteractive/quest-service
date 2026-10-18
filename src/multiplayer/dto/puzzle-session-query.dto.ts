@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsPositive, Max } from 'class-validator';
+import { IsInt, IsOptional, IsPositive, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class PuzzleSessionQueryDto {

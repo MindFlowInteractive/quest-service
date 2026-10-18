@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,8 +9,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PuzzleSession } from '../entities/puzzle-session.entity';
 import { PuzzleSessionSolution } from '../entities/puzzle-session-solution.entity';
+import { PuzzleSessionMessage } from '../entities/puzzle-session-message.entity';
 import { PuzzleSessionStatus } from '../enums/puzzle-session-status.enum';
 import { PuzzleSessionEventType } from '../enums/puzzle-session-event.enum';
+import { PuzzlePlayerRole } from '../enums/puzzle-player-role.enum';
 import { PuzzleSessionPlayerService } from './puzzle-session-player.service';
 import { PuzzleSessionStateService } from './puzzle-session-state.service';
 import { PuzzleSessionPersistenceService } from './puzzle-session-persistence.service';
@@ -17,6 +20,9 @@ import { PuzzleSessionTimeoutService } from './puzzle-session-timeout.service';
 import { CreatePuzzleSessionDto } from '../dto/create-puzzle-session.dto';
 import { SubmitSolutionDto } from '../dto/submit-solution.dto';
 import { UpdatePartialSolutionDto } from '../dto/update-solution.dto';
+import { AssignRoleDto } from '../dto/assign-role.dto';
+import { SendMessageDto } from '../dto/send-message.dto';
+import { evaluateWinCondition } from '../utils/puzzle-session-win-condition';
 
 @Injectable()
 export class PuzzleSessionService {
@@ -25,6 +31,8 @@ export class PuzzleSessionService {
     private readonly sessionRepository: Repository<PuzzleSession>,
     @InjectRepository(PuzzleSessionSolution)
     private readonly solutionRepository: Repository<PuzzleSessionSolution>,
+    @InjectRepository(PuzzleSessionMessage)
+    private readonly messageRepository: Repository<PuzzleSessionMessage>,
     private readonly playerService: PuzzleSessionPlayerService,
     private readonly stateService: PuzzleSessionStateService,
     private readonly persistence: PuzzleSessionPersistenceService,
@@ -40,6 +48,9 @@ export class PuzzleSessionService {
         maxPlayers: dto.maxPlayers,
         status: PuzzleSessionStatus.WAITING,
         expiresAt,
+        requiredSolvedSteps: dto.requiredSolvedSteps ?? [],
+        minContributors: dto.minContributors ?? 1,
+        requireAllPlayers: dto.requireAllPlayers ?? false,
       }),
     );
 
@@ -48,7 +59,12 @@ export class PuzzleSessionService {
       session.id,
       PuzzleSessionEventType.SESSION_CREATED,
       userId,
-      { puzzleId: session.puzzleId },
+      {
+        puzzleId: session.puzzleId,
+        requiredSolvedSteps: session.requiredSolvedSteps,
+        minContributors: session.minContributors,
+        requireAllPlayers: session.requireAllPlayers,
+      },
     );
 
     await this.join(session.id, userId);
@@ -101,16 +117,33 @@ export class PuzzleSessionService {
 
     const player = await this.playerService.join(sessionId, userId);
 
+    // The first active player becomes the leader. Later joiners keep the
+    // default contributor role assigned by the player service.
+    const activePlayers = await this.playerService.getActivePlayers(sessionId);
+    const hasLeader = activePlayers.some(
+      (candidate) => candidate.role === PuzzlePlayerRole.LEADER,
+    );
+    const joined = hasLeader
+      ? player
+      : await this.playerService.assignRole(
+          sessionId,
+          userId,
+          PuzzlePlayerRole.LEADER,
+        );
+
     const state = await this.stateService.mutate(
       sessionId,
       undefined,
       (current) => {
         current.players[userId] = {
           userId,
-          status: player.status,
+          status: joined.status,
           connected: true,
-          score: player.score,
-          progress: player.progress,
+          score: joined.score,
+          progress: joined.progress,
+          role: joined.role ?? PuzzlePlayerRole.CONTRIBUTOR,
+          contributions: joined.contributions ?? 0,
+          contributionPoints: joined.contributionPoints ?? 0,
         };
         if (current.status === PuzzleSessionStatus.WAITING) {
           current.status = PuzzleSessionStatus.ACTIVE;
@@ -141,6 +174,9 @@ export class PuzzleSessionService {
   async leave(sessionId: string, userId: string) {
     await this.playerService.leave(sessionId, userId);
 
+    // If the leader left, promote the earliest remaining player.
+    const promoted = await this.ensureLeader(sessionId);
+
     const state = await this.stateService.mutate(
       sessionId,
       undefined,
@@ -149,6 +185,9 @@ export class PuzzleSessionService {
           current.players[userId].status = 'LEFT' as any;
           current.players[userId].connected = false;
         }
+        if (promoted && current.players[promoted.userId]) {
+          current.players[promoted.userId].role = PuzzlePlayerRole.LEADER;
+        }
       },
     );
 
@@ -156,6 +195,7 @@ export class PuzzleSessionService {
       sessionId,
       PuzzleSessionEventType.PLAYER_LEFT,
       userId,
+      promoted ? { promotedLeader: promoted.userId } : undefined,
     );
 
     return state;
@@ -193,6 +233,9 @@ export class PuzzleSessionService {
           connected: true,
           score: player.score,
           progress: player.progress,
+          role: player.role ?? PuzzlePlayerRole.CONTRIBUTOR,
+          contributions: player.contributions ?? 0,
+          contributionPoints: player.contributionPoints ?? 0,
         };
       },
     );
@@ -244,6 +287,10 @@ export class PuzzleSessionService {
       dto.clientVersion,
     );
 
+    if (state.players[userId]?.role === PuzzlePlayerRole.OBSERVER) {
+      throw new ForbiddenException('Observers cannot submit solutions');
+    }
+
     // Replace this deterministic placeholder with the repository's puzzle validation service.
     const correct = dto.content.trim().length > 0;
 
@@ -262,29 +309,248 @@ export class PuzzleSessionService {
       dto.sessionId,
       state.version,
       (current) => {
-        if (
-          dto.stepId &&
-          correct &&
-          !current.sharedProgress.solvedSteps.includes(dto.stepId)
-        ) {
-          current.sharedProgress.solvedSteps.push(dto.stepId);
+        const player = current.players[userId];
+        const shared = current.sharedProgress;
+        shared.stepContributors = shared.stepContributors ?? {};
+
+        if (dto.stepId && correct && !shared.solvedSteps.includes(dto.stepId)) {
+          shared.solvedSteps.push(dto.stepId);
+          shared.stepContributors[dto.stepId] = userId;
         }
-        current.players[userId].score += correct ? 1 : 0;
-        current.players[userId].progress = Math.min(
-          100,
-          current.players[userId].progress + (correct ? 10 : 0),
-        );
+
+        if (player) {
+          player.score += correct ? 1 : 0;
+          player.progress = Math.min(
+            100,
+            player.progress + (correct ? 10 : 0),
+          );
+          player.contributions =
+            (player.contributions ?? 0) + (correct ? 1 : 0);
+          player.contributionPoints =
+            (player.contributionPoints ?? 0) + (correct ? 10 : 0);
+        }
       },
     );
+
+    if (correct) {
+      await this.playerService.recordContribution(dto.sessionId, userId, 10);
+    }
 
     await this.persistence.recordEvent(
       dto.sessionId,
       PuzzleSessionEventType.SOLUTION_SUBMITTED,
       userId,
-      { correct, stepId: dto.stepId },
+      {
+        correct,
+        stepId: dto.stepId,
+        contributions: updated.players[userId]?.contributions ?? 0,
+      },
     );
 
-    return { correct, state: updated };
+    // Auto-complete the session as soon as the declared team win condition is
+    // met. Sessions without a condition keep the manual completion flow.
+    const session = await this.get(dto.sessionId);
+    const winCondition = evaluateWinCondition(updated, {
+      requiredSolvedSteps: session.requiredSolvedSteps ?? [],
+      minContributors: session.minContributors ?? 1,
+      requireAllPlayers: session.requireAllPlayers ?? false,
+    });
+
+    let completed = false;
+    let finalState = updated;
+    if (
+      winCondition.satisfied &&
+      session.status === PuzzleSessionStatus.ACTIVE
+    ) {
+      finalState = await this.complete(dto.sessionId, userId);
+      completed = true;
+    }
+
+    return {
+      correct,
+      state: finalState,
+      completed,
+      winCondition,
+    };
+  }
+
+  /**
+   * Assign (or transfer) a co-operative role. Only the current leader may do
+   * this; assigning LEADER demotes the previous leader to contributor.
+   */
+  async assignRole(dto: AssignRoleDto, actorId: string) {
+    const state = await this.assertActive(dto.sessionId, actorId);
+    const players = await this.playerService.getActivePlayers(dto.sessionId);
+    const actor = players.find((player) => player.userId === actorId);
+
+    if (!actor || actor.role !== PuzzlePlayerRole.LEADER) {
+      throw new ForbiddenException('Only the session leader can assign roles');
+    }
+
+    const target = players.find(
+      (player) => player.userId === dto.targetUserId,
+    );
+    if (!target) {
+      throw new NotFoundException('Player is not part of this session');
+    }
+
+    if (dto.role === PuzzlePlayerRole.LEADER) {
+      const previousLeaders = players.filter(
+        (player) =>
+          player.role === PuzzlePlayerRole.LEADER &&
+          player.userId !== dto.targetUserId,
+      );
+      for (const leader of previousLeaders) {
+        await this.playerService.assignRole(
+          dto.sessionId,
+          leader.userId,
+          PuzzlePlayerRole.CONTRIBUTOR,
+        );
+      }
+    }
+
+    const player = await this.playerService.assignRole(
+      dto.sessionId,
+      dto.targetUserId,
+      dto.role,
+    );
+
+    const updated = await this.stateService.mutate(
+      dto.sessionId,
+      state.version,
+      (current) => {
+        if (dto.role === PuzzlePlayerRole.LEADER) {
+          for (const candidate of Object.values(current.players)) {
+            if (candidate.userId !== dto.targetUserId) {
+              candidate.role = PuzzlePlayerRole.CONTRIBUTOR;
+            }
+          }
+        }
+        if (current.players[dto.targetUserId]) {
+          current.players[dto.targetUserId].role = dto.role;
+        }
+      },
+    );
+
+    await this.persistence.recordEvent(
+      dto.sessionId,
+      PuzzleSessionEventType.ROLE_ASSIGNED,
+      actorId,
+      { targetUserId: dto.targetUserId, role: dto.role },
+    );
+
+    return { player, state: updated };
+  }
+
+  /**
+   * Post a chat message to the team. Messages are persisted so reconnecting
+   * players can catch up.
+   */
+  async sendMessage(dto: SendMessageDto, userId: string) {
+    await this.get(dto.sessionId);
+    const state = await this.getState(dto.sessionId);
+
+    if (!state.players[userId]) {
+      throw new BadRequestException('Player is not part of this session');
+    }
+
+    const content = dto.content.trim();
+    if (!content) {
+      throw new BadRequestException('Message cannot be empty');
+    }
+
+    const message = await this.messageRepository.save(
+      this.messageRepository.create({
+        sessionId: dto.sessionId,
+        userId,
+        content,
+        type: dto.type === 'system' ? 'system' : 'chat',
+      }),
+    );
+
+    await this.persistence.recordEvent(
+      dto.sessionId,
+      PuzzleSessionEventType.MESSAGE_SENT,
+      userId,
+      { messageId: message.id, type: message.type },
+    );
+
+    return message;
+  }
+
+  async getMessages(sessionId: string, limit = 50, offset = 0) {
+    await this.get(sessionId);
+    return this.messageRepository.find({
+      where: { sessionId },
+      order: { createdAt: 'DESC' },
+      take: Math.min(Math.max(Number(limit) || 50, 1), 200),
+      skip: Math.max(Number(offset) || 0, 0),
+    });
+  }
+
+  /**
+   * Per-player contribution leaderboard for the session.
+   */
+  async getContributions(sessionId: string) {
+    await this.get(sessionId);
+    const players = await this.playerService.getContributions(sessionId);
+
+    return {
+      sessionId,
+      totalContributions: players.reduce(
+        (sum, player) => sum + player.contributions,
+        0,
+      ),
+      totalPoints: players.reduce(
+        (sum, player) => sum + player.contributionPoints,
+        0,
+      ),
+      players,
+    };
+  }
+
+  /**
+   * Current progress towards the team win condition.
+   */
+  async getWinConditionProgress(sessionId: string) {
+    const [session, state] = await Promise.all([
+      this.get(sessionId),
+      this.getState(sessionId),
+    ]);
+
+    return evaluateWinCondition(state, {
+      requiredSolvedSteps: session.requiredSolvedSteps ?? [],
+      minContributors: session.minContributors ?? 1,
+      requireAllPlayers: session.requireAllPlayers ?? false,
+    });
+  }
+
+  /**
+   * Share a discovered hint with the whole team.
+   */
+  async discoverHint(sessionId: string, userId: string, hintId: string) {
+    const state = await this.assertActive(sessionId, userId);
+
+    const updated = await this.stateService.mutate(
+      sessionId,
+      state.version,
+      (current) => {
+        current.sharedProgress.discoveredHints =
+          current.sharedProgress.discoveredHints ?? [];
+        if (!current.sharedProgress.discoveredHints.includes(hintId)) {
+          current.sharedProgress.discoveredHints.push(hintId);
+        }
+      },
+    );
+
+    await this.persistence.recordEvent(
+      sessionId,
+      PuzzleSessionEventType.HINT_DISCOVERED,
+      userId,
+      { hintId },
+    );
+
+    return updated;
   }
 
   async complete(sessionId: string, userId: string) {
@@ -346,6 +612,26 @@ export class PuzzleSessionService {
   async history(sessionId: string, limit = 50, offset = 0) {
     await this.get(sessionId);
     return this.persistence.history(sessionId, limit, offset);
+  }
+
+  /**
+   * Make sure an active leader exists. Promotes the earliest active player when
+   * the previous leader left. Returns the (possibly unchanged) leader.
+   */
+  private async ensureLeader(sessionId: string) {
+    const activePlayers = await this.playerService.getActivePlayers(sessionId);
+    if (activePlayers.length === 0) return null;
+
+    const leader = activePlayers.find(
+      (player) => player.role === PuzzlePlayerRole.LEADER,
+    );
+    if (leader) return leader;
+
+    return this.playerService.assignRole(
+      sessionId,
+      activePlayers[0].userId,
+      PuzzlePlayerRole.LEADER,
+    );
   }
 
   private async assertActive(

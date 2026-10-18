@@ -9,7 +9,9 @@ import {
   Req,
 } from '@nestjs/common';
 import { DailyChallengesService } from '../services/daily-challenges.service';
+import { ChallengeAnalyticsService } from '../services/challenge-analytics.service';
 import { CompleteChallengeDto } from '../dto/complete-challenge.dto';
+import { GrantGracePeriodDto } from '../dto/grant-grace-period.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { Request } from 'express';
 
@@ -23,6 +25,7 @@ interface AuthenticatedRequest extends Request {
 export class DailyChallengesController {
   constructor(
     private readonly dailyChallengesService: DailyChallengesService,
+    private readonly challengeAnalyticsService: ChallengeAnalyticsService,
   ) {}
 
   // Daily Challenge Endpoints
@@ -70,6 +73,55 @@ export class DailyChallengesController {
       weeklyChallengeId,
       puzzleId,
     );
+  }
+
+  // Streak Endpoints
+
+  @Get('streak')
+  async getStreak(@Req() req: AuthenticatedRequest) {
+    return this.dailyChallengesService.getStreakStatus(req.user.id);
+  }
+
+  @Get('streak/leaderboard')
+  async streakLeaderboard(@Query('limit') limit?: string) {
+    return this.dailyChallengesService.getStreakLeaderboard(
+      limit ? Number(limit) : 10,
+    );
+  }
+
+  @Post('streak/grace-period')
+  async grantGracePeriod(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: GrantGracePeriodDto,
+  ) {
+    return this.dailyChallengesService.grantGracePeriod(
+      req.user.id,
+      dto?.hours ?? 24,
+    );
+  }
+
+  // Analytics Endpoints
+
+  @Get('analytics/overview')
+  async participationOverview(@Query('days') days?: string) {
+    return this.challengeAnalyticsService.getParticipationOverview(
+      days ? Number(days) : 7,
+    );
+  }
+
+  @Get('analytics/streaks')
+  async streakDistribution() {
+    return this.challengeAnalyticsService.getStreakDistribution();
+  }
+
+  @Get('analytics/weekly')
+  async weeklyOverview() {
+    return this.challengeAnalyticsService.getWeeklyOverview();
+  }
+
+  @Get('analytics/:challengeId')
+  async challengeAnalytics(@Param('challengeId') challengeId: string) {
+    return this.challengeAnalyticsService.getChallengeAnalytics(challengeId);
   }
 
   // History and Legacy Endpoints

@@ -1,4 +1,5 @@
 import { PuzzlePlayerStatus } from '../enums/puzzle-player-status.enum';
+import { PuzzlePlayerRole } from '../enums/puzzle-player-role.enum';
 import { PuzzleSessionStatus } from '../enums/puzzle-session-status.enum';
 
 export interface PuzzleSessionPlayerState {
@@ -7,6 +8,9 @@ export interface PuzzleSessionPlayerState {
   connected: boolean;
   score: number;
   progress: number;
+  role: PuzzlePlayerRole;
+  contributions: number;
+  contributionPoints: number;
 }
 
 export interface PartialSolutionState {
@@ -27,6 +31,11 @@ export interface PuzzleSessionState {
     completedSteps: string[];
     discoveredHints: string[];
     solvedSteps: string[];
+    /**
+     * Which player solved each step. Used to credit contributions and to
+     * evaluate "distinct contributors" win conditions.
+     */
+    stepContributors: Record<string, string>;
   };
   partialSolutions: Record<string, PartialSolutionState>;
   updatedAt: string;

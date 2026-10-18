@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, MoreThanOrEqual } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { PlayerEventsService } from '../player-events/player-events.service';
 import { Hint } from './entities/hint.entity';
 import { HintUsage } from './entities/hint-usage.entity';
@@ -16,8 +16,23 @@ import {
   HintType,
 } from './dto/create-hint.dto';
 import { generateAlgorithmicHints } from './algorithms/engine';
+import {
+  HintCostBreakdown,
+  HintCostService,
+  HintDifficulty,
+} from './services/hint-cost.service';
+import { HintCacheService } from './services/hint-cache.service';
+import { HintLimitsService, HintLimitStatus } from './services/hint-limits.service';
+import { HintAnalyticsService } from './services/hint-analytics.service';
 
 type Nullable<T> = T | null;
+
+const HINT_DIFFICULTIES: HintDifficulty[] = [
+  'easy',
+  'medium',
+  'hard',
+  'expert',
+];
 
 @Injectable()
 export class HintsService {
@@ -29,6 +44,10 @@ export class HintsService {
     @InjectRepository(HintTemplate)
     private readonly templateRepo: Repository<HintTemplate>,
     private readonly playerEventsService: PlayerEventsService,
+    private readonly costService: HintCostService,
+    private readonly cacheService: HintCacheService,
+    private readonly limitsService: HintLimitsService,
+    private readonly analyticsService: HintAnalyticsService,
   ) {}
 
   async createHint(dto: CreateHintDto): Promise<Hint> {
@@ -45,55 +64,75 @@ export class HintsService {
   async requestHint(dto: RequestHintDto): Promise<Hint> {
     this.assertNotAbusing(dto);
 
-    // Cost/limit checks
-    await this.enforceHintLimits(dto.userId, dto.puzzleId);
-
-    // Gather candidates for this puzzle, ordered progressively
-    const where: FindOptionsWhere<Hint> = {
-      puzzleId: dto.puzzleId,
-      isActive: true,
-    };
-
-    const candidates = await this.hintRepo.find({
-      where,
-      order: { order: 'ASC' },
-    });
-
-    if (candidates.length === 0) {
-      // Try generating from templates as fallback
-      const generated = await this.generateFromTemplates(dto);
-      if (!generated) {
-        throw new BadRequestException('No hints available for this puzzle');
-      }
-      return generated;
-    }
-
-    // Determine next progressive level based on prior usage
+    // Determine the next progressive level from prior usage. The count is
+    // cheap to fetch and doubles as a cache discriminator.
     const priorCount = await this.usageRepo.count({
       where: { userId: dto.userId, puzzleId: dto.puzzleId },
     });
 
-    // Progressive selection: pick the first candidate with order > priorCount
-    const progressive =
-      candidates.find((h) => h.order > priorCount) ??
-      candidates[candidates.length - 1];
+    const difficulty = this.resolveDifficulty(dto);
+    const cacheKey = this.cacheService.buildKey([
+      'hint',
+      dto.puzzleId,
+      priorCount,
+      difficulty,
+      this.contextFingerprint(dto),
+    ]);
 
-    // Contextual adjustment without spoiling: prefer contextual/strategic before specific
-    const filtered = this.rankByContextAndPersonalization(
-      candidates,
-      dto,
-      progressive.order,
+    let selected = this.cacheService.get<Hint>(cacheKey);
+
+    if (!selected) {
+      // Gather candidates for this puzzle, ordered progressively.
+      const candidates = await this.hintRepo.find({
+        where: { puzzleId: dto.puzzleId, isActive: true },
+        order: { order: 'ASC' },
+      });
+
+      if (candidates.length === 0) {
+        // Try generating from templates as fallback.
+        const generated = await this.generateFromTemplates(dto);
+        if (!generated) {
+          throw new BadRequestException('No hints available for this puzzle');
+        }
+        selected = generated;
+      } else {
+        // Progressive selection: first candidate beyond the hints already used.
+        const progressive =
+          candidates.find((h) => h.order > priorCount) ??
+          candidates[candidates.length - 1];
+
+        // Contextual adjustment without spoiling: prefer contextual/strategic
+        // before specific.
+        const filtered = this.rankByContextAndPersonalization(
+          candidates,
+          dto,
+          progressive.order,
+        );
+
+        selected = filtered[0];
+      }
+
+      this.cacheService.set(cacheKey, selected);
+    }
+
+    // Cost is always derived server-side; never trust a client-supplied price.
+    const charge = this.costService.computeCost(selected.order, difficulty);
+
+    // Fairness controls: per-puzzle cap, daily cap, cooldown and cost budget.
+    await this.limitsService.assertAllowed(
+      dto.userId,
+      dto.puzzleId,
+      charge.totalCost,
     );
 
-    // Final pick is the first ranked candidate
-    const selected = filtered[0];
-
-    // Record a provisional usage row (without completion yet)
+    // Record a provisional usage row (without completion yet).
     await this.recordUsageInternal({
       hintId: selected.id,
       puzzleId: dto.puzzleId,
       userId: dto.userId,
       attemptNumber: dto.attemptNumber,
+      hintOrder: selected.order,
+      cost: charge.totalCost,
       timeSpent: dto.timeSpent,
       ledToCompletion: false,
       satisfactionRating: 3,
@@ -101,15 +140,12 @@ export class HintsService {
       puzzleState: dto.puzzleState,
     });
 
-    // Update usage counters for analytics (non-blocking)
+    // Update usage counters for analytics (non-blocking).
     void this.hintRepo.update(selected.id, {
       usageCount: (selected.usageCount ?? 0) + 1,
-      analytics: {
-        ...selected.analytics,
-      },
     });
 
-    // Emit audit event for hint usage
+    // Emit audit event for hint usage.
     void this.playerEventsService.emitPlayerEvent({
       userId: dto.userId,
       sessionId: null,
@@ -117,6 +153,8 @@ export class HintsService {
       payload: {
         puzzleId: dto.puzzleId,
         hintId: selected.id,
+        hintOrder: selected.order,
+        cost: charge.totalCost,
         attemptNumber: dto.attemptNumber,
         timeSpent: dto.timeSpent,
         puzzleState: dto.puzzleState,
@@ -127,12 +165,62 @@ export class HintsService {
     return selected;
   }
 
+  /**
+   * Preview what the next hint(s) will cost without consuming one. Used by the
+   * client to render the price next to the "request hint" button.
+   */
+  getCostPreview(
+    puzzleId: string,
+    order = 1,
+    difficulty: HintDifficulty = 'medium',
+    hintCount = 0,
+  ): { next: HintCostBreakdown; schedule?: HintCostBreakdown[] } {
+    const next = this.costService.computeCost(order, difficulty);
+    if (hintCount > 0) {
+      return {
+        next,
+        schedule: this.costService.previewSchedule(
+          difficulty,
+          hintCount,
+        ),
+      };
+    }
+    return { next };
+  }
+
+  /**
+   * Current fairness status for a player/puzzle pair.
+   */
+  getLimitsStatus(userId: string, puzzleId: string): Promise<HintLimitStatus> {
+    return this.limitsService.getStatus(userId, puzzleId);
+  }
+
+  getPuzzleAnalytics(puzzleId: string) {
+    return this.analyticsService.getPuzzleAnalytics(puzzleId);
+  }
+
+  getUserAnalytics(userId: string) {
+    return this.analyticsService.getUserAnalytics(userId);
+  }
+
+  getGlobalAnalytics() {
+    return this.analyticsService.getGlobalAnalytics();
+  }
+
   // Explicit recording after the player uses a hint and proceeds
   async recordUsage(dto: HintUsageDto): Promise<HintUsage> {
-    const usage = await this.recordUsageInternal(dto);
+    // Resolve the hint first so order/cost are server-derived and a client
+    // cannot forge pricing information. The cost was already charged when the
+    // hint was requested, so the feedback row itself carries no charge.
+    const hint = await this.hintRepo.findOne({ where: { id: dto.hintId } });
+
+    const usage = await this.recordUsageInternal({
+      ...dto,
+      hintOrder: hint?.order ?? dto.hintOrder ?? 1,
+      cost: 0,
+    });
 
     // Update effectiveness based on completion and satisfaction
-    const hint = await this.hintRepo.findOne({ where: { id: dto.hintId } });
     if (hint) {
       const successCount =
         (hint.successCount ?? 0) + (dto.ledToCompletion ? 1 : 0);
@@ -142,13 +230,26 @@ export class HintsService {
         1,
         Math.max(0, 0.6 * completionRate + 0.4 * (dto.satisfactionRating / 5)),
       );
+
+      const existingAnalytics = hint.analytics ?? {};
+      const previousSamples = Math.max(1, usageCount - 1);
+      const averageTimeToCompletion =
+        dto.timeToCompletion !== undefined
+          ? (Number(existingAnalytics.averageTimeToCompletion ?? 0) *
+              previousSamples +
+              dto.timeToCompletion) /
+            usageCount
+          : existingAnalytics.averageTimeToCompletion;
+
       await this.hintRepo.update(hint.id, {
         successCount,
         usageCount,
         effectiveness,
         analytics: {
-          ...hint.analytics,
+          ...existingAnalytics,
           completionRate,
+          averageTimeToCompletion,
+          userSatisfaction: dto.satisfactionRating,
         },
       });
     }
@@ -178,7 +279,10 @@ export class HintsService {
       effectiveness: 0,
       analytics: {},
     });
-    return this.templateRepo.save(template);
+    const saved = await this.templateRepo.save(template);
+    // Cached hints may have been generated from the previous template set.
+    this.cacheService.clear();
+    return saved;
   }
 
   async updateTemplate(
@@ -189,6 +293,8 @@ export class HintsService {
     if (!existing) throw new BadRequestException('Template not found');
     const updated = { ...existing, ...input, id: existing.id };
     await this.templateRepo.save(updated);
+    // Never serve a hint built from a stale template definition.
+    this.cacheService.clear();
     return updated;
   }
 
@@ -196,7 +302,9 @@ export class HintsService {
     const existing = await this.templateRepo.findOne({ where: { id } });
     if (!existing) throw new BadRequestException('Template not found');
     existing.isActive = isActive;
-    return this.templateRepo.save(existing);
+    const saved = await this.templateRepo.save(existing);
+    this.cacheService.clear();
+    return saved;
   }
 
   async seedDefaultTemplates(): Promise<{ created: number }> {
@@ -289,6 +397,9 @@ export class HintsService {
         await this.templateRepo.save(t);
         created += 1;
       }
+    }
+    if (created > 0) {
+      this.cacheService.clear();
     }
     return { created };
   }
@@ -434,33 +545,35 @@ export class HintsService {
     return skill >= min && skill <= max;
   }
 
-  private async enforceHintLimits(
-    userId: string,
-    puzzleId: string,
-  ): Promise<void> {
-    // Simple limits: max 3 hints per puzzle per user, cooldown 15s after each request
-    const now = new Date();
-    const since = new Date(now.getTime() - 15 * 1000);
+  private resolveDifficulty(dto: RequestHintDto): HintDifficulty {
+    return this.normalizeDifficulty((dto.puzzleState as any)?.difficulty);
+  }
 
-    const count = await this.usageRepo.count({ where: { userId, puzzleId } });
-    if (count >= 3) {
-      throw new ForbiddenException('Hint limit reached for this puzzle');
-    }
+  private normalizeDifficulty(value: unknown): HintDifficulty {
+    const raw = String(value ?? 'medium');
+    return (HINT_DIFFICULTIES as string[]).includes(raw)
+      ? (raw as HintDifficulty)
+      : 'medium';
+  }
 
-    const recent = await this.usageRepo.find({
-      where: {
-        userId,
-        puzzleId,
-        createdAt: MoreThanOrEqual(since as any),
-      },
-      order: { createdAt: 'DESC' },
-      take: 1,
-    });
-    if (recent.length > 0) {
-      throw new ForbiddenException(
-        'Please wait before requesting another hint',
-      );
-    }
+  /**
+   * Stable fingerprint of the volatile puzzle context. It intentionally skips
+   * the user id: hint selection is not user-specific, so two players at the
+   * same progress point share a cache entry.
+   */
+  private contextFingerprint(dto: RequestHintDto): string {
+    const progress = Number((dto.puzzleState as any)?.progress ?? 0);
+    const bucket = Math.floor(
+      (Number.isFinite(progress) ? progress : 0) * 10,
+    );
+    const step = String((dto.puzzleState as any)?.currentStep ?? '-');
+    const errors = Array.isArray((dto.puzzleState as any)?.errors)
+      ? ((dto.puzzleState as any).errors as unknown[])
+          .slice(0, 3)
+          .map(String)
+          .join('|')
+      : '-';
+    return `${bucket}:${step}:${errors}`;
   }
 
   private assertNotAbusing(dto: RequestHintDto): void {
@@ -473,6 +586,8 @@ export class HintsService {
   private async recordUsageInternal(dto: HintUsageDto): Promise<HintUsage> {
     const usage = this.usageRepo.create({
       ...dto,
+      hintOrder: dto.hintOrder ?? 1,
+      cost: dto.cost ?? 0,
       isAbuseAttempt: false,
     });
     return this.usageRepo.save(usage);

@@ -95,17 +95,68 @@ export class DailyChallengesService {
   }
 
   /**
+   * Streak bonus curve: 5% per consecutive day past the first, capped at 50%.
+   * Flat milestone bonuses are layered on top at 7/14/30/100 days so long
+   * streaks keep feeling rewarding instead of plateauing at the cap.
+   */
+  static readonly STREAK_MILESTONES: Record<number, number> = {
+    7: 50,
+    14: 100,
+    30: 250,
+    100: 1000,
+  };
+
+  computeStreakBonus(basePoints: number, currentStreak: number) {
+    const multiplier = Math.min(
+      Math.max(currentStreak - 1, 0) * 0.05,
+      0.5,
+    );
+    const pointsBonus = Math.floor(basePoints * multiplier);
+    const milestoneBonus = DailyChallengesService.STREAK_MILESTONES[
+      currentStreak
+    ]
+      ? DailyChallengesService.STREAK_MILESTONES[currentStreak]
+      : 0;
+
+    return {
+      multiplier,
+      pointsBonus,
+      milestoneBonus,
+      totalBonus: pointsBonus + milestoneBonus,
+    };
+  }
+
+  private nextMilestone(currentStreak: number) {
+    const milestones = Object.keys(DailyChallengesService.STREAK_MILESTONES)
+      .map(Number)
+      .sort((a, b) => a - b);
+    const next = milestones.find((m) => m > currentStreak);
+    if (!next) return null;
+    return {
+      days: next,
+      bonus: DailyChallengesService.STREAK_MILESTONES[next],
+      daysRemaining: next - currentStreak,
+    };
+  }
+
+  /**
    * Processes the user's streak logic based on dates and grace periods.
    */
   private async processStreakAndBonus(
     userId: string,
     basePoints: number,
-  ): Promise<{ newStreak: number; bonusPoints: number }> {
+  ): Promise<{
+    newStreak: number;
+    bonusPoints: number;
+    milestoneBonus: number;
+    gracePeriodApplied: boolean;
+  }> {
     let userStreak = await this.userStreakRepo.findOne({
       where: { user: { id: userId } },
     });
     const now = new Date();
     const todayStart = this.getStartOfUTCDay(now);
+    let gracePeriodApplied = false;
 
     if (!userStreak) {
       // First time completing any puzzle or daily challenge
@@ -116,8 +167,11 @@ export class DailyChallengesService {
       userStreak = this.userStreakRepo.create({
         user: user,
         currentStreak: 1,
+        longestStreak: 1,
         streakStartDate: now,
         lastPuzzleCompletedAt: now,
+        gracePeriodsGranted: 0,
+        gracePeriodsUsed: 0,
       });
     } else {
       const lastCompletion = userStreak.lastPuzzleCompletedAt
@@ -142,35 +196,48 @@ export class DailyChallengesService {
           userStreak.currentStreak += 1;
         } else {
           // Check grace period
-          if (
-            userStreak.streakRecoveryGracePeriodEnd &&
-            new Date(userStreak.streakRecoveryGracePeriodEnd) > now
-          ) {
-            // Grace period saved the streak
+          const graceEndsAt = userStreak.streakRecoveryGracePeriodEnd
+            ? new Date(userStreak.streakRecoveryGracePeriodEnd)
+            : null;
+
+          if (graceEndsAt && graceEndsAt > now) {
+            // Grace period saved the streak; consume it so it cannot be
+            // reused indefinitely.
             userStreak.currentStreak += 1;
+            userStreak.streakRecoveryGracePeriodEnd = null;
+            userStreak.gracePeriodsUsed =
+              (userStreak.gracePeriodsUsed ?? 0) + 1;
+            gracePeriodApplied = true;
           } else {
             // Streak broken
             userStreak.currentStreak = 1;
             userStreak.streakStartDate = now;
+            userStreak.streakRecoveryGracePeriodEnd = null;
           }
         }
       }
       userStreak.lastPuzzleCompletedAt = now;
     }
 
+    // Keep the personal best in sync before persisting.
+    userStreak.longestStreak = Math.max(
+      userStreak.longestStreak ?? 0,
+      userStreak.currentStreak,
+    );
+
     await this.userStreakRepo.save(userStreak);
 
-    // Calculate Bonus (e.g. 5% extra per consecutive day past day 1, capped at 50%)
-    const streakMultiplier = Math.min(
-      (userStreak.currentStreak - 1) * 0.05,
-      0.5,
+    const bonus = this.computeStreakBonus(
+      basePoints,
+      userStreak.currentStreak,
     );
-    let bonusPoints = 0;
-    if (streakMultiplier > 0) {
-      bonusPoints = Math.floor(basePoints * streakMultiplier);
-    }
 
-    return { newStreak: userStreak.currentStreak, bonusPoints };
+    return {
+      newStreak: userStreak.currentStreak,
+      bonusPoints: bonus.totalBonus,
+      milestoneBonus: bonus.milestoneBonus,
+      gracePeriodApplied,
+    };
   }
 
   /**
@@ -322,10 +389,8 @@ export class DailyChallengesService {
     }
 
     // Process streak logic and bonus points
-    const { newStreak, bonusPoints } = await this.processStreakAndBonus(
-      userId,
-      challenge.baseRewardPoints,
-    );
+    const { newStreak, bonusPoints, milestoneBonus, gracePeriodApplied } =
+      await this.processStreakAndBonus(userId, challenge.baseRewardPoints);
 
     // Record completion with bonus XP
     const completion = this.completionRepo.create({
@@ -352,6 +417,8 @@ export class DailyChallengesService {
       success: true,
       currentStreak: newStreak,
       bonusPointsAwarded: bonusPoints,
+      milestoneBonus,
+      gracePeriodApplied,
       bonusXPAwarded: challenge.bonusXP,
       totalPointsEarned: challenge.baseRewardPoints + bonusPoints,
       totalXPEarned: challenge.bonusXP,
@@ -413,5 +480,138 @@ export class DailyChallengesService {
       });
       return completions;
     }
+  }
+
+  /**
+   * Full streak snapshot for a player: current/longest streak, whether today's
+   * challenge is done, whether the streak is at risk, and the state of the
+   * recovery grace period.
+   */
+  async getStreakStatus(userId: string) {
+    const userStreak = await this.userStreakRepo.findOne({
+      where: { user: { id: userId } },
+    });
+
+    const now = new Date();
+    const todayStart = this.getStartOfUTCDay(now);
+
+    if (!userStreak) {
+      return {
+        userId,
+        currentStreak: 0,
+        longestStreak: 0,
+        streakStartDate: null,
+        lastPuzzleCompletedAt: null,
+        completedToday: false,
+        atRisk: false,
+        bonusMultiplier: 0,
+        nextMilestone: this.nextMilestone(0),
+        gracePeriod: {
+          active: false,
+          endsAt: null,
+          grantable: true,
+          granted: 0,
+          used: 0,
+        },
+      };
+    }
+
+    const currentStreak = userStreak.currentStreak ?? 0;
+    const lastCompletion = userStreak.lastPuzzleCompletedAt
+      ? new Date(userStreak.lastPuzzleCompletedAt)
+      : null;
+    const completedToday = lastCompletion
+      ? this.getStartOfUTCDay(lastCompletion).getTime() === todayStart.getTime()
+      : false;
+
+    const graceEndsAt = userStreak.streakRecoveryGracePeriodEnd
+      ? new Date(userStreak.streakRecoveryGracePeriodEnd)
+      : null;
+    const graceActive = !!graceEndsAt && graceEndsAt > now;
+
+    return {
+      userId,
+      currentStreak,
+      longestStreak: Math.max(userStreak.longestStreak ?? 0, currentStreak),
+      streakStartDate: userStreak.streakStartDate ?? null,
+      lastPuzzleCompletedAt: lastCompletion,
+      completedToday,
+      atRisk: currentStreak > 0 && !completedToday,
+      bonusMultiplier: Math.min(Math.max(currentStreak - 1, 0) * 0.05, 0.5),
+      nextMilestone: this.nextMilestone(currentStreak),
+      gracePeriod: {
+        active: graceActive,
+        endsAt: graceActive ? graceEndsAt : null,
+        grantable: !graceActive,
+        granted: userStreak.gracePeriodsGranted ?? 0,
+        used: userStreak.gracePeriodsUsed ?? 0,
+      },
+    };
+  }
+
+  /**
+   * Grants a recovery grace period. While active it lets the player miss a day
+   * without resetting their streak; consuming it advances the streak and clears
+   * the window so it cannot be reused.
+   */
+  async grantGracePeriod(userId: string, hours = 24) {
+    const safeHours = Math.min(Math.max(Math.floor(hours || 24), 1), 168);
+    const now = new Date();
+
+    let userStreak = await this.userStreakRepo.findOne({
+      where: { user: { id: userId } },
+    });
+
+    if (!userStreak) {
+      const user = await this.userRepo.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException('User not found.');
+      }
+      userStreak = this.userStreakRepo.create({
+        user,
+        currentStreak: 0,
+        longestStreak: 0,
+        streakStartDate: null,
+        lastPuzzleCompletedAt: null,
+        gracePeriodsGranted: 0,
+        gracePeriodsUsed: 0,
+      });
+    }
+
+    const existingEnd = userStreak.streakRecoveryGracePeriodEnd
+      ? new Date(userStreak.streakRecoveryGracePeriodEnd)
+      : null;
+
+    if (existingEnd && existingEnd > now) {
+      throw new BadRequestException('A grace period is already active.');
+    }
+
+    userStreak.streakRecoveryGracePeriodEnd = new Date(
+      now.getTime() + safeHours * 60 * 60 * 1000,
+    );
+    userStreak.gracePeriodsGranted =
+      (userStreak.gracePeriodsGranted ?? 0) + 1;
+
+    const saved = await this.userStreakRepo.save(userStreak);
+
+    return {
+      success: true,
+      userId,
+      hours: safeHours,
+      gracePeriodEndsAt: saved.streakRecoveryGracePeriodEnd,
+      gracePeriodsGranted: saved.gracePeriodsGranted,
+    };
+  }
+
+  /**
+   * Players with the longest active streaks.
+   */
+  async getStreakLeaderboard(limit = 10) {
+    const safeLimit = Math.min(Math.max(Math.floor(limit || 10), 1), 100);
+    return this.userStreakRepo.find({
+      order: { currentStreak: 'DESC', longestStreak: 'DESC' },
+      take: safeLimit,
+      relations: ['user'],
+    });
   }
 }
