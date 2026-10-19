@@ -22,6 +22,11 @@ import { PuzzleState } from './entities/puzzle-state.entity';
 import { PlayerProgress } from './entities/player-progress.entity';
 import { GameSession } from './entities/game-session.entity';
 import { PuzzleAnalytics } from './entities/puzzle-analytics.entity';
+import { PracticeSession } from './entities/practice-session.entity';
+import { PracticeAttempt } from './entities/practice-attempt.entity';
+import { PracticeModeService } from './services/practice-mode.service';
+import { PracticeModeController } from './controllers/practice-mode.controller';
+import { Puzzle } from '../puzzles/entities/puzzle.entity';
 import { gameEngineConfig } from './config/game-engine.config';
 import { EnergyModule } from '../energy/energy.module';
 
@@ -34,6 +39,9 @@ import { EnergyModule } from '../energy/energy.module';
       PlayerProgress,
       GameSession,
       PuzzleAnalytics,
+      PracticeSession,
+      PracticeAttempt,
+      Puzzle,
     ]),
     EnergyModule,
   ],
@@ -52,8 +60,14 @@ import { EnergyModule } from '../energy/energy.module';
     PuzzleRegistryService,
     ScoringService,
     AchievementsService,
+    PracticeModeService,
   ],
-  controllers: [PuzzleController, GameStateController, AnalyticsController],
+  controllers: [
+    PuzzleController,
+    GameStateController,
+    AnalyticsController,
+    PracticeModeController,
+  ],
   exports: [
     PuzzleEngineService,
     StateManagementService,
@@ -69,6 +83,7 @@ import { EnergyModule } from '../energy/energy.module';
     PuzzleRegistryService,
     ScoringService,
     AchievementsService,
+    PracticeModeService,
   ],
 })
 export class GameEngineModule {}
