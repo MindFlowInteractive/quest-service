@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
@@ -16,20 +16,25 @@ export class CategoriesService {
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-    const category = this.categoriesRepository.create(createCategoryDto);
+    const { parentCategoryId, ...data } = createCategoryDto;
+    const parentCategory = parentCategoryId
+      ? await this.findOne(parentCategoryId)
+      : undefined;
+    const category = this.categoriesRepository.create({ ...data, parentCategory });
     return this.categoriesRepository.save(category);
   }
 
   async findAll(): Promise<Category[]> {
     return this.categoriesRepository.find({
-      // relations: ['puzzles'], // Include puzzles if you want to see them in the list
+      relations: ['parentCategory', 'children'],
+      order: { sortOrder: 'ASC', name: 'ASC' },
     });
   }
 
   async findOne(id: string): Promise<Category> {
     const category = await this.categoriesRepository.findOne({
       where: { id },
-      // relations: ['puzzles'], // Include puzzles for detailed view
+      relations: ['parentCategory'],
     });
     if (!category) {
       throw new NotFoundException(`Category with ID "${id}" not found`);
@@ -42,8 +47,51 @@ export class CategoriesService {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<Category> {
     const category = await this.findOne(id); // Find existing category
-    Object.assign(category, updateCategoryDto); // Apply updates
+    const { parentCategoryId, ...data } = updateCategoryDto;
+    if (parentCategoryId !== undefined) {
+      if (parentCategoryId === id) {
+        throw new BadRequestException('A category cannot be its own parent');
+      }
+      category.parentCategory = parentCategoryId
+        ? await this.findOne(parentCategoryId)
+        : null;
+      // Prevent introducing a cycle in the hierarchy.
+      let ancestor = category.parentCategory;
+      while (ancestor) {
+        if (ancestor.id === id) {
+          throw new BadRequestException('Category hierarchy cannot contain cycles');
+        }
+        ancestor = ancestor.parentCategory;
+        if (ancestor?.id) {
+          ancestor = await this.categoriesRepository.findOne({
+            where: { id: ancestor.id }, relations: ['parentCategory'],
+          });
+        }
+      }
+    }
+    Object.assign(category, data);
     return this.categoriesRepository.save(category);
+  }
+
+  async analytics() {
+    const rows = await this.categoriesRepository
+      .createQueryBuilder('category')
+      .leftJoin('category.puzzles', 'puzzle')
+      .select('category.id', 'id')
+      .addSelect('category.name', 'name')
+      .addSelect('COUNT(DISTINCT puzzle.id)', 'puzzleCount')
+      .addSelect('COALESCE(SUM(puzzle.attempts), 0)', 'attempts')
+      .addSelect('COALESCE(SUM(puzzle.completions), 0)', 'completions')
+      .groupBy('category.id')
+      .addGroupBy('category.name')
+      .orderBy('COUNT(DISTINCT puzzle.id)', 'DESC')
+      .getRawMany();
+    return rows.map((row) => ({
+      ...row,
+      puzzleCount: Number(row.puzzleCount),
+      attempts: Number(row.attempts),
+      completions: Number(row.completions),
+    }));
   }
 
   async remove(id: string): Promise<void> {

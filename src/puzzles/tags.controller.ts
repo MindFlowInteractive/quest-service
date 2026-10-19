@@ -37,4 +37,9 @@ export class TagsController {
   async findAll(@Query() dto: ListTagsDto): Promise<Tag[]> {
     return this.tagsService.listTags(dto);
   }
+
+  @Get('trending')
+  async trending(@Query('limit') limit?: string) {
+    return this.tagsService.trending(limit ? Number(limit) : 10);
+  }
 }
