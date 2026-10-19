@@ -13,6 +13,8 @@ import { PuzzleSessionService } from '../services/puzzle-session.service';
 import { JoinPuzzleSessionDto } from '../dto/join-puzzle-session.dto';
 import { SubmitSolutionDto } from '../dto/submit-solution.dto';
 import { UpdatePartialSolutionDto } from '../dto/update-solution.dto';
+import { AssignRoleDto } from '../dto/assign-role.dto';
+import { SendMessageDto } from '../dto/send-message.dto';
 
 @WebSocketGateway({
   namespace: '/puzzle-sessions',
@@ -134,6 +136,63 @@ export class PuzzleSessionsGateway
       this.server.to(this.room(dto.sessionId)).emit('puzzle:state', result);
 
       return { event: 'puzzle:state', data: result };
+    } catch (error) {
+      throw this.toWsException(error);
+    }
+  }
+
+  @SubscribeMessage('session:assign-role')
+  async assignRole(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: AssignRoleDto,
+  ) {
+    const userId = this.requireUser(client);
+    try {
+      const result = await this.sessionService.assignRole(dto, userId);
+      this.server.to(this.room(dto.sessionId)).emit('session:role-assigned', {
+        targetUserId: dto.targetUserId,
+        role: dto.role,
+        state: result.state,
+      });
+      return { event: 'session:role-assigned', data: result };
+    } catch (error) {
+      throw this.toWsException(error);
+    }
+  }
+
+  @SubscribeMessage('session:message')
+  async message(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: SendMessageDto,
+  ) {
+    const userId = this.requireUser(client);
+    try {
+      const message = await this.sessionService.sendMessage(dto, userId);
+      this.server.to(this.room(dto.sessionId)).emit('session:message', message);
+      return { event: 'session:message', data: message };
+    } catch (error) {
+      throw this.toWsException(error);
+    }
+  }
+
+  @SubscribeMessage('puzzle:discover-hint')
+  async discoverHint(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: { sessionId: string; hintId: string },
+  ) {
+    const userId = this.requireUser(client);
+    try {
+      const state = await this.sessionService.discoverHint(
+        dto.sessionId,
+        userId,
+        dto.hintId,
+      );
+      this.server.to(this.room(dto.sessionId)).emit('puzzle:hint-discovered', {
+        userId,
+        hintId: dto.hintId,
+        state,
+      });
+      return { event: 'puzzle:hint-discovered', data: state };
     } catch (error) {
       throw this.toWsException(error);
     }

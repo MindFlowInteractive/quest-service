@@ -25,6 +25,15 @@ export class UserStreak {
   @Column({ nullable: true })
   streakStartDate: Date; // When the current streak started
 
+  @Column({ default: 0 })
+  longestStreak: number; // Best streak ever achieved
+
   @Column({ nullable: true })
   streakRecoveryGracePeriodEnd: Date; // For streak recovery mechanics
+
+  @Column({ default: 0 })
+  gracePeriodsGranted: number; // Number of grace periods handed out
+
+  @Column({ default: 0 })
+  gracePeriodsUsed: number; // Number of grace periods consumed to save a streak
 }

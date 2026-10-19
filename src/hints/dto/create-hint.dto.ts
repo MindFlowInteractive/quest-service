@@ -112,6 +112,16 @@ export class HintUsageDto {
   @Min(1)
   attemptNumber: number;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  hintOrder?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cost?: number;
+
   @IsNumber()
   @Min(0)
   timeSpent: number;

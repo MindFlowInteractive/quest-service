@@ -5,6 +5,7 @@ import { PuzzleSession } from './entities/puzzle-session.entity';
 import { PuzzleSessionPlayer } from './entities/puzzle-session-player.entity';
 import { PuzzleSessionEvent } from './entities/puzzle-session-event.entity';
 import { PuzzleSessionSolution } from './entities/puzzle-session-solution.entity';
+import { PuzzleSessionMessage } from './entities/puzzle-session-message.entity';
 import { PuzzleSessionsController } from './controllers/puzzle-sessions.controller';
 import { PuzzleSessionsGateway } from './gateways/puzzle-sessions.gateway';
 import { PuzzleSessionService } from './services/puzzle-session.service';
@@ -24,6 +25,7 @@ export const PUZZLE_SESSION_TIMEOUT_QUEUE = 'puzzle-session-timeouts';
       PuzzleSessionPlayer,
       PuzzleSessionEvent,
       PuzzleSessionSolution,
+      PuzzleSessionMessage,
     ]),
     BullModule.registerQueue({ name: PUZZLE_SESSION_TIMEOUT_QUEUE }),
   ],

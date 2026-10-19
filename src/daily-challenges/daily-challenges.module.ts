@@ -7,6 +7,7 @@ import { DailyChallengeCompletion } from './entities/daily-challenge-completion.
 import { WeeklyChallenge } from './entities/weekly-challenge.entity';
 import { WeeklyChallengeCompletion } from './entities/weekly-challenge-completion.entity';
 import { DailyChallengesService } from './services/daily-challenges.service';
+import { ChallengeAnalyticsService } from './services/challenge-analytics.service';
 import { ChallengeRotationCron } from './services/challenge-rotation.cron';
 import { ChallengeSeeder } from './services/challenge-seeder.service';
 import { DailyChallengesController } from './controllers/daily-challenges.controller';
@@ -29,7 +30,12 @@ import { User } from '../users/entities/user.entity';
     ScheduleModule.forRoot(),
   ],
   controllers: [DailyChallengesController],
-  providers: [DailyChallengesService, ChallengeRotationCron, ChallengeSeeder],
-  exports: [DailyChallengesService, ChallengeSeeder],
+  providers: [
+    DailyChallengesService,
+    ChallengeAnalyticsService,
+    ChallengeRotationCron,
+    ChallengeSeeder,
+  ],
+  exports: [DailyChallengesService, ChallengeAnalyticsService, ChallengeSeeder],
 })
 export class DailyChallengesModule {}

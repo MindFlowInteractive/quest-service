@@ -68,6 +68,7 @@ export class PuzzleSessionStateService {
         completedSteps: [],
         discoveredHints: [],
         solvedSteps: [],
+        stepContributors: {},
       },
       partialSolutions: {},
       updatedAt: new Date().toISOString(),

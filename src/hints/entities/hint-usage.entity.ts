@@ -30,6 +30,12 @@ export class HintUsage {
   @Column({ type: 'int' })
   attemptNumber: number; // Which attempt this hint was used on
 
+  @Column({ type: 'int', default: 0 })
+  hintOrder: number; // Progressive tier (order) of the hint when consumed
+
+  @Column({ type: 'int', default: 0 })
+  cost: number; // Cost charged for this hint request (abuse/limit pricing)
+
   @Column({ type: 'int' })
   timeSpent: number; // Seconds spent before using hint
 
