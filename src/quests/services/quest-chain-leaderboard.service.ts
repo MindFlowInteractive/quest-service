@@ -48,6 +48,28 @@ export class QuestChainLeaderboardService {
     }));
   }
 
+  async getTimeAttackLeaderboard(chainId: string, limit = 10): Promise<LeaderboardEntry[]> {
+    const safeLimit = Math.min(100, Math.max(1, Math.trunc(limit) || 10));
+    const rows = await this.userProgressRepository
+      .createQueryBuilder('progress')
+      .select(['progress.userId', 'progress.totalTime', 'progress.completedAt'])
+      .where('progress.questChainId = :chainId', { chainId })
+      .andWhere('progress.status = :status', { status: 'completed' })
+      .andWhere('progress.mode = :mode', { mode: 'time_attack' })
+      .orderBy('progress.totalTime', 'ASC')
+      .limit(safeLimit)
+      .getRawMany();
+
+    return rows.map((row, index) => ({
+      rank: index + 1,
+      userId: row.progress_userId,
+      username: `User ${row.progress_userId}`,
+      value: Number(row.progress_totalTime),
+      completedAt: row.progress_completedAt,
+      chainName: undefined,
+    }));
+  }
+
   async getScoreLeaderboard(
     chainId: string,
     limit = 10,

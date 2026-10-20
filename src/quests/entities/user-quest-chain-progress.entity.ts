@@ -64,6 +64,13 @@ export class UserQuestChainProgress {
   @Column({ type: 'int', default: 0 })
   totalHintsUsed: number;
 
+  /** The server-owned timed variant; normal play remains unchanged. */
+  @Column({ type: 'varchar', length: 20, default: 'standard' })
+  mode: 'standard' | 'time_attack';
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  deadlineAt?: Date;
+
   @Column({ type: 'timestamp with time zone', nullable: true })
   startedAt?: Date;
 

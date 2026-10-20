@@ -28,7 +28,15 @@ export class QuestChainProgressionService {
   async startChain(
     userId: string,
     chainId: string,
+    mode: 'standard' | 'time_attack' = 'standard',
+    timeLimitSeconds = 300,
   ): Promise<UserQuestChainProgress> {
+    if (mode !== 'standard' && mode !== 'time_attack') {
+      throw new BadRequestException('Unsupported quest mode');
+    }
+    if (!Number.isInteger(timeLimitSeconds) || timeLimitSeconds < 30 || timeLimitSeconds > 3600) {
+      throw new BadRequestException('Time attack limit must be between 30 and 3600 seconds');
+    }
     // Check if user already has progress for this chain
     const existingProgress = await this.userProgressRepository.findOne({
       where: { userId, questChainId: chainId },
@@ -50,7 +58,11 @@ export class QuestChainProgressionService {
         totalScore: 0,
         totalTime: 0,
         totalHintsUsed: 0,
+        mode,
         startedAt: new Date(),
+        deadlineAt: mode === 'time_attack'
+          ? new Date(Date.now() + timeLimitSeconds * 1000)
+          : null,
         lastPlayedAt: new Date(),
       });
 
@@ -140,6 +152,11 @@ export class QuestChainProgressionService {
       );
     }
 
+    const now = new Date();
+    if (progress.mode === 'time_attack' && progress.deadlineAt && now >= progress.deadlineAt) {
+      throw new BadRequestException('Time attack has expired');
+    }
+
     try {
       // Update progress
       progress.completedPuzzleIds = [...progress.completedPuzzleIds, puzzleId];
@@ -148,7 +165,9 @@ export class QuestChainProgressionService {
         chainPuzzle.sequenceOrder,
       );
       progress.totalScore += completionData.score;
-      progress.totalTime += completionData.timeTaken;
+      progress.totalTime = progress.mode === 'time_attack' && progress.startedAt
+        ? Math.max(0, Math.ceil((now.getTime() - progress.startedAt.getTime()) / 1000))
+        : progress.totalTime + completionData.timeTaken;
       progress.totalHintsUsed += completionData.hintsUsed;
       progress.lastPlayedAt = new Date();
 
@@ -185,7 +204,11 @@ export class QuestChainProgressionService {
 
       if (allPuzzlesCompleted) {
         progress.status = 'completed';
-        progress.completedAt = new Date();
+        progress.completedAt = now;
+        if (progress.mode === 'time_attack' && progress.deadlineAt) {
+          const remainingSeconds = Math.max(0, Math.floor((progress.deadlineAt.getTime() - now.getTime()) / 1000));
+          progress.totalScore += Math.min(remainingSeconds, Math.floor(progress.totalScore * 0.2));
+        }
 
         // Award completion rewards
         await this.awardCompletionRewards(userId, chainId);
