@@ -7,6 +7,7 @@ import type {
   ValidationResult,
   CauseEffectResult,
 } from '../types/puzzle.types';
+import type { GameMode } from '../types/move-history.types';
 
 export interface IPuzzle {
   id: string;
@@ -131,4 +132,10 @@ export interface PerformanceMetrics {
   hintsUsed: number;
   score: number;
   timestamp: Date;
+  /** Number of moves that were undone during the session. */
+  undosUsed?: number;
+  /** Number of undone moves that were re-applied. */
+  redosUsed?: number;
+  /** The mode the session was played in; decides whether undo is penalised. */
+  mode?: GameMode;
 }
