@@ -120,7 +120,7 @@ export class GameSession {
   // Session configuration and context
   @Column({ type: 'jsonb', default: {} })
   sessionConfig: {
-    gameMode?: 'practice' | 'challenge' | 'timed' | 'zen';
+    gameMode?: 'practice' | 'challenge' | 'timed' | 'zen' | 'ranked';
     difficultyFilter?: string[];
     categoryFilter?: string[];
     timeLimit?: number;
