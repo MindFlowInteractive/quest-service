@@ -12,6 +12,10 @@ import type {
   PuzzleHint,
   ValidationResult,
 } from '../types/puzzle.types';
+import {
+  DEFAULT_UNDO_DEPTH,
+  DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE,
+} from '../types/move-history.types';
 
 /**
  * Abstract base class for all puzzle implementations
@@ -141,12 +145,21 @@ export abstract class BasePuzzle implements IPuzzle {
       // Clear redo stack when new move is made
       this.redoStack = [];
 
-      // Limit undo stack size
-      const maxUndoSteps = 50;
+      // Limit undo stack size to the depth allowed for this puzzle type.
+      const maxUndoSteps = this.getMaxUndoSteps();
       if (this.undoStack.length > maxUndoSteps) {
         this.undoStack.shift();
       }
     }
+  }
+
+  /**
+   * The number of undo steps retained for this puzzle.
+   *
+   * Puzzle types with expensive state snapshots keep a shallower history.
+   */
+  protected getMaxUndoSteps(): number {
+    return DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE[this.type] ?? DEFAULT_UNDO_DEPTH;
   }
 
   // Helper methods for scoring
