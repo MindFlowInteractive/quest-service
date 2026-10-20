@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsUUID, IsInt, Min, MaxLength } from 'class-validator';
 
 export class CreateCategoryDto {
   @IsString()
@@ -7,6 +7,20 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  slug?: string;
+
+  @IsOptional()
+  @IsUUID()
+  parentCategoryId?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
 
   // We might not need to link puzzles or collections directly during creation,
   // as those can be managed via separate endpoints or by updating the puzzle/collection.

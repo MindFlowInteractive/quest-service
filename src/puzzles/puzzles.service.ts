@@ -187,7 +187,11 @@ export class PuzzlesService {
       // Apply filters
       if (search) {
         queryBuilder.andWhere(
-          '(puzzle.title ILIKE :search OR puzzle.description ILIKE :search)',
+          `(puzzle.title ILIKE :search OR puzzle.description ILIKE :search
+            OR puzzle.category ILIKE :search
+            OR EXISTS (SELECT 1 FROM puzzle_tags search_pt
+              INNER JOIN tags search_tag ON search_tag.id = search_pt."tagId"
+              WHERE search_pt."puzzleId" = puzzle.id AND search_tag.name ILIKE :search))`,
           { search: `%${search}%` },
         );
       }
@@ -480,13 +484,11 @@ export class PuzzlesService {
 
       // 2. Extract categories and tags
       const categories = new Set<string>();
-      const tags = new Set<string>();
       const playedPuzzleIds = new Set<string>();
 
       topRatings.forEach((r) => {
         if (r.puzzle) {
           categories.add(r.puzzle.category);
-          r.puzzle.tags.forEach((t) => tags.add(t));
           playedPuzzleIds.add(r.puzzle.id);
         }
       });
@@ -511,7 +513,8 @@ export class PuzzlesService {
             }
           }),
         )
-        .orderBy('puzzle.averageRating', 'DESC')
+        .orderBy('puzzle.completions', 'DESC')
+        .addOrderBy('puzzle.averageRating', 'DESC')
         .take(limit);
 
       const puzzles = await queryBuilder.getMany();

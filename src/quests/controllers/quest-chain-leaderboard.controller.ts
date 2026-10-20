@@ -36,6 +36,18 @@ export class QuestChainLeaderboardController {
     return await this.leaderboardService.getSpeedRunLeaderboard(chainId, limit);
   }
 
+  @Get(':id/leaderboard/time-attack')
+  @ApiOperation({ summary: 'Get verified time attack completions for a quest chain' })
+  @ApiParam({ name: 'id', description: 'Quest chain ID' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Time attack leaderboard retrieved successfully' })
+  async getTimeAttackLeaderboard(
+    @Param('id') chainId: string,
+    @Query('limit', new ValidationPipe({ transform: true })) limit = 10,
+  ) {
+    return this.leaderboardService.getTimeAttackLeaderboard(chainId, limit);
+  }
+
   @Get(':id/leaderboard/score')
   @ApiOperation({ summary: 'Get score leaderboard for a quest chain' })
   @ApiParam({ name: 'id', description: 'Quest chain ID' })

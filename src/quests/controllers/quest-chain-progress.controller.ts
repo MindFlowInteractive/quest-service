@@ -38,8 +38,10 @@ export class QuestChainProgressController {
   async startChain(
     @Param('id') chainId: string,
     @Body('userId') userId: string,
+    @Body('mode') mode: 'standard' | 'time_attack' = 'standard',
+    @Body('timeLimitSeconds') timeLimitSeconds = 300,
   ): Promise<UserQuestChainProgress> {
-    return this.progressionService.startChain(userId, chainId);
+    return this.progressionService.startChain(userId, chainId, mode, timeLimitSeconds);
   }
 
   @Get(':id/progress')
