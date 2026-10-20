@@ -3,6 +3,7 @@ import type { PuzzleEngineService } from '../services/puzzle-engine.service';
 import type { HintSystemService } from '../services/hint-system.service';
 import type { DifficultyScalingService } from '../services/difficulty-scaling.service';
 import { PuzzleType, PuzzleMove, DifficultyLevel } from '../types/puzzle.types';
+import { GameMode } from '../types/move-history.types';
 import { AntiCheatGuard } from '../../anti-cheat/guards/anti-cheat.guard';
 
 @Controller('puzzles')
@@ -21,6 +22,11 @@ export class PuzzleController {
       playerId: string;
       difficulty?: string;
       config?: any;
+      /**
+       * Game mode the session runs in. Ranked sessions do not allow undo;
+       * challenge and timed sessions charge a score penalty for it.
+       */
+      mode?: GameMode;
     },
   ) {
     const difficulty =
@@ -32,6 +38,7 @@ export class PuzzleController {
       createPuzzleDto.playerId,
       difficulty,
       createPuzzleDto.config,
+      createPuzzleDto.mode,
     );
   }
 

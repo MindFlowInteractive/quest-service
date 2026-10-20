@@ -2,8 +2,17 @@ import { Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { gameEngineConfig } from '../config/game-engine.config';
 import type { ConfigType } from '@nestjs/config';
-import { PuzzleType, DifficultyLevel, PuzzleMove } from '../types/puzzle.types';
+import {
+  PuzzleType,
+  DifficultyLevel,
+  PuzzleMove,
+  PuzzleStatus,
+} from '../types/puzzle.types';
+import { GameMode } from '../types/move-history.types';
+import type { MoveHistorySnapshot } from '../types/move-history.types';
 import { EnergyService } from '../../energy/energy.service';
+import { MoveHistoryService } from './move-history.service';
+import { StateManagementService } from './state-management.service';
 
 @Injectable()
 export class PuzzleEngineService {
@@ -13,6 +22,8 @@ export class PuzzleEngineService {
     @Inject(gameEngineConfig.KEY)
     private readonly config: ConfigType<typeof gameEngineConfig>,
     private readonly energyService: EnergyService,
+    private readonly moveHistory: MoveHistoryService,
+    private readonly stateManagement: StateManagementService,
   ) {}
 
   async createPuzzle(
@@ -20,6 +31,7 @@ export class PuzzleEngineService {
     playerId: string,
     difficulty?: DifficultyLevel,
     config?: any,
+    mode?: GameMode,
   ): Promise<any> {
     // Calculate energy cost based on puzzle type and difficulty
     const energyCost = this.calculateEnergyCost(type, difficulty);
@@ -46,6 +58,27 @@ export class PuzzleEngineService {
     // Update the energy transaction with the actual puzzle ID
     // This would typically be done through a proper transaction system
 
+    // Start the move history for this session so undo/redo and the replay
+    // history are available from the very first move.
+    this.moveHistory.startSession(puzzleId, playerId, {
+      puzzleType: type,
+      mode,
+      initialState: {
+        puzzleId,
+        playerId,
+        status: PuzzleStatus.IN_PROGRESS,
+        currentState: {
+          type,
+          difficulty: difficulty ?? DifficultyLevel.MEDIUM,
+        },
+        moves: [],
+        startTime: new Date(),
+        score: 0,
+        hintsUsed: 0,
+        metadata: {},
+      },
+    });
+
     return {
       id: puzzleId,
       type,
@@ -54,6 +87,7 @@ export class PuzzleEngineService {
       config,
       energyCost,
       remainingEnergy: energyResult.currentEnergy,
+      undoPolicy: this.moveHistory.getPolicy(puzzleId, playerId),
     };
   }
 
@@ -117,7 +151,65 @@ export class PuzzleEngineService {
     playerId: string,
     move: PuzzleMove,
   ): Promise<any> {
-    return { puzzleId, playerId, move, success: true };
+    const entry = this.moveHistory.recordMove(puzzleId, playerId, move);
+
+    let moveCount = 0;
+    const history = this.moveHistory.getHistory(puzzleId, playerId);
+    if (history) {
+      const current = history.states[history.cursor];
+      if (current) {
+        moveCount = current.moves.length;
+        await this.stateManagement.saveState(current);
+      }
+    }
+
+    return {
+      puzzleId,
+      playerId,
+      move,
+      success: true,
+      sequence: entry.sequence,
+      moveCount,
+    };
+  }
+
+  /**
+   * Undoes the most recent move and persists the restored state.
+   */
+  async undoMove(
+    puzzleId: string,
+    playerId: string,
+  ): Promise<MoveHistorySnapshot> {
+    const result = this.moveHistory.undo(puzzleId, playerId);
+    await this.stateManagement.saveState(result.state);
+    return result;
+  }
+
+  /**
+   * Redoes the most recently undone move and persists the restored state.
+   */
+  async redoMove(
+    puzzleId: string,
+    playerId: string,
+  ): Promise<MoveHistorySnapshot> {
+    const result = this.moveHistory.redo(puzzleId, playerId);
+    await this.stateManagement.saveState(result.state);
+    return result;
+  }
+
+  /**
+   * The move history of a session, together with the rules that apply to it.
+   */
+  getMoveHistory(puzzleId: string, playerId: string) {
+    const history = this.moveHistory.getHistory(puzzleId, playerId);
+
+    return {
+      entries: history?.entries ?? [],
+      undoCount: history?.undoCount ?? 0,
+      redoCount: history?.redoCount ?? 0,
+      totalPenalty: history?.totalPenalty ?? 0,
+      policy: this.moveHistory.getPolicy(puzzleId, playerId),
+    };
   }
 
   async validateSolution(puzzleId: string, solution: any): Promise<boolean> {
@@ -130,6 +222,7 @@ export class PuzzleEngineService {
 
   async resetPuzzle(puzzleId: string, playerId: string): Promise<void> {
     // Reset puzzle state
+    this.moveHistory.clearSession(puzzleId, playerId);
   }
 
   async abandonPuzzle(puzzleId: string, playerId: string): Promise<void> {

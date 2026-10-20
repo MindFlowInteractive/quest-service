@@ -1,4 +1,10 @@
 import { registerAs } from '@nestjs/config';
+import {
+  DEFAULT_UNDO_DEPTH,
+  DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE,
+  GameMode,
+} from '../types/move-history.types';
+import { PuzzleType } from '../types/puzzle.types';
 
 export interface GameEngineConfig {
   puzzles: {
@@ -39,6 +45,21 @@ export interface GameEngineConfig {
     strictMode: boolean;
     allowPartialSolutions: boolean;
     timeoutThreshold: number;
+  };
+  undoRedo: {
+    enabled: boolean;
+    /** Undo steps allowed when a puzzle type has no explicit limit. */
+    defaultMaxUndoDepth: number;
+    /** Per-puzzle-type undo depth limits. */
+    maxUndoDepthByPuzzleType: Partial<Record<PuzzleType, number>>;
+    /** Modes in which undo is disabled entirely. */
+    disabledModes: GameMode[];
+    /** Modes in which undo is allowed but costs score. */
+    penalizedModes: GameMode[];
+    /** Score penalty ratio applied per undo in a penalised mode. */
+    undoPenalty: number;
+    /** Score penalty ratio applied per redo in a penalised mode. */
+    redoPenalty: number;
   };
 }
 
@@ -107,6 +128,50 @@ export const gameEngineConfig = registerAs(
       timeoutThreshold: Number.parseInt(
         process.env.GAME_TIMEOUT_THRESHOLD || '600000',
       ),
+    },
+    undoRedo: {
+      enabled: process.env.GAME_UNDO_ENABLED !== 'false',
+      defaultMaxUndoDepth: Number.parseInt(
+        process.env.GAME_MAX_UNDO_DEPTH || String(DEFAULT_UNDO_DEPTH),
+      ),
+      maxUndoDepthByPuzzleType: {
+        // Complex puzzles have expensive states, so they get a shallower
+        // undo history; simple puzzles can afford a deeper one.
+        [PuzzleType.LOGIC_GRID]: Number.parseInt(
+          process.env.GAME_MAX_UNDO_DEPTH_LOGIC_GRID ||
+            String(DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE[PuzzleType.LOGIC_GRID]),
+        ),
+        [PuzzleType.SEQUENCE]: Number.parseInt(
+          process.env.GAME_MAX_UNDO_DEPTH_SEQUENCE ||
+            String(DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE[PuzzleType.SEQUENCE]),
+        ),
+        [PuzzleType.SPATIAL]: Number.parseInt(
+          process.env.GAME_MAX_UNDO_DEPTH_SPATIAL ||
+            String(DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE[PuzzleType.SPATIAL]),
+        ),
+        [PuzzleType.MATHEMATICAL]: Number.parseInt(
+          process.env.GAME_MAX_UNDO_DEPTH_MATHEMATICAL ||
+            String(DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE[PuzzleType.MATHEMATICAL]),
+        ),
+        [PuzzleType.WORD_PUZZLE]: Number.parseInt(
+          process.env.GAME_MAX_UNDO_DEPTH_WORD_PUZZLE ||
+            String(DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE[PuzzleType.WORD_PUZZLE]),
+        ),
+        [PuzzleType.PATTERN_MATCHING]: Number.parseInt(
+          process.env.GAME_MAX_UNDO_DEPTH_PATTERN_MATCHING ||
+            String(
+              DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE[PuzzleType.PATTERN_MATCHING],
+            ),
+        ),
+        [PuzzleType.CUSTOM]: Number.parseInt(
+          process.env.GAME_MAX_UNDO_DEPTH_CUSTOM ||
+            String(DEFAULT_UNDO_DEPTH_BY_PUZZLE_TYPE[PuzzleType.CUSTOM]),
+        ),
+      },
+      disabledModes: [GameMode.RANKED],
+      penalizedModes: [GameMode.CHALLENGE, GameMode.TIMED],
+      undoPenalty: Number.parseFloat(process.env.GAME_UNDO_PENALTY || '0.05'),
+      redoPenalty: Number.parseFloat(process.env.GAME_REDO_PENALTY || '0.02'),
     },
   }),
 );

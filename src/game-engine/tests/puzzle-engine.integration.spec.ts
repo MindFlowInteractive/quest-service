@@ -2,9 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PuzzleEngineService } from '../services/puzzle-engine.service';
 import { PuzzleType, DifficultyLevel, PuzzleMove } from '../types/puzzle.types';
 import { StateManagementService } from '../services/state-management.service';
+import { MoveHistoryService } from '../services/move-history.service';
 import { ValidationService } from '../services/validation.service';
 import { CauseEffectEngineService } from '../services/cause-effect-engine.service';
 import { AnalyticsService } from '../services/analytics.service';
+import { EnergyService } from '../../energy/energy.service';
 import { PuzzleState } from '../entities/puzzle-state.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
@@ -40,6 +42,8 @@ describe('Puzzle Engine Integration', () => {
         PuzzleEngineService,
         { provide: getRepositoryToken(PuzzleState), useValue: mockRepository },
         { provide: StateManagementService, useValue: mockService },
+        { provide: MoveHistoryService, useValue: mockService },
+        { provide: EnergyService, useValue: mockService },
         { provide: ValidationService, useValue: mockService },
         { provide: CauseEffectEngineService, useValue: mockService },
         { provide: AnalyticsService, useValue: mockService },
