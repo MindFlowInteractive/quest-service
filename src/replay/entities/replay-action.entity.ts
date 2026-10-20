@@ -40,6 +40,7 @@ export class ReplayAction {
     | 'HINT_USED'
     | 'STATE_CHANGE'
     | 'UNDO'
+    | 'REDO'
     | 'SUBMISSION'
     | 'PAUSE'
     | 'RESUME';
