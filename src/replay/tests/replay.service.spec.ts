@@ -178,6 +178,69 @@ describe('ReplayService', () => {
     });
   });
 
+  describe('recordActions', () => {
+    it('should record a batch of actions in order', async () => {
+      const mockReplay = {
+        id: mockReplayId,
+        isCompleted: false,
+        movesCount: 0,
+        undosCount: 0,
+      };
+
+      jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
+      jest.spyOn(actionRepo, 'findOne').mockResolvedValue(null);
+      jest
+        .spyOn(actionRepo, 'create')
+        .mockImplementation(
+          (data: any) => ({ id: 'action-x', ...data } as any),
+        );
+      jest
+        .spyOn(actionRepo, 'save')
+        .mockImplementation((data: any) => Promise.resolve(data));
+      jest.spyOn(replayRepo, 'save').mockResolvedValue(mockReplay as any);
+
+      const recorded = await service.recordActions(mockReplayId, [
+        { actionType: 'MOVE', timestamp: 0, actionData: { moveId: 'm1' } },
+        { actionType: 'UNDO', timestamp: 10, actionData: {} },
+        { actionType: 'REDO', timestamp: 20, actionData: {} },
+      ]);
+
+      expect(recorded).toHaveLength(3);
+      expect(recorded.map((action) => action.actionType)).toEqual([
+        'MOVE',
+        'UNDO',
+        'REDO',
+      ]);
+    });
+
+    it('should count undo actions towards the replay metrics', async () => {
+      const mockReplay = {
+        id: mockReplayId,
+        isCompleted: false,
+        movesCount: 0,
+        undosCount: 0,
+      };
+
+      jest.spyOn(replayRepo, 'findOne').mockResolvedValue(mockReplay as any);
+      jest.spyOn(actionRepo, 'findOne').mockResolvedValue(null);
+      jest
+        .spyOn(actionRepo, 'create')
+        .mockImplementation(
+          (data: any) => ({ id: 'action-x', ...data } as any),
+        );
+      jest
+        .spyOn(actionRepo, 'save')
+        .mockImplementation((data: any) => Promise.resolve(data));
+      jest.spyOn(replayRepo, 'save').mockResolvedValue(mockReplay as any);
+
+      await service.recordActions(mockReplayId, [
+        { actionType: 'UNDO', timestamp: 0, actionData: {} },
+      ]);
+
+      expect(mockReplay.undosCount).toBe(1);
+    });
+  });
+
   describe('completeReplay', () => {
     it('should complete a replay with solved status', async () => {
       const completeDto: CompleteReplayDto = {
