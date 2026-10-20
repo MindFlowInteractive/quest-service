@@ -57,6 +57,27 @@ export class TagsService {
       .getMany();
   }
 
+  /** Return tags used by the most recently published puzzles. */
+  async trending(limit = 10): Promise<Array<{ id: string; name: string; usageCount: number }>> {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const boundedLimit = Math.min(Math.max(Math.trunc(limit) || 10, 1), 50);
+    const rows = await this.tagRepository
+      .createQueryBuilder('tag')
+      .innerJoin('tag.puzzles', 'puzzle')
+      .where('puzzle.publishedAt >= :since', { since })
+      .andWhere('puzzle.deletedAt IS NULL')
+      .select('tag.id', 'id')
+      .addSelect('tag.name', 'name')
+      .addSelect('COUNT(DISTINCT puzzle.id)', 'usageCount')
+      .groupBy('tag.id')
+      .addGroupBy('tag.name')
+      .orderBy('COUNT(DISTINCT puzzle.id)', 'DESC')
+      .addOrderBy('tag.name', 'ASC')
+      .limit(boundedLimit)
+      .getRawMany();
+    return rows.map((row) => ({ ...row, usageCount: Number(row.usageCount) }));
+  }
+
   /**
    * Find a tag by id or throw NotFoundException.
    */
@@ -74,7 +95,7 @@ export class TagsService {
    * usageCount is incremented for each newly attached tag.
    */
   async attachTags(puzzleId: string, tagNames: string[]): Promise<Puzzle> {
-    const normalised = tagNames.map((t) => t.trim().toLowerCase());
+    const normalised = [...new Set(tagNames.map((t) => t.trim().toLowerCase()).filter(Boolean))];
 
     const puzzle = await this.puzzleRepository.findOne({
       where: { id: puzzleId },
@@ -103,7 +124,8 @@ export class TagsService {
 
       // Determine which tags are truly new for this puzzle
       const currentIds = new Set((puzzle.tagEntities ?? []).map((t) => t.id));
-      const newTags = resolvedTags.filter((t) => !currentIds.has(t.id));
+      const newTags = [...new Map(resolvedTags.map((tag) => [tag.id, tag])).values()]
+        .filter((tag) => !currentIds.has(tag.id));
 
       // Attach new tags to the puzzle
       puzzle.tagEntities = [...(puzzle.tagEntities ?? []), ...newTags];

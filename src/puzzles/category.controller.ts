@@ -27,6 +27,11 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
+  @Get('analytics')
+  analytics() {
+    return this.categoriesService.analytics();
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Category> {
     return this.categoriesService.findOne(id);
