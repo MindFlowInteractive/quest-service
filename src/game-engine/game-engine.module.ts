@@ -15,15 +15,18 @@ import { PuzzleGeneratorService } from './services/puzzle-generator.service';
 import { PuzzleRegistryService } from './services/puzzle-registry.service';
 import { ScoringService } from './services/scoring.service';
 import { AchievementsService } from './services/achievements.service';
+import { MoveHistoryService } from './services/move-history.service';
 import { PuzzleController } from './controllers/puzzle.controller';
 import { GameStateController } from './controllers/game-state.controller';
 import { AnalyticsController } from './controllers/analytics.controller';
+import { MoveHistoryController } from './controllers/move-history.controller';
 import { PuzzleState } from './entities/puzzle-state.entity';
 import { PlayerProgress } from './entities/player-progress.entity';
 import { GameSession } from './entities/game-session.entity';
 import { PuzzleAnalytics } from './entities/puzzle-analytics.entity';
 import { gameEngineConfig } from './config/game-engine.config';
 import { EnergyModule } from '../energy/energy.module';
+import { ReplayModule } from '../replay/replay.module';
 
 @Global()
 @Module({
@@ -36,6 +39,7 @@ import { EnergyModule } from '../energy/energy.module';
       PuzzleAnalytics,
     ]),
     EnergyModule,
+    ReplayModule,
   ],
   providers: [
     PuzzleEngineService,
@@ -52,8 +56,14 @@ import { EnergyModule } from '../energy/energy.module';
     PuzzleRegistryService,
     ScoringService,
     AchievementsService,
+    MoveHistoryService,
   ],
-  controllers: [PuzzleController, GameStateController, AnalyticsController],
+  controllers: [
+    PuzzleController,
+    GameStateController,
+    AnalyticsController,
+    MoveHistoryController,
+  ],
   exports: [
     PuzzleEngineService,
     StateManagementService,
@@ -69,6 +79,7 @@ import { EnergyModule } from '../energy/energy.module';
     PuzzleRegistryService,
     ScoringService,
     AchievementsService,
+    MoveHistoryService,
   ],
 })
 export class GameEngineModule {}
