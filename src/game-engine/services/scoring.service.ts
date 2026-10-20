@@ -5,6 +5,7 @@ import type {
   PerformanceMetrics,
 } from '../interfaces/puzzle.interfaces';
 import { PuzzleType, DifficultyLevel } from '../types/puzzle.types';
+import { GameMode } from '../types/move-history.types';
 import { gameEngineConfig } from '../config/game-engine.config';
 
 interface ScoreCalculationResult {
@@ -14,6 +15,7 @@ interface ScoreCalculationResult {
   difficultyMultiplier: number;
   streakBonus: number;
   hintsUsedPenalty: number;
+  undoPenalty: number;
   finalScore: number;
   breakdown: Record<string, number>;
 }
@@ -73,10 +75,13 @@ export class ScoringService {
       baseScore,
     );
 
+    const undoPenalty = this.calculateUndoPenalty(performance, baseScore);
+
     // Calculate final score
     let finalScore = baseScore * difficultyMultiplier;
     finalScore += timeBonus + efficiencyBonus + streakBonus;
     finalScore -= hintsUsedPenalty;
+    finalScore -= undoPenalty;
 
     // Apply minimum score threshold
     finalScore = Math.max(finalScore, baseScore * 0.1);
@@ -88,6 +93,7 @@ export class ScoringService {
       difficultyMultiplier,
       streakBonus,
       hintsUsedPenalty,
+      undoPenalty,
       finalScore: Math.round(finalScore),
       breakdown: {
         base: baseScore,
@@ -96,6 +102,7 @@ export class ScoringService {
         difficulty: difficultyMultiplier,
         streak: streakBonus,
         hints: -hintsUsedPenalty,
+        undo: -undoPenalty,
       },
     };
 
@@ -266,6 +273,29 @@ export class ScoringService {
     // Progressive penalty for using multiple hints
     const penaltyRatio =
       this.config.hints.hintPenalty * hintsUsed * (1 + hintsUsed * 0.1);
+    return Math.round(baseScore * penaltyRatio);
+  }
+
+  /**
+   * Penalty for undoing moves.
+   *
+   * Undo is free in practice and zen sessions, but competitive modes charge a
+   * ratio of the base score for every undo, in the same way hints do.
+   */
+  private calculateUndoPenalty(
+    performance: PerformanceMetrics,
+    baseScore: number,
+  ): number {
+    const undosUsed = performance.undosUsed ?? 0;
+    if (undosUsed === 0) return 0;
+
+    const undoRedo = this.config.undoRedo;
+    if (!undoRedo) return 0;
+
+    const mode = performance.mode ?? GameMode.PRACTICE;
+    if (!undoRedo.penalizedModes.includes(mode)) return 0;
+
+    const penaltyRatio = undoRedo.undoPenalty * undosUsed;
     return Math.round(baseScore * penaltyRatio);
   }
 
