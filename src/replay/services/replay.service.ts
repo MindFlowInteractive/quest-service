@@ -115,6 +115,30 @@ export class ReplayService {
   }
 
   /**
+   * Record a batch of actions against a replay, in order.
+   *
+   * Used to import a whole move history in one go, e.g. when a session's
+   * history is turned into a replay after the puzzle is finished.
+   */
+  async recordActions(
+    replayId: string,
+    actions: Array<Omit<RecordActionDto, 'timestamp'> & { timestamp?: number }>,
+  ): Promise<ReplayAction[]> {
+    const recorded: ReplayAction[] = [];
+
+    for (const action of actions) {
+      recorded.push(
+        await this.recordAction(replayId, {
+          ...action,
+          timestamp: action.timestamp ?? 0,
+        }),
+      );
+    }
+
+    return recorded;
+  }
+
+  /**
    * Update replay metrics based on recorded action
    */
   private async updateReplayMetrics(
