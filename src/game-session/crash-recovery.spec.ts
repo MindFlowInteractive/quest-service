@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { GameSession } from './entities/game-session.entity';
 import { GameSessionService } from './services/game-session.service';
 import { CrashRecoveryJob } from './services/crash-recovery.job';
+import { CleanupSessionJob } from './services/cleanup-session.job';
 import { PlayerEventsService } from '../player-events/player-events.service';
 import { PuzzleVersionService } from '../puzzles/services/puzzle-version.service';
 import { CacheService } from '../cache/services/cache.service';
@@ -22,6 +24,8 @@ function makeSession(overrides: Partial<GameSession> = {}): GameSession {
     status: 'IN_PROGRESS',
     state: { progressPercent: 40 },
     lastActiveAt: new Date(),
+    lastHeartbeatAt: new Date(),
+    closeReason: null,
     suspendedAt: null,
     totalMoves: 10,
     hintsUsed: 2,
@@ -68,6 +72,7 @@ describe('Crash Recovery — GameSessionService', () => {
           provide: PuzzleVersionService,
           useValue: { getCurrentVersionId: jest.fn() },
         },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         { provide: CacheService, useValue: cache },
       ],
     }).compile();
@@ -95,6 +100,55 @@ describe('Crash Recovery — GameSessionService', () => {
       repo.findOneBy.mockResolvedValueOnce(null);
       await expect(service.suspend(SESSION_ID)).rejects.toThrow(
         NotFoundException,
+      );
+    });
+  });
+
+  describe('heartbeat()', () => {
+    it('refreshes activity and heartbeat for an active session', async () => {
+      const session = makeSession({
+        lastActiveAt: new Date(Date.now() - 60_000),
+        lastHeartbeatAt: new Date(Date.now() - 60_000),
+      });
+      repo.findOneBy.mockResolvedValueOnce(session);
+
+      const result = await service.heartbeat(SESSION_ID);
+
+      expect(result.lastHeartbeatAt).toBeInstanceOf(Date);
+      expect(result.lastActiveAt).toEqual(result.lastHeartbeatAt);
+      expect(repo.save).toHaveBeenCalledWith(session);
+    });
+
+    it('rejects heartbeats for sessions that are not active', async () => {
+      repo.findOneBy.mockResolvedValueOnce(
+        makeSession({ status: 'COMPLETED' }),
+      );
+
+      await expect(service.heartbeat(SESSION_ID)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when the session does not exist', async () => {
+      repo.findOneBy.mockResolvedValueOnce(null);
+      await expect(service.heartbeat(SESSION_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('updateState()', () => {
+    it('does not refresh the heartbeat for an empty autosave', async () => {
+      const heartbeatAt = new Date(Date.now() - 60_000);
+      const session = makeSession({ lastHeartbeatAt: heartbeatAt });
+      repo.findOneBy.mockResolvedValueOnce(session);
+
+      const result = await service.updateState(SESSION_ID, {});
+
+      expect(result.lastHeartbeatAt).toBe(heartbeatAt);
+      expect(result.lastActiveAt.getTime()).toBeGreaterThan(
+        heartbeatAt.getTime(),
       );
     });
   });
@@ -254,7 +308,10 @@ describe('Crash Recovery — CrashRecoveryJob', () => {
     await job.expireSuspendedSessions();
 
     expect(repo.save).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'ABANDONED' }),
+      expect.objectContaining({
+        status: 'ABANDONED',
+        closeReason: 'DISCONNECT_GRACE_TIMEOUT',
+      }),
     );
   });
 
@@ -338,5 +395,33 @@ describe('Crash Recovery — CrashRecoveryJob', () => {
 
     await expect(job.expireSuspendedSessions()).resolves.not.toThrow();
     expect(repo.save).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('CleanupSessionJob', () => {
+  let job: CleanupSessionJob;
+  let repo: ReturnType<typeof makeMockRepo>;
+
+  beforeEach(async () => {
+    repo = makeMockRepo();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        CleanupSessionJob,
+        { provide: getRepositoryToken(GameSession), useValue: repo },
+      ],
+    }).compile();
+    job = module.get<CleanupSessionJob>(CleanupSessionJob);
+  });
+
+  it('abandons sessions past the heartbeat timeout with an idle reason', async () => {
+    await job.handleCron();
+
+    const [criteria, update] = repo.update.mock.calls[0];
+    expect(criteria.status).toBe('IN_PROGRESS');
+    expect(criteria.lastHeartbeatAt).toBeDefined();
+    expect(update).toEqual({
+      status: 'ABANDONED',
+      closeReason: 'IDLE_TIMEOUT',
+    });
   });
 });

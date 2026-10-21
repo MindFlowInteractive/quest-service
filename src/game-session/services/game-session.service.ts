@@ -6,7 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { GameSession } from '../entities/game-session.entity';
 import { PlayerEventsService } from '../../player-events/player-events.service';
 import { PuzzleVersionService } from '../../puzzles/services/puzzle-version.service';
@@ -44,6 +44,7 @@ export class GameSessionService {
       status: 'IN_PROGRESS',
       state: {},
       lastActiveAt: new Date(),
+      lastHeartbeatAt: new Date(),
     });
     const savedSession = await this.sessionRepo.save(session);
 
@@ -66,7 +67,23 @@ export class GameSessionService {
 
     session.state = { ...session.state, ...partialState };
     session.lastActiveAt = new Date();
+    if (Object.keys(partialState).length > 0) {
+      session.lastHeartbeatAt = session.lastActiveAt;
+    }
 
+    return this.sessionRepo.save(session);
+  }
+
+  async heartbeat(sessionId: string) {
+    const session = await this.sessionRepo.findOneBy({ id: sessionId });
+    if (!session) throw new NotFoundException('Session not found');
+    if (session.status !== 'IN_PROGRESS') {
+      throw new ForbiddenException('Session is not active');
+    }
+
+    const now = new Date();
+    session.lastActiveAt = now;
+    session.lastHeartbeatAt = now;
     return this.sessionRepo.save(session);
   }
 
@@ -82,6 +99,8 @@ export class GameSessionService {
 
     session.status = status;
     session.lastActiveAt = new Date();
+    session.closeReason =
+      status === 'COMPLETED' ? 'COMPLETED' : 'USER_ABANDONED';
 
     const savedSession = await this.sessionRepo.save(session);
 
@@ -124,6 +143,7 @@ export class GameSessionService {
     session.status = 'SUSPENDED';
     session.suspendedAt = new Date();
     session.lastActiveAt = new Date();
+    session.lastHeartbeatAt = session.lastActiveAt;
     const saved = await this.sessionRepo.save(session);
 
     // Snapshot full state to Redis so reconnect can restore it exactly
@@ -160,6 +180,7 @@ export class GameSessionService {
     session.status = 'IN_PROGRESS';
     session.suspendedAt = null;
     session.lastActiveAt = new Date();
+    session.lastHeartbeatAt = session.lastActiveAt;
     return this.sessionRepo.save(session);
   }
 

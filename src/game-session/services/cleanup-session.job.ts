@@ -14,16 +14,21 @@ export class CleanupSessionJob {
     private readonly sessionRepo: Repository<GameSession>,
   ) {}
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleCron() {
-    const threshold = new Date(Date.now() - 1000 * 60 * 30); // 30 mins
+    const idleTimeoutSeconds = parseInt(
+      process.env.SESSION_IDLE_TIMEOUT_SECONDS ?? '1800',
+      10,
+    );
+    const threshold = new Date(Date.now() - idleTimeoutSeconds * 1000);
     const result = await this.sessionRepo.update(
       {
-        lastActiveAt: LessThan(threshold),
+        lastHeartbeatAt: LessThan(threshold),
         status: 'IN_PROGRESS',
       },
       {
         status: 'ABANDONED',
+        closeReason: 'IDLE_TIMEOUT',
       },
     );
     this.logger.log(`Cleaned up ${result.affected} idle sessions`);
