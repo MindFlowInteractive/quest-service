@@ -22,6 +22,12 @@ import { Tag } from './tag.entity';
 export class Puzzle {
   @Column({ type: 'timestamp with time zone', nullable: true })
   archivedAt?: Date;
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  restoredAt?: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  restoredBy?: string;
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -188,6 +194,10 @@ export class Puzzle {
       hard: number;
       expert: number;
     };
+    archivedAt?: string;
+    archivedBy?: string;
+    restoredAt?: string;
+    restoredBy?: string;
   };
 
   @CreateDateColumn()

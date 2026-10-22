@@ -19,6 +19,7 @@ import { PuzzleProgress } from '../game-logic/entities/puzzle-progress.entity';
 import { PuzzleRating } from './entities/puzzle-rating.entity';
 import { LocalizationService } from '../common/i18n/localization.service';
 import { PuzzleVersionService } from './services/puzzle-version.service';
+import { PuzzleValidationService } from './services/puzzle-validation.service';
 import {
   CreatePuzzleDto,
   UpdatePuzzleDto,
@@ -102,6 +103,7 @@ export class PuzzlesService {
     private ratingRepository: Repository<PuzzleRating>,
     private readonly localizationService: LocalizationService,
     private readonly puzzleVersionService: PuzzleVersionService,
+    private readonly puzzleValidationService: PuzzleValidationService,
   ) {}
 
   async create(
@@ -172,6 +174,7 @@ export class PuzzlesService {
         tags,
         isFeatured,
         isPublished,
+        isArchived,
         createdBy,
         page = 1,
         limit = 20,
@@ -181,8 +184,25 @@ export class PuzzlesService {
 
       const queryBuilder = this.puzzleRepository
         .createQueryBuilder('puzzle')
-        .leftJoinAndSelect('puzzle.tagEntities', 'tag')
-        .where('puzzle.deletedAt IS NULL');
+        .leftJoinAndSelect('puzzle.tagEntities', 'tag');
+
+      if (isArchived !== undefined) {
+        if (isArchived) {
+          queryBuilder
+            .withDeleted()
+            .where(
+              '(puzzle.deletedAt IS NOT NULL OR puzzle.archivedAt IS NOT NULL)',
+            );
+        } else {
+          queryBuilder.where(
+            'puzzle.deletedAt IS NULL AND puzzle.archivedAt IS NULL',
+          );
+        }
+      } else {
+        queryBuilder.where(
+          'puzzle.deletedAt IS NULL AND puzzle.archivedAt IS NULL',
+        );
+      }
 
       // Apply filters
       if (search) {
@@ -278,13 +298,25 @@ export class PuzzlesService {
     }
   }
 
-  async findOne(id: string, userId?: string): Promise<PuzzleWithStats> {
+  async findOne(
+    id: string,
+    userId?: string,
+    includeDeleted = false,
+  ): Promise<PuzzleWithStats> {
     try {
-      const puzzle = await this.puzzleRepository
+      const query = this.puzzleRepository
         .createQueryBuilder('puzzle')
-        .where('puzzle.id = :id', { id })
-        .andWhere('puzzle.deletedAt IS NULL')
-        .getOne();
+        .where('puzzle.id = :id', { id });
+
+      if (includeDeleted) {
+        query.withDeleted();
+      } else {
+        query.andWhere(
+          'puzzle.deletedAt IS NULL AND puzzle.archivedAt IS NULL',
+        );
+      }
+
+      const puzzle = await query.getOne();
 
       if (!puzzle) {
         throw new NotFoundException(`Puzzle with ID ${id} not found`);
@@ -607,10 +639,137 @@ export class PuzzlesService {
         });
         break;
       case BulkAction.ARCHIVE:
-        await this.puzzleRepository.softDelete(puzzleId);
+        await this.archive(puzzleId, userId);
+        break;
+      case BulkAction.RESTORE:
+        await this.restore(puzzleId, userId);
         break;
       default:
         throw new BadRequestException(`Unsupported bulk action: ${action}`);
     }
+  }
+
+  /**
+   * Archive a puzzle: marks archivedAt, sets isActive=false, audits author/time, and soft-deletes.
+   */
+  async archive(id: string, userId: string): Promise<PuzzleWithStats> {
+    try {
+      const puzzle = await this.puzzleRepository
+        .createQueryBuilder('puzzle')
+        .leftJoinAndSelect('puzzle.tagEntities', 'tag')
+        .where('puzzle.id = :id', { id })
+        .andWhere('puzzle.deletedAt IS NULL AND puzzle.archivedAt IS NULL')
+        .getOne();
+
+      if (!puzzle) {
+        throw new NotFoundException(`Puzzle with ID ${id} not found or already archived`);
+      }
+
+      const now = new Date();
+      puzzle.archivedAt = now;
+      puzzle.isActive = false;
+      puzzle.metadata = {
+        ...puzzle.metadata,
+        archivedAt: now.toISOString(),
+        archivedBy: userId,
+        lastModifiedBy: userId,
+      };
+
+      await this.puzzleRepository.save(puzzle);
+      await this.puzzleRepository.softDelete(id);
+      this.logger.log(`Archived puzzle: ${id} by user: ${userId}`);
+
+      const [enhancedPuzzle] = await this.enhanceWithStats([puzzle]);
+      return enhancedPuzzle;
+    } catch (error) {
+      this.logger.error(
+        `Failed to archive puzzle ${id}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Restore an archived puzzle:
+   * 1. Verifies the puzzle exists and is archived
+   * 2. Validates puzzle integrity (blocking restore if invalid)
+   * 3. Clears archivedAt and deletedAt, restores active state
+   * 4. Records restore actor and timestamp
+   * 5. Re-indexes for search and gameplay
+   */
+  async restore(id: string, userId: string): Promise<PuzzleWithStats> {
+    try {
+      // Find the puzzle including soft-deleted rows
+      const puzzle = await this.puzzleRepository
+        .createQueryBuilder('puzzle')
+        .withDeleted()
+        .leftJoinAndSelect('puzzle.tagEntities', 'tag')
+        .where('puzzle.id = :id', { id })
+        .getOne();
+
+      if (!puzzle) {
+        throw new NotFoundException(`Puzzle with ID ${id} not found`);
+      }
+
+      if (!puzzle.deletedAt && !puzzle.archivedAt) {
+        throw new BadRequestException(`Puzzle with ID ${id} is not archived`);
+      }
+
+      // Block restore if puzzle fails validation
+      const validation =
+        this.puzzleValidationService.validatePuzzleForRestore(puzzle);
+      if (!validation.isValid) {
+        throw new BadRequestException(
+          `Cannot restore invalid puzzle: ${validation.errors.join(', ')}`,
+        );
+      }
+
+      const now = new Date();
+      puzzle.deletedAt = null;
+      puzzle.archivedAt = null;
+      puzzle.isActive = true;
+      puzzle.restoredAt = now;
+      puzzle.restoredBy = userId;
+      puzzle.metadata = {
+        ...puzzle.metadata,
+        restoredAt: now.toISOString(),
+        restoredBy: userId,
+        lastModifiedBy: userId,
+      };
+
+      // Restore soft-delete status in DB
+      await this.puzzleRepository.restore(id);
+      const savedPuzzle = await this.puzzleRepository.save(puzzle);
+
+      // Re-index for search discovery
+      await this.reindexPuzzle(savedPuzzle);
+
+      this.logger.log(
+        `Restored puzzle: ${id} by user: ${userId} at ${now.toISOString()}`,
+      );
+
+      const [enhancedPuzzle] = await this.enhanceWithStats([savedPuzzle]);
+      return enhancedPuzzle;
+    } catch (error) {
+      this.logger.error(
+        `Failed to restore puzzle ${id}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Re-indexes a puzzle so it immediately reappears in full-text and filtered searches.
+   */
+  async reindexPuzzle(puzzle: Puzzle): Promise<void> {
+    if (!puzzle || !puzzle.id) {
+      return;
+    }
+    this.logger.log(
+      `Re-indexing puzzle for search: ${puzzle.id} (${puzzle.title})`,
+    );
+    await this.puzzleRepository.update(puzzle.id, { updatedAt: new Date() });
   }
 }

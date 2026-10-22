@@ -157,6 +157,26 @@ export class PuzzlesController {
     return await this.puzzlesService.update(id, { isPublished: false }, userId);
   }
 
+  @Post(':id/archive')
+  async archive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: any,
+  ): Promise<PuzzleWithStats> {
+    const userId = req.user?.id ?? 'temp-user-id';
+    this.logger.log(`Archiving puzzle: ${id} by user: ${userId}`);
+    return await this.puzzlesService.archive(id, userId);
+  }
+
+  @Post(':id/restore')
+  async restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: any,
+  ): Promise<PuzzleWithStats> {
+    const userId = req.user?.id ?? 'temp-user-id';
+    this.logger.log(`Restoring puzzle: ${id} by user: ${userId}`);
+    return await this.puzzlesService.restore(id, userId);
+  }
+
   @Post(':id/duplicate')
   async duplicate(
     @Param('id', ParseUUIDPipe) id: string,

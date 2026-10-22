@@ -72,6 +72,11 @@ export class SearchPuzzleDto {
   isPublished?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }: any) => value === 'true' || value === true)
+  isArchived?: boolean;
+
+  @IsOptional()
   @IsString()
   createdBy?: string;
 

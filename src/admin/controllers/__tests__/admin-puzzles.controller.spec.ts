@@ -22,6 +22,8 @@ describe('AdminPuzzlesController', () => {
             create: jest.fn(),
             update: jest.fn(),
             remove: jest.fn(),
+            archive: jest.fn(),
+            restore: jest.fn(),
           },
         },
         {
@@ -69,6 +71,55 @@ describe('AdminPuzzlesController', () => {
         targetId: mockPuzzle.id,
         details: { title: mockPuzzle.title },
       });
+    });
+  });
+
+  describe('archive', () => {
+    it('should call puzzlesService.archive and auditLogService.log', async () => {
+      const mockPuzzle = { id: 'puzzle-id', title: 'Archived Puzzle' };
+      (puzzlesService.archive as jest.Mock).mockResolvedValue(mockPuzzle);
+
+      const result = await controller.archive('puzzle-id', mockUser);
+
+      expect(puzzlesService.archive).toHaveBeenCalledWith(
+        'puzzle-id',
+        mockUser.id,
+      );
+      expect(auditLogService.log).toHaveBeenCalledWith({
+        adminId: mockUser.id,
+        action: 'ARCHIVE_PUZZLE',
+        targetType: 'PUZZLE',
+        targetId: 'puzzle-id',
+        details: { title: mockPuzzle.title },
+      });
+      expect(result).toEqual(mockPuzzle);
+    });
+  });
+
+  describe('restore', () => {
+    it('should call puzzlesService.restore and auditLogService.log with actor details', async () => {
+      const mockPuzzle = { id: 'puzzle-id', title: 'Restored Puzzle' };
+      (puzzlesService.restore as jest.Mock).mockResolvedValue(mockPuzzle);
+
+      const result = await controller.restore('puzzle-id', mockUser);
+
+      expect(puzzlesService.restore).toHaveBeenCalledWith(
+        'puzzle-id',
+        mockUser.id,
+      );
+      expect(auditLogService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          adminId: mockUser.id,
+          action: 'RESTORE_PUZZLE',
+          targetType: 'PUZZLE',
+          targetId: 'puzzle-id',
+          details: expect.objectContaining({
+            title: mockPuzzle.title,
+            restoredBy: mockUser.id,
+          }),
+        }),
+      );
+      expect(result).toEqual(mockPuzzle);
     });
   });
 });
