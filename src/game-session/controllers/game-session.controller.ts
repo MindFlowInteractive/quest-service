@@ -50,6 +50,15 @@ export class GameSessionController {
     };
   }
 
+  @Post(':id/heartbeat')
+  async heartbeat(@Param('id') sessionId: string) {
+    const session = await this.sessionService.heartbeat(sessionId);
+    return {
+      message: 'Game session heartbeat recorded',
+      session,
+    };
+  }
+
   @Get('resume/:userId')
   async resumeLatestSession(@Param('userId') userId: string) {
     const session = await this.sessionService.resume(userId);

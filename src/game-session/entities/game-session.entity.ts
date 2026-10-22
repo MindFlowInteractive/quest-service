@@ -43,6 +43,12 @@ export class GameSession {
   @Column({ type: 'timestamp', nullable: true })
   lastActiveAt: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  lastHeartbeatAt: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  closeReason: string | null;
+
   @Column({ type: 'int', default: 0 })
   totalMoves: number;
 

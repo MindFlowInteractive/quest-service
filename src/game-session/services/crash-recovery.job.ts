@@ -44,6 +44,7 @@ export class CrashRecoveryJob {
 
         session.status = 'ABANDONED';
         session.lastActiveAt = new Date();
+        session.closeReason = 'DISCONNECT_GRACE_TIMEOUT';
         await this.sessionRepo.save(session);
 
         await this.playerEventsService.emitPlayerEvent({
