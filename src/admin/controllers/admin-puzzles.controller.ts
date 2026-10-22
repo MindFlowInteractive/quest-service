@@ -91,4 +91,40 @@ export class AdminPuzzlesController {
       targetId: id,
     });
   }
+
+  @Post(':id/archive')
+  async archive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @ActiveUser() user: any,
+  ) {
+    const puzzle = await this.puzzlesService.archive(id, user.id);
+    await this.auditLogService.log({
+      adminId: user.id,
+      action: 'ARCHIVE_PUZZLE',
+      targetType: 'PUZZLE',
+      targetId: id,
+      details: { title: puzzle.title },
+    });
+    return puzzle;
+  }
+
+  @Post(':id/restore')
+  async restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @ActiveUser() user: any,
+  ) {
+    const puzzle = await this.puzzlesService.restore(id, user.id);
+    await this.auditLogService.log({
+      adminId: user.id,
+      action: 'RESTORE_PUZZLE',
+      targetType: 'PUZZLE',
+      targetId: id,
+      details: {
+        title: puzzle.title,
+        restoredAt: new Date(),
+        restoredBy: user.id,
+      },
+    });
+    return puzzle;
+  }
 }

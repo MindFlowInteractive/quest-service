@@ -12,6 +12,7 @@ export enum BulkAction {
   PUBLISH = 'publish',
   UNPUBLISH = 'unpublish',
   ARCHIVE = 'archive',
+  RESTORE = 'restore',
   DELETE = 'delete',
   UPDATE_CATEGORY = 'update_category',
   ADD_TAGS = 'add_tags',

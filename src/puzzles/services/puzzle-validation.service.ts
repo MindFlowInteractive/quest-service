@@ -91,6 +91,54 @@ export class PuzzleValidationService {
     };
   }
 
+  /**
+   * Validate an archived puzzle before allowing restoration.
+   * Ensures essential integrity (title, description, category, valid answer, hint bounds)
+   * so that invalid or corrupt puzzles cannot be restored to active play or search.
+   */
+  validatePuzzleForRestore(puzzle: Partial<any>): {
+    isValid: boolean;
+    errors: string[];
+  } {
+    const errors: string[] = [];
+
+    if (!puzzle.title || typeof puzzle.title !== 'string' || puzzle.title.trim().length < 3) {
+      errors.push('Title must be at least 3 characters long');
+    }
+
+    if (!puzzle.description || typeof puzzle.description !== 'string' || puzzle.description.trim().length < 10) {
+      errors.push('Description must be at least 10 characters long');
+    }
+
+    if (!puzzle.category) {
+      errors.push('Puzzle must have a category');
+    }
+
+    if (!puzzle.content) {
+      errors.push('Puzzle must have content defined');
+    } else {
+      if (!puzzle.content.type) {
+        errors.push('Puzzle content must specify a type');
+      }
+      if (!this.validateAnswer(puzzle.content)) {
+        errors.push('Puzzle must have a valid correct answer');
+      }
+    }
+
+    if (
+      Array.isArray(puzzle.hints) &&
+      puzzle.maxHints !== undefined &&
+      puzzle.hints.length > puzzle.maxHints
+    ) {
+      errors.push('Number of hints exceeds maximum allowed');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
   private validateAnswer(content: any): boolean {
     if (!content.correctAnswer) return false;
 
