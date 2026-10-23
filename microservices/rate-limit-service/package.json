@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start:dev": "ts-node -r tsconfig-paths/register src/main.ts",
-    "start": "node dist/main.js",
-    "build": "tsc -p tsconfig.json",
+    "start:dev": "node init && ts-node -r tsconfig-paths/register src/main.ts",
+    "start": "node init && node dist/main.js",
+    "build": "node init && tsc -p tsconfig.json",
     "test": "echo \"No tests\" && exit 0"
   },
   "dependencies": {

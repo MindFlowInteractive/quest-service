@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Example producer service demonstrating event publishing",
   "scripts": {
-    "start": "ts-node src/main.ts",
-    "start:dev": "ts-node-dev --respawn src/main.ts",
-    "build": "tsc",
+    "start": "node init && ts-node src/main.ts",
+    "start:dev": "node init && ts-node-dev --respawn src/main.ts",
+    "build": "node init && tsc",
     "test": "jest"
   },
   "dependencies": {

@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "description": "NestJS microservice for full-text search using Elasticsearch",
   "scripts": {
-    "start": "node dist/main",
-    "start:dev": "nest start --watch",
-    "build": "nest build",
+    "start": "node init && node dist/main",
+    "start:dev": "node init && nest start --watch",
+    "build": "node init && nest build",
     "test": "jest",
     "lint": "eslint . --ext .ts"
   },

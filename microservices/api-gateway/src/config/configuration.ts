@@ -151,4 +151,9 @@ export default () => ({
     healthCheck: {
         interval: parseInt(process.env.HEALTH_CHECK_INTERVAL, 10) || 30000,
     },
+
+    reconnect: {
+        gracePeriodMs:
+            parseInt(process.env.RECONNECT_GRACE_PERIOD_MS, 10) || 30000,
+    },
 });

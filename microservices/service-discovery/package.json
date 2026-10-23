@@ -4,9 +4,9 @@
   "description": "NestJS Service Discovery microservice",
   "private": true,
   "scripts": {
-    "start": "node dist/main.js",
-    "start:dev": "nest start --watch",
-    "build": "nest build",
+    "start": "node init && node dist/main.js",
+    "start:dev": "node init && nest start --watch",
+    "build": "node init && nest build",
     "test": "jest"
   },
   "dependencies": {
