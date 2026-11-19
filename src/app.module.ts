@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheWarmingModule } from './cache-warming/cache-warming.module';
+import { CosmeticsModule } from './cosmetics/cosmetics.module';
 import { DailyLoginRewardsModule } from './daily-login-rewards/daily-login-rewards.module';
 import { CacheJob } from './cache-warming/entities/cache-job.entity';
 import { Metric } from './cache-warming/entities/metric.entity';
@@ -52,6 +53,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     }),
     ScheduleModule.forRoot(),
     CacheWarmingModule,
+    CosmeticsModule,
     DailyLoginRewardsModule,
     EventsModule,
     JobsModule,
