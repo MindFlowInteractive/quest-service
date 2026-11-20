@@ -18,17 +18,46 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ReportsService {
+  private readonly reporterHistory = new Map<string, number[]>();
+  readonly RATE_LIMIT_MAX_REPORTS = 10;
+  readonly RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
   constructor(
     @InjectRepository(ContentReport)
     private readonly reportsRepository: Repository<ContentReport>,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  checkRateLimit(reporterId: string): boolean {
+    const now = Date.now();
+    const timestamps = this.reporterHistory.get(reporterId) || [];
+    const recent = timestamps.filter(
+      (ts) => now - ts < this.RATE_LIMIT_WINDOW_MS,
+    );
+
+    if (recent.length >= this.RATE_LIMIT_MAX_REPORTS) {
+      throw new BadRequestException(
+        'Reporting rate limit exceeded. You cannot submit more than 10 reports per hour.',
+      );
+    }
+
+    recent.push(now);
+    this.reporterHistory.set(reporterId, recent);
+    return true;
+  }
+
+  resetRateLimits(): void {
+    this.reporterHistory.clear();
+  }
+
   async createReport(
     reporterId: string,
     createReportDto: CreateReportDto,
   ): Promise<ContentReport> {
-    const { targetType, targetId, reason } = createReportDto;
+    const { targetType, targetId, reason, evidence } = createReportDto;
+
+    // Rate-limiting check to deter abuse and spam reports
+    this.checkRateLimit(reporterId);
 
     // Check for duplicate report from same user on same target
     const existingReport = await this.reportsRepository.findOne({
@@ -88,18 +117,30 @@ export class ReportsService {
       targetType,
       targetId,
       reason,
+      evidence,
       priority,
     });
 
     const savedReport = await this.reportsRepository.save(report);
 
-    // Emit event for auto-escalation check
+    // Emit event for auto-escalation check and moderation queue routing
     this.eventEmitter.emit('report.created', {
       report: savedReport,
       recentReportsCount,
     });
+    this.eventEmitter.emit('report.queued', {
+      report: savedReport,
+      priority,
+    });
 
     return savedReport;
+  }
+
+  async getModerationQueue(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ reports: ContentReport[]; total: number }> {
+    return this.getReports(page, limit);
   }
 
   async getReports(

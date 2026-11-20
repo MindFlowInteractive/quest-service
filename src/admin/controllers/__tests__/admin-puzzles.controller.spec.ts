@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AdminPuzzlesController } from '../admin-puzzles.controller';
 import { PuzzlesService } from '../../../puzzles/puzzles.service';
 import { AdminAuditLogService } from '../../services/admin-audit-log.service';
+import { PuzzleBulkImportService } from '../../../puzzles/services/puzzle-bulk-import.service';
 import { UserRole } from '../../../auth/constants';
 
 describe('AdminPuzzlesController', () => {
   let controller: AdminPuzzlesController;
   let puzzlesService: PuzzlesService;
   let auditLogService: AdminAuditLogService;
+  let bulkImportService: PuzzleBulkImportService;
 
   const mockUser = { id: 'admin-id', role: { name: UserRole.ADMIN } };
 
@@ -32,12 +34,23 @@ describe('AdminPuzzlesController', () => {
             log: jest.fn(),
           },
         },
+        {
+          provide: PuzzleBulkImportService,
+          useValue: {
+            importFromFile: jest.fn(),
+            getImportHistory: jest.fn(),
+            getImportHistoryById: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<AdminPuzzlesController>(AdminPuzzlesController);
     puzzlesService = module.get<PuzzlesService>(PuzzlesService);
     auditLogService = module.get<AdminAuditLogService>(AdminAuditLogService);
+    bulkImportService = module.get<PuzzleBulkImportService>(
+      PuzzleBulkImportService,
+    );
   });
 
   it('should be defined', () => {
@@ -120,6 +133,65 @@ describe('AdminPuzzlesController', () => {
         }),
       );
       expect(result).toEqual(mockPuzzle);
+    });
+  });
+
+  describe('importPuzzles', () => {
+    it('should delegate to bulkImportService.importFromFile with dryRun option', async () => {
+      const mockReport = {
+        dryRun: true,
+        filename: 'puzzles.json',
+        totalRecords: 1,
+        validCount: 1,
+        invalidCount: 0,
+        status: 'success',
+        errors: [],
+      };
+      (bulkImportService.importFromFile as jest.Mock).mockResolvedValue(
+        mockReport,
+      );
+
+      const body = { dryRun: true };
+      const file = { originalname: 'puzzles.json' };
+      const result = await controller.importPuzzles(file as any, body, mockUser);
+
+      expect(bulkImportService.importFromFile).toHaveBeenCalledWith(
+        file,
+        body,
+        mockUser.id,
+        true,
+      );
+      expect(result).toEqual(mockReport);
+    });
+  });
+
+  describe('getImportHistory', () => {
+    it('should delegate to bulkImportService.getImportHistory', async () => {
+      const mockHistory = { history: [], total: 0 };
+      (bulkImportService.getImportHistory as jest.Mock).mockResolvedValue(
+        mockHistory,
+      );
+
+      const result = await controller.getImportHistory(10, 0);
+
+      expect(bulkImportService.getImportHistory).toHaveBeenCalledWith(10, 0);
+      expect(result).toEqual(mockHistory);
+    });
+  });
+
+  describe('getImportHistoryById', () => {
+    it('should delegate to bulkImportService.getImportHistoryById', async () => {
+      const mockRecord = { id: 'history-1' };
+      (bulkImportService.getImportHistoryById as jest.Mock).mockResolvedValue(
+        mockRecord,
+      );
+
+      const result = await controller.getImportHistoryById('history-1');
+
+      expect(bulkImportService.getImportHistoryById).toHaveBeenCalledWith(
+        'history-1',
+      );
+      expect(result).toEqual(mockRecord);
     });
   });
 });
