@@ -49,6 +49,15 @@ export class QuestChainPuzzle {
   @Index()
   sequenceOrder: number;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  chapterId?: string;
+
+  @Column({ type: 'text', nullable: true })
+  narrative?: string;
+
+  @Column({ type: 'boolean', default: false })
+  isOptional?: boolean;
+
   @Column({ type: 'jsonb', default: {} })
   unlockConditions: UnlockConditions;
 

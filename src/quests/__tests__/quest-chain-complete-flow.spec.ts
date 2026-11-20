@@ -176,6 +176,7 @@ describe('QuestChain Complete Integration Tests', () => {
 
       mockQuestChainRepository.create.mockReturnValue(mockChain);
       mockQuestChainRepository.save.mockResolvedValue(mockChain);
+      mockQuestChainRepository.findOne.mockResolvedValue(mockChain);
 
       // Create the chain
       const createdChain = await questChainService.createChain(createDto);
@@ -348,6 +349,136 @@ describe('QuestChain Complete Integration Tests', () => {
       );
       expect(leaderboard).toBeDefined();
       expect(Array.isArray(leaderboard)).toBeTruthy();
+    });
+
+    it('advances through chapters without requiring optional stages', async () => {
+      const userId = uuidv4();
+      const chainId = uuidv4();
+      const firstStageId = uuidv4();
+      const sideStageId = uuidv4();
+      const secondStageId = uuidv4();
+      const chain = {
+        id: chainId,
+        story: {
+          intro: 'The journey begins.',
+          outro: 'The journey ends.',
+          chapters: [
+            {
+              id: 'chapter-one',
+              title: 'The Gate',
+              description: 'Open the gate.',
+              storyText: 'A locked gate blocks the road.',
+            },
+            {
+              id: 'chapter-two',
+              title: 'Beyond the Gate',
+              description: 'Continue onward.',
+              storyText: 'The path is finally open.',
+            },
+          ],
+        },
+      };
+      const stages = [
+        {
+          puzzleId: firstStageId,
+          chapterId: 'chapter-one',
+          sequenceOrder: 0,
+          isOptional: false,
+          narrative: 'You find a key.',
+          unlockConditions: {},
+          puzzle: { id: firstStageId },
+        },
+        {
+          puzzleId: sideStageId,
+          chapterId: 'chapter-one',
+          sequenceOrder: 1,
+          isOptional: true,
+          narrative: 'A hidden room holds a clue.',
+          unlockConditions: {},
+          puzzle: { id: sideStageId },
+        },
+        {
+          puzzleId: secondStageId,
+          chapterId: 'chapter-two',
+          sequenceOrder: 2,
+          isOptional: false,
+          narrative: 'The road beyond opens.',
+          unlockConditions: { previousPuzzles: [sideStageId] },
+          puzzle: { id: secondStageId },
+        },
+      ];
+      const progress = {
+        id: uuidv4(),
+        userId,
+        questChainId: chainId,
+        status: 'in_progress',
+        currentPuzzleIndex: 0,
+        completedPuzzleIds: [],
+        checkpointData: {},
+        branchPath: {},
+        totalScore: 0,
+        totalTime: 0,
+        totalHintsUsed: 0,
+      };
+
+      mockQuestChainRepository.findOne.mockResolvedValue(chain);
+      mockQuestChainPuzzleRepository.find.mockResolvedValue(stages);
+      mockQuestChainPuzzleRepository.findOne.mockImplementation(({ where }) =>
+        Promise.resolve(
+          stages.find((stage) => stage.puzzleId === where.puzzleId),
+        ),
+      );
+      mockUserProgressRepository.findOne.mockResolvedValue(progress);
+      mockUserProgressRepository.save.mockImplementation(
+        async (savedProgress) => savedProgress,
+      );
+
+      const firstStage = await progressionService.getNextPuzzle(
+        userId,
+        chainId,
+      );
+      expect(firstStage).toMatchObject({
+        chainPuzzle: { puzzleId: firstStageId },
+        narrative: 'You find a key.',
+      });
+
+      await progressionService.completePuzzle(userId, chainId, firstStageId, {
+        score: 10,
+        timeTaken: 30,
+        hintsUsed: 0,
+      });
+      const nextStage = await progressionService.getNextPuzzle(userId, chainId);
+      expect(nextStage).toMatchObject({
+        chainPuzzle: { puzzleId: secondStageId },
+        narrative: 'The road beyond opens.',
+      });
+
+      await progressionService.completePuzzle(userId, chainId, secondStageId, {
+        score: 10,
+        timeTaken: 30,
+        hintsUsed: 0,
+      });
+      const campaign = await progressionService.getCampaignProgress(
+        userId,
+        chainId,
+      );
+
+      expect(campaign.status).toBe('completed');
+      expect(campaign.completedChapterIds).toEqual([
+        'chapter-one',
+        'chapter-two',
+      ]);
+      expect(campaign.chapters[0].stages[1]).toMatchObject({
+        puzzleId: sideStageId,
+        isOptional: true,
+        completed: false,
+      });
+      expect(
+        await progressionService.getNextPuzzle(userId, chainId),
+      ).toMatchObject({
+        chainPuzzle: { puzzleId: sideStageId },
+        narrative: 'A hidden room holds a clue.',
+      });
     });
 
     it('should handle branching paths correctly', async () => {

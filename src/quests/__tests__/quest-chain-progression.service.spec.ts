@@ -27,6 +27,10 @@ describe('QuestChainProgressionService', () => {
     find: jest.fn(),
   };
 
+  const mockQuestChainRepository = {
+    findOne: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -38,6 +42,10 @@ describe('QuestChainProgressionService', () => {
         {
           provide: getRepositoryToken(QuestChainPuzzle),
           useValue: mockQuestChainPuzzleRepository,
+        },
+        {
+          provide: getRepositoryToken(QuestChain),
+          useValue: mockQuestChainRepository,
         },
       ],
     }).compile();
@@ -85,14 +93,16 @@ describe('QuestChainProgressionService', () => {
       const result = await service.startChain(userId, chainId);
 
       expect(result).toEqual(mockProgress);
-      expect(userProgressRepository.create).toHaveBeenCalledWith({
-        userId,
-        questChainId: chainId,
-        status: 'in_progress',
-        currentPuzzleIndex: 0,
-        startedAt: expect.any(Date),
-        lastPlayedAt: expect.any(Date),
-      });
+      expect(userProgressRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId,
+          questChainId: chainId,
+          status: 'in_progress',
+          currentPuzzleIndex: 0,
+          startedAt: expect.any(Date),
+          lastPlayedAt: expect.any(Date),
+        }),
+      );
     });
 
     it('should return existing progress if chain already started', async () => {
@@ -206,6 +216,157 @@ describe('QuestChainProgressionService', () => {
         completionData,
       );
       expect(result).toBe('puzzle5');
+    });
+
+    describe('chapter and stage progression', () => {
+      const firstChapter = {
+        id: 'chapter-one',
+        title: 'Chapter One',
+        description: 'First chapter',
+        storyText: 'The story begins.',
+      };
+      const secondChapter = {
+        id: 'chapter-two',
+        title: 'Chapter Two',
+        description: 'Second chapter',
+        storyText: 'The story continues.',
+      };
+
+      it('serves required stage narrative before an available optional stage', async () => {
+        const progress = {
+          completedPuzzleIds: [],
+          totalScore: 0,
+          totalTime: 0,
+          totalHintsUsed: 0,
+        };
+        const optionalStage = {
+          puzzleId: 'side-stage',
+          chapterId: firstChapter.id,
+          sequenceOrder: 0,
+          isOptional: true,
+          unlockConditions: {},
+          puzzle: { id: 'side-stage' },
+        };
+        const requiredStage = {
+          puzzleId: 'main-stage',
+          chapterId: firstChapter.id,
+          sequenceOrder: 1,
+          isOptional: false,
+          narrative: 'A new clue appears.',
+          unlockConditions: {},
+          puzzle: { id: 'main-stage' },
+        };
+
+        mockUserProgressRepository.findOne.mockResolvedValue(progress);
+        mockQuestChainRepository.findOne.mockResolvedValue({
+          story: { chapters: [firstChapter, secondChapter] },
+        });
+        mockQuestChainPuzzleRepository.find.mockResolvedValue([
+          optionalStage,
+          requiredStage,
+        ]);
+
+        const next = await service.getNextPuzzle('user', 'chain');
+
+        expect(next).toEqual({
+          puzzle: requiredStage.puzzle,
+          chainPuzzle: requiredStage,
+          narrative: 'A new clue appears.',
+        });
+      });
+
+      it('unlocks the next chapter when required stages are complete, even if a side stage is not', async () => {
+        const progress = {
+          status: 'in_progress',
+          completedPuzzleIds: ['first-stage'],
+          totalScore: 10,
+          totalTime: 20,
+          totalHintsUsed: 0,
+        };
+        const stages = [
+          {
+            puzzleId: 'first-stage',
+            chapterId: firstChapter.id,
+            sequenceOrder: 0,
+            isOptional: false,
+            unlockConditions: {},
+          },
+          {
+            puzzleId: 'side-stage',
+            chapterId: firstChapter.id,
+            sequenceOrder: 1,
+            isOptional: true,
+            narrative: 'A hidden passage.',
+            unlockConditions: {},
+          },
+          {
+            puzzleId: 'next-chapter-stage',
+            chapterId: secondChapter.id,
+            sequenceOrder: 2,
+            isOptional: false,
+            unlockConditions: { previousPuzzles: ['side-stage'] },
+          },
+        ];
+
+        mockQuestChainRepository.findOne.mockResolvedValue({
+          id: 'chain',
+          story: { chapters: [firstChapter, secondChapter] },
+        });
+        mockUserProgressRepository.findOne.mockResolvedValue(progress);
+        mockQuestChainPuzzleRepository.find.mockResolvedValue(stages);
+
+        const campaign = await service.getCampaignProgress('user', 'chain');
+
+        expect(campaign.completedChapterIds).toEqual([firstChapter.id]);
+        expect(campaign.currentChapterId).toBe(secondChapter.id);
+        expect(campaign.chapters[0].stages[1]).toMatchObject({
+          puzzleId: 'side-stage',
+          isOptional: true,
+          completed: false,
+          unlocked: true,
+          narrative: 'A hidden passage.',
+        });
+        expect(campaign.chapters[1].unlocked).toBe(true);
+      });
+
+      it('keeps later chapters locked until every required stage in prior chapters is complete', async () => {
+        const progress = {
+          status: 'in_progress',
+          completedPuzzleIds: [],
+          totalScore: 0,
+          totalTime: 0,
+          totalHintsUsed: 0,
+        };
+        const stages = [
+          {
+            puzzleId: 'first-stage',
+            chapterId: firstChapter.id,
+            sequenceOrder: 0,
+            isOptional: false,
+            unlockConditions: {},
+          },
+          {
+            puzzleId: 'next-chapter-stage',
+            chapterId: secondChapter.id,
+            sequenceOrder: 1,
+            isOptional: false,
+            unlockConditions: {},
+          },
+        ];
+
+        mockQuestChainRepository.findOne.mockResolvedValue({
+          id: 'chain',
+          story: { chapters: [firstChapter, secondChapter] },
+        });
+        mockUserProgressRepository.findOne.mockResolvedValue(progress);
+        mockQuestChainPuzzleRepository.find.mockResolvedValue(stages);
+
+        const campaign = await service.getCampaignProgress('user', 'chain');
+
+        expect(campaign.chapters[0].unlocked).toBe(true);
+        expect(campaign.chapters[1].unlocked).toBe(false);
+        expect(campaign.chapters[1].stages[0].unlocked).toBe(false);
+      });
     });
   });
 });

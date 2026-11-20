@@ -59,6 +59,7 @@ export class QuestChainValidationService {
 
       // Validate story structure
       this.validateStoryStructure(chain, result);
+      this.validateChapterStages(chain, chainPuzzles, result);
 
       // Validate rewards structure
       this.validateRewardsStructure(chain, result);
@@ -238,6 +239,11 @@ export class QuestChainValidationService {
     if (!story.chapters || story.chapters.length === 0) {
       result.warnings.push('No story chapters defined');
     } else {
+      const chapterIds = story.chapters.map((chapter) => chapter.id);
+      if (new Set(chapterIds).size !== chapterIds.length) {
+        result.errors.push('Story chapter IDs must be unique');
+      }
+
       // Validate chapter structure
       for (const chapter of story.chapters) {
         if (!chapter.id || chapter.id.trim() === '') {
@@ -249,6 +255,24 @@ export class QuestChainValidationService {
         if (!chapter.storyText || chapter.storyText.trim() === '') {
           result.warnings.push(`Chapter ${chapter.id} missing story text`);
         }
+      }
+    }
+  }
+
+  private validateChapterStages(
+    chain: QuestChain,
+    chainPuzzles: QuestChainPuzzle[],
+    result: ValidationResult,
+  ): void {
+    const chapterIds = new Set(
+      (chain.story?.chapters ?? []).map((chapter) => chapter.id),
+    );
+
+    for (const stage of chainPuzzles) {
+      if (stage.chapterId && !chapterIds.has(stage.chapterId)) {
+        result.errors.push(
+          `Stage ${stage.puzzleId} references non-existent chapter: ${stage.chapterId}`,
+        );
       }
     }
   }

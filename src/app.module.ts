@@ -20,6 +20,7 @@ import { CdnModule } from './cdn/cdn.module';
 import { AdminModule } from './admin/admin.module';
 import { LiveStreamingModule } from './live-streaming/live-streaming.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { QuestsModule } from './quests/quests.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     AdminModule,
     LiveStreamingModule,
     SubscriptionsModule,
+    QuestsModule,
   ],
 })
 export class AppModule {}

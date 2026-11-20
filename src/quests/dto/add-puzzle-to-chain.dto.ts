@@ -43,6 +43,18 @@ export class AddPuzzleToChainDto {
   @IsInt()
   sequenceOrder: number;
 
+  @IsString()
+  @IsOptional()
+  chapterId?: string;
+
+  @IsString()
+  @IsOptional()
+  narrative?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isOptional?: boolean;
+
   @ValidateNested()
   @Type(() => UnlockConditionsDto)
   @IsOptional()
