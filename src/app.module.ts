@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheWarmingModule } from './cache-warming/cache-warming.module';
 import { BoardThemesModule } from './board-themes/board-themes.module';
 import { DailyLoginRewardsModule } from './daily-login-rewards/daily-login-rewards.module';
+import { ScoreReconciliationModule } from './score-reconciliation/score-reconciliation.module';
 import { CacheJob } from './cache-warming/entities/cache-job.entity';
 import { Metric } from './cache-warming/entities/metric.entity';
 import { PreloadData } from './cache-warming/entities/preload-data.entity';
@@ -55,6 +56,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     CacheWarmingModule,
     BoardThemesModule,
     DailyLoginRewardsModule,
+    ScoreReconciliationModule,
     EventsModule,
     JobsModule,
     CdnModule,
