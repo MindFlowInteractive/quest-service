@@ -97,6 +97,40 @@ describe('ReportsController', () => {
         report: mockReport,
       });
     });
+
+    it('should submit a player report with reason and evidence via createPlayerReport', async () => {
+      const playerReportDto = {
+        reportedPlayerId: 'cheater-999',
+        reason: 'cheating',
+        evidence: 'Detected speedhack in level 4 replay',
+      };
+
+      const expectedPlayerReport = {
+        ...mockReport,
+        targetType: ReportTargetType.PLAYER,
+        targetId: 'cheater-999',
+        reason: 'cheating',
+        evidence: 'Detected speedhack in level 4 replay',
+      };
+
+      mockReportsService.createReport.mockResolvedValue(expectedPlayerReport);
+
+      const result = await controller.createPlayerReport(
+        { user: mockUser },
+        playerReportDto,
+      );
+
+      expect(service.createReport).toHaveBeenCalledWith(mockUser.id, {
+        targetType: ReportTargetType.PLAYER,
+        targetId: 'cheater-999',
+        reason: 'cheating',
+        evidence: 'Detected speedhack in level 4 replay',
+      });
+      expect(result).toEqual({
+        message: 'Report submitted successfully',
+        report: expectedPlayerReport,
+      });
+    });
   });
 
   describe('getReports', () => {
@@ -132,6 +166,17 @@ describe('ReportsController', () => {
       await controller.getReports(undefined, undefined);
 
       expect(service.getReports).toHaveBeenCalledWith(1, 20);
+    });
+
+    it('should route getModerationQueue to getReports', async () => {
+      mockReportsService.getReports.mockResolvedValue({
+        reports: [mockReport],
+        total: 1,
+      });
+
+      const result = await controller.getModerationQueue(1, 10);
+      expect(service.getReports).toHaveBeenCalledWith(1, 10);
+      expect(result.reports).toEqual([mockReport]);
     });
   });
 

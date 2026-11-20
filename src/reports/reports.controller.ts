@@ -17,9 +17,11 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
-import { CreateReportDto } from './dto/create-report.dto';
+import { Throttle } from '@nestjs/throttler';
+import { CreateReportDto, CreatePlayerReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportStatsDto } from './dto/report-stats.dto';
+import { ReportTargetType } from './entities/content-report.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -32,6 +34,7 @@ export class ReportsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Submit a new report' })
   @ApiResponse({ status: 201, description: 'Report successfully created' })
   @ApiResponse({
@@ -47,6 +50,59 @@ export class ReportsController {
       message: 'Report submitted successfully',
       report,
     };
+  }
+
+  @Post('player')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Submit a new player report' })
+  @ApiResponse({ status: 201, description: 'Player report successfully created' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Bad request - duplicate report, invalid data, or rate limit exceeded',
+  })
+  async createPlayerReport(
+    @Request() req,
+    @Body() createPlayerReportDto: CreatePlayerReportDto,
+  ) {
+    const report = await this.reportsService.createReport(req.user.id, {
+      targetType: ReportTargetType.PLAYER,
+      targetId: createPlayerReportDto.reportedPlayerId,
+      reason: createPlayerReportDto.reason,
+      evidence: createPlayerReportDto.evidence,
+    });
+    return {
+      message: 'Report submitted successfully',
+      report,
+    };
+  }
+
+  @Get('queue')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MODERATOR, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get paginated moderation queue sorted by priority' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 20)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Moderation queue retrieved successfully',
+  })
+  async getModerationQueue(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.getReports(page, limit);
   }
 
   @Get()

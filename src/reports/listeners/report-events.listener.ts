@@ -10,20 +10,26 @@ export class ReportEventsListener {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @OnEvent('report.resolved')
-  async handleReportResolved(payload: { report: any; resolution: string }) {
+  async handleReportResolved(payload: {
+    report: any;
+    resolution: string;
+    outcome?: string;
+  }) {
     const { report, resolution } = payload;
+    const outcomeText = resolution || payload.outcome || 'Resolved';
 
     // Send notification to the original reporter
     await this.notificationsService.createNotification({
       userId: report.reporterId,
       type: 'report_resolved',
       title: 'Your Report Has Been Resolved',
-      message: `The report you submitted regarding ${report.targetType} has been reviewed and resolved.`,
+      message: `The report you submitted regarding ${report.targetType} has been reviewed and resolved. Outcome: ${outcomeText}`,
       data: {
         reportId: report.id,
         targetType: report.targetType,
         targetId: report.targetId,
         resolution,
+        outcome: outcomeText,
       },
     });
   }

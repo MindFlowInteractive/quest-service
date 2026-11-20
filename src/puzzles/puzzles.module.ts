@@ -43,6 +43,8 @@ import { XpModule } from '../xp/xp.module';
 import { Tag } from './entities/tag.entity';
 import { TagsService } from './tags.service';
 import { TagsController } from './tags.controller';
+import { PuzzleImportHistory } from './entities/puzzle-import-history.entity';
+import { PuzzleBulkImportService } from './services/puzzle-bulk-import.service';
 
 @Module({
   imports: [
@@ -62,6 +64,7 @@ import { TagsController } from './tags.controller';
       UserCollectionProgress,
       PuzzleVersion,
       Tag,
+      PuzzleImportHistory,
     ]),
     AntiCheatModule,
     XpModule,
@@ -90,6 +93,7 @@ import { TagsController } from './tags.controller';
     SolutionSubmissionService,
     PuzzleVersionService,
     TagsService,
+    PuzzleBulkImportService,
   ],
   exports: [
     PuzzlesService,
@@ -98,6 +102,7 @@ import { TagsController } from './tags.controller';
     SolutionSubmissionService,
     PuzzleVersionService,
     TagsService,
+    PuzzleBulkImportService,
   ],
 })
 export class PuzzlesModule {}

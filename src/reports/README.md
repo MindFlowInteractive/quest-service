@@ -4,25 +4,39 @@ A comprehensive reporting system for the quest service that allows players to re
 
 ## Features
 
-- **Content Reporting**: Players can report puzzles, players, and chat messages
+- **Content & Player Reporting**: Players can report other players (for cheating, abusive names, abusive chat) as well as puzzles and chat messages with reasons and evidence
 - **Priority Scoring**: Reports automatically get priority based on volume
 - **Duplicate Prevention**: Same user cannot report same target multiple times
+- **Rate Limiting**: Throttled and rate-limited to deter abuse and spam reports
 - **Auto-Escalation**: 5+ reports on same target within 24h triggers critical priority
-- **Moderator Queue**: Paginated queue sorted by priority for efficient review
-- **Reporter Notifications**: Automatic notifications when reports are resolved
+- **Moderator Queue**: Paginated queue sorted by priority for efficient review (/reports/queue and /reports)
+- **Reporter Notifications**: Automatic notifications when reports are resolved with outcome
 - **Admin Statistics**: Comprehensive dashboard with reporting analytics
 
 ## API Endpoints
 
 ### POST /reports
-Submit a new report (requires authentication)
+Submit a new report (requires authentication, rate-limited)
 
 **Request Body:**
 ```json
 {
   "targetType": "puzzle|player|chat_message",
   "targetId": "string",
-  "reason": "string"
+  "reason": "cheating|abusive_name|abusive_chat|other|string",
+  "evidence": "string (optional)"
+}
+```
+
+### POST /reports/player
+Submit a player report (requires authentication, rate-limited)
+
+**Request Body:**
+```json
+{
+  "reportedPlayerId": "uuid",
+  "reason": "cheating|abusive_name|abusive_chat|other",
+  "evidence": "string (optional)"
 }
 ```
 
