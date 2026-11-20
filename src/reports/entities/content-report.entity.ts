@@ -15,6 +15,13 @@ export enum ReportTargetType {
   CHAT_MESSAGE = 'chat_message',
 }
 
+export enum ReportReason {
+  CHEATING = 'cheating',
+  ABUSIVE_NAME = 'abusive_name',
+  ABUSIVE_CHAT = 'abusive_chat',
+  OTHER = 'other',
+}
+
 export enum ReportStatus {
   OPEN = 'open',
   REVIEWING = 'reviewing',
@@ -54,6 +61,9 @@ export class ContentReport {
 
   @Column({ type: 'text' })
   reason: string;
+
+  @Column({ type: 'text', nullable: true })
+  evidence?: string;
 
   @Column({
     type: 'enum',

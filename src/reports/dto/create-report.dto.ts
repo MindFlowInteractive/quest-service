@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsUUID, IsNotEmpty } from 'class-validator';
+import { IsString, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { ReportTargetType } from '../entities/content-report.entity';
 
 export class CreateReportDto {
@@ -12,4 +12,22 @@ export class CreateReportDto {
   @IsString()
   @IsNotEmpty()
   reason: string;
+
+  @IsOptional()
+  @IsString()
+  evidence?: string;
+}
+
+export class CreatePlayerReportDto {
+  @IsString()
+  @IsNotEmpty()
+  reportedPlayerId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  reason: string;
+
+  @IsOptional()
+  @IsString()
+  evidence?: string;
 }

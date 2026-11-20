@@ -8,6 +8,7 @@ import {
   ReportStatus,
   ReportPriority,
   ReportTargetType,
+  ReportReason,
 } from './entities/content-report.entity';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -28,6 +29,7 @@ describe('ReportsService', () => {
     status: ReportStatus.OPEN,
     createdAt: new Date(),
     updatedAt: new Date(),
+    reporter: null as any,
   };
 
   const mockRepository = {
@@ -60,6 +62,7 @@ describe('ReportsService', () => {
     }).compile();
 
     service = module.get<ReportsService>(ReportsService);
+    service.resetRateLimits();
     repository = module.get<Repository<ContentReport>>(
       getRepositoryToken(ContentReport),
     );
@@ -181,6 +184,68 @@ describe('ReportsService', () => {
       expect(result.priority).toBe(ReportPriority.CRITICAL);
       expect(repository.update).toHaveBeenCalled();
     });
+
+    it('should submit player report with reason, evidence and route to moderation queue', async () => {
+      const playerReportDto: CreateReportDto = {
+        targetType: ReportTargetType.PLAYER,
+        targetId: 'cheater-999',
+        reason: ReportReason.CHEATING,
+        evidence: 'Suspicious movement patterns and impossibly fast solve time',
+      };
+
+      const expectedReport = {
+        ...mockReport,
+        targetType: ReportTargetType.PLAYER,
+        targetId: 'cheater-999',
+        reason: ReportReason.CHEATING,
+        evidence: 'Suspicious movement patterns and impossibly fast solve time',
+      };
+
+      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.count.mockResolvedValue(0);
+      mockRepository.create.mockReturnValue(expectedReport);
+      mockRepository.save.mockResolvedValue(expectedReport);
+
+      const result = await service.createReport('reporter-1', playerReportDto);
+
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        reporterId: 'reporter-1',
+        targetType: ReportTargetType.PLAYER,
+        targetId: 'cheater-999',
+        reason: ReportReason.CHEATING,
+        evidence: 'Suspicious movement patterns and impossibly fast solve time',
+        priority: ReportPriority.LOW,
+      });
+      expect(eventEmitter.emit).toHaveBeenCalledWith('report.queued', {
+        report: expectedReport,
+        priority: ReportPriority.LOW,
+      });
+      expect(result).toEqual(expectedReport);
+    });
+
+    it('should throw BadRequestException when reporter exceeds rate limit', async () => {
+      const createReportDto: CreateReportDto = {
+        targetType: ReportTargetType.PLAYER,
+        targetId: 'target-player',
+        reason: ReportReason.ABUSIVE_CHAT,
+        evidence: 'Toxic chat logs',
+      };
+
+      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.count.mockResolvedValue(0);
+      mockRepository.create.mockReturnValue(mockReport);
+      mockRepository.save.mockResolvedValue(mockReport);
+
+      // Submit up to limit
+      for (let i = 0; i < 10; i++) {
+        service.createReport('spammy-user', createReportDto);
+      }
+
+      // Next one should trigger rate limit error
+      await expect(
+        service.createReport('spammy-user', createReportDto),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('getReports', () => {
@@ -189,6 +254,27 @@ describe('ReportsService', () => {
       mockRepository.findAndCount.mockResolvedValue([mockReports, 1]);
 
       const result = await service.getReports(1, 20);
+
+      expect(repository.findAndCount).toHaveBeenCalledWith({
+        relations: ['reporter'],
+        order: {
+          priority: 'DESC',
+          createdAt: 'DESC',
+        },
+        skip: 0,
+        take: 20,
+      });
+      expect(result).toEqual({
+        reports: mockReports,
+        total: 1,
+      });
+    });
+
+    it('should return paginated moderation queue matching getReports', async () => {
+      const mockReports = [mockReport];
+      mockRepository.findAndCount.mockResolvedValue([mockReports, 1]);
+
+      const result = await service.getModerationQueue(1, 20);
 
       expect(repository.findAndCount).toHaveBeenCalledWith({
         relations: ['reporter'],
