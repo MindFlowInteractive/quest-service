@@ -14,12 +14,14 @@ import { UserQuestChainProgress } from './user-quest-chain-progress.entity';
 export interface QuestChainStory {
   intro: string;
   outro: string;
-  chapters: Array<{
-    id: string;
-    title: string;
-    description: string;
-    storyText: string;
-  }>;
+  chapters: StoryChapter[];
+}
+
+export interface StoryChapter {
+  id: string;
+  title: string;
+  description: string;
+  storyText: string;
 }
 
 export interface QuestChainRewards {

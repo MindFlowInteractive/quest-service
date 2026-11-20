@@ -195,5 +195,65 @@ describe('QuestChainService', () => {
         }),
       ).rejects.toThrow('Puzzle already exists in this quest chain');
     });
+
+    it('should save stage chapter, narrative, and optional metadata', async () => {
+      const chainId = uuidv4();
+      const puzzleId = uuidv4();
+      const chain = {
+        id: chainId,
+        story: {
+          chapters: [{ id: 'chapter-one' }],
+        },
+      };
+      const stage = {
+        id: uuidv4(),
+        questChainId: chainId,
+        puzzleId,
+        sequenceOrder: 1,
+        chapterId: 'chapter-one',
+        narrative: 'A clue is revealed.',
+        isOptional: true,
+      };
+
+      mockQuestChainRepository.findOne.mockResolvedValue(chain);
+      mockQuestChainPuzzleRepository.findOne.mockResolvedValue(null);
+      mockQuestChainPuzzleRepository.create.mockReturnValue(stage);
+      mockQuestChainPuzzleRepository.save.mockResolvedValue(stage);
+
+      await service.addPuzzleToChain(chainId, {
+        puzzleId,
+        sequenceOrder: 1,
+        chapterId: 'chapter-one',
+        narrative: 'A clue is revealed.',
+        isOptional: true,
+      });
+
+      expect(mockQuestChainPuzzleRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chapterId: 'chapter-one',
+          narrative: 'A clue is revealed.',
+          isOptional: true,
+          questChainId: chainId,
+        }),
+      );
+    });
+
+    it('should reject a stage assigned to an undefined story chapter', async () => {
+      mockQuestChainRepository.findOne.mockResolvedValue({
+        id: 'chain',
+        story: { chapters: [] },
+      });
+      mockQuestChainPuzzleRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.addPuzzleToChain('chain', {
+          puzzleId: uuidv4(),
+          sequenceOrder: 0,
+          chapterId: 'missing-chapter',
+        }),
+      ).rejects.toThrow(
+        'Chapter missing-chapter does not exist in this quest chain',
+      );
+    });
   });
 });

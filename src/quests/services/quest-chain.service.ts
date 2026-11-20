@@ -121,6 +121,17 @@ export class QuestChainService {
       );
     }
 
+    if (
+      puzzleData.chapterId &&
+      !chain.story?.chapters?.some(
+        (chapter) => chapter.id === puzzleData.chapterId,
+      )
+    ) {
+      throw new BadRequestException(
+        `Chapter ${puzzleData.chapterId} does not exist in this quest chain`,
+      );
+    }
+
     try {
       const chainPuzzle = this.questChainPuzzleRepository.create({
         ...puzzleData,

@@ -5,6 +5,7 @@ import {
   Param,
   Body,
   ValidationPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -12,9 +13,13 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 
-import { QuestChainProgressionService } from '../services/quest-chain-progression.service';
+import {
+  CampaignProgress,
+  QuestChainProgressionService,
+} from '../services/quest-chain-progression.service';
 import { PuzzleCompletionDto } from '../dto/puzzle-completion.dto';
 import { UserQuestChainProgress } from '../entities/user-quest-chain-progress.entity';
 
@@ -41,7 +46,12 @@ export class QuestChainProgressController {
     @Body('mode') mode: 'standard' | 'time_attack' = 'standard',
     @Body('timeLimitSeconds') timeLimitSeconds = 300,
   ): Promise<UserQuestChainProgress> {
-    return this.progressionService.startChain(userId, chainId, mode, timeLimitSeconds);
+    return this.progressionService.startChain(
+      userId,
+      chainId,
+      mode,
+      timeLimitSeconds,
+    );
   }
 
   @Get(':id/progress')
@@ -58,6 +68,21 @@ export class QuestChainProgressController {
     @Body('userId') userId: string,
   ): Promise<UserQuestChainProgress> {
     return this.progressionService.getProgress(userId, chainId);
+  }
+
+  @Get(':id/campaign-progress')
+  @ApiOperation({ summary: 'Get chapter and stage progress for a campaign' })
+  @ApiResponse({
+    status: 200,
+    description: 'Campaign progress including chapter unlocks and story stages',
+  })
+  @ApiQuery({ name: 'userId', required: true, type: String })
+  @ApiParam({ name: 'id', description: 'Quest chain ID' })
+  async getCampaignProgress(
+    @Param('id') chainId: string,
+    @Query('userId') userId: string,
+  ): Promise<CampaignProgress> {
+    return this.progressionService.getCampaignProgress(userId, chainId);
   }
 
   @Get(':id/next-puzzle')
