@@ -3,8 +3,17 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import type { ConfigType } from '@nestjs/config';
 import type Redis from 'ioredis';
 import { LRUCache } from 'lru-cache';
+import { gunzipSync, gzipSync } from 'zlib';
 import { cacheConfig } from '../config/cache.config';
 import { CacheMonitoringService } from './cache-monitoring.service';
+
+const GZIP_MAGIC = [0x1f, 0x8b];
+
+function isGzipBuffer(buffer: Buffer): boolean {
+  return (
+    buffer.length >= 2 && buffer[0] === GZIP_MAGIC[0] && buffer[1] === GZIP_MAGIC[1]
+  );
+}
 
 export interface CacheOptions {
   ttl?: number;
@@ -27,6 +36,7 @@ export class CacheService {
   private readonly logger = new Logger(CacheService.name);
   private readonly l1Cache: LRUCache<string, any>;
   private readonly keyPrefix: string;
+  private readonly invalidationChannel: string;
   private readonly redis: Redis;
 
   constructor(
@@ -37,6 +47,7 @@ export class CacheService {
     private readonly monitoring: CacheMonitoringService,
   ) {
     this.keyPrefix = this.config.redis.keyPrefix;
+    this.invalidationChannel = `${this.keyPrefix}invalidations`;
     this.redis = this.redisClient;
 
     // Initialize L1 cache (in-memory)
@@ -46,6 +57,7 @@ export class CacheService {
     });
 
     this.setupRedisEventHandlers();
+    this.setupDistributedSync();
   }
 
   async get<T>(key: string, options: CacheOptions = {}): Promise<T | null> {
@@ -103,7 +115,7 @@ export class CacheService {
     const ttl = options.ttl || this.config.redis.defaultTtl;
 
     try {
-      const serialized = this.serialize(value);
+      const serialized = this.serialize(value, options.compress);
 
       // Set in L1 cache if enabled
       if (
@@ -130,6 +142,9 @@ export class CacheService {
             await this.addTags(fullKey, tags);
           }
         }
+
+        // Tell other instances to refresh stale L1 entries.
+        await this.publishDistributedInvalidation('set', [fullKey]);
       }
 
       this.monitoring.recordSet(Date.now() - startTime);
@@ -156,6 +171,9 @@ export class CacheService {
         await this.removeTags(fullKey);
       }
 
+      // Propagate the invalidation to other instances.
+      await this.publishDistributedInvalidation('delete', [fullKey]);
+
       this.monitoring.recordDelete(Date.now() - startTime);
     } catch (error) {
       this.logger.error(`Cache delete error for key ${key}:`, error);
@@ -180,6 +198,9 @@ export class CacheService {
           await this.redis.del(...keys);
           await this.redis.del(tagKey);
         }
+
+        // Propagate the invalidation to other instances.
+        await this.publishDistributedInvalidation('delete', keys);
       }
     } catch (error) {
       this.logger.error(`Cache deleteByTag error for tag ${tag}:`, error);
@@ -202,6 +223,9 @@ export class CacheService {
           await this.redis.del(...keys);
         }
       }
+
+      // Propagate the invalidation to other instances.
+      await this.publishDistributedInvalidation('clear', []);
     } catch (error) {
       this.logger.error('Cache clear error:', error);
       this.monitoring.recordError();
@@ -249,15 +273,22 @@ export class CacheService {
     return `${this.keyPrefix}${key}`;
   }
 
-  private serialize(value: any): string {
-    return JSON.stringify(value);
+  private serialize(value: any, compress?: boolean): string | Buffer {
+    const json = JSON.stringify(value);
+    return compress ? gzipSync(json) : json;
   }
 
   private deserialize(value: string): any {
+    const buffer: Buffer = Buffer.isBuffer(value)
+      ? value
+      : Buffer.from(value, 'utf8');
+    const text = isGzipBuffer(buffer)
+      ? gunzipSync(buffer).toString('utf8')
+      : buffer.toString('utf8');
     try {
-      return JSON.parse(value);
+      return JSON.parse(text);
     } catch {
-      return value;
+      return text;
     }
   }
 
@@ -295,5 +326,59 @@ export class CacheService {
     this.redis.on('close', () => {
       this.logger.warn('Redis connection closed');
     });
+  }
+
+  private setupDistributedSync(): void {
+    if (!this.config.layers.l1.enabled) {
+      return;
+    }
+
+    this.redis.on('message', (channel: string, message: string) => {
+      if (channel !== this.invalidationChannel) {
+        return;
+      }
+      this.handleDistributedInvalidation(message);
+    });
+
+    this.redis.subscribe(this.invalidationChannel, (error) => {
+      if (error) {
+        this.logger.error('Failed to subscribe to invalidations:', error);
+      }
+    });
+  }
+
+  private handleDistributedInvalidation(message: string): void {
+    try {
+      const { op, keys } = JSON.parse(message) as {
+        op: string;
+        keys?: string[];
+      };
+      if (!Array.isArray(keys)) {
+        return;
+      }
+      if (op === 'delete' || op === 'set') {
+        for (const key of keys) {
+          this.l1Cache.delete(key);
+        }
+      } else if (op === 'clear') {
+        this.l1Cache.clear();
+      }
+    } catch (error) {
+      this.logger.error('Error handling distributed invalidation:', error);
+    }
+  }
+
+  private async publishDistributedInvalidation(
+    op: string,
+    keys: string[] = [],
+  ): Promise<void> {
+    try {
+      await this.redis.publish(
+        this.invalidationChannel,
+        JSON.stringify({ op, keys }),
+      );
+    } catch (error) {
+      this.logger.error('Failed to publish distributed invalidation:', error);
+    }
   }
 }
